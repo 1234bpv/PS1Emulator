@@ -1,0 +1,41 @@
+// Етап 1: EXE, що лінкує pcsxcore.lib і рахує кадри без виведення.
+
+TARGET          ps1stage1.exe
+TARGETTYPE      exe
+UID             0 0xE0001002
+SECUREID        0xE0001002
+VENDORID        0
+
+// Файлові операції для JSONL-логу; більше нічого не потрібно.
+CAPABILITY      None
+
+EPOCSTACKSIZE   0x14000
+// Гість PS1: 2 МБ ОЗП + 512 КБ BIOS + 1 МБ VRAM + структури ядра.
+EPOCHEAPSIZE    0x100000 0x1000000
+
+// Ті самі прапорці, що й у ядра. P13: без ORDER-макросів CSL 3.4.3 бере
+// big-endian гілку; заголовки ядра тут теж їх читають.
+OPTION GCCE     -march=armv6 -D__SIZEOF_POINTER__=4 -DP_HAVE_MMAP=0 \
+                -D__ORDER_LITTLE_ENDIAN__=1234 -D__ORDER_BIG_ENDIAN__=4321 \
+                -D__ORDER_PDP_ENDIAN__=3412 -D__BYTE_ORDER__=1234
+
+MACRO           DRC_DISABLE
+
+SOURCEPATH      ..\..\..\src\symbian
+SOURCE          stage1.cpp
+
+// ESTLIB не має snprintf/vsnprintf (C99); у SDK їх немає в жодній .dso.
+SOURCEPATH      ..\..\..\src\compat
+SOURCE          compat_snprintf.c
+
+USERINCLUDE     ..\..\..\src\compat
+USERINCLUDE     ..\..\..\pcsx_rearmed
+USERINCLUDE     ..\..\..\pcsx_rearmed\include
+USERINCLUDE     ..\..\..\pcsx_rearmed\libpcsxcore
+
+SYSTEMINCLUDE   \epoc32\include
+SYSTEMINCLUDE   \epoc32\include\libc
+
+STATICLIBRARY   pcsxcore.lib
+LIBRARY         euser.lib
+LIBRARY         estlib.lib
