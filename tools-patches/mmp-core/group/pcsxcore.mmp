@@ -7,7 +7,13 @@ TARGETTYPE      lib
 
 // P8: SDK не має ARMv6-платформи GCCE, ціль задається прапорцем.
 // P7: __SIZEOF_POINTER__ з'явився у GCC 4.3; бандлений CSL 3.4.3 його не має.
-OPTION GCCE     -march=armv6 -D__SIZEOF_POINTER__=4 -DP_HAVE_MMAP=0
+// Порядок байтів. GCC 3.4.3 не визначає __BYTE_ORDER__ (з'явився у 4.6), а в #if
+// невизначений макрос дорівнює 0, тож `__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__`
+// стає `0 == 0` і ядро збиралося по BIG-ENDIAN гілці: psxmem.h:30 (доступ до
+// пам'яті), r3000a.h:82 (розкладка регістрів), cdrom.c:1350. Значення — як у GCC 4.6+.
+OPTION GCCE     -march=armv6 -D__SIZEOF_POINTER__=4 -DP_HAVE_MMAP=0 \
+                -D__ORDER_LITTLE_ENDIAN__=1234 -D__ORDER_BIG_ENDIAN__=4321 \
+                -D__ORDER_PDP_ENDIAN__=3412 -D__BYTE_ORDER__=1234
 
 // Динарек вимкнено (Makefile upstream робить те саме за відсутності DYNAREC=ari64).
 MACRO           DRC_DISABLE
@@ -40,6 +46,18 @@ SOURCE          pad.c
 SOURCE          gte.c
 SOURCE          gte_nf.c
 SOURCE          gte_divider.c
+
+// -march=armv6 вмикає HAVE_ARMV5 в arm_features.h, тож gte.c:551 бере
+// асемблерну версію (gteMAC123f_arm). Upstream Makefile робить те саме для ARCH=arm.
+//
+// Файли беруться ПОПЕРЕДНЬО ОБРОБЛЕНІ (..\asm), бо збірна система Symbian передає
+// асемблер компіляторові з розширенням .s (у нижньому регістрі), а за ним GCC
+// препроцесор НЕ запускає — на відміну від .S. Без цього макроси з arm_features.h
+// не розгортаються: "bad instruction `function(gteRTPS_sf1lm0_arm):'".
+// Регенерація — див. ..\asm\regen.cmd.
+SOURCEPATH      ..\asm
+SOURCE          gte_arm.s
+SOURCE          gte_nf_arm.s
 
 SOURCEPATH      ..\..\..\pcsx_rearmed\libpcsxcore\new_dynarec
 SOURCE          emu_if.c
