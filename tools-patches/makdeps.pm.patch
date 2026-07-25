@@ -1,0 +1,23 @@
+--- D:/VsCodeProjects/SymbianProjects/S60_3rd_FP1/Epoc32/tools/makdeps.pm.orig	2026-07-25 03:19:30.388795200 +0300
++++ D:/VsCodeProjects/SymbianProjects/S60_3rd_FP1/Epoc32/tools/makdeps.pm	2026-07-25 03:21:36.192531400 +0300
+@@ -163,6 +163,12 @@
+ 
+ 	my $CPPCommand;
+  	my $exe = &PreprocessorToUseExe();
++	# Dependency scanning only. The stock Epoc32\gcc\bin\cpp.exe is a 2003 cygwin
++	# build that rejects C99 variadic macros (#define foo(...)); CSL 3.4.3's cpp
++	# accepts them and the flags used below. Preprocessor.pm is deliberately left
++	# alone: prepfile.pm/epocrc.pl still need the stock cpp for its "-+" option,
++	# which CSL's cpp does not support.
++	$exe = "D:\\VsCodeProjects\\SymbianProjects\\toolchain\\CSL_Arm_Toolchain\\bin\\arm-none-symbianelf-cpp";
+ 	$CPPCommand = "$exe -undef -M -MG -nostdinc $PrefixFileOption -I ".&Path_PrefixWithDriveAndQuote($ChopSrcPath)." @UserFlags -I- -I ".&Path_PrefixWithDriveAndQuote($ChopSysDecoyPath)." @SysFlags @PlatMacros @BldMacros $ProductVariantFlag ".&Path_PrefixWithDriveAndQuote($Src);
+ 
+ 	if ($Mode{'Verbose'}) {
+@@ -187,6 +193,7 @@
+ 			my $dep = $1;
+ 			$dep =~ s/;/ /go;	# spaces were turned into semicolon, so convert back again here
+ 			$dep =~ s-/-\\-go;	# replace forward slashes with backward slashes
++			$dep =~ s-\\\\-\\-go;	# CSL cpp escapes backslashes in its -M output
+ 			$dep =~ s/^.\://;
+ 			push @RTWDepList,$dep;
+ 		}

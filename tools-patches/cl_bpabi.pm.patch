@@ -1,0 +1,79 @@
+--- D:/VsCodeProjects/SymbianProjects/S60_3rd_FP1/Epoc32/tools/cl_bpabi.pm.orig	2026-07-25 00:08:20.831900300 +0300
++++ D:/VsCodeProjects/SymbianProjects/S60_3rd_FP1/Epoc32/tools/cl_bpabi.pm	2026-07-25 00:10:06.784788800 +0300
+@@ -3,6 +3,8 @@
+ # Copyright (c) 1997-2006 Symbian Software Ltd.  All rights reserved.
+ #
+ 
++#patch for Vista 3rd Ed FP1
++
+ # This package contains routines to handle Base Platform ABI (BPABI) Platforms.
+ package Cl_bpabi;
+ 
+@@ -192,6 +194,7 @@
+ 		&main::Output(
+ 			"\n",
+ 			"PATH=",&main::Path_Drive,$EPOCPath,"gcc\\bin;\$(PATH)\n",
++
+ 			"\n"
+ 		);
+ 	}
+@@ -199,7 +202,16 @@
+ 		&main::Output(
+ 			"\n",
+ 			"# must set both PATH and Path to make it work correctly\n",
+-			"Path:=",&main::Path_Drive,$EPOCPath,"gcc\\bin;\$(Path)\n",
++
++				"Path:=", &main::Path_Drive,$EPOCPath,"gcc\\bin;",
++	                  &GCCInstallPath,"\\..\\bin;",
++	                  &GCCInstallPath,"\\..\\arm-none-symbianelf\\bin;",
++				&GCCInstallPath,"\\..\\libexec\\gcc\\arm-none-symbianelf\\3.4.3;",
++
++				"\$(Path)",
++				"\n",
++
++	
+ 			"PATH:=\$(Path)\n",
+ 			"\n"
+ 		);
+@@ -1752,8 +1764,9 @@
+ 
+ #	Extract the path till the occurence of bin directory.
+ 	my @Installpath = split(/\\\.\./, $gccInstallPath);
+-
++# Detected from the compiler itself; must not depend on the install location.
+ 	return $Installpath[0];
++
+ }
+ 
+ sub GCCLibPath {
+@@ -1769,10 +1782,29 @@
+ 
+ #	Extract the path till the occurence of libgcc.a directory.
+ 	my @libpath = split(/\\libgcc.a/, $gccLibPath);
+-
++# Detected from the compiler itself; must not depend on the install location.
+ 	return $libpath[0];
+ }
+ 
++sub GCCRuntimePath {
++	my $gccInstallPath;
++
++	open PIPE, "arm-none-symbianelf-g++ -print-libgcc-file-name 2>&1 | ";
++	while(<PIPE>)
++	{
++		$gccInstallPath = $_;
++		$gccInstallPath =~ s/\//\\/g;
++	}
++	close PIPE;
++
++#	Extract the path till the occurence of bin directory.
++	my @Installpath = split(/\\\.\./, $gccInstallPath);
++# Detected from the compiler itself; must not depend on the install location.
++	return $Installpath[0];
++
++}
++
++
+ my %BSF_keywords = (
+ 		    COMMON_OPTIONS => 1,
+ 		    THUMB_OPTIONS => 1,

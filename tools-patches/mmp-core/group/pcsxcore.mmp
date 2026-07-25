@@ -1,0 +1,75 @@
+// libpcsxcore для Symbian — Етап 1: ядро з інтерпретатором, динарек вимкнено.
+// Статична бібліотека: перевіряє компільованість ядра окремо від оболонки.
+// Проблемні точки — docs/architecture/data-spec.md
+
+TARGET          pcsxcore.lib
+TARGETTYPE      lib
+
+// P8: SDK не має ARMv6-платформи GCCE, ціль задається прапорцем.
+// P7: __SIZEOF_POINTER__ з'явився у GCC 4.3; бандлений CSL 3.4.3 його не має.
+OPTION GCCE     -march=armv6 -D__SIZEOF_POINTER__=4 -DP_HAVE_MMAP=0
+
+// Динарек вимкнено (Makefile upstream робить те саме за відсутності DYNAREC=ari64).
+MACRO           DRC_DISABLE
+
+SOURCEPATH      ..\..\..\pcsx_rearmed\libpcsxcore
+
+SOURCE          cdriso.c
+SOURCE          cdrom.c
+SOURCE          cdrom-async.c
+SOURCE          cheat.c
+SOURCE          database.c
+SOURCE          decode_xa.c
+SOURCE          mdec.c
+SOURCE          misc.c
+SOURCE          plugins.c
+SOURCE          ppf.c
+SOURCE          psxbios.c
+SOURCE          psxcommon.c
+SOURCE          psxcounters.c
+SOURCE          psxdma.c
+SOURCE          psxevents.c
+SOURCE          psxhw.c
+SOURCE          psxinterpreter.c
+SOURCE          psxmem.c
+SOURCE          r3000a.c
+SOURCE          sio.c
+SOURCE          spu.c
+SOURCE          gpu.c
+SOURCE          pad.c
+SOURCE          gte.c
+SOURCE          gte_nf.c
+SOURCE          gte_divider.c
+
+SOURCEPATH      ..\..\..\pcsx_rearmed\libpcsxcore\new_dynarec
+SOURCE          emu_if.c
+
+// zlib вендорений у репозиторії (deps/libchdr/deps/zlib-1.3.1).
+// PIPS/Open C у цьому SDK НЕ встановлено, тож збираємо свій.
+SOURCEPATH      ..\..\..\pcsx_rearmed\deps\libchdr\deps\zlib-1.3.1
+SOURCE          adler32.c
+SOURCE          compress.c
+SOURCE          crc32.c
+SOURCE          deflate.c
+SOURCE          gzclose.c
+SOURCE          gzlib.c
+SOURCE          gzread.c
+SOURCE          gzwrite.c
+SOURCE          infback.c
+SOURCE          inffast.c
+SOURCE          inflate.c
+SOURCE          inftrees.c
+SOURCE          trees.c
+SOURCE          uncompr.c
+SOURCE          zutil.c
+
+// Compat-заголовки: CSL 3.4.3 та ESTLIB не мають stdint.h (C99) і stdalign.h (C11).
+USERINCLUDE     ..\..\..\src\compat
+
+USERINCLUDE     ..\..\..\pcsx_rearmed
+USERINCLUDE     ..\..\..\pcsx_rearmed\include
+USERINCLUDE     ..\..\..\pcsx_rearmed\libpcsxcore
+USERINCLUDE     ..\..\..\pcsx_rearmed\deps\libchdr\deps\zlib-1.3.1
+
+SYSTEMINCLUDE   \epoc32\include
+SYSTEMINCLUDE   \epoc32\include\libc
