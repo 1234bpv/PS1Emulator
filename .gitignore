@@ -1,0 +1,22 @@
+# Комітяться лише src/, tests/, README.md, CLAUDE.md, AGENTS.md, план.
+# Решта — локальна (методологія, розділ Git-ігнорує).
+
+docs/
+plans/
+configs/
+pcsx_rearmed/
+*.pkl
+*.sis
+*.sisx
+*.bin
+*.cue
+*.chd
+
+# Артефакти складання
+*.o
+*.obj
+*.lib
+*.dll
+*.exe
+*.map
+epoc32/
