@@ -1,19 +1,26 @@
---- D:/VsCodeProjects/SymbianProjects/S60_3rd_FP1/Epoc32/tools/makdeps.pm.orig	2026-07-25 03:19:30.388795200 +0300
-+++ D:/VsCodeProjects/SymbianProjects/S60_3rd_FP1/Epoc32/tools/makdeps.pm	2026-07-25 03:21:36.192531400 +0300
-@@ -163,6 +163,12 @@
+--- makdeps.pm.orig	2026-07-25 03:19:30.388795200 +0300
++++ makdeps.pm	2026-07-26 05:10:31.883407900 +0300
+@@ -163,7 +163,18 @@
  
  	my $CPPCommand;
   	my $exe = &PreprocessorToUseExe();
+-	$CPPCommand = "$exe -undef -M -MG -nostdinc $PrefixFileOption -I ".&Path_PrefixWithDriveAndQuote($ChopSrcPath)." @UserFlags -I- -I ".&Path_PrefixWithDriveAndQuote($ChopSysDecoyPath)." @SysFlags @PlatMacros @BldMacros $ProductVariantFlag ".&Path_PrefixWithDriveAndQuote($Src);
 +	# Dependency scanning only. The stock Epoc32\gcc\bin\cpp.exe is a 2003 cygwin
 +	# build that rejects C99 variadic macros (#define foo(...)); CSL 3.4.3's cpp
 +	# accepts them and the flags used below. Preprocessor.pm is deliberately left
 +	# alone: prepfile.pm/epocrc.pl still need the stock cpp for its "-+" option,
 +	# which CSL's cpp does not support.
 +	$exe = "D:\\VsCodeProjects\\SymbianProjects\\toolchain\\CSL_Arm_Toolchain\\bin\\arm-none-symbianelf-cpp";
- 	$CPPCommand = "$exe -undef -M -MG -nostdinc $PrefixFileOption -I ".&Path_PrefixWithDriveAndQuote($ChopSrcPath)." @UserFlags -I- -I ".&Path_PrefixWithDriveAndQuote($ChopSysDecoyPath)." @SysFlags @PlatMacros @BldMacros $ProductVariantFlag ".&Path_PrefixWithDriveAndQuote($Src);
++	# -undef strips the compiler's built-in target macros, so __arm__ is gone
++	# during dependency scanning only. new_dynarec.c:110 selects assem_arm.h on
++	# __arm__; without it HOST_IMM8 stays undefined and :3650 hits an #error,
++	# which aborts the scan. The real compile defines __arm__, so this only
++	# restores what -undef removed.
++	$CPPCommand = "$exe -undef -D__arm__=1 -M -MG -nostdinc $PrefixFileOption -I ".&Path_PrefixWithDriveAndQuote($ChopSrcPath)." @UserFlags -I- -I ".&Path_PrefixWithDriveAndQuote($ChopSysDecoyPath)." @SysFlags @PlatMacros @BldMacros $ProductVariantFlag ".&Path_PrefixWithDriveAndQuote($Src);
  
  	if ($Mode{'Verbose'}) {
-@@ -187,6 +193,7 @@
+ 		print "$CPPCommand\n"
+@@ -187,6 +198,7 @@
  			my $dep = $1;
  			$dep =~ s/;/ /go;	# spaces were turned into semicolon, so convert back again here
  			$dep =~ s-/-\\-go;	# replace forward slashes with backward slashes
