@@ -23,3 +23,5 @@ EKA2L1*.log
 *.exe
 *.map
 epoc32/
+*.key
+*.cer

@@ -1,0 +1,21 @@
+// Етап 0: зонд виконуваної пам'яті. Самодостатній, ядра емулятора не лінкує.
+
+TARGET          ps1stage0.exe
+TARGETTYPE      exe
+UID             0 0xE0001003
+SECUREID        0xE0001003
+VENDORID        0
+
+// Свідомо None: одне з питань зонда - чи потрібна capability для
+// RChunk::CreateLocalCode. Якщо потрібна, буде KErrPermissionDenied (-46).
+CAPABILITY      None
+
+EPOCSTACKSIZE   0x5000
+
+SOURCEPATH      ..\..\..\src\symbian
+SOURCE          stage0_probe.cpp
+
+SYSTEMINCLUDE   \epoc32\include
+
+LIBRARY         euser.lib
+LIBRARY         efsrv.lib

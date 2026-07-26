@@ -23,6 +23,7 @@ MACRO           DRC_DISABLE
 
 SOURCEPATH      ..\..\..\src\symbian
 SOURCE          stage1.cpp
+SOURCE          vout_symbian.cpp
 
 // ESTLIB не має snprintf/vsnprintf (C99); у SDK їх немає в жодній .dso.
 SOURCEPATH      ..\..\..\src\compat
@@ -32,10 +33,12 @@ USERINCLUDE     ..\..\..\src\compat
 USERINCLUDE     ..\..\..\pcsx_rearmed
 USERINCLUDE     ..\..\..\pcsx_rearmed\include
 USERINCLUDE     ..\..\..\pcsx_rearmed\libpcsxcore
+USERINCLUDE     ..\..\..\pcsx_rearmed\plugins\gpulib
 
 SYSTEMINCLUDE   \epoc32\include
 SYSTEMINCLUDE   \epoc32\include\libc
 
+STATICLIBRARY   gpuunai.lib
 STATICLIBRARY   pcsxcore.lib
 LIBRARY         euser.lib
 LIBRARY         estlib.lib

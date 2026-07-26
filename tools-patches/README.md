@@ -10,6 +10,9 @@
 | `cl_bpabi.pm.patch` | правка SDK: vista-патч без хардкоду шляху до CSL |
 | `makdeps.pm.patch` | правка SDK: препроцесор для сканування залежностей |
 | `mmp-core/` | `bld.inf` + `pcsxcore.mmp` для ядра (Етап 1) |
+| `mmp-gpu/` | `gpuunai.mmp` — gpulib + gpu_unai без асемблера (Етап 2) |
+| `mmp-stage0/` | `stage0.mmp` — зонд виконуваної пам'яті (Етап 0) |
+| `mmp-stage1/` | `stage1.mmp` — оболонка, що лінкує ядро і GPU |
 
 ## Передумови
 
@@ -60,3 +63,17 @@ call .\ABLD.BAT build gcce urel
 Очікуваний результат — `Epoc32\release\armv5\urel\pcsxcore.lib` (~685 КБ, 42 об'єктні файли).
 
 `abld` викликати саме як `call .\ABLD.BAT` — просто `abld` cmd не знаходить.
+
+## Пакування SIS для фізичного апарата
+
+```cmd
+call symbian-env.cmd
+cd <...>\configs\stage0\group
+makesis stage0.pkg ps1stage0.sis
+makekeys -cert -password dummy -len 2048 -dname "CN=PS1Emulator-Dev OU=Dev OR=PS1Emulator CO=UA" stage0key.key stage0cert.cer
+signsis ps1stage0.sis ps1stage0_signed.sis stage0cert.cer stage0key.key dummy
+```
+
+**`.pkg` мусить мати закінчення рядків CRLF і бути в ASCII.** З LF `makesis` мовчки не бачить блок постачальника і падає з `No vendor names found` — повідомлення вказує не на ту причину. Редактори, що зберігають у LF, ламають збірку непомітно.
+
+Ключ і сертифікат (`*.key`, `*.cer`) у git не потрапляють — генеруються локально командою вище. Самопідпис достатній, бо UID у діапазоні `0xE0000000-0xEFFFFFFF` (розробницький) і `CAPABILITY None`.

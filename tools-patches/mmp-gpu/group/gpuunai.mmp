@@ -1,0 +1,40 @@
+// gpu_unai + gpulib для Symbian - Етап 2: растеризація без виведення на екран.
+// Статична бібліотека, як і pcsxcore.lib.
+//
+// P16: асемблер gpu_arm.S не збирається GAS-ом з CSL 3.4.3 (не підставляє
+// параметри макроса всередині .if), тому вмикаємо чисті C-шляхи через
+// GPU_UNAI_NO_ARM_ASM. Швидкодія - після коректності.
+
+TARGET          gpuunai.lib
+TARGETTYPE      lib
+
+// Ті самі прапорці, що й у ядра (P7, P8, P13 - див. pcsxcore.mmp).
+OPTION GCCE     -march=armv6 -D__SIZEOF_POINTER__=4 -DP_HAVE_MMAP=0 \
+                -D__ORDER_LITTLE_ENDIAN__=1234 -D__ORDER_BIG_ENDIAN__=4321 \
+                -D__ORDER_PDP_ENDIAN__=3412 -D__BYTE_ORDER__=1234
+
+MACRO           REARMED
+MACRO           USE_GPULIB=1
+MACRO           GPU_UNAI_NO_ARM_ASM
+
+SOURCEPATH      ..\..\..\pcsx_rearmed\plugins\gpulib
+SOURCE          gpu.c
+SOURCE          prim.c
+
+SOURCEPATH      ..\..\..\pcsx_rearmed\plugins\gpu_unai
+SOURCE          gpulib_if.cpp
+
+// Старий растеризатор: gpulib_if.cpp перемикається на нього через
+// IS_OLD_RENDERER(), тож без цього файла не лінкується.
+SOURCEPATH      ..\..\..\pcsx_rearmed\plugins\gpu_unai\old
+SOURCE          if.cpp
+
+USERINCLUDE     ..\..\..\src\compat
+USERINCLUDE     ..\..\..\pcsx_rearmed
+USERINCLUDE     ..\..\..\pcsx_rearmed\include
+USERINCLUDE     ..\..\..\pcsx_rearmed\libpcsxcore
+USERINCLUDE     ..\..\..\pcsx_rearmed\plugins\gpulib
+USERINCLUDE     ..\..\..\pcsx_rearmed\plugins\gpu_unai
+
+SYSTEMINCLUDE   \epoc32\include
+SYSTEMINCLUDE   \epoc32\include\libc
