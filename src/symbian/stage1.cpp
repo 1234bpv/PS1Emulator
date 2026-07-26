@@ -238,12 +238,13 @@ static void openLog()
 		g_log = fopen("C:\\ps1_stage1.jsonl", "w");
 	}
 
-// Командний рядок: [кількість кадрів] [bios] [gputest]
-static void parseCommandLine(TInt &aFrames, TBool &aUseBios, TBool &aGpuTest)
+// Командний рядок: [кількість кадрів] [bios] [gputest] [drc]
+static void parseCommandLine(TInt &aFrames, TBool &aUseBios, TBool &aGpuTest, TBool &aDrc)
 	{
 	aFrames = KDefaultFrames;
 	aUseBios = EFalse;
 	aGpuTest = EFalse;
+	aDrc = EFalse;
 
 	TBuf<256> cmd;
 	User::CommandLine(cmd);
@@ -261,6 +262,12 @@ static void parseCommandLine(TInt &aFrames, TBool &aUseBios, TBool &aGpuTest)
 	_LIT(KGpuTestArg, "gputest");
 	if (cmd.FindF(KGpuTestArg) != KErrNotFound)
 		aGpuTest = ETrue;
+
+	// Динарек умисно за прапорцем: у EKA2L1 його результат нічого не доводить
+	// (CLAUDE.md розділ 6), тож типовим лишається інтерпретатор.
+	_LIT(KDrcArg, "drc");
+	if (cmd.FindF(KDrcArg) != KErrNotFound)
+		aDrc = ETrue;
 	}
 
 // Самоперевірка растеризації: подаємо команди GP0 напряму, без BIOS і без гри.
@@ -293,10 +300,10 @@ static void runGpuSelfTest()
 static TInt runStage1()
 	{
 	TInt framesToRun;
-	TBool useBios, gpuTest;
-	parseCommandLine(framesToRun, useBios, gpuTest);
-	logEvent("start", NULL, "stage1 begin, frames=%d bios=%d gputest=%d",
-		(int)framesToRun, (int)useBios, (int)gpuTest);
+	TBool useBios, gpuTest, useDrc;
+	parseCommandLine(framesToRun, useBios, gpuTest, useDrc);
+	logEvent("start", NULL, "stage1 begin, frames=%d bios=%d gputest=%d drc=%d",
+		(int)framesToRun, (int)useBios, (int)gpuTest, (int)useDrc);
 
 	bindStubPlugins();
 
@@ -309,7 +316,7 @@ static TInt runStage1()
 	strcpy(Config.Bios[0], "HLE");
 	Config.HLE = 1;
 	Config.PsxAuto = 1;
-	Config.Cpu = CPU_INTERPRETER;
+	Config.Cpu = useDrc ? CPU_DYNAREC : CPU_INTERPRETER;
 
 	// Справжній BIOS вмикається другим аргументом ("bios") і поки НЕ придатний для
 	// роботи: він чекає на регістри GPU і SPU, а в нас там заглушки з константами,

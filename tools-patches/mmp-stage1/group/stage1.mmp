@@ -9,7 +9,10 @@ VENDORID        0
 // Файлові операції для JSONL-логу; більше нічого не потрібно.
 CAPABILITY      None
 
-EPOCSTACKSIZE   0x14000
+// 80 КБ не вистачає рекомпіляторові: new_recompile_block тримає таблиці блоку
+// в локальних масивах, і перший же виклик дає access violation у пролозі
+// (запис під sp). На Linux це не спливає - там типовий стек 8 МБ.
+EPOCSTACKSIZE   0x80000
 // Гість PS1: 2 МБ ОЗП + 512 КБ BIOS + 1 МБ VRAM + структури ядра.
 EPOCHEAPSIZE    0x100000 0x1000000
 
@@ -19,11 +22,14 @@ OPTION GCCE     -march=armv6 -D__SIZEOF_POINTER__=4 -DP_HAVE_MMAP=0 \
                 -D__ORDER_LITTLE_ENDIAN__=1234 -D__ORDER_BIG_ENDIAN__=4321 \
                 -D__ORDER_PDP_ENDIAN__=3412 -D__BYTE_ORDER__=1234
 
-MACRO           DRC_DISABLE
+// Мусить збігатися з pcsxcore.mmp: заголовки динареку читають цей макрос.
+MACRO           BASE_ADDR_DYNAMIC=1
 
 SOURCEPATH      ..\..\..\src\symbian
 SOURCE          stage1.cpp
 SOURCE          vout_symbian.cpp
+// Платформна заміна mmap(PROT_EXEC)/__clear_cache для динареку.
+SOURCE          ndrc_mem_symbian.cpp
 
 // ESTLIB не має snprintf/vsnprintf (C99); у SDK їх немає в жодній .dso.
 SOURCEPATH      ..\..\..\src\compat
@@ -41,4 +47,5 @@ SYSTEMINCLUDE   \epoc32\include\libc
 STATICLIBRARY   gpuunai.lib
 STATICLIBRARY   pcsxcore.lib
 LIBRARY         euser.lib
+LIBRARY         hal.lib
 LIBRARY         estlib.lib

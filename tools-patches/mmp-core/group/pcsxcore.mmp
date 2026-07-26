@@ -1,4 +1,4 @@
-// libpcsxcore для Symbian — Етап 1: ядро з інтерпретатором, динарек вимкнено.
+// libpcsxcore для Symbian — ядро PlayStation з динареком ari64 (Етап 3).
 // Статична бібліотека: перевіряє компільованість ядра окремо від оболонки.
 // Проблемні точки — docs/architecture/data-spec.md
 
@@ -15,8 +15,16 @@ OPTION GCCE     -march=armv6 -D__SIZEOF_POINTER__=4 -DP_HAVE_MMAP=0 \
                 -D__ORDER_LITTLE_ENDIAN__=1234 -D__ORDER_BIG_ENDIAN__=4321 \
                 -D__ORDER_PDP_ENDIAN__=3412 -D__BYTE_ORDER__=1234
 
-// Динарек вимкнено (Makefile upstream робить те саме за відсутності DYNAREC=ari64).
-MACRO           DRC_DISABLE
+// Динарек ari64 увімкнено (Етап 3). Upstream ставить DRC_DISABLE лише за
+// відсутності DYNAREC=ari64; з ari64 натомість потрібен BASE_ADDR_DYNAMIC=1,
+// бо кеш трансляцій виділяється в рантаймі (RChunk), а не резервується в .bss.
+MACRO           BASE_ADDR_DYNAMIC=1
+
+// Лише для прогонів у EKA2L1: асемблерний get_reg вживає uadd8/sel, яких
+// Dynarmic не реалізує, і потік гине на "Undefined instruction" одразу після
+// EmuReset. З цим макросом береться C-версія і решта динареку перевіряється.
+// Для апарата ЗАКОМЕНТУВАТИ - на ARM1136 асемблерна версія справна й швидша.
+// MACRO           NDRC_NO_ARMV6_GET_REG
 
 SOURCEPATH      ..\..\..\pcsx_rearmed\libpcsxcore
 
@@ -58,9 +66,14 @@ SOURCE          gte_divider.c
 SOURCEPATH      ..\asm
 SOURCE          gte_arm.s
 SOURCE          gte_nf_arm.s
+// Етап 3: та сама причина попередньої обробки, що й для gte_arm.
+SOURCE          linkage_arm.s
 
+// Склад динареку — за Makefile upstream, гілка DYNAREC=ari64.
 SOURCEPATH      ..\..\..\pcsx_rearmed\libpcsxcore\new_dynarec
 SOURCE          emu_if.c
+SOURCE          new_dynarec.c
+SOURCE          pcsxmem.c
 
 // zlib вендорений у репозиторії (deps/libchdr/deps/zlib-1.3.1).
 // PIPS/Open C у цьому SDK НЕ встановлено, тож збираємо свій.
@@ -87,6 +100,10 @@ USERINCLUDE     ..\..\..\src\compat
 USERINCLUDE     ..\..\..\pcsx_rearmed
 USERINCLUDE     ..\..\..\pcsx_rearmed\include
 USERINCLUDE     ..\..\..\pcsx_rearmed\libpcsxcore
+// Явно, хоч new_dynarec.c включає "assem_arm.h" зі свого ж каталогу: сканер
+// залежностей SDK шукає лише за USERINCLUDE, не знаходить, і через -MG
+// продовжує з невизначеним HOST_IMM8 - аж до `#error not handled` на :3650.
+USERINCLUDE     ..\..\..\pcsx_rearmed\libpcsxcore\new_dynarec
 USERINCLUDE     ..\..\..\pcsx_rearmed\deps\libchdr\deps\zlib-1.3.1
 
 SYSTEMINCLUDE   \epoc32\include

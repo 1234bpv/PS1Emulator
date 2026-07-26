@@ -21,5 +21,13 @@ for %%F in (gte_arm gte_nf_arm) do (
   if errorlevel 1 echo FAILED: %%F
 )
 
+REM linkage_arm.S: stage 3, the dynarec. BASE_ADDR_DYNAMIC must match the .mmp:
+REM it decides whether the translation cache is addressed via a variable.
+"%CSL%\arm-none-symbianelf-gcc.exe" -E -x assembler-with-cpp -march=armv6 ^
+  -D__SIZEOF_POINTER__=4 -DBASE_ADDR_DYNAMIC=1 ^
+  -I "%PR%\libpcsxcore" -I "%PR%\include" -I "%PR%\libpcsxcore\new_dynarec" ^
+  "%PR%\libpcsxcore\new_dynarec\linkage_arm.S" -o "%OUT%linkage_arm.s"
+if errorlevel 1 echo FAILED: linkage_arm
+
 echo Done. Verify with: arm-none-symbianelf-gcc -c -march=armv6 gte_arm.s -o nul
 endlocal
