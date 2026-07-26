@@ -154,23 +154,35 @@ void plat_trigger_vibrate(int /*pad*/, int /*low*/, int /*high*/) { }
 
 } // extern "C"
 
-// --- Заглушки плагінів ------------------------------------------------------
+// --- Плагіни ----------------------------------------------------------------
 // LoadPlugins() вантажить .so через SysLoadLibrary, чого під Symbian немає,
-// тож вказівники виставляються напряму. Справжні gpu_unai і dfsound - Етапи 2 і 4.
+// тож вказівники виставляються напряму. GPU - справжній gpu_unai через gpulib
+// (Етап 2). Звук поки заглушений, це Етап 4.
 
-static long   CALLBACK gpuInit(void)                                          { return 0; }
-static long   CALLBACK gpuShutdown(void)                                      { return 0; }
-static long   CALLBACK gpuClose(void)                                         { return 0; }
-static void   CALLBACK gpuWriteStatus(uint32_t)                               { }
-static void   CALLBACK gpuWriteData(uint32_t)                                 { }
-static void   CALLBACK gpuWriteDataMem(uint32_t *, int)                       { }
-static uint32_t CALLBACK gpuReadStatus(void)                                  { return 0x14802000; }
-static uint32_t CALLBACK gpuReadData(void)                                    { return 0; }
-static void   CALLBACK gpuReadDataMem(uint32_t *, int)                        { }
-static long   CALLBACK gpuDmaChain(uint32_t *, uint32_t, uint32_t *, int32_t *) { return 0; }
-static long   CALLBACK gpuFreeze(uint32_t, GPUFreeze_t *, uint16_t **)        { return 0; }
-static void   CALLBACK gpuVBlank(int, int)                                    { }
-static void   CALLBACK gpuGetScreenInfo(int *w, int *h)                       { if (w) *w = 320; if (h) *h = 240; }
+// Обгортки з src/symbian/vout_symbian.cpp: імена gpulib збігаються з ТИПАМИ
+// в plugins.h, тож напряму їх сюди не оголосити.
+extern "C" {
+long ps1GpuInit(void);
+long ps1GpuShutdown(void);
+long ps1GpuOpen(unsigned long *disp, char *cap, char *cfg);
+long ps1GpuClose(void);
+void ps1GpuWriteStatus(uint32_t data);
+void ps1GpuWriteData(uint32_t data);
+void ps1GpuWriteDataMem(uint32_t *mem, int count);
+uint32_t ps1GpuReadStatus(void);
+uint32_t ps1GpuReadData(void);
+void ps1GpuReadDataMem(uint32_t *mem, int count);
+long ps1GpuDmaChain(uint32_t *rambase, uint32_t start_addr, uint32_t *progress_addr, int32_t *cycles);
+long ps1GpuFreeze(uint32_t type, GPUFreeze_t *freeze, uint16_t **vram_ptr);
+void ps1GpuVBlank(int is_vblank, int lcf);
+void ps1GpuGetScreenInfo(int *y, int *base_hres);
+void ps1GpuSetCallbacks(unsigned int *frameCount, unsigned int *hcnt);
+
+int voutSymbianDump(const char *path);
+int voutSymbianUpdates(void);
+}
+
+static unsigned int g_gpuHcnt;
 
 static long CALLBACK spuInit(void)                                            { return 0; }
 static long CALLBACK spuShutdown(void)                                        { return 0; }
@@ -187,19 +199,20 @@ static void CALLBACK spuAsync(unsigned int, unsigned int)                     { 
 
 static void bindStubPlugins()
 	{
-	GPU_init          = gpuInit;
-	GPU_shutdown      = gpuShutdown;
-	GPU_close         = gpuClose;
-	GPU_writeStatus   = gpuWriteStatus;
-	GPU_writeData     = gpuWriteData;
-	GPU_writeDataMem  = gpuWriteDataMem;
-	GPU_readStatus    = gpuReadStatus;
-	GPU_readData      = gpuReadData;
-	GPU_readDataMem   = gpuReadDataMem;
-	GPU_dmaChain      = gpuDmaChain;
-	GPU_freeze        = gpuFreeze;
-	GPU_vBlank        = gpuVBlank;
-	GPU_getScreenInfo = gpuGetScreenInfo;
+	GPU_init          = ps1GpuInit;
+	GPU_shutdown      = ps1GpuShutdown;
+	GPU_open          = ps1GpuOpen;
+	GPU_close         = ps1GpuClose;
+	GPU_writeStatus   = ps1GpuWriteStatus;
+	GPU_writeData     = ps1GpuWriteData;
+	GPU_writeDataMem  = ps1GpuWriteDataMem;
+	GPU_readStatus    = ps1GpuReadStatus;
+	GPU_readData      = ps1GpuReadData;
+	GPU_readDataMem   = ps1GpuReadDataMem;
+	GPU_dmaChain      = ps1GpuDmaChain;
+	GPU_freeze        = ps1GpuFreeze;
+	GPU_vBlank        = ps1GpuVBlank;
+	GPU_getScreenInfo = ps1GpuGetScreenInfo;
 
 	SPU_init             = spuInit;
 	SPU_shutdown         = spuShutdown;
@@ -225,11 +238,12 @@ static void openLog()
 		g_log = fopen("C:\\ps1_stage1.jsonl", "w");
 	}
 
-// Командний рядок: [кількість кадрів] [bios]
-static void parseCommandLine(TInt &aFrames, TBool &aUseBios)
+// Командний рядок: [кількість кадрів] [bios] [gputest]
+static void parseCommandLine(TInt &aFrames, TBool &aUseBios, TBool &aGpuTest)
 	{
 	aFrames = KDefaultFrames;
 	aUseBios = EFalse;
+	aGpuTest = EFalse;
 
 	TBuf<256> cmd;
 	User::CommandLine(cmd);
@@ -243,17 +257,52 @@ static void parseCommandLine(TInt &aFrames, TBool &aUseBios)
 	_LIT(KBiosArg, "bios");
 	if (cmd.FindF(KBiosArg) != KErrNotFound)
 		aUseBios = ETrue;
+
+	_LIT(KGpuTestArg, "gputest");
+	if (cmd.FindF(KGpuTestArg) != KErrNotFound)
+		aGpuTest = ETrue;
+	}
+
+// Самоперевірка растеризації: подаємо команди GP0 напряму, без BIOS і без гри.
+// Це єдиний спосіб перевірити gpu_unai поки процесор крутиться в пастці HLE.
+// Формати команд - стандартні GP0 PlayStation.
+static void runGpuSelfTest()
+	{
+	// 0x02 - заливка прямокутника у VRAM: колір, потім (y<<16|x), потім (h<<16|w).
+	// Слово кольору - 0xCCBBGGRR, тож 0x000080 це червоний, а не синій.
+	const uint32_t fill[] = {
+		0x02FFFFFFu,          // білий, як і трикутник: щоб порівняти тракти кольору
+		(20u << 16) | 10u,    // x=10, y=20
+		(60u << 16) | 100u    // w=100, h=60
+	};
+	for (unsigned i = 0; i < sizeof(fill) / sizeof(fill[0]); i++)
+		ps1GpuWriteData(fill[i]);
+
+	// 0x20 - суцільний трикутник без текстури: колір, потім три вершини.
+	// Білий: у BGR555 має вийти 0x7fff, і це перевіряє тракт кольору цілком.
+	const uint32_t tri[] = {
+		0x20FFFFFFu,
+		(200u << 16) | 200u,
+		(200u << 16) | 300u,
+		(260u << 16) | 250u
+	};
+	for (unsigned i = 0; i < sizeof(tri) / sizeof(tri[0]); i++)
+		ps1GpuWriteData(tri[i]);
 	}
 
 static TInt runStage1()
 	{
 	TInt framesToRun;
-	TBool useBios;
-	parseCommandLine(framesToRun, useBios);
-	logEvent("start", NULL, "stage1 begin, frames=%d bios=%d",
-		(int)framesToRun, (int)useBios);
+	TBool useBios, gpuTest;
+	parseCommandLine(framesToRun, useBios, gpuTest);
+	logEvent("start", NULL, "stage1 begin, frames=%d bios=%d gputest=%d",
+		(int)framesToRun, (int)useBios, (int)gpuTest);
 
 	bindStubPlugins();
+
+	// gpulib читає лічильники кадрів і рядків напряму зі структури фронтенду
+	// (gpu.c:1218-1264), тож підключаємо їх до справжніх змінних ядра.
+	ps1GpuSetCallbacks(&frame_counter, &g_gpuHcnt);
 
 	// Мінімальний еквівалент emu_core_preinit() з frontend/main.c:435.
 	memset(&Config, 0, sizeof(Config));
@@ -295,6 +344,12 @@ static TInt runStage1()
 		(int)Config.HLE, KBiosDir, KBiosFile,
 		Config.PsxType ? "PAL" : "NTSC", (unsigned)frame_counter);
 
+	if (gpuTest)
+		{
+		runGpuSelfTest();
+		logEvent("gpu_selftest", NULL, "GP0 fill + triangle submitted");
+		}
+
 	const u32 framesAtStart = frame_counter;
 	for (int i = 0; i < framesToRun; i++)
 		{
@@ -312,8 +367,13 @@ static TInt runStage1()
 
 	const u32 produced = frame_counter - framesAtStart;
 	logEvent("done", produced ? NULL : "NO_FRAMES",
-		"frames_produced=%u pc=%08x cycle=%u", (unsigned)produced,
-		(unsigned)psxRegs.pc, (unsigned)psxRegs.cycle);
+		"frames_produced=%u pc=%08x cycle=%u vout_updates=%d",
+		(unsigned)produced, (unsigned)psxRegs.pc, (unsigned)psxRegs.cycle,
+		voutSymbianUpdates());
+
+	// Знімок VRAM для перевірки растеризації на хості (Етап 2).
+	const int dumpRc = voutSymbianDump("E:\\ps1_vram.bin");
+	logEvent("vram_dump", dumpRc ? "DUMP_FAIL" : NULL, "rc=%d", dumpRc);
 
 	EmuShutdown();
 	logEvent("shutdown", NULL, NULL);

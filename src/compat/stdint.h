@@ -21,6 +21,26 @@ typedef unsigned int       uintptr_t;
 typedef long long          intmax_t;
 typedef unsigned long long uintmax_t;
 
+// Родини least/fast: gpu_unai використовує uint_fast16_t у растеризаторах.
+// На ARM 32-розрядне слово швидше за 8/16-розрядні, тож fast8/fast16 - це int.
+typedef signed char        int_least8_t;
+typedef unsigned char      uint_least8_t;
+typedef short              int_least16_t;
+typedef unsigned short     uint_least16_t;
+typedef int                int_least32_t;
+typedef unsigned int       uint_least32_t;
+typedef long long          int_least64_t;
+typedef unsigned long long uint_least64_t;
+
+typedef int                int_fast8_t;
+typedef unsigned int       uint_fast8_t;
+typedef int                int_fast16_t;
+typedef unsigned int       uint_fast16_t;
+typedef int                int_fast32_t;
+typedef unsigned int       uint_fast32_t;
+typedef long long          int_fast64_t;
+typedef unsigned long long uint_fast64_t;
+
 #define INT8_MIN   (-128)
 #define INT8_MAX   127
 #define UINT8_MAX  255U
