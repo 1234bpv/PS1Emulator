@@ -4,6 +4,7 @@
 
 #include <e32base.h>
 #include <e32std.h>
+#include <e32debug.h>
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -17,18 +18,28 @@ extern "C" {
 #include "psxcounters.h"
 }
 
-static const int KFramesToRun = 60;
+// Скільки кадрів рахувати. Перевизначається першим аргументом командного рядка:
+// EKA2L1 передає його через --run "<exe>" "<args>". Лог потрапляє на хост лише
+// коли процес завершився штатно, тож можливість швидко зменшити прогін критична.
+static const int KDefaultFrames = 600;
+
+// Ядро складає шлях як "%s/%s" (psxmem.c:312) - пряма скісна в тексті навмисна,
+// це перевірка, чи ESTLIB приймає її замість зворотної.
+static const char KBiosDir[]  = "C:\\bios";
+static const char KBiosFile[] = "scph7502.bin";
+
+// Один повторюваний рядок ядра здатен роздути лог до мегабайтів (без диска
+// HLE BIOS видав 23 195 однакових записів), тому обмежуємо потік від ядра.
+static const int KMaxCoreEvents = 2000;
 
 static FILE *g_log;
 static TUint g_startTick;
 static int g_eventId;
+static int g_coreEvents;
 
 // Лог у форматі JSONL: один об'єкт на подію (CLAUDE.md, розділ 7).
 static void logEvent(const char *type, const char *errType, const char *fmt, ...)
 	{
-	if (!g_log)
-		return;
-
 	char msg[512];
 	msg[0] = 0;
 	if (fmt)
@@ -55,8 +66,18 @@ static void logEvent(const char *type, const char *errType, const char *fmt, ...
 	esc[d] = 0;
 
 	const TUint elapsed = User::NTickCount() - g_startTick;
+	const int id = g_eventId++;
+
+	// Дублюємо в канал налагодження: EKA2L1 віддає файл на хост лише при закритті,
+	// тож обірваний прогін інакше не лишає жодного сліду.
+	RDebug::Printf("[ps1] %d %ums %s %s %s", id, (unsigned)elapsed, type,
+		errType ? errType : "-", esc);
+
+	if (!g_log)
+		return;
+
 	fprintf(g_log, "{\"id\":%d,\"ms\":%u,\"event\":\"%s\",\"error\":%s%s%s,\"msg\":\"%s\"}\n",
-		g_eventId++, (unsigned)elapsed, type,
+		id, (unsigned)elapsed, type,
 		errType ? "\"" : "null", errType ? errType : "", errType ? "\"" : "",
 		esc);
 	fflush(g_log);
@@ -65,10 +86,22 @@ static void logEvent(const char *type, const char *errType, const char *fmt, ...
 // --- Контракт, який libpcsxcore очікує від фронтенду -----------------------
 // Перелік визначено з самої бібліотеки (nm: невизначені мінус визначені).
 
+// Повертає EFalse, коли ліміт вичерпано; про сам факт обрізання повідомляє один раз.
+static TBool allowCoreEvent()
+	{
+	if (++g_coreEvents < KMaxCoreEvents)
+		return ETrue;
+	if (g_coreEvents == KMaxCoreEvents)
+		logEvent("core", "LOG_TRUNCATED", "core message limit %d reached", KMaxCoreEvents);
+	return EFalse;
+	}
+
 extern "C" {
 
 void SysPrintf(const char *fmt, ...)
 	{
+	if (!allowCoreEvent())
+		return;
 	char buf[512];
 	va_list ap;
 	va_start(ap, fmt);
@@ -79,6 +112,8 @@ void SysPrintf(const char *fmt, ...)
 
 void SysMessage(const char *fmt, ...)
 	{
+	if (!allowCoreEvent())
+		return;
 	char buf[512];
 	va_list ap;
 	va_start(ap, fmt);
@@ -190,9 +225,33 @@ static void openLog()
 		g_log = fopen("C:\\ps1_stage1.jsonl", "w");
 	}
 
+// Командний рядок: [кількість кадрів] [bios]
+static void parseCommandLine(TInt &aFrames, TBool &aUseBios)
+	{
+	aFrames = KDefaultFrames;
+	aUseBios = EFalse;
+
+	TBuf<256> cmd;
+	User::CommandLine(cmd);
+	TLex lex(cmd);
+
+	lex.SkipSpace();
+	TInt n = 0;
+	if (lex.Val(n) == KErrNone && n > 0)
+		aFrames = n;
+
+	_LIT(KBiosArg, "bios");
+	if (cmd.FindF(KBiosArg) != KErrNotFound)
+		aUseBios = ETrue;
+	}
+
 static TInt runStage1()
 	{
-	logEvent("start", NULL, "stage1 begin, frames=%d", KFramesToRun);
+	TInt framesToRun;
+	TBool useBios;
+	parseCommandLine(framesToRun, useBios);
+	logEvent("start", NULL, "stage1 begin, frames=%d bios=%d",
+		(int)framesToRun, (int)useBios);
 
 	bindStubPlugins();
 
@@ -202,6 +261,24 @@ static TInt runStage1()
 	Config.HLE = 1;
 	Config.PsxAuto = 1;
 	Config.Cpu = CPU_INTERPRETER;
+
+	// Справжній BIOS вмикається другим аргументом ("bios") і поки НЕ придатний для
+	// роботи: він чекає на регістри GPU і SPU, а в нас там заглушки з константами,
+	// тож перший же кадр не завершується (перевірено: 156 с ЦП без жодного кадру).
+	// Вмикати після інтеграції gpu_unai - Етап 2. Завантаження самого дампу справне.
+	if (useBios)
+		{
+		strcpy(Config.BiosDir, KBiosDir);
+		strcpy(Config.Bios[PSX_REGION_EU], KBiosFile);
+		Config.PsxRegion = PSX_REGION_EU;
+
+		// Заставка теж вимагає GPU, тож поки обходимо її (r3000a.c:93).
+		Config.SlowBoot = 0;
+
+		// Диска немає, автовизначення (misc.c:483) не спрацює; дамп європейський.
+		Config.PsxType = PSX_TYPE_PAL;
+		}
+
 	SetIsoFile(NULL);
 
 	if (EmuInit() == -1)
@@ -212,10 +289,14 @@ static TInt runStage1()
 	logEvent("init", NULL, "EmuInit ok");
 
 	EmuReset();
-	logEvent("reset", NULL, "EmuReset ok, frame_counter=%u", (unsigned)frame_counter);
+	// Config.HLE == 0 - єдине надійне свідчення, що дамп справді підхопився.
+	logEvent("reset", (useBios && Config.HLE) ? "BIOS_NOT_LOADED" : NULL,
+		"EmuReset ok, hle=%d bios=%s/%s type=%s frame_counter=%u",
+		(int)Config.HLE, KBiosDir, KBiosFile,
+		Config.PsxType ? "PAL" : "NTSC", (unsigned)frame_counter);
 
 	const u32 framesAtStart = frame_counter;
-	for (int i = 0; i < KFramesToRun; i++)
+	for (int i = 0; i < framesToRun; i++)
 		{
 		const TUint t0 = User::NTickCount();
 		const u32 before = frame_counter;
