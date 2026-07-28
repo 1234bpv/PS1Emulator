@@ -15,6 +15,11 @@ EPOCSTACKSIZE   0x5000
 SOURCEPATH      ..\..\..\src\symbian
 SOURCE          stage0_probe.cpp
 
+// Шлях відносний до SOURCEPATH вище, не до .mmp.
+START RESOURCE  stage0_reg.rss
+TARGETPATH      \private\10003a3f\import\apps
+END
+
 SYSTEMINCLUDE   \epoc32\include
 
 LIBRARY         euser.lib

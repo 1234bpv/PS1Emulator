@@ -16,6 +16,7 @@
 #include <e32base.h>
 #include <e32std.h>
 #include <e32debug.h>
+#include <e32cons.h>
 #include <f32file.h>
 
 // Кеш трансляцій ari64: TARGET_SIZE_2=24 в assem_arm.h:40.
@@ -26,8 +27,11 @@ static const TInt KGrowCommit    = 1024 * 1024;
 static const TInt KFarOffset     = 512 * 1024;
 static const TInt KImbIterations = 1000;
 
-_LIT(KLogPath, "C:\\Data\\ps1_stage0.jsonl");
-_LIT(KLogDir,  "C:\\Data\\");
+// E: перший: на N95 8GB це масова пам'ять, і лише її видно по USB.
+// C:\Data - запасний варіант для апаратів без масової пам'яті.
+_LIT(KLogPathE, "E:\\ps1_stage0.jsonl");
+_LIT(KLogPathC, "C:\\Data\\ps1_stage0.jsonl");
+_LIT(KLogDirC,  "C:\\Data\\");
 
 // mov r0, #42 / mov r0, #43 / bx lr
 static const TUint32 KMovR0_42 = 0xE3A0002AU;
@@ -39,6 +43,11 @@ typedef TInt (*TProbeFn)();
 static RFs  g_fs;
 static RFile g_log;
 static TBool g_logOpen;
+// На апараті RDebug нікуди не пише без відлагоджувача, а файл треба ще діставати.
+// Консоль - єдиний канал, який видно одразу на екрані телефона. Створюється
+// ПІСЛЯ вимірів: у EKA2L1 віконний сервер на ній падає, і зонд не має від цього
+// втрачати результат. Рядки до того накопичуються тут.
+static TBuf<4096> g_screen;
 static TUint g_startTick;
 static TInt  g_eventId;
 static TInt  g_failures;
@@ -64,6 +73,25 @@ static void logEvent(const TDesC8 &aType, const TDesC8 &aError, const TDesC8 &aM
         // Скидання після кожної події: паніка на виконанні коду не має з'їсти лог.
         g_log.Flush();
         }
+    // На екрані потрібне читабельне, а не JSON: подія, помилка, суть.
+    TBuf<256> screen;
+    screen.Copy(aType);
+    if (aError.Length())
+        {
+        TBuf<64> err;
+        err.Copy(aError);
+        screen.Append(_L(" ["));
+        screen.Append(err);
+        screen.Append(_L("]"));
+        }
+    screen.Append(_L(": "));
+    TBuf<192> m;
+    m.Copy(aMsg.Left(m.MaxLength()));
+    screen.Append(m);
+    screen.Append(_L("\n"));
+    if (g_screen.Length() + screen.Length() <= g_screen.MaxLength())
+        g_screen.Append(screen);
+
     if (aError.Length()) g_failures++;
     }
 
@@ -196,12 +224,22 @@ static void mainL()
 
     if (g_fs.Connect() == KErrNone)
         {
-        g_fs.MkDirAll(KLogDir);
-        if (g_log.Replace(g_fs, KLogPath, EFileWrite | EFileShareAny) == KErrNone)
+        if (g_log.Replace(g_fs, KLogPathE, EFileWrite | EFileShareAny) == KErrNone)
             g_logOpen = ETrue;
+        else
+            {
+            g_fs.MkDirAll(KLogDirC);
+            if (g_log.Replace(g_fs, KLogPathC, EFileWrite | EFileShareAny) == KErrNone)
+                g_logOpen = ETrue;
+            }
         }
 
     logOk(_L8("start"), _L8("stage0 executable memory probe"));
+    if (g_logOpen)
+        logOk(_L8("log"), _L8("written to E:\\ps1_stage0.jsonl or C:\\Data"));
+    else
+        logEvent(_L8("log"), _L8("LOG_OPEN_FAIL"), _L8("screen only"));
+
     runProbe();
 
     TBuf8<64> msg;
@@ -210,6 +248,18 @@ static void mainL()
 
     if (g_logOpen) g_log.Close();
     g_fs.Close();
+
+    // Виміри вже завершені й записані; далі лише показ.
+    _LIT(KTitle, "PS1 stage0");
+    CConsoleBase *console = NULL;
+    TRAPD(err, console = Console::NewL(KTitle, TSize(KConsFullScreen, KConsFullScreen)));
+    if (err == KErrNone && console)
+        {
+        console->Write(g_screen);
+        console->Write(_L("\nPress any key to exit.\n"));
+        console->Getch();
+        delete console;
+        }
     }
 
 GLDEF_C TInt E32Main()

@@ -1,5 +1,5 @@
 ; Stage 0: executable memory probe. Self-signed, CAPABILITY None.
-; ASCII only: makesis misparses UTF-8 without BOM.
+; ASCII only, CRLF only: makesis misparses UTF-8 and LF line endings.
 
 &EN
 
@@ -11,3 +11,4 @@
 [0x101F7961],0,0,0,{"Series60ProductID"}
 
 "\VsCodeProjects\SymbianProjects\S60_3rd_FP1\Epoc32\release\gcce\urel\ps1stage0.exe"-"!:\sys\bin\ps1stage0.exe"
+"\VsCodeProjects\SymbianProjects\S60_3rd_FP1\Epoc32\data\z\private\10003a3f\import\apps\stage0_reg.RSC"-"!:\private\10003a3f\import\apps\stage0_reg.rsc"
