@@ -70,9 +70,14 @@ call .\ABLD.BAT build gcce urel
 call symbian-env.cmd
 cd <...>\configs\stage0\group
 makesis stage0.pkg ps1stage0.sis
-makekeys -cert -password dummy -len 2048 -dname "CN=PS1Emulator-Dev OU=Dev OR=PS1Emulator CO=UA" stage0key.key stage0cert.cer
-signsis ps1stage0.sis ps1stage0_signed.sis stage0cert.cer stage0key.key dummy
+makekeys -cert -password dummy -len 1024 -dname "CN=PS1Emulator-Dev OU=Dev OR=PS1Emulator CO=UA" stage0key.key stage0cert.cer
+signsis -s ps1stage0.sis ps1stage0_signed.sis stage0cert.cer stage0key.key dummy
+signsis -o ps1stage0_signed.sis
 ```
+
+**`-s` обов'язковий.** Без нього `signsis` мовчки не підписує і код повернення нульовий — виглядає як успіх. Перевірка одна: `signsis -o` має надрукувати `Issued by`/`Issued to`; порожній вивід означає непідписаний файл.
+
+**Довжина ключа 1024, не 2048.** `makekeys` цієї версії створює лише DSA (ключ RSA задати нічим), а DSA стандартизовано до 1024 біт. Приклад у довідці самого `makekeys` радить 2048 — він розрахований на новішу версію з RSA.
 
 **`.pkg` мусить мати закінчення рядків CRLF і бути в ASCII.** З LF `makesis` мовчки не бачить блок постачальника і падає з `No vendor names found` — повідомлення вказує не на ту причину. Редактори, що зберігають у LF, ламають збірку непомітно.
 
