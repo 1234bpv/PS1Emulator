@@ -24,6 +24,9 @@ extern "C" {
 static const int KDefaultFrames = 600;
 // Запуск з меню апарата: 300 кадрів = 5 секунд ігрового часу на кожен режим ЦП.
 static const int KDeviceFrames = 300;
+// Стек потоку емуляції. 80 КБ рекомпіляторові мало (перевірено в EKA2L1:
+// access violation у пролозі new_recompile_block).
+static const TInt KEmuStackSize = 512 * 1024;
 
 // Ядро складає шлях як "%s/%s" (psxmem.c:312) - пряма скісна в тексті навмисна,
 // це перевірка, чи ESTLIB приймає її замість зворотної.
@@ -435,11 +438,8 @@ static TInt runStage1()
 	return rc;
 	}
 
-GLDEF_C TInt E32Main()
+static TInt emuThreadFn(TAny *)
 	{
-	g_startTick = User::NTickCount();
-	openLog();
-
 	CTrapCleanup *cleanup = CTrapCleanup::New();
 	if (!cleanup)
 		return KErrNoMemory;
@@ -452,8 +452,44 @@ GLDEF_C TInt E32Main()
 		result = err;
 		}
 
-	if (g_log)
-		fclose(g_log);
 	delete cleanup;
 	return result;
+	}
+
+GLDEF_C TInt E32Main()
+	{
+	g_startTick = User::NTickCount();
+	openLog();
+	logEvent("boot", NULL, "stage1 starting, emu thread stack=%d", KEmuStackSize);
+
+	// Емуляція йде в окремому потоці заради стека: рекомпілятор тримає таблиці
+	// блоку в локальних масивах, і 80 КБ йому мало. Роздувати EPOCSTACKSIZE не
+	// можна - завантажувач апарата відмовляє запускати процес із завеликим
+	// стеком, причому мовчки, ще до E32Main. Стек потоку такого обмеження не має.
+	RThread emu;
+	TInt rc = emu.Create(_L("ps1emu"), emuThreadFn, KEmuStackSize,
+		&User::Allocator(), NULL);
+	if (rc != KErrNone)
+		{
+		logEvent("fatal", "THREAD_CREATE_FAIL", "stack=%d rc=%d", KEmuStackSize, (int)rc);
+		if (g_log)
+			fclose(g_log);
+		return rc;
+		}
+
+	TRequestStatus status;
+	emu.Logon(status);
+	emu.Resume();
+	User::WaitForRequest(status);
+
+	const TExitType exitType = emu.ExitType();
+	const TInt exitReason = emu.ExitReason();
+	emu.Close();
+
+	logEvent("thread_done", exitType == EExitKill ? NULL : "THREAD_PANIC",
+		"exit_type=%d reason=%d", (int)exitType, (int)exitReason);
+
+	if (g_log)
+		fclose(g_log);
+	return status.Int();
 	}
