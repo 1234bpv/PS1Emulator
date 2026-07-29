@@ -70,14 +70,25 @@ call .\ABLD.BAT build gcce urel
 call symbian-env.cmd
 cd <...>\configs\stage0\group
 makesis stage0.pkg ps1stage0.sis
-makekeys -cert -password dummy -len 1024 -dname "CN=PS1Emulator-Dev OU=Dev OR=PS1Emulator CO=UA" stage0key.key stage0cert.cer
-signsis -s ps1stage0.sis ps1stage0_signed.sis stage0cert.cer stage0key.key dummy
-signsis -o ps1stage0_signed.sis
+openssl genrsa -out sha1.key 1024
+openssl req -new -x509 -sha1 -key sha1.key -out sha1.cer -days 3650 -subj "/CN=PS1Emulator Dev"
+signsis -s ps1stage0.sis ps1stage0_sha1.sis sha1.cer sha1.key
+signsis -o ps1stage0_sha1.sis
 ```
 
-**`-s` обов'язковий.** Без нього `signsis` мовчки не підписує і код повернення нульовий — виглядає як успіх. Перевірка одна: `signsis -o` має надрукувати `Issued by`/`Issued to`; порожній вивід означає непідписаний файл.
+**Сертифікат мусить бути RSA + SHA-1, і робить його openssl, не `makekeys`.** Це перевірено на Nokia N95 8GB (S60v3 FP1, Symbian 9.2, ПЗ v35): SHA-1 встановлюється, SHA-256 дає **«файл пошкоджено»**.
 
-**Довжина ключа 1024, не 2048.** `makekeys` цієї версії створює лише DSA (ключ RSA задати нічим), а DSA стандартизовано до 1024 біт. Приклад у довідці самого `makekeys` радить 2048 — він розрахований на новішу версію з RSA.
+Symbian 9.2 — 2006 рік, його SWInstall не знає `sha256WithRSAEncryption`. Сертифікат не розбирається взагалі, тож інсталятор не доходить навіть до перевірки строку дії й повідомляє про пошкодження файлу. Помилка вказує на вміст пакета, хоча несправний лише сертифікат — на цю хибну підказку легко втратити багато часу.
+
+Діагностична ознака, що відрізняє два випадки:
+- **«файл пошкоджено»** — сертифікат не розібрано (SHA-256, або DSA від `makekeys`);
+- **«прострочений сертифікат»** — сертифікат розібрано, апарат дійшов до дати. Так поводиться оригінальний PIPS 1.7, підписаний Nokia через Symbian CA до 05.08.2020.
+
+Еталон для звірки — сертифікат Ensymble (`ensymble/utils/defaultcert.py`, zlib+base64): RSA-1024, `sha1WithRSAEncryption`, 2006-2036. Підписаний ним пакет ставиться, тож при сумнівах ним перевіряють, чи справа в сертифікаті, чи в самому SIS.
+
+`makekeys` із цього SDK не годиться принципово: він робить лише DSA (RSA задати нічим), а на DSA покладатися не варто. Приклад у його ж довідці радить 2048 біт — він розрахований на новішу версію з RSA.
+
+**`-s` обов'язковий.** Без нього `signsis` мовчки не підписує і код повернення нульовий — виглядає як успіх. Перевірка одна: `signsis -o` має надрукувати `Issued by`/`Issued to`; порожній вивід означає непідписаний файл.
 
 **`.pkg` мусить мати закінчення рядків CRLF і бути в ASCII.** З LF `makesis` мовчки не бачить блок постачальника і падає з `No vendor names found` — повідомлення вказує не на ту причину. Редактори, що зберігають у LF, ламають збірку непомітно.
 

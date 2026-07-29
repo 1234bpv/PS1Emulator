@@ -25,3 +25,4 @@ EKA2L1*.log
 epoc32/
 *.key
 *.cer
+*.pem
