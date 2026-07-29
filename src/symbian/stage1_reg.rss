@@ -1,0 +1,15 @@
+// Реєстрація застосунку: без неї EXE лежить у \sys\bin і його нічим запустити з меню.
+
+#include <appinfo.rh>
+
+UID2 KUidAppRegistrationResourceFile
+UID3 0xE0001002
+
+RESOURCE APP_REGISTRATION_INFO
+	{
+	app_file = "ps1stage1";
+	hidden = KAppNotHidden;
+	embeddability = KAppNotEmbeddable;
+	newfile = KAppDoesNotSupportNewFile;
+	launch = KAppLaunchInForeground;
+	}

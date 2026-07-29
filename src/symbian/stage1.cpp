@@ -22,6 +22,8 @@ extern "C" {
 // EKA2L1 передає його через --run "<exe>" "<args>". Лог потрапляє на хост лише
 // коли процес завершився штатно, тож можливість швидко зменшити прогін критична.
 static const int KDefaultFrames = 600;
+// Запуск з меню апарата: 300 кадрів = 5 секунд ігрового часу на кожен режим ЦП.
+static const int KDeviceFrames = 300;
 
 // Ядро складає шлях як "%s/%s" (psxmem.c:312) - пряма скісна в тексті навмисна,
 // це перевірка, чи ESTLIB приймає її замість зворотної.
@@ -239,7 +241,10 @@ static void openLog()
 	}
 
 // Командний рядок: [кількість кадрів] [bios] [gputest] [drc]
-static void parseCommandLine(TInt &aFrames, TBool &aUseBios, TBool &aGpuTest, TBool &aDrc)
+// aHaveArgs == EFalse означає запуск з меню телефона - там аргументів немає,
+// і тоді проганяються обидва режими ЦП підряд для порівняння.
+static void parseCommandLine(TInt &aFrames, TBool &aUseBios, TBool &aGpuTest, TBool &aDrc,
+	TBool &aHaveArgs)
 	{
 	aFrames = KDefaultFrames;
 	aUseBios = EFalse;
@@ -248,6 +253,8 @@ static void parseCommandLine(TInt &aFrames, TBool &aUseBios, TBool &aGpuTest, TB
 
 	TBuf<256> cmd;
 	User::CommandLine(cmd);
+	cmd.Trim();
+	aHaveArgs = cmd.Length() > 0;
 	TLex lex(cmd);
 
 	lex.SkipSpace();
@@ -297,32 +304,28 @@ static void runGpuSelfTest()
 		ps1GpuWriteData(tri[i]);
 	}
 
-static TInt runStage1()
+// Один прогін: ініціалізація ядра, N кадрів, вимкнення. Викликається двічі
+// (інтерпретатор, потім динарек), тож усе, що псує наступний прогін, має тут
+// прибиратися - звідси EmuShutdown у кінці.
+static TInt runPass(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
+	TUint &aTicks, u32 &aProduced)
 	{
-	TInt framesToRun;
-	TBool useBios, gpuTest, useDrc;
-	parseCommandLine(framesToRun, useBios, gpuTest, useDrc);
-	logEvent("start", NULL, "stage1 begin, frames=%d bios=%d gputest=%d drc=%d",
-		(int)framesToRun, (int)useBios, (int)gpuTest, (int)useDrc);
-
-	bindStubPlugins();
-
-	// gpulib читає лічильники кадрів і рядків напряму зі структури фронтенду
-	// (gpu.c:1218-1264), тож підключаємо їх до справжніх змінних ядра.
-	ps1GpuSetCallbacks(&frame_counter, &g_gpuHcnt);
+	const char *mode = aUseDrc ? "drc" : "interp";
+	aTicks = 0;
+	aProduced = 0;
 
 	// Мінімальний еквівалент emu_core_preinit() з frontend/main.c:435.
 	memset(&Config, 0, sizeof(Config));
 	strcpy(Config.Bios[0], "HLE");
 	Config.HLE = 1;
 	Config.PsxAuto = 1;
-	Config.Cpu = useDrc ? CPU_DYNAREC : CPU_INTERPRETER;
+	Config.Cpu = aUseDrc ? CPU_DYNAREC : CPU_INTERPRETER;
 
 	// Справжній BIOS вмикається другим аргументом ("bios") і поки НЕ придатний для
 	// роботи: він чекає на регістри GPU і SPU, а в нас там заглушки з константами,
 	// тож перший же кадр не завершується (перевірено: 156 с ЦП без жодного кадру).
 	// Вмикати після інтеграції gpu_unai - Етап 2. Завантаження самого дампу справне.
-	if (useBios)
+	if (aUseBios)
 		{
 		strcpy(Config.BiosDir, KBiosDir);
 		strcpy(Config.Bios[PSX_REGION_EU], KBiosFile);
@@ -339,52 +342,97 @@ static TInt runStage1()
 
 	if (EmuInit() == -1)
 		{
-		logEvent("fatal", "EMU_INIT_FAIL", "EmuInit returned -1");
+		logEvent("fatal", "EMU_INIT_FAIL", "%s: EmuInit returned -1", mode);
 		return KErrGeneral;
 		}
-	logEvent("init", NULL, "EmuInit ok");
 
 	EmuReset();
 	// Config.HLE == 0 - єдине надійне свідчення, що дамп справді підхопився.
-	logEvent("reset", (useBios && Config.HLE) ? "BIOS_NOT_LOADED" : NULL,
-		"EmuReset ok, hle=%d bios=%s/%s type=%s frame_counter=%u",
-		(int)Config.HLE, KBiosDir, KBiosFile,
-		Config.PsxType ? "PAL" : "NTSC", (unsigned)frame_counter);
+	logEvent("reset", (aUseBios && Config.HLE) ? "BIOS_NOT_LOADED" : NULL,
+		"%s: EmuReset ok, hle=%d type=%s", mode,
+		(int)Config.HLE, Config.PsxType ? "PAL" : "NTSC");
 
-	if (gpuTest)
+	if (aGpuTest)
 		{
 		runGpuSelfTest();
-		logEvent("gpu_selftest", NULL, "GP0 fill + triangle submitted");
+		logEvent("gpu_selftest", NULL, "%s: GP0 fill + triangle submitted", mode);
 		}
 
+	// Поперовий лог тут НЕ ведеться навмисно: fflush коштує більше за саму
+	// емуляцію (виміряно - 59 кадрів, 2274 мс проти 689 мс), і при поперовому
+	// логуванні порівняння інтерпретатора з динареком міряло б файлову систему.
 	const u32 framesAtStart = frame_counter;
-	for (int i = 0; i < framesToRun; i++)
+	const TUint tStart = User::NTickCount();
+	for (int i = 0; i < aFrames; i++)
 		{
-		const TUint t0 = User::NTickCount();
-		const u32 before = frame_counter;
-
 		psxRegs.stop = 0;
 		psxCpu->Execute(&psxRegs);
-
-		logEvent("frame", NULL, "n=%d ticks=%u pc=%08x cycle=%u frames=%u",
-			i, (unsigned)(User::NTickCount() - t0),
-			(unsigned)psxRegs.pc, (unsigned)psxRegs.cycle,
-			(unsigned)(frame_counter - before));
 		}
+	aTicks = User::NTickCount() - tStart;
+	aProduced = frame_counter - framesAtStart;
 
-	const u32 produced = frame_counter - framesAtStart;
-	logEvent("done", produced ? NULL : "NO_FRAMES",
-		"frames_produced=%u pc=%08x cycle=%u vout_updates=%d",
-		(unsigned)produced, (unsigned)psxRegs.pc, (unsigned)psxRegs.cycle,
-		voutSymbianUpdates());
+	logEvent("pass", aProduced ? NULL : "NO_FRAMES",
+		"%s: frames=%u ms=%u pc=%08x cycle=%u", mode,
+		(unsigned)aProduced, (unsigned)aTicks,
+		(unsigned)psxRegs.pc, (unsigned)psxRegs.cycle);
+
+	EmuShutdown();
+	return aProduced ? KErrNone : KErrGeneral;
+	}
+
+static TInt runStage1()
+	{
+	TInt framesToRun;
+	TBool useBios, gpuTest, useDrc, haveArgs;
+	parseCommandLine(framesToRun, useBios, gpuTest, useDrc, haveArgs);
+
+	bindStubPlugins();
+
+	// gpulib читає лічильники кадрів і рядків напряму зі структури фронтенду
+	// (gpu.c:1218-1264), тож підключаємо їх до справжніх змінних ядра.
+	ps1GpuSetCallbacks(&frame_counter, &g_gpuHcnt);
+
+	// Без аргументів (запуск з меню апарата) кількість кадрів менша: на 332 МГц
+	// інтерпретатор помітно повільніший за хост, а чекати на телефон незручно.
+	if (!haveArgs)
+		framesToRun = KDeviceFrames;
+
+	logEvent("start", NULL, "stage1 begin, frames=%d bios=%d gputest=%d args=%d",
+		(int)framesToRun, (int)useBios, (int)gpuTest, (int)haveArgs);
+
+	TInt rc;
+	TUint interpTicks = 0, drcTicks = 0;
+	u32 interpFrames = 0, drcFrames = 0;
+
+	if (haveArgs)
+		{
+		rc = runPass(useDrc, framesToRun, useBios, gpuTest,
+			useDrc ? drcTicks : interpTicks, useDrc ? drcFrames : interpFrames);
+		}
+	else
+		{
+		// Спершу інтерпретатор - він відомо працює, тож дає базу для порівняння
+		// навіть якщо динарек упаде наступним.
+		rc = runPass(EFalse, framesToRun, useBios, EFalse, interpTicks, interpFrames);
+		const TInt rcDrc = runPass(ETrue, framesToRun, useBios, ETrue, drcTicks, drcFrames);
+		if (rc == KErrNone)
+			rc = rcDrc;
+
+		// Частки на кадр у мкс: цілочисельно, бо ділення в мс губить різницю.
+		const unsigned interpUs = interpFrames ? (unsigned)(interpTicks * 1000 / interpFrames) : 0;
+		const unsigned drcUs = drcFrames ? (unsigned)(drcTicks * 1000 / drcFrames) : 0;
+		logEvent("compare", NULL,
+			"interp %ums/%uf=%uus_per_frame, drc %ums/%uf=%uus_per_frame",
+			(unsigned)interpTicks, (unsigned)interpFrames, interpUs,
+			(unsigned)drcTicks, (unsigned)drcFrames, drcUs);
+		}
 
 	// Знімок VRAM для перевірки растеризації на хості (Етап 2).
 	const int dumpRc = voutSymbianDump("E:\\ps1_vram.bin");
 	logEvent("vram_dump", dumpRc ? "DUMP_FAIL" : NULL, "rc=%d", dumpRc);
 
-	EmuShutdown();
 	logEvent("shutdown", NULL, NULL);
-	return produced ? KErrNone : KErrGeneral;
+	return rc;
 	}
 
 GLDEF_C TInt E32Main()

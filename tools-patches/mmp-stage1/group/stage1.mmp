@@ -31,6 +31,11 @@ SOURCE          vout_symbian.cpp
 // Платформна заміна mmap(PROT_EXEC)/__clear_cache для динареку.
 SOURCE          ndrc_mem_symbian.cpp
 
+// Шлях відносний до SOURCEPATH вище, не до .mmp.
+START RESOURCE  stage1_reg.rss
+TARGETPATH      \private\10003a3f\import\apps
+END
+
 // ESTLIB не має snprintf/vsnprintf (C99); у SDK їх немає в жодній .dso.
 SOURCEPATH      ..\..\..\src\compat
 SOURCE          compat_snprintf.c
