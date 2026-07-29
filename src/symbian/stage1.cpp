@@ -24,20 +24,17 @@ extern "C" {
 static const int KDefaultFrames = 600;
 // Запуск з меню апарата: 300 кадрів = 5 секунд ігрового часу на кожен режим ЦП.
 static const int KDeviceFrames = 300;
+// Крок маркерів прогресу в циклі кадрів.
+static const int KProgressEvery = 50;
 
 // Ядро складає шлях як "%s/%s" (psxmem.c:312) - пряма скісна в тексті навмисна,
 // це перевірка, чи ESTLIB приймає її замість зворотної.
 static const char KBiosDir[]  = "C:\\bios";
 static const char KBiosFile[] = "scph7502.bin";
 
-// Один повторюваний рядок ядра здатен роздути лог до мегабайтів (без диска
-// HLE BIOS видав 23 195 однакових записів), тому обмежуємо потік від ядра.
-static const int KMaxCoreEvents = 2000;
-
 static FILE *g_log;
 static TUint g_startTick;
 static int g_eventId;
-static int g_coreEvents;
 
 // Лог у форматі JSONL: один об'єкт на подію (CLAUDE.md, розділ 7).
 static void logEvent(const char *type, const char *errType, const char *fmt, ...)
@@ -88,40 +85,58 @@ static void logEvent(const char *type, const char *errType, const char *fmt, ...
 // --- Контракт, який libpcsxcore очікує від фронтенду -----------------------
 // Перелік визначено з самої бібліотеки (nm: невизначені мінус визначені).
 
-// Повертає EFalse, коли ліміт вичерпано; про сам факт обрізання повідомляє один раз.
-static TBool allowCoreEvent()
+// Згортання повторів замість обмеження кількості. Ліміт різав за порядком
+// надходження: 2000 однакових "game crash @f0001234" від інтерпретатора з'їдали
+// квоту, і на прогін динареку не лишалось жодного повідомлення ядра - зокрема
+// його власної самоперевірки. До того ж кожен запис коштує fflush на флеш, тож
+// потік повторів спотворював і вимір часу.
+static char g_lastCore[512];
+static int g_coreRepeat;
+
+// Викликати перед подіями, які мають лягти в лог у правильному порядку.
+static void flushCoreRepeat()
 	{
-	if (++g_coreEvents < KMaxCoreEvents)
-		return ETrue;
-	if (g_coreEvents == KMaxCoreEvents)
-		logEvent("core", "LOG_TRUNCATED", "core message limit %d reached", KMaxCoreEvents);
-	return EFalse;
+	if (!g_coreRepeat)
+		return;
+	const int n = g_coreRepeat;
+	g_coreRepeat = 0;
+	g_lastCore[0] = 0;
+	logEvent("core", NULL, "previous message repeated %d times", n);
+	}
+
+static void logCore(const char *type, const char *buf)
+	{
+	if (strcmp(buf, g_lastCore) == 0)
+		{
+		g_coreRepeat++;
+		return;
+		}
+	flushCoreRepeat();
+	strncpy(g_lastCore, buf, sizeof(g_lastCore) - 1);
+	g_lastCore[sizeof(g_lastCore) - 1] = 0;
+	logEvent(type, NULL, "%s", buf);
 	}
 
 extern "C" {
 
 void SysPrintf(const char *fmt, ...)
 	{
-	if (!allowCoreEvent())
-		return;
 	char buf[512];
 	va_list ap;
 	va_start(ap, fmt);
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
-	logEvent("core", NULL, "%s", buf);
+	logCore("core", buf);
 	}
 
 void SysMessage(const char *fmt, ...)
 	{
-	if (!allowCoreEvent())
-		return;
 	char buf[512];
 	va_list ap;
 	va_start(ap, fmt);
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
-	logEvent("core_msg", NULL, "%s", buf);
+	logCore("core_msg", buf);
 	}
 
 // Плагіни вбудовані, динамічного завантаження під Symbian немає.
@@ -361,16 +376,30 @@ static TInt runPass(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
 	// Поперовий лог тут НЕ ведеться навмисно: fflush коштує більше за саму
 	// емуляцію (виміряно - 59 кадрів, 2274 мс проти 689 мс), і при поперовому
 	// логуванні порівняння інтерпретатора з динареком міряло б файлову систему.
+	// Один запис перед першим Execute: якщо процес гине на першому ж блоці,
+	// у лозі має лишитись слід саме про це, а не тиша після gpu_selftest.
+	flushCoreRepeat();
+	logEvent("exec_begin", NULL, "%s: entering frame loop, %d frames", mode, aFrames);
+
 	const u32 framesAtStart = frame_counter;
 	const TUint tStart = User::NTickCount();
 	for (int i = 0; i < aFrames; i++)
 		{
 		psxRegs.stop = 0;
 		psxCpu->Execute(&psxRegs);
+
+		// Рідкісні маркери: 6 записів на прогін вимір не псують, зате показують,
+		// доки дійшло, коли процес гине без жодного повідомлення.
+		if ((i + 1) % KProgressEvery == 0)
+			{
+			logEvent("progress", NULL, "%s: frame %d/%d ms=%u", mode, i + 1, aFrames,
+				(unsigned)(User::NTickCount() - tStart));
+			}
 		}
 	aTicks = User::NTickCount() - tStart;
 	aProduced = frame_counter - framesAtStart;
 
+	flushCoreRepeat();
 	logEvent("pass", aProduced ? NULL : "NO_FRAMES",
 		"%s: frames=%u ms=%u pc=%08x cycle=%u", mode,
 		(unsigned)aProduced, (unsigned)aTicks,
