@@ -64,6 +64,17 @@ call .\ABLD.BAT build gcce urel
 
 `abld` викликати саме як `call .\ABLD.BAT` — просто `abld` cmd не знаходить.
 
+## Після зміни ядра EXE обов'язково перезбирати з `reallyclean`
+
+`abld` відстежує лише власні вихідні файли цілі. Зміна `pcsxcore.lib` чи `gpuunai.lib` перелінкування **не викликає**: `abld build` для `stage1` мовчки нічого не робить, і EXE лишається зі старою бібліотекою всередині.
+
+```cmd
+cd <...>\configs\core\group  & call .\ABLD.BAT build gcce urel
+cd <...>\configs\stage1\group & call .\ABLD.BAT reallyclean gcce urel & bldmake bldfiles & call .\ABLD.BAT build gcce urel
+```
+
+Перевірка одна: **час зміни `ps1stage1.exe` мусить бути пізнішим за час `pcsxcore.lib`.** Інакше на пристрій поїде збірка без ваших правок, і налагодження піде хибним шляхом — виправлення виглядатиме так, ніби воно не подіяло.
+
 ## Пакування SIS для фізичного апарата
 
 ```cmd
