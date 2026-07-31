@@ -29,7 +29,10 @@ static const int KProgressEvery = 50;
 
 // Ядро складає шлях як "%s/%s" (psxmem.c:312) - пряма скісна в тексті навмисна,
 // це перевірка, чи ESTLIB приймає її замість зворотної.
-static const char KBiosDir[]  = "C:\\bios";
+// Корінь картки E: замість C:\bios: демон розгортання (v1) не створює тек, а
+// E: точно існує й читабельний (туди ж пишеться лог). Дамп заливається на
+// E:\scph7502.bin.
+static const char KBiosDir[]  = "E:";
 static const char KBiosFile[] = "scph7502.bin";
 
 static FILE *g_log;
@@ -309,6 +312,18 @@ static void parseCommandLine(TInt &aFrames, TBool &aUseBios, TBool &aGpuTest, TB
 // Формати команд - стандартні GP0 PlayStation.
 static void runGpuSelfTest()
 	{
+	// Налаштування вікна дисплея через GP1 (320x240 NTSC, 15bit). На растеризацію
+	// у VRAM це не впливає (GP0 пише в VRAM незалежно від регістрів дисплея), тож
+	// дамп лишається тим самим. Мета - щоб gpulib виставив screen.w/h=320/240, і
+	// показ пішов справжньою гілкою масштабування (320x240 -> 240x180 летербокс),
+	// а не fallback'ом (розмір екрана). GP1 = (команда<<24)|дані.
+	// hrange x1=0x200,x2=0xC00 -> (x2-x1)/hdiv(8)=320; vrange y1=0x10,y2=0x100 -> 240.
+	ps1GpuWriteStatus(0x06000000u | (0xC00u << 12) | 0x200u); // GP1(06) hor range
+	ps1GpuWriteStatus(0x07000000u | (0x100u << 10) | 0x010u); // GP1(07) ver range
+	ps1GpuWriteStatus(0x08000001u);                           // GP1(08) mode: 320x240 NTSC 15bit
+	ps1GpuWriteStatus(0x05000000u);                           // GP1(05) display start = (0,0)
+	ps1GpuWriteStatus(0x03000000u);                           // GP1(03) display enable
+
 	// 0x02 - заливка прямокутника у VRAM: колір, потім (y<<16|x), потім (h<<16|w).
 	// Слово кольору - 0xCCBBGGRR, тож 0x000080 це червоний, а не синій.
 	const uint32_t fill[] = {
