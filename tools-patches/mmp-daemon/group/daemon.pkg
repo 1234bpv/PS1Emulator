@@ -1,0 +1,14 @@
+; PS1 deploy daemon: WiFi/TCP file transfer + app launch.
+; ASCII only, CRLF only: makesis misparses UTF-8 and LF line endings.
+
+&EN
+
+#{"PS1 Deploy Daemon"},(0xE0001004),1,0,0
+
+%{"PS1Emulator"}
+:"PS1Emulator"
+
+[0x101F7961],0,0,0,{"Series60ProductID"}
+
+"\VsCodeProjects\SymbianProjects\S60_3rd_FP1\Epoc32\release\gcce\urel\ps1daemon.exe"-"!:\sys\bin\ps1daemon.exe"
+"\VsCodeProjects\SymbianProjects\S60_3rd_FP1\Epoc32\data\z\private\10003a3f\import\apps\daemon_reg.RSC"-"!:\private\10003a3f\import\apps\daemon_reg.rsc"

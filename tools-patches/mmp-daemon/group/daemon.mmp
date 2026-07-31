@@ -1,0 +1,28 @@
+// Демон розгортання: приймає файли й запускає застосунки по WiFi/TCP.
+// Самодостатній, ядра емулятора не лінкує.
+
+TARGET          ps1daemon.exe
+TARGETTYPE      exe
+UID             0 0xE0001004
+SECUREID        0xE0001004
+VENDORID        0
+
+// NetworkServices - сокети; ReadUserData - вибір точки доступу через RConnection.
+// Обидві в самопідписному наборі, тож пакет ставиться й без хака.
+CAPABILITY      NetworkServices ReadUserData
+
+EPOCSTACKSIZE   0x5000
+
+SOURCEPATH      ..\..\..\src\symbian
+SOURCE          deploy_daemon.cpp
+
+START RESOURCE  daemon_reg.rss
+TARGETPATH      \private\10003a3f\import\apps
+END
+
+SYSTEMINCLUDE   \epoc32\include
+
+LIBRARY         euser.lib
+LIBRARY         efsrv.lib
+LIBRARY         esock.lib
+LIBRARY         insock.lib
