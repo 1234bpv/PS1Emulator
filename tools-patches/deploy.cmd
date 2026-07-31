@@ -12,7 +12,10 @@ REM   deploy.cmd stage1 wifi [ip] [runargs]
 REM                              over WiFi: push EXE, launch it, pull the log back -
 REM                              no mass-storage juggling, no screen tap. Needs the
 REM                              daemon running on the phone. ip defaults to the value
-REM                              cached from the card (E:\daemon_ip.txt) on last collect.
+REM                              cached from the card (E:\daemon_ip.txt) on last collect,
+REM                              then to "scan" - auto-discovering the daemon on the LAN.
+REM                              Pass "scan" explicitly to force discovery. A stale
+REM                              given/cached ip also falls back to a scan automatically.
 REM   deploy.cmd collect         pull *.jsonl and ps1_vram.bin off the phone
 REM
 REM Mass-storage modes (stage*, daemon, fast, collect) need the phone in "Mass
@@ -178,16 +181,14 @@ exit /b 0
 
 REM --- WiFi deploy over the on-device daemon --------------------------------
 :wifi
-REM ip = arg 3, else the value cached from the card on last collect.
+REM ip = arg 3, else the value cached from the card on last collect, else "scan".
+REM deploy_net.ps1 auto-discovers the daemon on the LAN when the ip is "scan" and
+REM also falls back to a scan if a given/cached ip no longer answers (DHCP moved it).
 set DIP=%~3
 if "%DIP%"=="" (
   if exist "%~dp0.daemon_ip" for /f "usebackq tokens=1 delims=:" %%A in ("%~dp0.daemon_ip") do set DIP=%%A
 )
-if "%DIP%"=="" (
-  echo [deploy] no daemon IP. Pass it: deploy.cmd %TARGET% wifi 192.168.x.y
-  echo [deploy] the phone shows it on the daemon screen, or run collect once to cache it.
-  exit /b 5
-)
+if "%DIP%"=="" set DIP=scan
 
 REM No run args by default: stage1 then runs BOTH interp and drc and emits the
 REM compare line (the benchmark). An arg like "drc" would run a single pass instead.
