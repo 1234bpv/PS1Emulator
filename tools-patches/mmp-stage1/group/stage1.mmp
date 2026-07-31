@@ -56,3 +56,6 @@ STATICLIBRARY   pcsxcore.lib
 LIBRARY         euser.lib
 LIBRARY         hal.lib
 LIBRARY         estlib.lib
+// Виведення кадру на екран (Етап 2): window server + FBS bitmap.
+LIBRARY         ws32.lib
+LIBRARY         fbscli.lib

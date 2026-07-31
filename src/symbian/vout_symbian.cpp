@@ -6,6 +6,11 @@
 // (окрема задача з власними помилками). Змішувати їх - шукати помилку рендерингу
 // там, де насправді зламаний вивід.
 
+#include <e32std.h>
+#include <e32base.h>
+#include <w32std.h>
+#include <fbs.h>
+
 #include <stdio.h>
 #include <string.h>
 #include "compat_stdio.h"
@@ -119,6 +124,118 @@ extern "C" int voutSymbianDump(const char *path)
 extern "C" int voutSymbianUpdates(void)
 	{
 	return g_vout.updates;
+	}
+
+// --- Виведення кадру на екран (DSA/CFbsBitmap, Етап 2) ----------------------
+// Показуємо вміст VRAM на екрані апарата. Джерело - той самий g_vout, що й дамп
+// (перевірений тракт): якщо gpulib задав вікно дисплея (справжня гра/BIOS),
+// беремо його; інакше (шлях gputest, де регістри дисплея не програмуються) -
+// лівий верхній кут VRAM у розмір екрана, там лежить заливка самоперевірки.
+//
+// Малюємо через window server + BitBlt, а не через CDirectScreenAccess: DSA -
+// це CActive і потребує CActiveScheduler та обробки AbortNow/Restart, тоді як
+// для показу одного кадру достатньо синхронного BitBlt. Швидкий шлях DSA -
+// коли дійде до анімації (Етап 4), а не до перевірки виведення.
+
+// PS1 VRAM - BGR555 (біт15 маска, 14-10 B, 9-5 G, 4-0 R); екран EColor64K -
+// RGB565. Зелений розширюємо з 5 до 6 біт, щоб не втратити яскравість.
+static inline TUint16 Bgr555ToRgb565(TUint16 aPix)
+	{
+	const TUint r = aPix & 0x1f;
+	const TUint g = (aPix >> 5) & 0x1f;
+	const TUint b = (aPix >> 10) & 0x1f;
+	const TUint g6 = (g << 1) | (g >> 4);
+	return (TUint16)((r << 11) | (g6 << 5) | b);
+	}
+
+static void ShowL(TInt aHoldMs)
+	{
+	const TUint16 *vram = (const TUint16 *)g_vout.vram;
+	if (!vram)
+		User::Leave(KErrNotReady);
+
+	RWsSession ws;
+	User::LeaveIfError(ws.Connect());
+	CleanupClosePushL(ws);
+
+	CWsScreenDevice *dev = new (ELeave) CWsScreenDevice(ws);
+	CleanupStack::PushL(dev);
+	User::LeaveIfError(dev->Construct());
+
+	RWindowGroup grp(ws);
+	User::LeaveIfError(grp.Construct((TUint32)&grp, ETrue));
+	CleanupClosePushL(grp);
+	grp.SetOrdinalPosition(0);
+
+	RWindow win(ws);
+	User::LeaveIfError(win.Construct(grp, (TUint32)&win));
+	CleanupClosePushL(win);
+
+	const TSize scr = dev->SizeInPixels();
+	win.SetExtent(TPoint(0, 0), scr);
+	win.SetBackgroundColor(KRgbBlack);
+	win.Activate();
+
+	CWindowGc *gc = new (ELeave) CWindowGc(dev);
+	CleanupStack::PushL(gc);
+	User::LeaveIfError(gc->Construct());
+
+	// Початок і розмір джерела у VRAM. g_vout.offset уже враховує src_x/src_y.
+	const TUint16 *base = vram;
+	TInt w = scr.iWidth, h = scr.iHeight;
+	if (g_vout.w > 0 && g_vout.h > 0)
+		{
+		base = vram + g_vout.offset / 2;
+		w = g_vout.w;
+		h = g_vout.h;
+		}
+	if (w > scr.iWidth)  w = scr.iWidth;   // без масштабування на першому кроці
+	if (h > scr.iHeight) h = scr.iHeight;
+
+	CFbsBitmap *bmp = new (ELeave) CFbsBitmap;
+	CleanupStack::PushL(bmp);
+	User::LeaveIfError(bmp->Create(TSize(w, h), EColor64K));
+
+	bmp->LockHeap();
+	TUint16 *dst = (TUint16 *)bmp->DataAddress();
+	const TInt dstStride = bmp->DataStride() / 2;   // у 16-бітних словах
+	for (TInt row = 0; row < h; row++)
+		{
+		const TUint16 *s = base + row * 1024;        // крок рядка VRAM - 1024
+		TUint16 *d = dst + row * dstStride;
+		for (TInt col = 0; col < w; col++)
+			d[col] = Bgr555ToRgb565(s[col]);
+		}
+	bmp->UnlockHeap();
+
+	win.Invalidate();
+	win.BeginRedraw();
+	gc->Activate(win);
+	gc->BitBlt(TPoint(0, 0), bmp);
+	gc->Deactivate();
+	win.EndRedraw();
+	ws.Flush();
+
+	User::After(aHoldMs * 1000);
+
+	CleanupStack::PopAndDestroy(bmp);
+	CleanupStack::PopAndDestroy(gc);
+	CleanupStack::PopAndDestroy();   // win
+	CleanupStack::PopAndDestroy();   // grp
+	CleanupStack::PopAndDestroy(dev);
+	CleanupStack::PopAndDestroy();   // ws
+	}
+
+// Тримаємо кадр aHoldMs мілісекунд, щоб людина встигла глянути на екран.
+// Обгорнуто у TRAP: збій виведення не має валити прогін (числа з логу цінні
+// самі по собі), тому повертаємо код помилки, а не лишаємо leave нагору.
+extern "C" int voutSymbianShow(int holdMs)
+	{
+	if (holdMs < 0) holdMs = 0;
+	if (holdMs > 30000) holdMs = 30000;
+	TInt err;
+	TRAP(err, ShowL(holdMs));
+	return err;
 	}
 
 // --- Обгортки для libpcsxcore -----------------------------------------------

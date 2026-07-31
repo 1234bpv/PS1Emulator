@@ -197,7 +197,12 @@ void ps1GpuSetCallbacks(unsigned int *frameCount, unsigned int *hcnt);
 
 int voutSymbianDump(const char *path);
 int voutSymbianUpdates(void);
+int voutSymbianShow(int holdMs);
 }
+
+// Скільки тримати кадр на екрані, щоб людина встигла глянути (запуск headless
+// по WiFi: дивимось на сам апарат під час прогону).
+static const int KScreenHoldMs = 5000;
 
 static unsigned int g_gpuHcnt;
 
@@ -259,12 +264,13 @@ static void openLog()
 // aHaveArgs == EFalse означає запуск з меню телефона - там аргументів немає,
 // і тоді проганяються обидва режими ЦП підряд для порівняння.
 static void parseCommandLine(TInt &aFrames, TBool &aUseBios, TBool &aGpuTest, TBool &aDrc,
-	TBool &aHaveArgs)
+	TBool &aShowScreen, TBool &aHaveArgs)
 	{
 	aFrames = KDefaultFrames;
 	aUseBios = EFalse;
 	aGpuTest = EFalse;
 	aDrc = EFalse;
+	aShowScreen = EFalse;
 
 	TBuf<256> cmd;
 	User::CommandLine(cmd);
@@ -290,6 +296,12 @@ static void parseCommandLine(TInt &aFrames, TBool &aUseBios, TBool &aGpuTest, TB
 	_LIT(KDrcArg, "drc");
 	if (cmd.FindF(KDrcArg) != KErrNotFound)
 		aDrc = ETrue;
+
+	// Виведення кадру на екран (Етап 2). За замовчуванням вимкнено, бо псує
+	// чистий headless-прогін замірів: показ тримає процес KScreenHoldMs зайвих.
+	_LIT(KScreenArg, "screen");
+	if (cmd.FindF(KScreenArg) != KErrNotFound)
+		aShowScreen = ETrue;
 	}
 
 // Самоперевірка растеризації: подаємо команди GP0 напряму, без BIOS і без гри.
@@ -412,8 +424,8 @@ static TInt runPass(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
 static TInt runStage1()
 	{
 	TInt framesToRun;
-	TBool useBios, gpuTest, useDrc, haveArgs;
-	parseCommandLine(framesToRun, useBios, gpuTest, useDrc, haveArgs);
+	TBool useBios, gpuTest, useDrc, showScreen, haveArgs;
+	parseCommandLine(framesToRun, useBios, gpuTest, useDrc, showScreen, haveArgs);
 
 	bindStubPlugins();
 
@@ -459,6 +471,16 @@ static TInt runStage1()
 	// Знімок VRAM для перевірки растеризації на хості (Етап 2).
 	const int dumpRc = voutSymbianDump("E:\\ps1_vram.bin");
 	logEvent("vram_dump", dumpRc ? "DUMP_FAIL" : NULL, "rc=%d", dumpRc);
+
+	// Виведення того самого кадру на екран апарата (Етап 2). Лог фіксує код
+	// повернення: KErrNotReady (-18) означає, що vout_update жодного разу не
+	// віддав кадр, решта від'ємних - збій window server / FBS.
+	if (showScreen)
+		{
+		const int showRc = voutSymbianShow(KScreenHoldMs);
+		logEvent("screen", showRc ? "SHOW_FAIL" : NULL, "rc=%d hold=%dms",
+			showRc, KScreenHoldMs);
+		}
 
 	logEvent("shutdown", NULL, NULL);
 	return rc;
