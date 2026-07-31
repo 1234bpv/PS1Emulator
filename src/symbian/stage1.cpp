@@ -219,6 +219,14 @@ static const TInt KWatchdogMs = 60000;
 static volatile TInt g_wdRun;    // 1, поки прохід хоче, щоб сторож жив
 static volatile TInt g_wdFired;  // 1, якщо сторож спрацював (спін довше ліміту)
 
+// Діагностика: сторож семплює pc/cycle раз на ~2 с. Траєкторія показує, чи
+// виконання стоїть на одній інструкції (хендлер висить), чи повзе - без цього
+// повільний/завислий BIOS нічим не локалізувати на залізі.
+static const TInt KWdSamples = 40;
+static volatile TUint32 g_wdPc[KWdSamples];
+static volatile TUint32 g_wdCyc[KWdSamples];
+static volatile TInt g_wdSamples;
+
 // Завершується КООПЕРАТИВНО: перевіряє g_wdRun короткими кроками й виходить сам,
 // коли прохід його вимкне. Так не треба RThread::Kill (паніка при вбивстві вже
 // мертвого потоку) і немає гонки на завершенні.
@@ -227,8 +235,16 @@ static TInt watchdogThread(TAny *aArg)
 	const TInt totalMs = (TInt)aArg;
 	const TInt step = 200;
 	TInt elapsed = 0;
+	TInt nextSampleMs = 0;
 	while (g_wdRun && elapsed < totalMs)
 		{
+		if (elapsed >= nextSampleMs && g_wdSamples < KWdSamples)
+			{
+			g_wdPc[g_wdSamples] = psxRegs.pc;
+			g_wdCyc[g_wdSamples] = psxRegs.cycle;
+			g_wdSamples++;
+			nextSampleMs += 2000;
+			}
 		User::After(step * 1000);
 		elapsed += step;
 		}
@@ -396,6 +412,17 @@ static TInt runPass(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
 	Config.PsxAuto = 1;
 	Config.Cpu = aUseDrc ? CPU_DYNAREC : CPU_INTERPRETER;
 
+	// Дефолти з emu_set_default_config() (frontend/main.c:108), які memset обнуляє.
+	// КРИТИЧНО: cycle_multiplier. Із 0 виходить subCycleStep=0x10000*0/100=0, і
+	// addCycle() (psxinterpreter.c:235) не нарощує psxRegs.cycle - таймери й VBlank
+	// ніколи не цокають, і петля-очікування в BIOS крутиться вічно (виявлено
+	// семплюванням pc/cycle: pc у bfc04a48-8c, cycle застиг на 555). Решта -
+	// авто-сентинели (-1), які ядро інакше плутає з явним режимом 0.
+	Config.cycle_multiplier = CYCLE_MULT_DEFAULT;
+	Config.GpuListWalking = -1;
+	Config.FractionalFramerate = -1;
+	Config.AlternativeFlip = -1;
+
 	// Справжній BIOS вмикається другим аргументом ("bios") і поки НЕ придатний для
 	// роботи: він чекає на регістри GPU і SPU, а в нас там заглушки з константами,
 	// тож перший же кадр не завершується (перевірено: 156 с ЦП без жодного кадру).
@@ -445,6 +472,7 @@ static TInt runPass(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
 	// EPOCSTACKSIZE апарат відхиляє (RThread::Create -> KErrTooBig, див. Етап 3).
 	g_wdRun = 1;
 	g_wdFired = 0;
+	g_wdSamples = 0;
 	RThread wd;
 	TRequestStatus wdStat;
 	const TBool haveWd =
@@ -481,6 +509,11 @@ static TInt runPass(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
 	// Роззброїти сторож: просимо вийти й чекаємо, поки він завершиться сам.
 	g_wdRun = 0;
 	if (haveWd) { User::WaitForRequest(wdStat); wd.Close(); }
+
+	// Траєкторія pc/cycle зі сторожа: показує, де саме застрягло виконання.
+	for (TInt s = 0; s < g_wdSamples; s++)
+		logEvent("wdsample", NULL, "%s: t=%ds pc=%08x cycle=%u", mode, (int)(s * 2),
+			(unsigned)g_wdPc[s], (unsigned)g_wdCyc[s]);
 
 	flushCoreRepeat();
 	logEvent("pass", stalled ? "STALLED" : (aProduced ? NULL : "NO_FRAMES"),
