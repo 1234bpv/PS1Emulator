@@ -308,18 +308,35 @@ extern "C" int voutSymbianShow(int holdMs)
 
 extern "C" {
 
-long ps1GpuInit(void)                                   { return GPUinit(); }
+// Діагностика GPU-тракту: скільки команд BIOS реально шле. Показує, чи проблема
+// в доставці команд (лічильники нульові) чи в растеризації (ненульові, але VRAM
+// чорний). Скидаються в ps1GpuInit (раз на прохід).
+static unsigned g_gpData, g_gpDataMem, g_gpDma, g_gpStatus;
+
+long ps1GpuInit(void)
+	{
+	g_gpData = g_gpDataMem = g_gpDma = g_gpStatus = 0;
+	return GPUinit();
+	}
 long ps1GpuShutdown(void)                               { return GPUshutdown(); }
 long ps1GpuOpen(unsigned long *d, char *c, char *g)     { return GPUopen(d, c, g); }
 long ps1GpuClose(void)                                  { return GPUclose(); }
-void ps1GpuWriteStatus(uint32_t d)                      { GPUwriteStatus(d); }
-void ps1GpuWriteData(uint32_t d)                        { GPUwriteData(d); }
-void ps1GpuWriteDataMem(uint32_t *m, int c)             { GPUwriteDataMem(m, c); }
+void ps1GpuWriteStatus(uint32_t d)                      { g_gpStatus++; GPUwriteStatus(d); }
+void ps1GpuWriteData(uint32_t d)                        { g_gpData++; GPUwriteData(d); }
+void ps1GpuWriteDataMem(uint32_t *m, int c)             { g_gpDataMem++; GPUwriteDataMem(m, c); }
 uint32_t ps1GpuReadStatus(void)                         { return GPUreadStatus(); }
 uint32_t ps1GpuReadData(void)                           { return GPUreadData(); }
 void ps1GpuReadDataMem(uint32_t *m, int c)              { GPUreadDataMem(m, c); }
 long ps1GpuDmaChain(uint32_t *rb, uint32_t sa, uint32_t *pa, int32_t *cy)
-                                                        { return GPUdmaChain(rb, sa, pa, cy); }
+                                                        { g_gpDma++; return GPUdmaChain(rb, sa, pa, cy); }
+
+void voutSymbianGpuStats(unsigned *aData, unsigned *aDataMem, unsigned *aDma, unsigned *aStatus)
+	{
+	if (aData)    *aData = g_gpData;
+	if (aDataMem) *aDataMem = g_gpDataMem;
+	if (aDma)     *aDma = g_gpDma;
+	if (aStatus)  *aStatus = g_gpStatus;
+	}
 long ps1GpuFreeze(uint32_t t, struct GPUFreeze *f, uint16_t **v) { return GPUfreeze(t, f, v); }
 void ps1GpuVBlank(int v, int lcf)                       { GPUvBlank(v, lcf); }
 void ps1GpuGetScreenInfo(int *y, int *hres)             { GPUgetScreenInfo(y, hres); }

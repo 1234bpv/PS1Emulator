@@ -204,6 +204,7 @@ int voutSymbianShow(int holdMs);
 int voutSymbianInit(void);
 void voutSymbianPresent(void);
 int voutSymbianFinish(int holdMs);
+void voutSymbianGpuStats(unsigned *data, unsigned *dataMem, unsigned *dma, unsigned *status);
 }
 
 // Скільки тримати кадр на екрані, щоб людина встигла глянути (запуск headless
@@ -536,6 +537,13 @@ static TInt runPass(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
 		"%s: frames=%u ms=%u pc=%08x cycle=%u", mode,
 		(unsigned)aProduced, (unsigned)aTicks,
 		(unsigned)psxRegs.pc, (unsigned)psxRegs.cycle);
+
+	// Скільки GPU-команд BIOS реально надіслав: локалізує чорний екран - доставка
+	// команд (усе 0) проти растеризації (ненульові, а VRAM порожній).
+	unsigned gpData = 0, gpDataMem = 0, gpDma = 0, gpStatus = 0;
+	voutSymbianGpuStats(&gpData, &gpDataMem, &gpDma, &gpStatus);
+	logEvent("gpustats", NULL, "%s: gp0=%u dataMem=%u dmaChain=%u gp1=%u", mode,
+		gpData, gpDataMem, gpDma, gpStatus);
 
 	// Тримаємо останній кадр і прибираємо вікно.
 	if (aShowScreen)
