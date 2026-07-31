@@ -26,3 +26,6 @@ epoc32/
 *.key
 *.cer
 *.pem
+
+# runtime cache: last-seen daemon IP
+tools-patches/.daemon_ip

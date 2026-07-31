@@ -37,12 +37,20 @@ static const TInt  KChunk      = 8192;
 // Свій IP демон пише сюди, щоб ПК дізнався адресу один раз через накопичувач;
 // DHCP може її змінювати між сесіями.
 _LIT(KIpFile, "E:\\daemon_ip.txt");
+// Стійкий лог на картці: читається через накопичувач навіть коли демон помер,
+// тож видно, на якому кроці ініціалізації він упав (консоль зникає надто швидко).
+_LIT(KLogFile, "E:\\ps1_daemon.log");
 
 static RSocketServ g_ss;
 static RConnection g_conn;
 static RSocket     g_listener;
 static RFs         g_fs;
 static CConsoleBase *g_console;
+static RFile       g_logFile;
+static TBool       g_haveLog;
+// Ознака єдиного екземпляра: існує, поки перший демон живий. Другий запуск бачить
+// KErrAlreadyExists і виходить чисто, а не падає з -14 на Bind(зайнятий порт).
+static RSemaphore  g_single;
 
 // Буфер дочитування: RecvOneOrMore може захопити більше за рядок команди,
 // прихопивши початок двійкового вантажу. Залишок тримається тут між викликами.
@@ -59,6 +67,16 @@ static void say(const TDesC &aMsg)
     TBuf8<256> m;
     m.Copy(aMsg.Left(m.MaxLength()));
     RDebug::RawPrint(m);
+    // Стійкий слід із флешем на кожному рядку: якщо наступний крок панікує,
+    // у файлі лишається саме те, що встигло записатися до падіння.
+    if (g_haveLog)
+        {
+        TBuf8<300> line;
+        line.Copy(m);
+        line.Append(_L8("\r\n"));
+        g_logFile.Write(line);
+        g_logFile.Flush();
+        }
     }
 
 // --- блокувальні обгортки над асинхронними сокетами ------------------------
@@ -203,8 +221,9 @@ static void cmdGet(RSocket &aSock, const TDesC8 &aArgs)
     path.Copy(aArgs);
     path.TrimAll();
 
+    // ShareAny: дозволяє забрати навіть файл, відкритий іншим (наш живий лог).
     RFile f;
-    TInt r = f.Open(g_fs, path, EFileRead | EFileShareReadersOnly);
+    TInt r = f.Open(g_fs, path, EFileRead | EFileShareAny);
     if (r != KErrNone)
         {
         TBuf8<64> e; e.Format(_L8("ERR open %d\n"), r);
@@ -352,31 +371,39 @@ static TUint32 findApIapL()
     return iapId;
     }
 
-// Піднімає з'єднання: спершу мовчки через IAP "Netis", інакше - з запитом точки
-// доступу (стандартний RConnection::Start). Так автозапуск після ребута не
-// впирається в діалог, але лишається робочим, якщо IAP названо інакше.
+// Одна спроба мовчазного підняття через IAP "Netis".
+static TInt startConnOnce()
+    {
+    say(_L("reading CommDb for Netis IAP..."));
+    TUint32 iapId = 0;
+    TRAPD(err, iapId = findApIapL());
+    if (err != KErrNone)
+        { TBuf<64> s; s.Format(_L("CommDb read err=%d"), err); say(s); return err; }
+    if (iapId == 0)
+        { say(_L("Netis IAP not found")); return KErrNotFound; }
+    TCommDbConnPref pref;
+    pref.SetIapId(iapId);
+    pref.SetDialogPreference(ECommDbDialogPrefDoNotPrompt);
+    pref.SetDirection(ECommDbConnectionDirectionOutgoing);
+    TBuf<64> s; s.Format(_L("Netis iap=%u, connecting..."), (unsigned)iapId); say(s);
+    return g_conn.Start(pref);
+    }
+
+// Піднімає з'єднання. Автозапуск при завантаженні стартує ДО того, як WiFi
+// асоціюється, тож перша спроба зазвичай падає - повторюємо мовчки з паузами.
+// Лише коли всі спроби вичерпано, відкат на діалог вибору точки (ручний запуск).
 static TInt startConn()
     {
-    TUint32 iapId = 0;
-    TRAP_IGNORE(iapId = findApIapL());
-    if (iapId != 0)
+    const TInt kTries = 12;
+    for (TInt i = 0; i < kTries; i++)
         {
-        TCommDbConnPref pref;
-        pref.SetIapId(iapId);
-        pref.SetDialogPreference(ECommDbDialogPrefDoNotPrompt);
-        pref.SetDirection(ECommDbConnectionDirectionOutgoing);
-        TInt r = g_conn.Start(pref);
-        if (r == KErrNone)
-            {
-            TBuf<64> s; s.Format(_L("connected to Netis (iap %u)"), (unsigned)iapId);
-            say(s);
-            return KErrNone;
-            }
-        TBuf<64> s; s.Format(_L("Netis start err=%d, will prompt"), r);
+        TInt r = startConnOnce();
+        if (r == KErrNone) { say(_L("connected to Netis")); return KErrNone; }
+        TBuf<80> s; s.Format(_L("conn attempt %d/%d r=%d, retry in 5s"), i + 1, kTries, r);
         say(s);
+        User::After(5 * 1000000);
         }
-    else
-        say(_L("Netis IAP not found, will prompt"));
+    say(_L("Netis failed, falling back to AP dialog"));
     return g_conn.Start();
     }
 
@@ -386,8 +413,31 @@ static void mainL()
     TRAP_IGNORE(g_console = Console::NewL(KTitle, TSize(KConsFullScreen, KConsFullScreen)));
 
     User::LeaveIfError(g_fs.Connect());
+    // Відкрити стійкий лог якнайраніше (одразу після ФС), щоб покрити весь старт.
+    // APPEND, не Replace: інакше ручний запуск затирає слід спроби автозапуску.
+    g_haveLog = (g_logFile.Open(g_fs, KLogFile, EFileWrite | EFileShareAny) == KErrNone);
+    if (!g_haveLog)
+        g_haveLog = (g_logFile.Create(g_fs, KLogFile, EFileWrite | EFileShareAny) == KErrNone);
+    if (g_haveLog) { TInt endPos = 0; g_logFile.Seek(ESeekEnd, endPos); }
+    // NTickCount росте від завантаження: малий тік = запуск одразу після boot
+    // (тобто автозапуск спрацював), великий = ручний запуск.
+    TBuf<64> startMsg; startMsg.Format(_L("=== daemon start (tick=%u) ==="),
+        (unsigned)User::NTickCount());
+    say(startMsg);
+
+    // Захист від подвійного запуску: якщо семафор уже є - інший демон живий,
+    // виходимо чисто (без -14 на Bind, що виглядало як крах).
+    _LIT(KSingleName, "ps1daemon_single");
+    if (g_single.CreateGlobal(KSingleName, 0) == KErrAlreadyExists)
+        {
+        say(_L("another instance already running - exiting cleanly"));
+        return; // E32Main закриє лог; решту звільнить вихід процесу
+        }
+
     User::LeaveIfError(g_ss.Connect());
+    say(_L("socket server ok"));
     User::LeaveIfError(g_conn.Open(g_ss));
+    say(_L("connection opened"));
 
     // Автопідключення до Netis без запиту; за потреби відкат на діалог вибору.
     say(_L("starting connection..."));
@@ -398,6 +448,7 @@ static void mainL()
         say(s);
         User::Leave(r);
         }
+    say(_L("connection up"));
 
     reportIp();
 
@@ -432,6 +483,8 @@ static void mainL()
     g_listener.Close();
     g_conn.Close();
     g_ss.Close();
+    say(_L("=== daemon stop ==="));
+    if (g_haveLog) { g_logFile.Close(); g_haveLog = EFalse; }  // до закриття ФС
     g_fs.Close();
     delete g_console;
     }
@@ -441,6 +494,15 @@ GLDEF_C TInt E32Main()
     CTrapCleanup *cleanup = CTrapCleanup::New();
     if (!cleanup) return KErrNoMemory;
     TRAPD(err, mainL());
+    // Шлях падіння: mainL лишила до нормального прибирання, лог іще відкритий -
+    // записати код leave, щоб було видно причину виходу.
+    if (err != KErrNone && g_haveLog)
+        {
+        TBuf8<64> s; s.Format(_L8("mainL left with %d\r\n"), err);
+        g_logFile.Write(s);
+        g_logFile.Flush();
+        }
+    if (g_haveLog) { g_logFile.Close(); g_haveLog = EFalse; }
     delete cleanup;
     return err;
     }
