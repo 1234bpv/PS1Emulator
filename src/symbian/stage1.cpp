@@ -207,6 +207,39 @@ int voutSymbianShow(int holdMs);
 // по WiFi: дивимось на сам апарат під час прогону).
 static const int KScreenHoldMs = 5000;
 
+// Захист від зависання. Цикл кадрів покладається на те, що psxCpu->Execute()
+// повертається на межі кадру (pl_frame_limit виставляє psxRegs.stop на VBlank).
+// Реальний BIOS може крутитися в ранній ініціалізації ДО першого VBlank - тоді
+// Execute не повертається ніколи, а демон розгортання блокований у RUN без
+// таймауту, тобто телефон знімається лише ребутом. Сторожовий потік через
+// KWatchdogMs виставляє psxRegs.stop (інтерпретатор перевіряє його щоінструкції,
+// while(!regs->stop)), і прохід завершується з частковим результатом у лозі.
+static const TInt KWatchdogMs = 60000;
+
+static volatile TInt g_wdRun;    // 1, поки прохід хоче, щоб сторож жив
+static volatile TInt g_wdFired;  // 1, якщо сторож спрацював (спін довше ліміту)
+
+// Завершується КООПЕРАТИВНО: перевіряє g_wdRun короткими кроками й виходить сам,
+// коли прохід його вимкне. Так не треба RThread::Kill (паніка при вбивстві вже
+// мертвого потоку) і немає гонки на завершенні.
+static TInt watchdogThread(TAny *aArg)
+	{
+	const TInt totalMs = (TInt)aArg;
+	const TInt step = 200;
+	TInt elapsed = 0;
+	while (g_wdRun && elapsed < totalMs)
+		{
+		User::After(step * 1000);
+		elapsed += step;
+		}
+	if (g_wdRun)
+		{
+		psxRegs.stop = 1;
+		g_wdFired = 1;
+		}
+	return 0;
+	}
+
 static unsigned int g_gpuHcnt;
 
 static long CALLBACK spuInit(void)                                            { return 0; }
@@ -408,12 +441,31 @@ static TInt runPass(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
 	flushCoreRepeat();
 	logEvent("exec_begin", NULL, "%s: entering frame loop, %d frames", mode, aFrames);
 
+	// Озброїти сторож на весь прохід. Анонімний потік із малим стеком: великий
+	// EPOCSTACKSIZE апарат відхиляє (RThread::Create -> KErrTooBig, див. Етап 3).
+	g_wdRun = 1;
+	g_wdFired = 0;
+	RThread wd;
+	TRequestStatus wdStat;
+	const TBool haveWd =
+		(wd.Create(KNullDesC, watchdogThread, 4096, NULL, (TAny *)KWatchdogMs) == KErrNone);
+	if (haveWd) { wd.Logon(wdStat); wd.Resume(); }
+
 	const u32 framesAtStart = frame_counter;
 	const TUint tStart = User::NTickCount();
+	TBool stalled = EFalse;
 	for (int i = 0; i < aFrames; i++)
 		{
 		psxRegs.stop = 0;
 		psxCpu->Execute(&psxRegs);
+
+		if (g_wdFired)
+			{
+			logEvent("watchdog", "WATCHDOG",
+				"%s: stalled >%dms at frame %d - aborting pass", mode, (int)KWatchdogMs, i);
+			stalled = ETrue;
+			break;
+			}
 
 		// Рідкісні маркери: 6 записів на прогін вимір не псують, зате показують,
 		// доки дійшло, коли процес гине без жодного повідомлення.
@@ -426,8 +478,12 @@ static TInt runPass(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
 	aTicks = User::NTickCount() - tStart;
 	aProduced = frame_counter - framesAtStart;
 
+	// Роззброїти сторож: просимо вийти й чекаємо, поки він завершиться сам.
+	g_wdRun = 0;
+	if (haveWd) { User::WaitForRequest(wdStat); wd.Close(); }
+
 	flushCoreRepeat();
-	logEvent("pass", aProduced ? NULL : "NO_FRAMES",
+	logEvent("pass", stalled ? "STALLED" : (aProduced ? NULL : "NO_FRAMES"),
 		"%s: frames=%u ms=%u pc=%08x cycle=%u", mode,
 		(unsigned)aProduced, (unsigned)aTicks,
 		(unsigned)psxRegs.pc, (unsigned)psxRegs.cycle);
