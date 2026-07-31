@@ -28,6 +28,9 @@
 #include <in_sock.h>
 #include <es_sock.h>
 #include <es_enum.h>
+#include <commdb.h>
+#include <cdbcols.h>
+#include <commdbconnpref.h>
 
 static const TInt  KPort       = 2323;
 static const TInt  KChunk      = 8192;
@@ -323,6 +326,60 @@ static void reportIp()
         }
     }
 
+// Ім'я точки доступу (IAP), до якої під'єднуватись без запиту. WiFi-мережі на
+// S60v3 налаштовані як IAP; ім'я IAP зазвичай збігається з SSID.
+_LIT(KApName, "Netis");
+
+// Знаходить id IAP на ім'я KApName у CommDb. 0, якщо немає. Може лишити
+// (KErrPermissionDenied тощо), викликач обгортає TRAP.
+static TUint32 findApIapL()
+    {
+    TUint32 iapId = 0;
+    CCommsDatabase *db = CCommsDatabase::NewL();
+    CleanupStack::PushL(db);
+    CCommsDbTableView *view = db->OpenTableLC(TPtrC(IAP));
+    for (TInt rc = view->GotoFirstRecord(); rc == KErrNone; rc = view->GotoNextRecord())
+        {
+        TBuf<64> name;
+        view->ReadTextL(TPtrC(COMMDB_NAME), name);
+        if (name.CompareF(KApName) == 0)
+            {
+            view->ReadUintL(TPtrC(COMMDB_ID), iapId);
+            break;
+            }
+        }
+    CleanupStack::PopAndDestroy(2); // view, db
+    return iapId;
+    }
+
+// Піднімає з'єднання: спершу мовчки через IAP "Netis", інакше - з запитом точки
+// доступу (стандартний RConnection::Start). Так автозапуск після ребута не
+// впирається в діалог, але лишається робочим, якщо IAP названо інакше.
+static TInt startConn()
+    {
+    TUint32 iapId = 0;
+    TRAP_IGNORE(iapId = findApIapL());
+    if (iapId != 0)
+        {
+        TCommDbConnPref pref;
+        pref.SetIapId(iapId);
+        pref.SetDialogPreference(ECommDbDialogPrefDoNotPrompt);
+        pref.SetDirection(ECommDbConnectionDirectionOutgoing);
+        TInt r = g_conn.Start(pref);
+        if (r == KErrNone)
+            {
+            TBuf<64> s; s.Format(_L("connected to Netis (iap %u)"), (unsigned)iapId);
+            say(s);
+            return KErrNone;
+            }
+        TBuf<64> s; s.Format(_L("Netis start err=%d, will prompt"), r);
+        say(s);
+        }
+    else
+        say(_L("Netis IAP not found, will prompt"));
+    return g_conn.Start();
+    }
+
 static void mainL()
     {
     _LIT(KTitle, "PS1 deploy daemon");
@@ -332,10 +389,9 @@ static void mainL()
     User::LeaveIfError(g_ss.Connect());
     User::LeaveIfError(g_conn.Open(g_ss));
 
-    // Може один раз спитати точку доступу; далі з'єднання тримається всю сесію,
-    // тож окремий прогін лишається без дотику до екрана.
+    // Автопідключення до Netis без запиту; за потреби відкат на діалог вибору.
     say(_L("starting connection..."));
-    TInt r = g_conn.Start();
+    TInt r = startConn();
     if (r != KErrNone)
         {
         TBuf<64> s; s.Format(_L("conn start err=%d"), r);

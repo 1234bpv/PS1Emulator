@@ -7,9 +7,11 @@ UID             0 0xE0001004
 SECUREID        0xE0001004
 VENDORID        0
 
-// NetworkServices - сокети; ReadUserData - вибір точки доступу через RConnection.
-// Обидві в самопідписному наборі, тож пакет ставиться й без хака.
-CAPABILITY      NetworkServices ReadUserData
+// NetworkServices - сокети; ReadUserData - RConnection; ReadDeviceData - читання
+// CommDb для пошуку IAP "Netis" (автопідключення). ReadDeviceData не входить у
+// самопідписний набір, тож пакет ставиться лише на зламаному апараті (Install
+// Server), що для нашого демона й так виконано.
+CAPABILITY      NetworkServices ReadUserData ReadDeviceData
 
 EPOCSTACKSIZE   0x5000
 
@@ -20,9 +22,15 @@ START RESOURCE  daemon_reg.rss
 TARGETPATH      \private\10003a3f\import\apps
 END
 
+// Автозапуск при завантаженні: sysstart читає .rsc із цього import-каталогу.
+START RESOURCE  daemon_startup.rss
+TARGETPATH      \private\101f875a\import
+END
+
 SYSTEMINCLUDE   \epoc32\include
 
 LIBRARY         euser.lib
 LIBRARY         efsrv.lib
 LIBRARY         esock.lib
 LIBRARY         insock.lib
+LIBRARY         commdb.lib
