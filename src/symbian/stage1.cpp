@@ -201,6 +201,9 @@ void ps1GpuSetCallbacks(unsigned int *frameCount, unsigned int *hcnt);
 int voutSymbianDump(const char *path);
 int voutSymbianUpdates(void);
 int voutSymbianShow(int holdMs);
+int voutSymbianInit(void);
+void voutSymbianPresent(void);
+int voutSymbianFinish(int holdMs);
 }
 
 // Скільки тримати кадр на екрані, щоб людина встигла глянути (запуск headless
@@ -399,7 +402,7 @@ static void runGpuSelfTest()
 // (інтерпретатор, потім динарек), тож усе, що псує наступний прогін, має тут
 // прибиратися - звідси EmuShutdown у кінці.
 static TInt runPass(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
-	TUint &aTicks, u32 &aProduced)
+	TBool aShowScreen, TUint &aTicks, u32 &aProduced)
 	{
 	const char *mode = aUseDrc ? "drc" : "interp";
 	aTicks = 0;
@@ -423,18 +426,19 @@ static TInt runPass(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
 	Config.FractionalFramerate = -1;
 	Config.AlternativeFlip = -1;
 
-	// Справжній BIOS вмикається другим аргументом ("bios") і поки НЕ придатний для
-	// роботи: він чекає на регістри GPU і SPU, а в нас там заглушки з константами,
-	// тож перший же кадр не завершується (перевірено: 156 с ЦП без жодного кадру).
-	// Вмикати після інтеграції gpu_unai - Етап 2. Завантаження самого дампу справне.
+	// Справжній BIOS вмикається другим аргументом ("bios"). Тепер GPU справжній
+	// (gpu_unai), тож BIOS завантажується й виконується (див. plans/progress.md).
 	if (aUseBios)
 		{
 		strcpy(Config.BiosDir, KBiosDir);
 		strcpy(Config.Bios[PSX_REGION_EU], KBiosFile);
 		Config.PsxRegion = PSX_REGION_EU;
 
-		// Заставка теж вимагає GPU, тож поки обходимо її (r3000a.c:93).
-		Config.SlowBoot = 0;
+		// SlowBoot=1: повний бут із заставкою (логотип SCE/PS). З 0 емулятор
+		// патчить BIOS, щоб пропустити анімацію - тоді екран лишається чорним аж
+		// до очікування диска, і показувати нічого. Раніше було 0, бо GPU був
+		// заглушкою; тепер вмикаємо, щоб побачити логотип.
+		Config.SlowBoot = 1;
 
 		// Диска немає, автовизначення (misc.c:483) не спрацює; дамп європейський.
 		Config.PsxType = PSX_TYPE_PAL;
@@ -468,6 +472,13 @@ static TInt runPass(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
 	flushCoreRepeat();
 	logEvent("exec_begin", NULL, "%s: entering frame loop, %d frames", mode, aFrames);
 
+	// Живий вивід: вікно один раз до циклу, кадр - щокадру всередині.
+	if (aShowScreen)
+		{
+		const int initRc = voutSymbianInit();
+		logEvent("screen_init", initRc ? "SHOW_FAIL" : NULL, "%s: rc=%d", mode, initRc);
+		}
+
 	// Озброїти сторож на весь прохід. Анонімний потік із малим стеком: великий
 	// EPOCSTACKSIZE апарат відхиляє (RThread::Create -> KErrTooBig, див. Етап 3).
 	g_wdRun = 1;
@@ -495,6 +506,11 @@ static TInt runPass(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
 			break;
 			}
 
+		// Живий кадр на екран. Додає накладні (конвертація+BitBlt), тож псує
+		// заміри - вмикається лише за прапорцем screen, не в бенчмарку.
+		if (aShowScreen)
+			voutSymbianPresent();
+
 		// Рідкісні маркери: 6 записів на прогін вимір не псують, зате показують,
 		// доки дійшло, коли процес гине без жодного повідомлення.
 		if ((i + 1) % KProgressEvery == 0)
@@ -520,6 +536,14 @@ static TInt runPass(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
 		"%s: frames=%u ms=%u pc=%08x cycle=%u", mode,
 		(unsigned)aProduced, (unsigned)aTicks,
 		(unsigned)psxRegs.pc, (unsigned)psxRegs.cycle);
+
+	// Тримаємо останній кадр і прибираємо вікно.
+	if (aShowScreen)
+		{
+		voutSymbianFinish(KScreenHoldMs);
+		logEvent("screen", NULL, "%s: presented %u frames, held %dms", mode,
+			(unsigned)aProduced, KScreenHoldMs);
+		}
 
 	EmuShutdown();
 	return aProduced ? KErrNone : KErrGeneral;
@@ -551,15 +575,15 @@ static TInt runStage1()
 
 	if (haveArgs)
 		{
-		rc = runPass(useDrc, framesToRun, useBios, gpuTest,
+		rc = runPass(useDrc, framesToRun, useBios, gpuTest, showScreen,
 			useDrc ? drcTicks : interpTicks, useDrc ? drcFrames : interpFrames);
 		}
 	else
 		{
 		// Спершу інтерпретатор - він відомо працює, тож дає базу для порівняння
-		// навіть якщо динарек упаде наступним.
-		rc = runPass(EFalse, framesToRun, useBios, EFalse, interpTicks, interpFrames);
-		const TInt rcDrc = runPass(ETrue, framesToRun, useBios, ETrue, drcTicks, drcFrames);
+		// навіть якщо динарек упаде наступним. Екран у бенчмарку не чіпаємо.
+		rc = runPass(EFalse, framesToRun, useBios, EFalse, EFalse, interpTicks, interpFrames);
+		const TInt rcDrc = runPass(ETrue, framesToRun, useBios, ETrue, EFalse, drcTicks, drcFrames);
 		if (rc == KErrNone)
 			rc = rcDrc;
 
@@ -572,19 +596,10 @@ static TInt runStage1()
 			(unsigned)drcTicks, (unsigned)drcFrames, drcUs);
 		}
 
-	// Знімок VRAM для перевірки растеризації на хості (Етап 2).
+	// Знімок VRAM для перевірки растеризації на хості (Етап 2). Вивід на екран
+	// тепер живий, усередині runPass (кадр за кадром), а не одноразово тут.
 	const int dumpRc = voutSymbianDump("E:\\ps1_vram.bin");
 	logEvent("vram_dump", dumpRc ? "DUMP_FAIL" : NULL, "rc=%d", dumpRc);
-
-	// Виведення того самого кадру на екран апарата (Етап 2). Лог фіксує код
-	// повернення: KErrNotReady (-18) означає, що vout_update жодного разу не
-	// віддав кадр, решта від'ємних - збій window server / FBS.
-	if (showScreen)
-		{
-		const int showRc = voutSymbianShow(KScreenHoldMs);
-		logEvent("screen", showRc ? "SHOW_FAIL" : NULL, "rc=%d hold=%dms",
-			showRc, KScreenHoldMs);
-		}
 
 	logEvent("shutdown", NULL, NULL);
 	return rc;

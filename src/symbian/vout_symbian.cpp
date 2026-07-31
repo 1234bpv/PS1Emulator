@@ -126,16 +126,27 @@ extern "C" int voutSymbianUpdates(void)
 	return g_vout.updates;
 	}
 
-// --- Виведення кадру на екран (DSA/CFbsBitmap, Етап 2) ----------------------
-// Показуємо вміст VRAM на екрані апарата. Джерело - той самий g_vout, що й дамп
-// (перевірений тракт): якщо gpulib задав вікно дисплея (справжня гра/BIOS),
-// беремо його; інакше (шлях gputest, де регістри дисплея не програмуються) -
-// лівий верхній кут VRAM у розмір екрана, там лежить заливка самоперевірки.
+// --- Живий вивід кадру на екран (window server + BitBlt, Етап 2) ------------
+// Вікно/контекст/бітмап створюються ОДИН раз (Init), кадр блитається ЩОКАДРУ
+// (Present), наприкінці - тримання й прибирання (Finish). Так на екрані видно
+// саму анімацію (завантаження BIOS, гру), а не єдиний кадр у кінці прогону -
+// раніше показ у кінці ловив BIOS уже в простої (чорний екран).
 //
-// Малюємо через window server + BitBlt, а не через CDirectScreenAccess: DSA -
-// це CActive і потребує CActiveScheduler та обробки AbortNow/Restart, тоді як
-// для показу одного кадру достатньо синхронного BitBlt. Швидкий шлях DSA -
-// коли дійде до анімації (Етап 4), а не до перевірки виведення.
+// Present сам оновлює g_vout поточним кадром (vout_update), бо gpulib презентує
+// рідко - лише за fb_dirty_display_area (тому в дампі був upd=1). Нам потрібен
+// кожен кадр, тож викликаємо vout_update напряму й читаємо свіжий VRAM.
+//
+// DSA (CDirectScreenAccess) навмисно не беремо: це CActive із CActiveScheduler
+// та обробкою AbortNow/Restart; синхронного BitBlt для нашого циклу достатньо.
+
+static TBool g_wsReady;
+static RWsSession g_ws;
+static CWsScreenDevice *g_dev;
+static RWindowGroup g_grp;
+static RWindow g_win;
+static CWindowGc *g_gc;
+static CFbsBitmap *g_bmp;
+static TSize g_scr;
 
 // PS1 VRAM - BGR555 (біт15 маска, 14-10 B, 9-5 G, 4-0 R); екран EColor64K -
 // RGB565. Зелений розширюємо з 5 до 6 біт, щоб не втратити яскравість.
@@ -148,45 +159,37 @@ static inline TUint16 Bgr555ToRgb565(TUint16 aPix)
 	return (TUint16)((r << 11) | (g6 << 5) | b);
 	}
 
-static void ShowL(TInt aHoldMs)
+static void initL()
 	{
-	const TUint16 *vram = (const TUint16 *)g_vout.vram;
-	if (!vram)
-		User::Leave(KErrNotReady);
+	User::LeaveIfError(g_ws.Connect());
+	g_dev = new (ELeave) CWsScreenDevice(g_ws);
+	User::LeaveIfError(g_dev->Construct());
+	g_grp = RWindowGroup(g_ws);
+	User::LeaveIfError(g_grp.Construct((TUint32)&g_grp, ETrue));
+	g_grp.SetOrdinalPosition(0);
+	g_win = RWindow(g_ws);
+	User::LeaveIfError(g_win.Construct(g_grp, (TUint32)&g_win));
+	g_scr = g_dev->SizeInPixels();
+	g_win.SetExtent(TPoint(0, 0), g_scr);
+	g_win.SetBackgroundColor(KRgbBlack);
+	g_win.Activate();
+	g_gc = new (ELeave) CWindowGc(g_dev);
+	User::LeaveIfError(g_gc->Construct());
+	g_bmp = new (ELeave) CFbsBitmap;
+	User::LeaveIfError(g_bmp->Create(g_scr, EColor64K));
+	g_wsReady = ETrue;
+	}
 
-	RWsSession ws;
-	User::LeaveIfError(ws.Connect());
-	CleanupClosePushL(ws);
+// Масштабує поточний g_vout у g_bmp (nearest-neighbor, збереження пропорцій,
+// чорні поля) і блитає у вікно.
+static void blitCurrent()
+	{
+	const TUint8 *vbytes = (const TUint8 *)g_vout.vram;
+	if (!vbytes)
+		return;
 
-	CWsScreenDevice *dev = new (ELeave) CWsScreenDevice(ws);
-	CleanupStack::PushL(dev);
-	User::LeaveIfError(dev->Construct());
-
-	RWindowGroup grp(ws);
-	User::LeaveIfError(grp.Construct((TUint32)&grp, ETrue));
-	CleanupClosePushL(grp);
-	grp.SetOrdinalPosition(0);
-
-	RWindow win(ws);
-	User::LeaveIfError(win.Construct(grp, (TUint32)&win));
-	CleanupClosePushL(win);
-
-	const TSize scr = dev->SizeInPixels();
-	win.SetExtent(TPoint(0, 0), scr);
-	win.SetBackgroundColor(KRgbBlack);
-	win.Activate();
-
-	CWindowGc *gc = new (ELeave) CWindowGc(dev);
-	CleanupStack::PushL(gc);
-	User::LeaveIfError(gc->Construct());
-
-	// Початок і розмір джерела у VRAM (g_vout.offset - байтовий, уже враховує
-	// src_x/src_y). Якщо gpulib задав вікно дисплея - беремо його; інакше
-	// (шлях gputest, де регістри дисплея не програмуються) - лівий верхній кут
-	// VRAM у розмір екрана, там лежить заливка самоперевірки.
-	const TUint8 *vbytes = (const TUint8 *)vram;
 	TInt startByte = 0;
-	TInt sw = scr.iWidth, sh = scr.iHeight;
+	TInt sw = g_scr.iWidth, sh = g_scr.iHeight;
 	const TBool rgb24 = g_vout.rgb24;
 	if (g_vout.w > 0 && g_vout.h > 0)
 		{
@@ -202,11 +205,10 @@ static void ShowL(TInt aHoldMs)
 	if (sh > 512 - startRow) sh = 512 - startRow;  // не читати за межі VRAM 1024x512
 	if (sh < 1) sh = 1;
 
-	// Вписуємо джерело в екран зі збереженням пропорцій (nearest-neighbor),
-	// решта - чорні поля. PS1 видає 320x240 (ландшафт), екран N95 240x320
-	// (портрет), тож кадр гри лягає у ~240x180 з полями згори й знизу.
-	// Обертання під ландшафтну гру - окреме питання доведення (Етап 4).
-	const TInt SW = scr.iWidth, SH = scr.iHeight;
+	// Вписуємо джерело в екран зі збереженням пропорцій. PS1 - ландшафт
+	// (320x240/640x480), екран N95 - портрет (240x320), тож кадр лягає з
+	// чорними полями згори/знизу. Обертання під ландшафт - доведення (Етап 4).
+	const TInt SW = g_scr.iWidth, SH = g_scr.iHeight;
 	TInt dstW = SW;
 	TInt dstH = sh * SW / sw;
 	if (dstH > SH) { dstH = SH; dstW = sw * SH / sh; }
@@ -215,22 +217,17 @@ static void ShowL(TInt aHoldMs)
 	const TInt ox = (SW - dstW) / 2;
 	const TInt oy = (SH - dstH) / 2;
 
-	CFbsBitmap *bmp = new (ELeave) CFbsBitmap;
-	CleanupStack::PushL(bmp);
-	User::LeaveIfError(bmp->Create(TSize(SW, SH), EColor64K));
-
-	bmp->LockHeap();
-	TUint16 *dst = (TUint16 *)bmp->DataAddress();
-	const TInt dstStride = bmp->DataStride() / 2;   // у 16-бітних словах
-	Mem::FillZ(dst, dstStride * SH * 2);            // чорні поля
+	g_bmp->LockHeap();
+	TUint16 *dst = (TUint16 *)g_bmp->DataAddress();
+	const TInt dstStride = g_bmp->DataStride() / 2;   // у 16-бітних словах
+	Mem::FillZ(dst, dstStride * SH * 2);              // чорні поля
 	for (TInt dy = 0; dy < dstH; dy++)
 		{
 		const TInt sy = dy * sh / dstH;
 		TUint16 *drow = dst + (oy + dy) * dstStride + ox;
 		if (rgb24)
 			{
-			// RGB24: 3 байти на піксель (R,G,B). Поки НЕ перевірено на залізі -
-			// gputest 16-бітний, а без гри 24-бітного джерела немає.
+			// RGB24: 3 байти на піксель (R,G,B). Поки НЕ перевірено на залізі.
 			const TUint8 *srow = vbytes + startByte + sy * 2048;
 			for (TInt dx = 0; dx < dstW; dx++)
 				{
@@ -245,36 +242,63 @@ static void ShowL(TInt aHoldMs)
 				drow[dx] = Bgr555ToRgb565(srow[dx * sw / dstW]);
 			}
 		}
-	bmp->UnlockHeap();
+	g_bmp->UnlockHeap();
 
-	win.Invalidate();
-	win.BeginRedraw();
-	gc->Activate(win);
-	gc->BitBlt(TPoint(0, 0), bmp);
-	gc->Deactivate();
-	win.EndRedraw();
-	ws.Flush();
-
-	User::After(aHoldMs * 1000);
-
-	CleanupStack::PopAndDestroy(bmp);
-	CleanupStack::PopAndDestroy(gc);
-	CleanupStack::PopAndDestroy();   // win
-	CleanupStack::PopAndDestroy();   // grp
-	CleanupStack::PopAndDestroy(dev);
-	CleanupStack::PopAndDestroy();   // ws
+	g_win.Invalidate();
+	g_win.BeginRedraw();
+	g_gc->Activate(g_win);
+	g_gc->BitBlt(TPoint(0, 0), g_bmp);
+	g_gc->Deactivate();
+	g_win.EndRedraw();
+	g_ws.Flush();
 	}
 
-// Тримаємо кадр aHoldMs мілісекунд, щоб людина встигла глянути на екран.
-// Обгорнуто у TRAP: збій виведення не має валити прогін (числа з логу цінні
-// самі по собі), тому повертаємо код помилки, а не лишаємо leave нагору.
-extern "C" int voutSymbianShow(int holdMs)
+// Init/Present/Finish обгорнуті у TRAP: збій виведення не має валити прогін
+// (числа з логу цінні самі по собі).
+extern "C" int voutSymbianInit(void)
 	{
+	if (g_wsReady)
+		return KErrNone;
+	TInt err;
+	TRAP(err, initL());
+	return err;
+	}
+
+extern "C" void voutSymbianPresent(void)
+	{
+	if (!g_wsReady)
+		return;
+	// Оновити g_vout поточним кадром напряму (gpulib робить це рідко), тоді блит.
+	vout_update(&gpu, gpu.screen.src_x, gpu.screen.src_y);
+	TRAP_IGNORE(blitCurrent());
+	}
+
+extern "C" int voutSymbianFinish(int holdMs)
+	{
+	if (!g_wsReady)
+		return KErrNotReady;
 	if (holdMs < 0) holdMs = 0;
 	if (holdMs > 30000) holdMs = 30000;
-	TInt err;
-	TRAP(err, ShowL(holdMs));
-	return err;
+	if (holdMs > 0)
+		User::After(holdMs * 1000);
+	delete g_bmp; g_bmp = NULL;
+	delete g_gc;  g_gc = NULL;
+	g_win.Close();
+	g_grp.Close();
+	delete g_dev; g_dev = NULL;
+	g_ws.Close();
+	g_wsReady = EFalse;
+	return KErrNone;
+	}
+
+// Одноразовий показ (шлях gputest: статична картинка): init + один present + hold.
+extern "C" int voutSymbianShow(int holdMs)
+	{
+	TInt r = voutSymbianInit();
+	if (r != KErrNone)
+		return r;
+	voutSymbianPresent();
+	return voutSymbianFinish(holdMs);
 	}
 
 // --- Обгортки для libpcsxcore -----------------------------------------------
