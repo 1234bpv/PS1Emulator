@@ -180,31 +180,70 @@ static void ShowL(TInt aHoldMs)
 	CleanupStack::PushL(gc);
 	User::LeaveIfError(gc->Construct());
 
-	// Початок і розмір джерела у VRAM. g_vout.offset уже враховує src_x/src_y.
-	const TUint16 *base = vram;
-	TInt w = scr.iWidth, h = scr.iHeight;
+	// Початок і розмір джерела у VRAM (g_vout.offset - байтовий, уже враховує
+	// src_x/src_y). Якщо gpulib задав вікно дисплея - беремо його; інакше
+	// (шлях gputest, де регістри дисплея не програмуються) - лівий верхній кут
+	// VRAM у розмір екрана, там лежить заливка самоперевірки.
+	const TUint8 *vbytes = (const TUint8 *)vram;
+	TInt startByte = 0;
+	TInt sw = scr.iWidth, sh = scr.iHeight;
+	const TBool rgb24 = g_vout.rgb24;
 	if (g_vout.w > 0 && g_vout.h > 0)
 		{
-		base = vram + g_vout.offset / 2;
-		w = g_vout.w;
-		h = g_vout.h;
+		startByte = g_vout.offset;
+		sw = g_vout.w;
+		sh = g_vout.h;
 		}
-	if (w > scr.iWidth)  w = scr.iWidth;   // без масштабування на першому кроці
-	if (h > scr.iHeight) h = scr.iHeight;
+	if (sw < 1) sw = 1;
+	if (sh < 1) sh = 1;
+	const TInt maxW = rgb24 ? 682 : 1024;          // 2048 байтів на рядок VRAM
+	if (sw > maxW) sw = maxW;
+	const TInt startRow = startByte / 2048;
+	if (sh > 512 - startRow) sh = 512 - startRow;  // не читати за межі VRAM 1024x512
+	if (sh < 1) sh = 1;
+
+	// Вписуємо джерело в екран зі збереженням пропорцій (nearest-neighbor),
+	// решта - чорні поля. PS1 видає 320x240 (ландшафт), екран N95 240x320
+	// (портрет), тож кадр гри лягає у ~240x180 з полями згори й знизу.
+	// Обертання під ландшафтну гру - окреме питання доведення (Етап 4).
+	const TInt SW = scr.iWidth, SH = scr.iHeight;
+	TInt dstW = SW;
+	TInt dstH = sh * SW / sw;
+	if (dstH > SH) { dstH = SH; dstW = sw * SH / sh; }
+	if (dstW < 1) dstW = 1;
+	if (dstH < 1) dstH = 1;
+	const TInt ox = (SW - dstW) / 2;
+	const TInt oy = (SH - dstH) / 2;
 
 	CFbsBitmap *bmp = new (ELeave) CFbsBitmap;
 	CleanupStack::PushL(bmp);
-	User::LeaveIfError(bmp->Create(TSize(w, h), EColor64K));
+	User::LeaveIfError(bmp->Create(TSize(SW, SH), EColor64K));
 
 	bmp->LockHeap();
 	TUint16 *dst = (TUint16 *)bmp->DataAddress();
 	const TInt dstStride = bmp->DataStride() / 2;   // у 16-бітних словах
-	for (TInt row = 0; row < h; row++)
+	Mem::FillZ(dst, dstStride * SH * 2);            // чорні поля
+	for (TInt dy = 0; dy < dstH; dy++)
 		{
-		const TUint16 *s = base + row * 1024;        // крок рядка VRAM - 1024
-		TUint16 *d = dst + row * dstStride;
-		for (TInt col = 0; col < w; col++)
-			d[col] = Bgr555ToRgb565(s[col]);
+		const TInt sy = dy * sh / dstH;
+		TUint16 *drow = dst + (oy + dy) * dstStride + ox;
+		if (rgb24)
+			{
+			// RGB24: 3 байти на піксель (R,G,B). Поки НЕ перевірено на залізі -
+			// gputest 16-бітний, а без гри 24-бітного джерела немає.
+			const TUint8 *srow = vbytes + startByte + sy * 2048;
+			for (TInt dx = 0; dx < dstW; dx++)
+				{
+				const TUint8 *p = srow + (dx * sw / dstW) * 3;
+				drow[dx] = (TUint16)(((p[0] >> 3) << 11) | ((p[1] >> 2) << 5) | (p[2] >> 3));
+				}
+			}
+		else
+			{
+			const TUint16 *srow = (const TUint16 *)(vbytes + startByte) + sy * 1024;
+			for (TInt dx = 0; dx < dstW; dx++)
+				drow[dx] = Bgr555ToRgb565(srow[dx * sw / dstW]);
+			}
 		}
 	bmp->UnlockHeap();
 
