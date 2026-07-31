@@ -306,28 +306,40 @@ static TBool serveOne(RSocket &aSock)
 
 // --- підняття мережі --------------------------------------------------------
 
-// Знаходить перший не-loopback IPv4 і пише його у файл + на екран. Це стандартний
-// рецепт переліку інтерфейсів через опції UDP-сокета - offline-безпечний.
-static void reportIp()
+// Поточний не-loopback IPv4, якщо є. ETrue = мережа піднята. Стандартний рецепт
+// переліку інтерфейсів через опції UDP-сокета - offline-безпечний.
+static TBool currentIp(TDes &aOut)
     {
+    aOut.Zero();
     RSocket probe;
     if (probe.Open(g_ss, KAfInet, KSockDatagram, KProtocolInetUdp, g_conn) != KErrNone)
-        return;
+        return EFalse;
     probe.SetOpt(KSoInetEnumInterfaces, KSolInetIfCtrl);
     TPckgBuf<TSoInetInterfaceInfo> info;
-    TBuf<40> ipText;
     while (probe.GetOpt(KSoInetNextInterface, KSolInetIfCtrl, info) == KErrNone)
         {
         TInetAddr addr(info().iAddress);
         if (addr.Address() != 0 && addr.Address() != INET_ADDR(127, 0, 0, 1))
             {
-            addr.Output(ipText);
+            addr.Output(aOut);
             break;
             }
         }
     probe.Close();
+    return aOut.Length() > 0;
+    }
 
-    if (ipText.Length())
+// Чи піднята мережа зараз (для перевірки здоров'я з'єднання в циклі прийому).
+static TBool haveIp()
+    {
+    TBuf<40> ip;
+    return currentIp(ip);
+    }
+
+static void reportIp()
+    {
+    TBuf<40> ipText;
+    if (currentIp(ipText))
         {
         TBuf<80> s; s.Format(_L("IP %S port %d"), &ipText, KPort);
         say(s);
@@ -407,6 +419,54 @@ static TInt startConn()
     return g_conn.Start();
     }
 
+// Обслуговує з'єднання, паралельно раз на 15 с перевіряючи, чи жива мережа.
+// Повертає EFalse на STOP (демон завершується), ETrue на втраті мережі
+// (потрібне перепідключення). Health-check прибирає зомбі-стан: раніше при
+// зникненні WiFi демон висів у Accept живим, тримав порт, і перезапуск не
+// вдавався (захист екземпляра) - лишався тільки ребут.
+static TBool acceptLoop()
+    {
+    RTimer timer;
+    if (timer.CreateLocal() != KErrNone)
+        return ETrue;
+    TBool reconnect = ETrue;
+    for (;;)
+        {
+        RSocket sock;
+        if (sock.Open(g_ss) != KErrNone)
+            break;
+        TRequestStatus astat, tstat;
+        g_listener.Accept(sock, astat);
+        timer.After(tstat, 15 * 1000000);
+        User::WaitForRequest(astat, tstat);
+        if (astat != KRequestPending)
+            {
+            timer.Cancel();
+            User::WaitForRequest(tstat);
+            if (astat == KErrNone)
+                {
+                say(_L("client connected"));
+                g_residual.Zero();
+                if (!serveOne(sock)) { sock.Close(); reconnect = EFalse; break; }
+                say(_L("client done"));
+                }
+            sock.Close();
+            continue;
+            }
+        // Спрацював таймер: скасувати Accept і перевірити мережу.
+        g_listener.CancelAccept();
+        User::WaitForRequest(astat);
+        sock.Close();
+        if (!haveIp())
+            {
+            say(_L("network lost - reconnecting"));
+            break;
+            }
+        }
+    timer.Close();
+    return reconnect;
+    }
+
 static void mainL()
     {
     _LIT(KTitle, "PS1 deploy daemon");
@@ -436,52 +496,54 @@ static void mainL()
 
     User::LeaveIfError(g_ss.Connect());
     say(_L("socket server ok"));
-    User::LeaveIfError(g_conn.Open(g_ss));
-    say(_L("connection opened"));
 
-    // Автопідключення до Netis без запиту; за потреби відкат на діалог вибору.
-    say(_L("starting connection..."));
-    TInt r = startConn();
-    if (r != KErrNone)
+    // Самовідновлення: підключитись -> слухати -> при втраті мережі
+    // перепідключитись. Так засинання WiFi більше не робить демон зомбі; вихід
+    // лише за командою STOP.
+    for (;;)
         {
-        TBuf<64> s; s.Format(_L("conn start err=%d"), r);
-        say(s);
-        User::Leave(r);
-        }
-    say(_L("connection up"));
-
-    reportIp();
-
-    User::LeaveIfError(
-        g_listener.Open(g_ss, KAfInet, KSockStream, KProtocolInetTcp, g_conn));
-    TInetAddr addr;
-    addr.SetPort(KPort);
-    addr.SetAddress(KInetAddrAny);
-    User::LeaveIfError(g_listener.Bind(addr));
-    User::LeaveIfError(g_listener.Listen(4));
-    say(_L("listening. STOP command or task-kill to quit."));
-
-    TBool keepGoing = ETrue;
-    while (keepGoing)
-        {
-        RSocket sock;
-        if (sock.Open(g_ss) != KErrNone)
-            break;
-        TRequestStatus st;
-        g_listener.Accept(sock, st);
-        User::WaitForRequest(st);
-        if (st == KErrNone)
+        User::LeaveIfError(g_conn.Open(g_ss));
+        say(_L("connection opened, starting..."));
+        TInt r = startConn();
+        if (r != KErrNone)
             {
-            say(_L("client connected"));
-            g_residual.Zero();
-            keepGoing = serveOne(sock);
-            say(_L("client done"));
+            TBuf<64> s; s.Format(_L("conn start err=%d, retry in 10s"), r); say(s);
+            g_conn.Close();
+            User::After(10 * 1000000);
+            continue;
             }
-        sock.Close();
+        say(_L("connection up"));
+        reportIp();
+
+        TInt lr = g_listener.Open(g_ss, KAfInet, KSockStream, KProtocolInetTcp, g_conn);
+        if (lr == KErrNone)
+            {
+            TInetAddr addr;
+            addr.SetPort(KPort);
+            addr.SetAddress(KInetAddrAny);
+            lr = g_listener.Bind(addr);
+            }
+        if (lr == KErrNone)
+            lr = g_listener.Listen(4);
+        if (lr != KErrNone)
+            {
+            TBuf<64> s; s.Format(_L("listen err=%d, reconnecting"), lr); say(s);
+            g_listener.Close();
+            g_conn.Close();
+            User::After(5 * 1000000);
+            continue;
+            }
+        say(_L("listening. STOP to quit."));
+
+        const TBool reconnect = acceptLoop();
+        g_listener.Close();
+        g_conn.Close();
+        if (!reconnect)
+            break;               // STOP
+        say(_L("reconnecting..."));
+        User::After(3 * 1000000);
         }
 
-    g_listener.Close();
-    g_conn.Close();
     g_ss.Close();
     say(_L("=== daemon stop ==="));
     if (g_haveLog) { g_logFile.Close(); g_haveLog = EFalse; }  // до закриття ФС
