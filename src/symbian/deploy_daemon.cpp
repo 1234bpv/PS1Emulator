@@ -467,6 +467,35 @@ static TBool acceptLoop()
     return reconnect;
     }
 
+// Завершити інші екземпляри демона. Консольний exe диспетчер завдань не знімає, а
+// завислий екземпляр (напр. після сну WiFi) тримав сокет/семафор і блокував новий
+// запуск - раніше рятував лише ребут. Тепер новий запуск сам замінює старого.
+// Потребує capability PowerMgmt (вбивство чужого процесу).
+static void killOtherInstances()
+    {
+    const TProcessId myId = RProcess().Id();
+    TFindProcess finder(_L("ps1daemon*"));
+    TFullName name;
+    TInt killed = 0;
+    while (finder.Next(name) == KErrNone)
+        {
+        RProcess p;
+        if (p.Open(name) != KErrNone)
+            continue;
+        if (p.Id() != myId && p.ExitType() == EExitPending)
+            {
+            p.Kill(0);
+            killed++;
+            }
+        p.Close();
+        }
+    if (killed)
+        {
+        TBuf<64> s; s.Format(_L("killed %d stale instance(s)"), killed); say(s);
+        User::After(500 * 1000);   // дати ядру звільнити сокет/семафор
+        }
+    }
+
 static void mainL()
     {
     _LIT(KTitle, "PS1 deploy daemon");
@@ -485,13 +514,16 @@ static void mainL()
         (unsigned)User::NTickCount());
     say(startMsg);
 
-    // Захист від подвійного запуску: якщо семафор уже є - інший демон живий,
-    // виходимо чисто (без -14 на Bind, що виглядало як крах).
+    // Новий запуск замінює старий: спершу знімаємо будь-які інші екземпляри
+    // (у т.ч. завислі), тоді беремо семафор. Раніше тут був відмовний вихід, що й
+    // робило демон неперезапускним без ребуту.
+    killOtherInstances();
     _LIT(KSingleName, "ps1daemon_single");
     if (g_single.CreateGlobal(KSingleName, 0) == KErrAlreadyExists)
         {
-        say(_L("another instance already running - exiting cleanly"));
-        return; // E32Main закриє лог; решту звільнить вихід процесу
+        // Старий не звільнив семафор миттєво - зачекаємо ще трохи й продовжимо;
+        // самовідновний цикл нижче все одно повторюватиме Bind, доки сокет вільний.
+        say(_L("single-instance busy after kill - proceeding anyway"));
         }
 
     User::LeaveIfError(g_ss.Connect());

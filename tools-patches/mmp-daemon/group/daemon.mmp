@@ -11,7 +11,8 @@ VENDORID        0
 // CommDb для пошуку IAP "Netis" (автопідключення). ReadDeviceData не входить у
 // самопідписний набір, тож пакет ставиться лише на зламаному апараті (Install
 // Server), що для нашого демона й так виконано.
-CAPABILITY      NetworkServices ReadUserData ReadDeviceData
+// PowerMgmt: killOtherInstances() знімає завислий екземпляр при новому запуску.
+CAPABILITY      NetworkServices ReadUserData ReadDeviceData PowerMgmt
 
 EPOCSTACKSIZE   0x5000
 
