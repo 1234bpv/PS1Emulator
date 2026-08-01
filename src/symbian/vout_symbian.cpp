@@ -10,6 +10,7 @@
 #include <e32base.h>
 #include <w32std.h>
 #include <fbs.h>
+#include <hal.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -168,6 +169,30 @@ static CFbsBitGc *g_dsaGc;
 static TBool g_dsaActive;
 static CActiveScheduler *g_dsaSched;   // ненульовий лише якщо його створив DSA
 
+// Прямий запис у буфер LCD (HAL): масштабуємо кадр одразу в екран, зливаючи fill
+// і present в один прохід (профіль показав: present - це bandwidth копії 150КБ,
+// не оверхед). Лише коли DSA активний (володіє екраном) і формат = RGB565.
+static TBool    g_fbOk;
+static TUint16 *g_fbBase;    // адреса першого пікселя
+static TInt     g_fbStride;  // 16-бітних слів на рядок
+static TInt     g_fbW, g_fbH;
+
+static void queryFramebuffer()
+	{
+	g_fbOk = EFalse;
+	TInt addr = 0, bpp = 0, lineOff = 0, firstOff = 0, xpix = 0, ypix = 0;
+	if (HAL::Get(HALData::EDisplayMemoryAddress, addr) != KErrNone || addr == 0) return;
+	if (HAL::Get(HALData::EDisplayBitsPerPixel, bpp) != KErrNone || bpp != 16) return;
+	if (HAL::Get(HALData::EDisplayOffsetBetweenLines, lineOff) != KErrNone || lineOff < 2) return;
+	HAL::Get(HALData::EDisplayOffsetToFirstPixel, firstOff);
+	if (HAL::Get(HALData::EDisplayXPixels, xpix) != KErrNone || xpix < 1) return;
+	if (HAL::Get(HALData::EDisplayYPixels, ypix) != KErrNone || ypix < 1) return;
+	g_fbBase   = (TUint16 *)((TUint8 *)addr + firstOff);
+	g_fbStride = lineOff / 2;
+	g_fbW = xpix; g_fbH = ypix;
+	g_fbOk = ETrue;
+	}
+
 static void dsaStartL()
 	{
 	g_dsa->StartL();
@@ -272,6 +297,8 @@ static void initL()
 			});
 		if (e != KErrNone)
 			{ delete g_dsa; g_dsa = NULL; g_dsaGc = NULL; g_dsaActive = EFalse; }
+		else
+			queryFramebuffer();   // прямий запис у LCD, якщо формат підходить
 		}
 
 	g_wsReady = ETrue;
@@ -302,10 +329,17 @@ static void blitCurrent()
 	if (sh > 512 - startRow) sh = 512 - startRow;  // не читати за межі VRAM 1024x512
 	if (sh < 1) sh = 1;
 
+	// Пампимо планувальник (DSA abort/restart) до вибору цілі, щоб не писати в
+	// екран, який WS уже забрав.
+	if (g_useDsa && CActiveScheduler::Current())
+		{ TInt _e; while (CActiveScheduler::RunIfReady(_e, CActive::EPriorityIdle)) { } }
+	const TBool directFb = (g_useDsa && g_dsaActive && g_fbOk);
+
 	// Вписуємо джерело в екран зі збереженням пропорцій. Орієнтацію НЕ обертаємо
-	// самі: апарат робить автоповорот вікна за акселерометром, тож ручний поворот
-	// давав би подвійний. Малюємо вертикально, letterbox згори/знизу.
-	const TInt SW = g_scr.iWidth, SH = g_scr.iHeight;
+	// самі: апарат робить автоповорот вікна за акселерометром. У directFb цілимось
+	// прямо у фізичний буфер LCD (розміри з HAL).
+	const TInt SW = directFb ? g_fbW : g_scr.iWidth;
+	const TInt SH = directFb ? g_fbH : g_scr.iHeight;
 
 	// Черезрядкові режими (hi-res, sh>256) кладуть поля в сусідні рядки VRAM, тож
 	// лінійне читання дає "гребінку". Беремо одне поле (парні рядки); пропорцію
@@ -322,9 +356,19 @@ static void blitCurrent()
 	const TInt oy = (SH - dstH) / 2;
 
 	const TUint _fc0 = User::FastCounter();
-	g_bmp->LockHeap();
-	TUint16 *dst = (TUint16 *)g_bmp->DataAddress();
-	const TInt dstStride = g_bmp->DataStride() / 2;   // у 16-бітних словах
+	TUint16 *dst;
+	TInt dstStride;
+	if (directFb)
+		{
+		dst = g_fbBase;             // прямо в LCD - зливаємо fill і present в один прохід
+		dstStride = g_fbStride;
+		}
+	else
+		{
+		g_bmp->LockHeap();
+		dst = (TUint16 *)g_bmp->DataAddress();
+		dstStride = g_bmp->DataStride() / 2;   // у 16-бітних словах
+		}
 	// Чорні поля лише коли геометрія змінилась: інакше вони вже чорні з минулого
 	// кадру, а зображення однаково перезаписується. Прибирає memset ~150КБ/кадр.
 	if (ox != g_blitOx || oy != g_blitOy || dstW != g_blitW || dstH != g_blitH)
@@ -366,21 +410,20 @@ static void blitCurrent()
 				}
 			}
 		}
-	g_bmp->UnlockHeap();
+	if (!directFb)
+		g_bmp->UnlockHeap();
 	const TUint _fc1 = User::FastCounter();
 	g_blitFillTicks += (unsigned)(_fc1 - _fc0);
 
-	if (g_useDsa && g_dsaActive && g_dsaGc)
+	if (directFb)
 		{
-		// Обробити можливі abort/restart від WS перед малюванням.
-		if (CActiveScheduler::Current())
-			{ TInt e; while (CActiveScheduler::RunIfReady(e, CActive::EPriorityIdle)) { } }
-		if (g_dsaActive && g_dsaGc)     // не абортнуто під час пампу
-			{
-			g_dsaGc->BitBlt(TPoint(0, 0), g_bmp);
-			CFbsScreenDevice *sd = g_dsa->ScreenDevice();
-			if (sd) sd->Update();       // проштовхнути в буфер екрана
-			}
+		// Кадр уже в буфері екрана - present-копія не потрібна.
+		}
+	else if (g_useDsa && g_dsaActive && g_dsaGc)
+		{
+		g_dsaGc->BitBlt(TPoint(0, 0), g_bmp);
+		CFbsScreenDevice *sd = g_dsa->ScreenDevice();
+		if (sd) sd->Update();           // проштовхнути в буфер екрана
 		}
 	else
 		{
