@@ -30,9 +30,22 @@ MACRO           BASE_ADDR_DYNAMIC=1
 SOURCEPATH      ..\..\..\src\symbian
 SOURCE          stage1.cpp
 SOURCE          vout_symbian.cpp
+// Glue звуку: обгортки ps1Spu* над dfsound + out-драйвер (окремо від plugins.h).
+SOURCE          snd_symbian.cpp
 // Платформна заміна mmap(PROT_EXEC)/__clear_cache для динареку.
 SOURCE          ndrc_mem_symbian.cpp
 
+// Звук: dfsound (портабельна гілка). spu.c втягує reverb/adsr/xa через #include.
+// NEON off (потребує ARMv7+__ARM_NEON__), ssat під HAVE_ARMV6 - безпечно для ARM11.
+SOURCEPATH      ..\..\..\pcsx_rearmed\plugins\dfsound
+SOURCE          spu.c registers.c dma.c freeze.c out.c nullsnd.c
+
+// mix_chan/mix_chan_rvb: HAVE_ARMV5 (від -march=armv6) вмикає asm-версії в spu.c.
+// Попередньо оброблено (..\asm), як gte_arm - abld не запускає cpp на .s. Regen: ..\asm\regen.cmd
+SOURCEPATH      ..\asm
+SOURCE          arm_utils.s
+
+SOURCEPATH      ..\..\..\src\symbian
 // Шлях відносний до SOURCEPATH вище, не до .mmp.
 START RESOURCE  stage1_reg.rss
 TARGETPATH      \private\10003a3f\import\apps
@@ -47,6 +60,7 @@ USERINCLUDE     ..\..\..\pcsx_rearmed
 USERINCLUDE     ..\..\..\pcsx_rearmed\include
 USERINCLUDE     ..\..\..\pcsx_rearmed\libpcsxcore
 USERINCLUDE     ..\..\..\pcsx_rearmed\plugins\gpulib
+USERINCLUDE     ..\..\..\pcsx_rearmed\plugins\dfsound
 
 SYSTEMINCLUDE   \epoc32\include
 SYSTEMINCLUDE   \epoc32\include\libc

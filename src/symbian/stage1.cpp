@@ -276,47 +276,31 @@ static TInt watchdogThread(TAny *aArg)
 
 static unsigned int g_gpuHcnt;
 
-// Мінімальний SPU: без звуку (Етап 4), лише достатньо, щоб рання ініціалізація
-// BIOS пройшла. BIOS пише SPUCNT (0x1f801daa), тоді опитує SPUSTAT (0x1f801dae) і
-// чекає, поки низькі біти статусу віддзеркалять контроль (dfsound registers.c:147).
-// Стаб, що завжди 0, давав вічний полінг (pc bfc04174). Ведемо тіньові регістри
-// й правильний SPUSTAT; транспорт/DMA лишаються заглушками, але статус вдає
-// готовність (біт «зайнято» не встановлюється), тож полінги завершуються.
-static unsigned short g_spuReg[256];   // 0x1f801c00..0x1f801dff, крок 2
-static unsigned short g_spuStat;
+// Звук: справжній SPU - dfsound через обгортки ps1Spu* у snd_symbian.cpp (там
+// plugins.h не включено, тож назви функцій dfsound не конфліктують із typedef).
+extern "C" {
+long ps1SpuInit(void);
+long ps1SpuShutdown(void);
+long ps1SpuOpen(void);
+long ps1SpuClose(void);
+void ps1SpuConfigure(void);
+void ps1SpuWriteRegister(unsigned long, unsigned short, unsigned int);
+unsigned short ps1SpuReadRegister(unsigned long, unsigned int);
+void ps1SpuWriteDMAMem(unsigned short *, int, unsigned int);
+void ps1SpuReadDMAMem(unsigned short *, int, unsigned int);
+void ps1SpuAsync(unsigned int, unsigned int);
+void ps1SpuRegisterCallback(void (*cb)(int));
+void ps1SpuRegisterScheduleCb(void (*cb)(unsigned int));
+void ps1SndConfigure(void);
+void ps1SndSelectOutput(void);
+void ps1SndStats(unsigned *feeds, unsigned *samples, int *maxAmp);
+}
 
-static long CALLBACK spuInit(void)
-	{
-	memset(g_spuReg, 0, sizeof(g_spuReg));
-	g_spuStat = 0;
-	return 0;
-	}
-static long CALLBACK spuShutdown(void)                                        { return 0; }
-static long CALLBACK spuClose(void)                                           { return 0; }
-static void CALLBACK spuWriteRegister(unsigned long reg, unsigned short val, unsigned int)
-	{
-	const unsigned o = reg & 0xfff;                    // 0xc00..0xdff
-	if (o >= 0xc00 && o <= 0xdff)
-		g_spuReg[(o - 0xc00) >> 1] = val;
-	if (o == 0xdaa)                                    // SPUCNT -> оновити SPUSTAT
-		g_spuStat = (unsigned short)((val & 0x3f) | ((val << 2) & 0x80));
-	}
-static unsigned short CALLBACK spuReadRegister(unsigned long reg, unsigned int)
-	{
-	const unsigned o = reg & 0xfff;
-	if (o == 0xdae)                                    // SPUSTAT: дзеркалить SPUCNT, не «зайнято»
-		return g_spuStat;
-	if (o >= 0xc00 && o <= 0xdff)
-		return g_spuReg[(o - 0xc00) >> 1];
-	return 0;
-	}
-static void CALLBACK spuWriteDMAMem(unsigned short *, int, unsigned int)      { }
-static void CALLBACK spuReadDMAMem(unsigned short *, int, unsigned int)       { }
+// XA/CD-аудіо та freeze для звуку BIOS не потрібні - лишаємо заглушками.
 static void CALLBACK spuPlayADPCMchannel(xa_decode_t *, unsigned int, int)    { }
 static long CALLBACK spuFreeze(int, SPUFreeze_t *, unsigned short **, void *, unsigned int) { return 0; }
 static int  CALLBACK spuPlayCDDAchannel(short *, int, unsigned int, int)      { return 0; }
 static void CALLBACK spuSetCDvol(unsigned char, unsigned char, unsigned char, unsigned char, unsigned int) { }
-static void CALLBACK spuAsync(unsigned int, unsigned int)                     { }
 
 static void bindStubPlugins()
 	{
@@ -335,18 +319,22 @@ static void bindStubPlugins()
 	GPU_vBlank        = ps1GpuVBlank;
 	GPU_getScreenInfo = ps1GpuGetScreenInfo;
 
-	SPU_init             = spuInit;
-	SPU_shutdown         = spuShutdown;
-	SPU_close            = spuClose;
-	SPU_writeRegister    = spuWriteRegister;
-	SPU_readRegister     = spuReadRegister;
-	SPU_writeDMAMem      = spuWriteDMAMem;
-	SPU_readDMAMem       = spuReadDMAMem;
+	SPU_init             = ps1SpuInit;
+	SPU_shutdown         = ps1SpuShutdown;
+	SPU_open             = ps1SpuOpen;
+	SPU_close            = ps1SpuClose;
+	SPU_configure        = ps1SpuConfigure;
+	SPU_writeRegister    = ps1SpuWriteRegister;
+	SPU_readRegister     = ps1SpuReadRegister;
+	SPU_writeDMAMem      = ps1SpuWriteDMAMem;
+	SPU_readDMAMem       = ps1SpuReadDMAMem;
+	SPU_async            = ps1SpuAsync;
+	SPU_registerCallback = ps1SpuRegisterCallback;
+	SPU_registerScheduleCb = ps1SpuRegisterScheduleCb;
 	SPU_playADPCMchannel = spuPlayADPCMchannel;
 	SPU_freeze           = spuFreeze;
 	SPU_playCDDAchannel  = spuPlayCDDAchannel;
 	SPU_setCDvol         = spuSetCDvol;
-	SPU_async            = spuAsync;
 	}
 
 // --- Точка входу ------------------------------------------------------------
@@ -507,6 +495,12 @@ static TInt runPass(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
 	const long gpuOpenRc = ps1GpuOpen(&gpuDisp, (char *)"PCSX", NULL);
 	logEvent("gpu_open", gpuOpenRc ? "GPU_OPEN_FAIL" : NULL, "%s: open=%ld", mode, gpuOpenRc);
 
+	// SPU_open викликає SetupSound (out_current = none); перенаправляємо на наш
+	// драйвер (скидає лічильники амплітуди на цей прохід).
+	const long spuOpenRc = SPU_open();
+	ps1SndSelectOutput();
+	logEvent("spu_open", spuOpenRc ? "SPU_OPEN_FAIL" : NULL, "%s: open=%ld", mode, spuOpenRc);
+
 	EmuReset();
 	// Config.HLE == 0 - єдине надійне свідчення, що дамп справді підхопився.
 	logEvent("reset", (aUseBios && Config.HLE) ? "BIOS_NOT_LOADED" : NULL,
@@ -611,6 +605,13 @@ static TInt runPass(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
 		mode, g_gpulibWriteData, g_gpulibWriteDataMem, g_gpulibDmaChain,
 		g_gpulibDmaWords, g_gpulibWriteStatus, g_gpulibReadStatus, g_gpulibStatusLast);
 
+	// Звук (Фаза A): скільки семплів SPU видав і пікова амплітуда. maxAmp>0 =
+	// SPU реально генерує звук BIOS; вивід у динамік - Фаза B.
+	unsigned sndFeeds = 0, sndSamples = 0; int sndMax = 0;
+	ps1SndStats(&sndFeeds, &sndSamples, &sndMax);
+	logEvent("sndstats", NULL, "%s: feeds=%u samples=%u maxAmp=%d", mode,
+		sndFeeds, sndSamples, sndMax);
+
 	// Тримаємо останній кадр і прибираємо вікно.
 	if (aShowScreen)
 		{
@@ -641,6 +642,11 @@ static TInt runStage1()
 	// викликаємо самі. Обидва проходи (interp/drc) поділяють один VRAM.
 	const long gpuInitRc = ps1GpuInit();
 	logEvent("gpu_init", gpuInitRc ? "GPU_INIT_FAIL" : NULL, "init=%ld", gpuInitRc);
+
+	// Звук: конфіг dfsound до SPU_init, тоді ініціалізація SPU (раз на процес).
+	ps1SndConfigure();
+	const long spuInitRc = SPU_init();
+	logEvent("spu_init", spuInitRc ? "SPU_INIT_FAIL" : NULL, "init=%ld", spuInitRc);
 
 	// Без аргументів (запуск з меню апарата) кількість кадрів менша: на 332 МГц
 	// інтерпретатор помітно повільніший за хост, а чекати на телефон незручно.
