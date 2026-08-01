@@ -263,25 +263,38 @@ static void blitCurrent()
 	TUint16 *dst = (TUint16 *)g_bmp->DataAddress();
 	const TInt dstStride = g_bmp->DataStride() / 2;   // у 16-бітних словах
 	Mem::FillZ(dst, dstStride * SH * 2);              // чорні поля
+
+	// Nearest-neighbor через 16.16 фіксед-поінт: акумулятор замість ділення на
+	// кожен піксель. ARM11 не має швидкого апаратного ділення, а профіль показав,
+	// що блит з per-pixel діленням з'їдав ~половину часу кадру.
+	const TInt srcH = field ? srcRows : sh;           // рядків-джерел для кроку
+	const TUint sxStep = ((TUint)sw << 16) / (TUint)dstW;
+	const TUint syStep = ((TUint)srcH << 16) / (TUint)dstH;
 	for (TInt dy = 0; dy < dstH; dy++)
 		{
-		const TInt ssy = field ? (dy * srcRows / dstH) * 2 : dy * sh / dstH;
+		const TInt srcLine = (TInt)((syStep * (TUint)dy) >> 16);
+		const TInt ssy = field ? srcLine * 2 : srcLine;
 		TUint16 *drow = dst + (oy + dy) * dstStride + ox;
+		TUint sxf = 0;
 		if (rgb24)
 			{
 			// RGB24: 3 байти на піксель (R,G,B). Поки НЕ перевірено на залізі.
 			const TUint8 *srow = vbytes + startByte + ssy * 2048;
 			for (TInt dx = 0; dx < dstW; dx++)
 				{
-				const TUint8 *p = srow + (dx * sw / dstW) * 3;
+				const TUint8 *p = srow + (sxf >> 16) * 3;
 				drow[dx] = (TUint16)(((p[0] >> 3) << 11) | ((p[1] >> 2) << 5) | (p[2] >> 3));
+				sxf += sxStep;
 				}
 			}
 		else
 			{
 			const TUint16 *srow = (const TUint16 *)(vbytes + startByte) + ssy * 1024;
 			for (TInt dx = 0; dx < dstW; dx++)
-				drow[dx] = Bgr555ToRgb565(srow[dx * sw / dstW]);
+				{
+				drow[dx] = Bgr555ToRgb565(srow[sxf >> 16]);
+				sxf += sxStep;
+				}
 			}
 		}
 	g_bmp->UnlockHeap();

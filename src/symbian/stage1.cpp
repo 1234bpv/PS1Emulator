@@ -586,16 +586,22 @@ static TInt runPass(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
 
 	const u32 framesAtStart = frame_counter;
 	const TUint tStart = User::NTickCount();
+	// Профілювання пайплайну: сумарний час (мс) на кожен етап за весь прохід.
+	// NTickCount тут ~1мс; пер-кадрова похибка усереднюється на сотнях кадрів.
+	TUint tPoll = 0, tEmu = 0, tBlit = 0, tSnd = 0;
 	TBool stalled = EFalse;
 	for (int i = 0; i < aFrames; i++)
 		{
 		// Ввід: свіжий стан кнопок до Execute, бо ядро читає пад усередині кадру.
 		// Лише за наявності вікна (screen); у headless-бенчмарку клавіш нема.
+		TUint t0 = User::NTickCount();
 		if (aShowScreen)
 			in_keystate[0] = voutSymbianPollPad();
 
+		TUint t1 = User::NTickCount(); tPoll += t1 - t0;
 		psxRegs.stop = 0;
 		psxCpu->Execute(&psxRegs);
+		TUint t2 = User::NTickCount(); tEmu += t2 - t1;
 
 		if (g_wdFired)
 			{
@@ -610,7 +616,9 @@ static TInt runPass(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
 		if (aShowScreen)
 			{
 			voutSymbianPresent();
+			TUint t3 = User::NTickCount(); tBlit += t3 - t2;
 			ps1SndPump();   // обслужити аудіо-callback'и й долити буфер
+			tSnd += User::NTickCount() - t3;
 			}
 
 		// Рідкісні маркери: 6 записів на прогін вимір не псують, зате показують,
@@ -659,6 +667,21 @@ static TInt runPass(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
 	ps1SndStats(&sndFeeds, &sndSamples, &sndMax);
 	logEvent("sndstats", NULL, "%s: feeds=%u samples=%u maxAmp=%d", mode,
 		sndFeeds, sndSamples, sndMax);
+
+	// Профіль пайплайну: сумарний час на етап + частка від загального. Показує,
+	// що оптимізувати - емуляцію (drc) чи вивід (блит)/звук.
+	{
+	const TUint tTot = tPoll + tEmu + tBlit + tSnd;
+	const TUint den = tTot ? tTot : 1;
+	logEvent("profile", NULL,
+		"%s: total=%ums poll=%ums(%u%%) emu=%ums(%u%%) blit=%ums(%u%%) snd=%ums(%u%%) frames=%u",
+		mode, (unsigned)tTot,
+		(unsigned)tPoll, (unsigned)(tPoll * 100 / den),
+		(unsigned)tEmu,  (unsigned)(tEmu * 100 / den),
+		(unsigned)tBlit, (unsigned)(tBlit * 100 / den),
+		(unsigned)tSnd,  (unsigned)(tSnd * 100 / den),
+		(unsigned)aProduced);
+	}
 
 	// Тримаємо останній кадр (докручуючи аудіо), тоді прибираємо вікно й звук.
 	if (aShowScreen)
