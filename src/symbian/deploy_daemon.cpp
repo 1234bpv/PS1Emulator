@@ -453,7 +453,10 @@ static TBool acceptLoop()
             sock.Close();
             continue;
             }
-        // Спрацював таймер: скасувати Accept і перевірити мережу.
+        // Спрацював таймер (простій): тримаємо апарат активним, інакше він засинає,
+        // WiFi гасне, а приспаний процес не самовідновлюється - і рятував лише ребут.
+        User::ResetInactivityTime();
+        // Скасувати Accept і перевірити мережу.
         g_listener.CancelAccept();
         User::WaitForRequest(astat);
         sock.Close();
