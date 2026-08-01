@@ -205,10 +205,17 @@ static void blitCurrent()
 	if (sh > 512 - startRow) sh = 512 - startRow;  // не читати за межі VRAM 1024x512
 	if (sh < 1) sh = 1;
 
-	// Вписуємо джерело в екран зі збереженням пропорцій. PS1 - ландшафт
-	// (320x240/640x480), екран N95 - портрет (240x320), тож кадр лягає з
-	// чорними полями згори/знизу. Обертання під ландшафт - доведення (Етап 4).
+	// Вписуємо джерело в екран зі збереженням пропорцій. Орієнтацію НЕ обертаємо
+	// самі: апарат робить автоповорот вікна за акселерометром, тож ручний поворот
+	// давав би подвійний. Малюємо вертикально, letterbox згори/знизу.
 	const TInt SW = g_scr.iWidth, SH = g_scr.iHeight;
+
+	// Черезрядкові режими (hi-res, sh>256) кладуть поля в сусідні рядки VRAM, тож
+	// лінійне читання дає "гребінку". Беремо одне поле (парні рядки); пропорцію
+	// рахуємо за повною висотою, бо на залізі поле розтягується на весь кадр.
+	const TBool field = (sh > 256);
+	const TInt srcRows = field ? sh / 2 : sh;
+
 	TInt dstW = SW;
 	TInt dstH = sh * SW / sw;
 	if (dstH > SH) { dstH = SH; dstW = sw * SH / sh; }
@@ -223,12 +230,12 @@ static void blitCurrent()
 	Mem::FillZ(dst, dstStride * SH * 2);              // чорні поля
 	for (TInt dy = 0; dy < dstH; dy++)
 		{
-		const TInt sy = dy * sh / dstH;
+		const TInt ssy = field ? (dy * srcRows / dstH) * 2 : dy * sh / dstH;
 		TUint16 *drow = dst + (oy + dy) * dstStride + ox;
 		if (rgb24)
 			{
 			// RGB24: 3 байти на піксель (R,G,B). Поки НЕ перевірено на залізі.
-			const TUint8 *srow = vbytes + startByte + sy * 2048;
+			const TUint8 *srow = vbytes + startByte + ssy * 2048;
 			for (TInt dx = 0; dx < dstW; dx++)
 				{
 				const TUint8 *p = srow + (dx * sw / dstW) * 3;
@@ -237,7 +244,7 @@ static void blitCurrent()
 			}
 		else
 			{
-			const TUint16 *srow = (const TUint16 *)(vbytes + startByte) + sy * 1024;
+			const TUint16 *srow = (const TUint16 *)(vbytes + startByte) + ssy * 1024;
 			for (TInt dx = 0; dx < dstW; dx++)
 				drow[dx] = Bgr555ToRgb565(srow[dx * sw / dstW]);
 			}
