@@ -424,11 +424,44 @@ static TInt startConn()
 // (потрібне перепідключення). Health-check прибирає зомбі-стан: раніше при
 // зникненні WiFi демон висів у Accept живим, тримав порт, і перезапуск не
 // вдавався (захист екземпляра) - лишався тільки ребут.
+// Широкомовна адреса підмережі (x.x.x.255) для keepalive.
+static TBool getBcastAddr(TInetAddr &aOut)
+    {
+    RSocket probe;
+    if (probe.Open(g_ss, KAfInet, KSockDatagram, KProtocolInetUdp, g_conn) != KErrNone)
+        return EFalse;
+    probe.SetOpt(KSoInetEnumInterfaces, KSolInetIfCtrl);
+    TPckgBuf<TSoInetInterfaceInfo> info;
+    TBool ok = EFalse;
+    while (probe.GetOpt(KSoInetNextInterface, KSolInetIfCtrl, info) == KErrNone)
+        {
+        TInetAddr addr(info().iAddress);
+        const TUint32 a = addr.Address();
+        if (a != 0 && a != INET_ADDR(127, 0, 0, 1))
+            {
+            aOut.SetAddress(a | 0xFF);   // /24 directed broadcast
+            aOut.SetPort(KPort);
+            ok = ETrue;
+            break;
+            }
+        }
+    probe.Close();
+    return ok;
+    }
+
 static TBool acceptLoop()
     {
     RTimer timer;
     if (timer.CreateLocal() != KErrNone)
         return ETrue;
+    // Keepalive проти WiFi PSM: прошивка не дає вимкнути енергозбереження радіо,
+    // тож при простої TCP радіо паркується й демон стає недоступним. Раз на 5с
+    // шлемо крихітну UDP-датаграму на широкомовну адресу підмережі - трафік у
+    // ефірі тримає радіо активним.
+    RSocket ka;
+    TInetAddr kaAddr;
+    const TBool haveKa = getBcastAddr(kaAddr)
+        && ka.Open(g_ss, KAfInet, KSockDatagram, KProtocolInetUdp, g_conn) == KErrNone;
     TBool reconnect = ETrue;
     for (;;)
         {
@@ -437,7 +470,7 @@ static TBool acceptLoop()
             break;
         TRequestStatus astat, tstat;
         g_listener.Accept(sock, astat);
-        timer.After(tstat, 15 * 1000000);
+        timer.After(tstat, 5 * 1000000);
         User::WaitForRequest(astat, tstat);
         if (astat != KRequestPending)
             {
@@ -453,9 +486,16 @@ static TBool acceptLoop()
             sock.Close();
             continue;
             }
-        // Спрацював таймер (простій): тримаємо апарат активним, інакше він засинає,
-        // WiFi гасне, а приспаний процес не самовідновлюється - і рятував лише ребут.
+        // Спрацював таймер (простій, 5с): тримаємо апарат активним і шлемо keepalive
+        // у ефір, щоб WiFi-радіо не парковалось (інакше демон стає недоступним).
         User::ResetInactivityTime();
+        if (haveKa)
+            {
+            TRequestStatus ks;
+            TBuf8<4> ping; ping.SetLength(4);
+            ka.SendTo(ping, kaAddr, 0, ks);
+            User::WaitForRequest(ks);
+            }
         // Скасувати Accept і перевірити мережу.
         g_listener.CancelAccept();
         User::WaitForRequest(astat);
@@ -466,6 +506,7 @@ static TBool acceptLoop()
             break;
             }
         }
+    if (haveKa) ka.Close();
     timer.Close();
     return reconnect;
     }
