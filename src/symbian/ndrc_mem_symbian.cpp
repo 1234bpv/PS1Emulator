@@ -50,3 +50,18 @@ extern "C" int ndrc_symbian_pgsize(void)
         size = 4096;
     return size;
     }
+
+// Високороздільний лічильник для профілювання (розділити CPU/GPU в "emu").
+// User::FastCounter доступний лише з C++; віддаємо його C-коду ядра/gpulib.
+extern "C" unsigned int ndrc_symbian_fastcount(void)
+    {
+    return User::FastCounter();
+    }
+
+extern "C" unsigned int ndrc_symbian_fastfreq(void)
+    {
+    TInt f = 0;
+    if (HAL::Get(HALData::EFastCounterFrequency, f) != KErrNone || f < 1)
+        f = 1000000;
+    return (unsigned int)f;
+    }

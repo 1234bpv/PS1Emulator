@@ -227,6 +227,9 @@ void voutSymbianGpuStats(unsigned *data, unsigned *dataMem, unsigned *dma, unsig
 extern unsigned int g_gpulibWriteData, g_gpulibWriteDataMem, g_gpulibDmaChain;
 extern unsigned int g_gpulibDmaWords, g_gpulibWriteStatus, g_gpulibReadStatus;
 extern unsigned int g_gpulibStatusLast;
+// Час растеризації gpu_unai (тики FastCounter) - розділяє CPU vs GPU в "emu".
+extern unsigned long long g_gpulibRenderTicks;
+unsigned int ndrc_symbian_fastfreq(void);
 }
 
 // Скільки тримати кадр на екрані, щоб людина встигла глянути (запуск headless
@@ -471,6 +474,7 @@ static TInt runPass(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
 	g_gpulibWriteData = g_gpulibWriteDataMem = g_gpulibDmaChain = 0;
 	g_gpulibDmaWords = g_gpulibWriteStatus = g_gpulibReadStatus = 0;
 	g_gpulibStatusLast = 0;
+	g_gpulibRenderTicks = 0;
 
 	// Мінімальний еквівалент emu_core_preinit() з frontend/main.c:435.
 	memset(&Config, 0, sizeof(Config));
@@ -680,13 +684,18 @@ static TInt runPass(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
 	{
 	const TUint tTot = tPoll + tEmu + tBlit + tSnd;
 	const TUint den = tTot ? tTot : 1;
+	// gpuRaster - частина emu, витрачена на растеризацію gpu_unai (тики->мс). Решта
+	// emu - це CPU (drc) + генерація звуку. Показує, CPU чи GPU оптимізувати далі.
+	const unsigned freq = ndrc_symbian_fastfreq();
+	const unsigned gpuRasterMs = (unsigned)(g_gpulibRenderTicks * 1000ULL / (freq ? freq : 1));
 	logEvent("profile", NULL,
-		"%s: total=%ums poll=%ums(%u%%) emu=%ums(%u%%) blit=%ums(%u%%) snd=%ums(%u%%) frames=%u",
+		"%s: total=%ums poll=%ums(%u%%) emu=%ums(%u%%) blit=%ums(%u%%) snd=%ums(%u%%) gpuRaster=%ums(%u%% of emu) frames=%u",
 		mode, (unsigned)tTot,
 		(unsigned)tPoll, (unsigned)(tPoll * 100 / den),
 		(unsigned)tEmu,  (unsigned)(tEmu * 100 / den),
 		(unsigned)tBlit, (unsigned)(tBlit * 100 / den),
 		(unsigned)tSnd,  (unsigned)(tSnd * 100 / den),
+		gpuRasterMs, (unsigned)(tEmu ? gpuRasterMs * 100 / tEmu : 0),
 		(unsigned)aProduced);
 	}
 
