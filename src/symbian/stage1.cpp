@@ -205,6 +205,12 @@ int voutSymbianInit(void);
 void voutSymbianPresent(void);
 int voutSymbianFinish(int holdMs);
 void voutSymbianGpuStats(unsigned *data, unsigned *dataMem, unsigned *dma, unsigned *status);
+
+// Лічильники безпосередньо в gpulib: усі шляхи ядра (interp/drc) сходяться туди,
+// тож це достовірний сигнал, чи BIOS реально шле команди малювання.
+extern unsigned int g_gpulibWriteData, g_gpulibWriteDataMem, g_gpulibDmaChain;
+extern unsigned int g_gpulibDmaWords, g_gpulibWriteStatus, g_gpulibReadStatus;
+extern unsigned int g_gpulibStatusLast;
 }
 
 // Скільки тримати кадр на екрані, щоб людина встигла глянути (запуск headless
@@ -262,11 +268,40 @@ static TInt watchdogThread(TAny *aArg)
 
 static unsigned int g_gpuHcnt;
 
-static long CALLBACK spuInit(void)                                            { return 0; }
+// Мінімальний SPU: без звуку (Етап 4), лише достатньо, щоб рання ініціалізація
+// BIOS пройшла. BIOS пише SPUCNT (0x1f801daa), тоді опитує SPUSTAT (0x1f801dae) і
+// чекає, поки низькі біти статусу віддзеркалять контроль (dfsound registers.c:147).
+// Стаб, що завжди 0, давав вічний полінг (pc bfc04174). Ведемо тіньові регістри
+// й правильний SPUSTAT; транспорт/DMA лишаються заглушками, але статус вдає
+// готовність (біт «зайнято» не встановлюється), тож полінги завершуються.
+static unsigned short g_spuReg[256];   // 0x1f801c00..0x1f801dff, крок 2
+static unsigned short g_spuStat;
+
+static long CALLBACK spuInit(void)
+	{
+	memset(g_spuReg, 0, sizeof(g_spuReg));
+	g_spuStat = 0;
+	return 0;
+	}
 static long CALLBACK spuShutdown(void)                                        { return 0; }
 static long CALLBACK spuClose(void)                                           { return 0; }
-static void CALLBACK spuWriteRegister(unsigned long, unsigned short, unsigned int) { }
-static unsigned short CALLBACK spuReadRegister(unsigned long, unsigned int)   { return 0; }
+static void CALLBACK spuWriteRegister(unsigned long reg, unsigned short val, unsigned int)
+	{
+	const unsigned o = reg & 0xfff;                    // 0xc00..0xdff
+	if (o >= 0xc00 && o <= 0xdff)
+		g_spuReg[(o - 0xc00) >> 1] = val;
+	if (o == 0xdaa)                                    // SPUCNT -> оновити SPUSTAT
+		g_spuStat = (unsigned short)((val & 0x3f) | ((val << 2) & 0x80));
+	}
+static unsigned short CALLBACK spuReadRegister(unsigned long reg, unsigned int)
+	{
+	const unsigned o = reg & 0xfff;
+	if (o == 0xdae)                                    // SPUSTAT: дзеркалить SPUCNT, не «зайнято»
+		return g_spuStat;
+	if (o >= 0xc00 && o <= 0xdff)
+		return g_spuReg[(o - 0xc00) >> 1];
+	return 0;
+	}
 static void CALLBACK spuWriteDMAMem(unsigned short *, int, unsigned int)      { }
 static void CALLBACK spuReadDMAMem(unsigned short *, int, unsigned int)       { }
 static void CALLBACK spuPlayADPCMchannel(xa_decode_t *, unsigned int, int)    { }
@@ -409,6 +444,10 @@ static TInt runPass(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
 	aTicks = 0;
 	aProduced = 0;
 
+	g_gpulibWriteData = g_gpulibWriteDataMem = g_gpulibDmaChain = 0;
+	g_gpulibDmaWords = g_gpulibWriteStatus = g_gpulibReadStatus = 0;
+	g_gpulibStatusLast = 0;
+
 	// Мінімальний еквівалент emu_core_preinit() з frontend/main.c:435.
 	memset(&Config, 0, sizeof(Config));
 	strcpy(Config.Bios[0], "HLE");
@@ -452,6 +491,13 @@ static TInt runPass(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
 		logEvent("fatal", "EMU_INIT_FAIL", "%s: EmuInit returned -1", mode);
 		return KErrGeneral;
 		}
+
+	// GPU_init() робиться раз на процес у runStage1 (як LoadPlugins у фронтенді);
+	// тут - лише GPU_open() на кожен прохід (як OpenPlugins, frontend/main.c:210).
+	// Порожній gpuDisp: наш backend вікна дисплея з нього не бере (vout_symbian).
+	unsigned long gpuDisp = 0;
+	const long gpuOpenRc = ps1GpuOpen(&gpuDisp, (char *)"PCSX", NULL);
+	logEvent("gpu_open", gpuOpenRc ? "GPU_OPEN_FAIL" : NULL, "%s: open=%ld", mode, gpuOpenRc);
 
 	EmuReset();
 	// Config.HLE == 0 - єдине надійне свідчення, що дамп справді підхопився.
@@ -545,6 +591,13 @@ static TInt runPass(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
 	logEvent("gpustats", NULL, "%s: gp0=%u dataMem=%u dmaChain=%u gp1=%u", mode,
 		gpData, gpDataMem, gpDma, gpStatus);
 
+	// Ground truth з gpulib: якщо тут теж нулі - BIOS не малює (застряг раніше);
+	// якщо ненульові, а VRAM порожній - проблема в растеризації gpu_unai.
+	logEvent("gpulibstats", NULL,
+		"%s: wData=%u wDataMem=%u dmaChain=%u dmaWords=%u wStatus=%u rStatus=%u statusLast=%08x",
+		mode, g_gpulibWriteData, g_gpulibWriteDataMem, g_gpulibDmaChain,
+		g_gpulibDmaWords, g_gpulibWriteStatus, g_gpulibReadStatus, g_gpulibStatusLast);
+
 	// Тримаємо останній кадр і прибираємо вікно.
 	if (aShowScreen)
 		{
@@ -568,6 +621,13 @@ static TInt runStage1()
 	// gpulib читає лічильники кадрів і рядків напряму зі структури фронтенду
 	// (gpu.c:1218-1264), тож підключаємо їх до справжніх змінних ядра.
 	ps1GpuSetCallbacks(&frame_counter, &g_gpuHcnt);
+
+	// GPU_init() раз на процес: виділяє VRAM і виконує do_reset() у gpulib
+	// (gpu.status = 0x14802000, біт 28 = готовність до DMA). Фронтенд робить це в
+	// LoadPlugins() (plugins.c:328); ми обходимо LoadPlugins (нема .so), тож
+	// викликаємо самі. Обидва проходи (interp/drc) поділяють один VRAM.
+	const long gpuInitRc = ps1GpuInit();
+	logEvent("gpu_init", gpuInitRc ? "GPU_INIT_FAIL" : NULL, "init=%ld", gpuInitRc);
 
 	// Без аргументів (запуск з меню апарата) кількість кадрів менша: на 332 МГц
 	// інтерпретатор помітно повільніший за хост, а чекати на телефон незручно.
@@ -608,6 +668,9 @@ static TInt runStage1()
 	// тепер живий, усередині runPass (кадр за кадром), а не одноразово тут.
 	const int dumpRc = voutSymbianDump("E:\\ps1_vram.bin");
 	logEvent("vram_dump", dumpRc ? "DUMP_FAIL" : NULL, "rc=%d", dumpRc);
+
+	// Парний до ps1GpuInit(): звільняє VRAM після знімка (звідси - після дампу).
+	ps1GpuShutdown();
 
 	logEvent("shutdown", NULL, NULL);
 	return rc;
