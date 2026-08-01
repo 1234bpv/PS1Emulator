@@ -159,10 +159,16 @@ static TInt g_blitOx = -1, g_blitOy, g_blitW, g_blitH;
 static unsigned long long g_blitFillTicks, g_blitPresentTicks;
 extern "C" unsigned int ndrc_symbian_fastfreq(void);
 
-// DSA (Direct Screen Access): малюємо прямо в буфер екрана замість window-server
-// BitBlt+Flush (той - синхронний раунд-тріп, ~половина часу блиту). За прапорцем
-// (аргумент "dsa"), із відкатом на window-шлях, якщо StartL не вдався або WS
-// забрав екран (AbortNow). Планувальник для DSA-подій дає аудіо-підсистема.
+// DSA (Direct Screen Access) + direct-FB (запис прямо в LCD через HAL-адресу).
+// СТАТУС: законсервований експеримент (типово off), глухий кут на N95 8GB -
+// перевірено 2026-08-01 тест-патерном ("fbtest"):
+//   1) WS композитить порожнє вікно поверх наших сирих HAL-записів (кадр блимав
+//      частку секунди й зникав) - координований лише шлях через g_dsaGc->BitBlt,
+//      а це та сама пропускна здатність, що й window;
+//   2) HAL віддає ЛОГІЧНУ (повернуту) геометрію 320x240/640B, а сира пам'ять -
+//      ФІЗИЧНА портретна 240x320/480B -> діагональний stride-зсув при автоповороті.
+// Present упирається в bandwidth LCD; чисто його побити може лише MBX (EGL). Код
+// лишено за прапорцем як основу/довідку. Вмикання: аргумент "dsa" (+"fbtest").
 static TBool g_useDsa;
 static CDirectScreenAccess *g_dsa;
 static CFbsBitGc *g_dsaGc;
@@ -176,20 +182,24 @@ static TBool    g_fbOk;
 static TUint16 *g_fbBase;    // адреса першого пікселя
 static TInt     g_fbStride;  // 16-бітних слів на рядок
 static TInt     g_fbW, g_fbH;
+// Сирі HAL-значення (для діагностики "двох вікон" - stride/розміри/буфер).
+static TInt g_fbAddr, g_fbBpp, g_fbLineBytes, g_fbFirstOff, g_fbXpix, g_fbYpix;
 
 static void queryFramebuffer()
 	{
 	g_fbOk = EFalse;
-	TInt addr = 0, bpp = 0, lineOff = 0, firstOff = 0, xpix = 0, ypix = 0;
-	if (HAL::Get(HALData::EDisplayMemoryAddress, addr) != KErrNone || addr == 0) return;
-	if (HAL::Get(HALData::EDisplayBitsPerPixel, bpp) != KErrNone || bpp != 16) return;
-	if (HAL::Get(HALData::EDisplayOffsetBetweenLines, lineOff) != KErrNone || lineOff < 2) return;
-	HAL::Get(HALData::EDisplayOffsetToFirstPixel, firstOff);
-	if (HAL::Get(HALData::EDisplayXPixels, xpix) != KErrNone || xpix < 1) return;
-	if (HAL::Get(HALData::EDisplayYPixels, ypix) != KErrNone || ypix < 1) return;
-	g_fbBase   = (TUint16 *)((TUint8 *)addr + firstOff);
-	g_fbStride = lineOff / 2;
-	g_fbW = xpix; g_fbH = ypix;
+	g_fbAddr = g_fbBpp = g_fbLineBytes = g_fbFirstOff = g_fbXpix = g_fbYpix = 0;
+	HAL::Get(HALData::EDisplayMemoryAddress, g_fbAddr);
+	HAL::Get(HALData::EDisplayBitsPerPixel, g_fbBpp);
+	HAL::Get(HALData::EDisplayOffsetBetweenLines, g_fbLineBytes);
+	HAL::Get(HALData::EDisplayOffsetToFirstPixel, g_fbFirstOff);
+	HAL::Get(HALData::EDisplayXPixels, g_fbXpix);
+	HAL::Get(HALData::EDisplayYPixels, g_fbYpix);
+	if (g_fbAddr == 0 || g_fbBpp != 16 || g_fbLineBytes < 2 || g_fbXpix < 1 || g_fbYpix < 1)
+		return;   // формат не підходить - лишаємось на window-шляху
+	g_fbBase   = (TUint16 *)((TUint8 *)g_fbAddr + g_fbFirstOff);
+	g_fbStride = g_fbLineBytes / 2;
+	g_fbW = g_fbXpix; g_fbH = g_fbYpix;
 	g_fbOk = ETrue;
 	}
 
@@ -528,6 +538,49 @@ extern "C" void voutSymbianSetDsa(int aOn)
 extern "C" int voutSymbianDsaActive(void)
 	{
 	return (g_useDsa && g_dsaActive) ? 1 : 0;
+	}
+
+// Діагностичний тест-патерн прямо в буфер LCD: синій фон, білі рамки, різнокольорові
+// кути (ЧЕР=ЛВ, ЗЕЛ=ПВ, СИН-ярк=ЛН, ЖОВ=ПН) і діагональ. За тим, що видно, точно
+// визначаємо проблему direct-FB: зсув=stride, порожньо=подвійний буфер, дзеркало=орієнтація.
+extern "C" int voutSymbianFbTest(void)
+	{
+	if (!g_fbOk || !g_fbBase) return -1;
+	const TInt W = g_fbW, H = g_fbH, S = g_fbStride;
+	TUint16 *fb = g_fbBase;
+	const TUint16 BLUE = 0x001f, WHITE = 0xffff, RED = 0xf800, GREEN = 0x07e0, YELLOW = 0xffe0, CYAN = 0x07ff;
+	for (TInt y = 0; y < H; y++)
+		{
+		TUint16 *row = fb + y * S;
+		for (TInt x = 0; x < W; x++)
+			{
+			TUint16 c = BLUE;
+			if (x < 2 || x >= W - 2 || y < 2 || y >= H - 2) c = WHITE;      // рамка
+			else if (x < 40 && y < 40) c = RED;                            // ЛВ кут
+			else if (x >= W - 40 && y < 40) c = GREEN;                     // ПВ кут
+			else if (x < 40 && y >= H - 40) c = CYAN;                      // ЛН кут
+			else if (x >= W - 40 && y >= H - 40) c = YELLOW;               // ПН кут
+			else if (x == y) c = WHITE;                                    // діагональ
+			row[x] = c;
+			}
+		}
+	if (g_dsa && g_dsaActive)
+		{ CFbsScreenDevice *sd = g_dsa->ScreenDevice(); if (sd) sd->Update(); }
+	return 0;
+	}
+
+// Сирі HAL-параметри буфера екрана + розмір вікна з WS (для діагностики direct-FB).
+extern "C" void voutSymbianFbInfo(int *aOk, int *aXpix, int *aYpix, int *aLineBytes,
+                                  int *aBpp, int *aFirstOff, int *aWinW, int *aWinH)
+	{
+	if (aOk)        *aOk        = g_fbOk ? 1 : 0;
+	if (aXpix)      *aXpix      = g_fbXpix;
+	if (aYpix)      *aYpix      = g_fbYpix;
+	if (aLineBytes) *aLineBytes = g_fbLineBytes;
+	if (aBpp)       *aBpp       = g_fbBpp;
+	if (aFirstOff)  *aFirstOff  = g_fbFirstOff;
+	if (aWinW)      *aWinW      = g_scr.iWidth;
+	if (aWinH)      *aWinH      = g_scr.iHeight;
 	}
 
 // Поділ часу блиту в мс: fill = цикл масштабування, present = BitBlt+Flush.

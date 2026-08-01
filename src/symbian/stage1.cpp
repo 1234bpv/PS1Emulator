@@ -224,6 +224,8 @@ void voutSymbianGpuStats(unsigned *data, unsigned *dataMem, unsigned *dma, unsig
 void voutSymbianBlitSplit(unsigned *fillMs, unsigned *presentMs);
 void voutSymbianSetDsa(int on);
 int voutSymbianDsaActive(void);
+void voutSymbianFbInfo(int *ok, int *xpix, int *ypix, int *lineBytes, int *bpp, int *firstOff, int *winW, int *winH);
+int voutSymbianFbTest(void);
 
 // Лічильники безпосередньо в gpulib: усі шляхи ядра (interp/drc) сходяться туди,
 // тож це достовірний сигнал, чи BIOS реально шле команди малювання.
@@ -590,6 +592,11 @@ static TInt runPass(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
 		{
 		const int initRc = voutSymbianInit();
 		logEvent("screen_init", initRc ? "SHOW_FAIL" : NULL, "%s: rc=%d", mode, initRc);
+		// Діагностика direct-FB: сирі HAL-параметри буфера проти розміру вікна WS.
+		int fbOk = 0, xpix = 0, ypix = 0, lineB = 0, bpp = 0, firstOff = 0, winW = 0, winH = 0;
+		voutSymbianFbInfo(&fbOk, &xpix, &ypix, &lineB, &bpp, &firstOff, &winW, &winH);
+		logEvent("fb", NULL, "%s: ok=%d hal=%dx%d line=%dB bpp=%d first=%d win=%dx%d",
+			mode, fbOk, xpix, ypix, lineB, bpp, firstOff, winW, winH);
 		}
 
 	// Озброїти сторож на весь прохід. Анонімний потік із малим стеком: великий
@@ -730,6 +737,24 @@ static TInt runStage1()
 	TInt framesToRun;
 	TBool useBios, gpuTest, useDrc, showScreen, useDisc, haveArgs;
 	parseCommandLine(framesToRun, useBios, gpuTest, useDrc, showScreen, useDisc, haveArgs);
+
+	// Діагностика direct-FB: аргумент "fbtest" малює тест-патерн прямо в LCD (без
+	// емуляції) і тримає 8с. За побаченим визначаємо stride/буфер/орієнтацію.
+	TBuf<256> cl; User::CommandLine(cl); cl.Trim();
+	_LIT(KFbTest, "fbtest");
+	if (cl.FindF(KFbTest) != KErrNotFound)
+		{
+		voutSymbianSetDsa(1);
+		const int ir = voutSymbianInit();
+		int fbOk = 0, xp = 0, yp = 0, lb = 0, bpp = 0, fo = 0, ww = 0, wh = 0;
+		voutSymbianFbInfo(&fbOk, &xp, &yp, &lb, &bpp, &fo, &ww, &wh);
+		logEvent("fb", NULL, "init=%d ok=%d hal=%dx%d line=%dB bpp=%d first=%d win=%dx%d",
+			ir, fbOk, xp, yp, lb, bpp, fo, ww, wh);
+		const int tr = voutSymbianFbTest();
+		logEvent("fbtest", tr ? "NO_FB" : NULL, "rc=%d - pattern held 8s", tr);
+		voutSymbianFinish(8000);
+		return KErrNone;
+		}
 
 	bindStubPlugins();
 
