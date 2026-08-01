@@ -153,6 +153,11 @@ static TSize g_scr;
 // Скидається в initL при (пере)створенні бітмапа.
 static TInt g_blitOx = -1, g_blitOy, g_blitW, g_blitH;
 
+// Поділ часу блиту: fill = цикл масштабування у бітмап, present = BitBlt+Flush у
+// window server. Показує, що оптимізувати - цикл (кеш) чи презентацію (DSA/MBX).
+static unsigned long long g_blitFillTicks, g_blitPresentTicks;
+extern "C" unsigned int ndrc_symbian_fastfreq(void);
+
 // Ввід: неблокуюче опитування подій RWsSession. g_evStat озброюється раз у initL,
 // щокадру voutSymbianPollPad() виснажує чергу й тримає g_pad (біти DKEY_*, active-high).
 static TRequestStatus g_evStat;
@@ -212,6 +217,7 @@ static void initL()
 	g_bmp = new (ELeave) CFbsBitmap;
 	User::LeaveIfError(g_bmp->Create(g_scr, EColor64K));
 	g_blitOx = -1;   // новий бітмап - примусити FillZ на першому кадрі
+	g_blitFillTicks = g_blitPresentTicks = 0;
 
 	// Ввід: група вже на передньому плані (ordinal 0), тож отримує клавіші.
 	// Озброюємо чергу подій один раз; опитуємо неблокуюче щокадру.
@@ -265,6 +271,7 @@ static void blitCurrent()
 	const TInt ox = (SW - dstW) / 2;
 	const TInt oy = (SH - dstH) / 2;
 
+	const TUint _fc0 = User::FastCounter();
 	g_bmp->LockHeap();
 	TUint16 *dst = (TUint16 *)g_bmp->DataAddress();
 	const TInt dstStride = g_bmp->DataStride() / 2;   // у 16-бітних словах
@@ -310,6 +317,8 @@ static void blitCurrent()
 			}
 		}
 	g_bmp->UnlockHeap();
+	const TUint _fc1 = User::FastCounter();
+	g_blitFillTicks += (unsigned)(_fc1 - _fc0);
 
 	g_win.Invalidate();
 	g_win.BeginRedraw();
@@ -318,6 +327,7 @@ static void blitCurrent()
 	g_gc->Deactivate();
 	g_win.EndRedraw();
 	g_ws.Flush();
+	g_blitPresentTicks += (unsigned)(User::FastCounter() - _fc1);
 	}
 
 // Init/Present/Finish обгорнуті у TRAP: збій виведення не має валити прогін
@@ -393,6 +403,15 @@ extern "C" int voutSymbianShow(int holdMs)
 		return r;
 	voutSymbianPresent();
 	return voutSymbianFinish(holdMs);
+	}
+
+// Поділ часу блиту в мс: fill = цикл масштабування, present = BitBlt+Flush.
+extern "C" void voutSymbianBlitSplit(unsigned *aFillMs, unsigned *aPresentMs)
+	{
+	const unsigned f = ndrc_symbian_fastfreq();
+	const unsigned freq = f ? f : 1;
+	if (aFillMs)    *aFillMs    = (unsigned)(g_blitFillTicks * 1000ULL / freq);
+	if (aPresentMs) *aPresentMs = (unsigned)(g_blitPresentTicks * 1000ULL / freq);
 	}
 
 // --- Обгортки для libpcsxcore -----------------------------------------------

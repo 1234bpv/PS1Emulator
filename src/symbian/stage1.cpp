@@ -221,6 +221,7 @@ unsigned short voutSymbianPollPad(void);
 void voutSymbianPresent(void);
 int voutSymbianFinish(int holdMs);
 void voutSymbianGpuStats(unsigned *data, unsigned *dataMem, unsigned *dma, unsigned *status);
+void voutSymbianBlitSplit(unsigned *fillMs, unsigned *presentMs);
 
 // Лічильники безпосередньо в gpulib: усі шляхи ядра (interp/drc) сходяться туди,
 // тож це достовірний сигнал, чи BIOS реально шле команди малювання.
@@ -688,14 +689,17 @@ static TInt runPass(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
 	// emu - це CPU (drc) + генерація звуку. Показує, CPU чи GPU оптимізувати далі.
 	const unsigned freq = ndrc_symbian_fastfreq();
 	const unsigned gpuRasterMs = (unsigned)(g_gpulibRenderTicks * 1000ULL / (freq ? freq : 1));
+	unsigned blitFillMs = 0, blitPresentMs = 0;
+	voutSymbianBlitSplit(&blitFillMs, &blitPresentMs);
 	logEvent("profile", NULL,
-		"%s: total=%ums poll=%ums(%u%%) emu=%ums(%u%%) blit=%ums(%u%%) snd=%ums(%u%%) gpuRaster=%ums(%u%% of emu) frames=%u",
+		"%s: total=%ums poll=%ums(%u%%) emu=%ums(%u%%) blit=%ums(%u%%) snd=%ums(%u%%) gpuRaster=%ums(%u%% of emu) blitFill=%ums blitPresent=%ums frames=%u",
 		mode, (unsigned)tTot,
 		(unsigned)tPoll, (unsigned)(tPoll * 100 / den),
 		(unsigned)tEmu,  (unsigned)(tEmu * 100 / den),
 		(unsigned)tBlit, (unsigned)(tBlit * 100 / den),
 		(unsigned)tSnd,  (unsigned)(tSnd * 100 / den),
 		gpuRasterMs, (unsigned)(tEmu ? gpuRasterMs * 100 / tEmu : 0),
+		blitFillMs, blitPresentMs,
 		(unsigned)aProduced);
 	}
 
