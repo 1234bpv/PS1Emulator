@@ -294,6 +294,9 @@ void ps1SpuRegisterScheduleCb(void (*cb)(unsigned int));
 void ps1SndConfigure(void);
 void ps1SndSelectOutput(void);
 void ps1SndStats(unsigned *feeds, unsigned *samples, int *maxAmp);
+int  ps1SndOpenOutput(void);
+void ps1SndPump(void);
+void ps1SndCloseOutput(void);
 }
 
 // XA/CD-аудіо та freeze для звуку BIOS не потрібні - лишаємо заглушками.
@@ -501,6 +504,14 @@ static TInt runPass(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
 	ps1SndSelectOutput();
 	logEvent("spu_open", spuOpenRc ? "SPU_OPEN_FAIL" : NULL, "%s: open=%ld", mode, spuOpenRc);
 
+	// Вивід у динамік лише в інтерактивних прогонах (screen): у бенчмарку звук
+	// псував би заміри, а вікна/акт.планувальника там нема.
+	if (aShowScreen)
+		{
+		const int sndRc = ps1SndOpenOutput();
+		logEvent("snd_open", sndRc ? "SND_OPEN_WARN" : NULL, "%s: rc=%d", mode, sndRc);
+		}
+
 	EmuReset();
 	// Config.HLE == 0 - єдине надійне свідчення, що дамп справді підхопився.
 	logEvent("reset", (aUseBios && Config.HLE) ? "BIOS_NOT_LOADED" : NULL,
@@ -563,7 +574,10 @@ static TInt runPass(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
 		// Живий кадр на екран. Додає накладні (конвертація+BitBlt), тож псує
 		// заміри - вмикається лише за прапорцем screen, не в бенчмарку.
 		if (aShowScreen)
+			{
 			voutSymbianPresent();
+			ps1SndPump();   // обслужити аудіо-callback'и й долити буфер
+			}
 
 		// Рідкісні маркери: 6 записів на прогін вимір не псують, зате показують,
 		// доки дійшло, коли процес гине без жодного повідомлення.
@@ -612,10 +626,12 @@ static TInt runPass(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
 	logEvent("sndstats", NULL, "%s: feeds=%u samples=%u maxAmp=%d", mode,
 		sndFeeds, sndSamples, sndMax);
 
-	// Тримаємо останній кадр і прибираємо вікно.
+	// Тримаємо останній кадр (докручуючи аудіо), тоді прибираємо вікно й звук.
 	if (aShowScreen)
 		{
+		ps1SndPump();
 		voutSymbianFinish(KScreenHoldMs);
+		ps1SndCloseOutput();
 		logEvent("screen", NULL, "%s: presented %u frames, held %dms", mode,
 			(unsigned)aProduced, KScreenHoldMs);
 		}

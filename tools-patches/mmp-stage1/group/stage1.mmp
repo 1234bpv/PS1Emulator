@@ -73,3 +73,5 @@ LIBRARY         estlib.lib
 // Виведення кадру на екран (Етап 2): window server + FBS bitmap.
 LIBRARY         ws32.lib
 LIBRARY         fbscli.lib
+// Звук: потоковий вивід PCM у динамік (CMdaAudioOutputStream).
+LIBRARY         mediaclientaudiostream.lib
