@@ -77,3 +77,5 @@ LIBRARY         fbscli.lib
 LIBRARY         mediaclientaudiostream.lib
 // DSA: CFbsBitGc/CFbsScreenDevice (прямий вивід у буфер екрана).
 LIBRARY         bitgdi.lib
+// GL ES вивід (MBX): EGL + OpenGL ES 1.1.
+LIBRARY         libgles_cm.lib

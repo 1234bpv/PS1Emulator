@@ -224,6 +224,8 @@ void voutSymbianGpuStats(unsigned *data, unsigned *dataMem, unsigned *dma, unsig
 void voutSymbianBlitSplit(unsigned *fillMs, unsigned *presentMs);
 void voutSymbianSetDsa(int on);
 int voutSymbianDsaActive(void);
+void voutSymbianSetGl(int on);
+int voutSymbianGlActive(void);
 void voutSymbianFbInfo(int *ok, int *xpix, int *ypix, int *lineBytes, int *bpp, int *firstOff, int *winW, int *winH);
 int voutSymbianFbTest(void);
 
@@ -430,6 +432,11 @@ static void parseCommandLine(TInt &aFrames, TBool &aUseBios, TBool &aGpuTest, TB
 	_LIT(KDsaArg, "dsa");
 	if (cmd.FindF(KDsaArg) != KErrNotFound)
 		voutSymbianSetDsa(1);
+
+	// GL ES вивід (MBX): GPU масштабує й презентує через eglSwapBuffers.
+	_LIT(KGlArg, "gl");
+	if (cmd.FindF(KGlArg) != KErrNotFound)
+		voutSymbianSetGl(1);
 	}
 
 // Самоперевірка растеризації: подаємо команди GP0 напряму, без BIOS і без гри.
@@ -715,7 +722,7 @@ static TInt runPass(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
 		gpuRasterMs, (unsigned)(tEmu ? gpuRasterMs * 100 / tEmu : 0),
 		blitFillMs, blitPresentMs,
 		(unsigned)aProduced);
-	logEvent("dsa", NULL, "%s: active=%d", mode, voutSymbianDsaActive());
+	logEvent("dsa", NULL, "%s: active=%d gl=%d", mode, voutSymbianDsaActive(), voutSymbianGlActive());
 	}
 
 	// Тримаємо останній кадр (докручуючи аудіо), тоді прибираємо вікно й звук.

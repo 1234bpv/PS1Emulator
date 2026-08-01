@@ -11,6 +11,8 @@
 #include <w32std.h>
 #include <fbs.h>
 #include <hal.h>
+#include <gles/egl.h>
+#include <gles/gl.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -185,6 +187,29 @@ static TInt     g_fbW, g_fbH;
 // Сирі HAL-значення (для діагностики "двох вікон" - stride/розміри/буфер).
 static TInt g_fbAddr, g_fbBpp, g_fbLineBytes, g_fbFirstOff, g_fbXpix, g_fbYpix;
 
+// EGL/GL ES 1.1 вивід (MBX): кадр PS1 -> текстура -> текстурований квад ->
+// eglSwapBuffers. GPU робить масштабування і present. За прапорцем "gl", із
+// відкатом на window-BitBlt. Колір: BGR555->RGB565 при заповненні текстури.
+//
+// СТАТУС (2026-08-01): НЕ працює в НАШІЙ оболонці. eglCreateWindowSurface панікує
+// на нашому "голому" RWindow (трасування: begin/getDisplay/initialize/chooseConfig/
+// displaymode ok -> крах на createWindowSurface). Причина: робочі порти (ClassiCube)
+// створюють EGL-поверхню на вікні CCoeControl У РАМКАХ фреймворку CONE (CCoeEnv), а
+// MBX-EGL, схоже, спирається на CCoeEnv::Static(), якого консольний stage1 не має.
+// Щоб увімкнути GL, оболонку треба перевести на CCoeEnv/AVKON (велика зміна). Код
+// лишено за прапорцем як основу. Перевірено GL ES 1.1 у SDK (libgles_cm.lib) - є.
+static const TInt KGlTexW = 1024;   // POT, покриває ширину дисплея <=1024
+static const TInt KGlTexH = 256;    // POT, покриває поле <=256 рядків
+static TBool      g_useGl;
+static TBool      g_glReady;
+static EGLDisplay g_eglDpy = EGL_NO_DISPLAY;
+static EGLSurface g_eglSurf = EGL_NO_SURFACE;
+static EGLContext g_eglCtx = EGL_NO_CONTEXT;
+static GLuint     g_glTex;
+static TUint16   *g_glBuf;           // буфер конвертації (rows*w, RGB565)
+static TBool glInitOnWindow();       // визначені нижче, кличуться з initL
+static void  glShutdown();
+
 static void queryFramebuffer()
 	{
 	g_fbOk = EFalse;
@@ -291,6 +316,15 @@ static void initL()
 	g_pad = 0;
 	g_ws.EventReady(&g_evStat);
 
+	// GL ES вивід (MBX): якщо ввімкнено й вдалось - present іде через GPU. Інакше
+	// (нема 3D / помилка) лишаємось на window-BitBlt.
+	g_glReady = EFalse;
+	if (g_useGl)
+		{
+		TRAPD(ge, { if (!glInitOnWindow()) glShutdown(); });
+		if (ge != KErrNone) { glShutdown(); }
+		}
+
 	// DSA: потребує CActiveScheduler (для подій abort/restart). Зазвичай його вже
 	// створила аудіо-підсистема; якщо ні - робимо власний і прибираємо у Finish.
 	g_dsa = NULL; g_dsaGc = NULL; g_dsaActive = EFalse; g_dsaSched = NULL;
@@ -312,6 +346,110 @@ static void initL()
 		}
 
 	g_wsReady = ETrue;
+	}
+
+// Трасування з негайним флешем: переживає панік (TRAP не ловить), щоб знати, на
+// якому EGL/GL-виклику падає ініціалізація. Читається з E:\gltrace.txt.
+// EGL/GL ES ініціалізація на наявному g_win. Повертає EFalse -> відкат на window.
+// УВАГА: eglCreateWindowSurface панікує на нашому голому RWindow (нема CCoeEnv,
+// на який спирається MBX-EGL) - див. коментар до глобалів. Лишено для майбутнього
+// переходу оболонки на CONE/AVKON.
+static TBool glInitOnWindow()
+	{
+	g_eglDpy = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+	if (g_eglDpy == EGL_NO_DISPLAY) return EFalse;
+	if (!eglInitialize(g_eglDpy, NULL, NULL)) return EFalse;
+	// Явний RGB565: конфіг має збігатися з форматом вікна.
+	const EGLint attribs[] = {
+		EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
+		EGL_BUFFER_SIZE,  16,
+		EGL_RED_SIZE,     5,
+		EGL_GREEN_SIZE,   6,
+		EGL_BLUE_SIZE,    5,
+		EGL_DEPTH_SIZE,   0,
+		EGL_NONE };
+	EGLConfig cfg; EGLint n = 0;
+	if (!eglChooseConfig(g_eglDpy, attribs, &cfg, 1, &n) || n < 1) return EFalse;
+	g_win.SetRequiredDisplayMode(EColor64K);
+	g_ws.Flush();
+	g_eglSurf = eglCreateWindowSurface(g_eglDpy, cfg, (NativeWindowType)&g_win, NULL);
+	if (g_eglSurf == EGL_NO_SURFACE) return EFalse;
+	g_eglCtx = eglCreateContext(g_eglDpy, cfg, EGL_NO_CONTEXT, NULL);
+	if (g_eglCtx == EGL_NO_CONTEXT) return EFalse;
+	if (!eglMakeCurrent(g_eglDpy, g_eglSurf, g_eglSurf, g_eglCtx)) return EFalse;
+
+	g_glBuf = (TUint16 *)User::Alloc(KGlTexW * KGlTexH * 2);
+	if (!g_glBuf) return EFalse;
+
+	glViewport(0, 0, g_scr.iWidth, g_scr.iHeight);
+	glMatrixMode(GL_PROJECTION); glLoadIdentity();
+	glOrthof(0, (GLfloat)g_scr.iWidth, (GLfloat)g_scr.iHeight, 0, -1, 1);  // top-left origin
+	glMatrixMode(GL_MODELVIEW); glLoadIdentity();
+	glClearColor(0, 0, 0, 1);
+	glDisable(GL_DEPTH_TEST);
+	glEnable(GL_TEXTURE_2D);
+	glGenTextures(1, &g_glTex);
+	glBindTexture(GL_TEXTURE_2D, g_glTex);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, KGlTexW, KGlTexH, 0,
+		GL_RGB, GL_UNSIGNED_SHORT_5_6_5, NULL);
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	g_glReady = ETrue;
+	return ETrue;
+	}
+
+// Один кадр через GL: конвертуємо поле у буфер (BGR555->RGB565), вантажимо у
+// текстуру, малюємо летербоксований квад, свопаємо. Масштаб і present - на GPU.
+static void glPresentFrame(const TUint8 *vbytes, TInt startByte,
+                           TInt sw, TInt sh, TBool field, TInt srcRows)
+	{
+	TInt hf = field ? srcRows : sh;
+	if (hf > KGlTexH) hf = KGlTexH;
+	TInt w = sw; if (w > KGlTexW) w = KGlTexW;
+	for (TInt y = 0; y < hf; y++)
+		{
+		const TInt ssy = field ? y * 2 : y;
+		const TUint16 *srow = (const TUint16 *)(vbytes + startByte) + ssy * 1024;
+		TUint16 *drow = g_glBuf + y * w;   // упаковано з кроком w
+		for (TInt x = 0; x < w; x++)
+			drow[x] = Bgr555ToRgb565(srow[x]);
+		}
+	glBindTexture(GL_TEXTURE_2D, g_glTex);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, hf, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, g_glBuf);
+
+	// Летербокс зі збереженням пропорцій (аспект за повною висотою sh).
+	const TInt SW = g_scr.iWidth, SH = g_scr.iHeight;
+	TInt dstW = SW, dstH = sh * SW / sw;
+	if (dstH > SH) { dstH = SH; dstW = sw * SH / sh; }
+	const TInt ox = (SW - dstW) / 2, oy = (SH - dstH) / 2;
+	const GLfloat u = (GLfloat)w / KGlTexW, v = (GLfloat)hf / KGlTexH;
+	const GLfloat x0 = (GLfloat)ox, y0 = (GLfloat)oy, x1 = (GLfloat)(ox + dstW), y1 = (GLfloat)(oy + dstH);
+	const GLfloat verts[8] = { x0, y0,  x1, y0,  x0, y1,  x1, y1 };
+	const GLfloat texc[8]  = { 0, 0,   u, 0,    0, v,    u, v };
+
+	glClear(GL_COLOR_BUFFER_BIT);
+	glVertexPointer(2, GL_FLOAT, 0, verts);
+	glTexCoordPointer(2, GL_FLOAT, 0, texc);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	eglSwapBuffers(g_eglDpy, g_eglSurf);
+	}
+
+static void glShutdown()
+	{
+	if (g_eglDpy != EGL_NO_DISPLAY)
+		{
+		eglMakeCurrent(g_eglDpy, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+		if (g_eglCtx != EGL_NO_CONTEXT)  eglDestroyContext(g_eglDpy, g_eglCtx);
+		if (g_eglSurf != EGL_NO_SURFACE) eglDestroySurface(g_eglDpy, g_eglSurf);
+		eglTerminate(g_eglDpy);
+		}
+	g_eglDpy = EGL_NO_DISPLAY; g_eglSurf = EGL_NO_SURFACE; g_eglCtx = EGL_NO_CONTEXT;
+	User::Free(g_glBuf); g_glBuf = NULL;
+	g_glReady = EFalse;
 	}
 
 // Масштабує поточний g_vout у g_bmp (nearest-neighbor, збереження пропорцій,
@@ -356,6 +494,14 @@ static void blitCurrent()
 	// рахуємо за повною висотою, бо на залізі поле розтягується на весь кадр.
 	const TBool field = (sh > 256);
 	const TInt srcRows = field ? sh / 2 : sh;
+
+	// GL ES шлях (MBX): GPU масштабує й презентує (eglSwapBuffers). Замінює весь
+	// bitmap+present нижче. rgb24 поки лишаємо на bitmap-шляху (не перевірено).
+	if (g_glReady && !rgb24)
+		{
+		glPresentFrame(vbytes, startByte, sw, sh, field, srcRows);
+		return;
+		}
 
 	TInt dstW = SW;
 	TInt dstH = sh * SW / sw;
@@ -503,6 +649,8 @@ extern "C" int voutSymbianFinish(int holdMs)
 	if (holdMs > 0)
 		User::After(holdMs * 1000);
 	g_ws.EventReadyCancel();   // знімаємо озброєний запит подій перед закриттям
+	// GL тримає EGL-поверхню на вікні - знімаємо перед закриттям вікна.
+	if (g_eglDpy != EGL_NO_DISPLAY) glShutdown();
 	// DSA тримає вікно/пристрій - знімаємо його першим.
 	if (g_dsa) { delete g_dsa; g_dsa = NULL; g_dsaGc = NULL; g_dsaActive = EFalse; }
 	delete g_bmp; g_bmp = NULL;
@@ -532,6 +680,18 @@ extern "C" int voutSymbianShow(int holdMs)
 extern "C" void voutSymbianSetDsa(int aOn)
 	{
 	g_useDsa = aOn ? ETrue : EFalse;
+	}
+
+// Увімкнути GL ES вивід (MBX). Викликати ДО voutSymbianInit.
+extern "C" void voutSymbianSetGl(int aOn)
+	{
+	g_useGl = aOn ? ETrue : EFalse;
+	}
+
+// Чи справді GL активний (для логу): 1 = present іде через GPU/EGL.
+extern "C" int voutSymbianGlActive(void)
+	{
+	return g_glReady ? 1 : 0;
 	}
 
 // Чи справді DSA активний (для логу): 1 = present іде через DSA.
