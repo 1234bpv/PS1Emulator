@@ -242,6 +242,13 @@ static const int KScreenHoldMs = 5000;
 // while(!regs->stop)), і прохід завершується з частковим результатом у лозі.
 static const TInt KWatchdogMs = 60000;
 
+// Меню-запуск (alpha 1.0) грає гру, тож потрібні великий бюджет кадрів і довший
+// сторож, щоб не обірвати сесію. Прохід усе одно самозавершується (не лишаємо
+// вічний консольний процес, який важко зняти).
+static const TInt KPlayFrames = 200000;
+static const TInt KPlayWatchdogMs = 1200000;    // 20 хв
+static TInt g_watchdogMs = KWatchdogMs;         // бенчмарк за замовчуванням
+
 static volatile TInt g_wdRun;    // 1, поки прохід хоче, щоб сторож жив
 static volatile TInt g_wdFired;  // 1, якщо сторож спрацював (спін довше ліміту)
 
@@ -581,7 +588,7 @@ static TInt runPass(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
 	RThread wd;
 	TRequestStatus wdStat;
 	const TBool haveWd =
-		(wd.Create(KNullDesC, watchdogThread, 4096, NULL, (TAny *)KWatchdogMs) == KErrNone);
+		(wd.Create(KNullDesC, watchdogThread, 4096, NULL, (TAny *)g_watchdogMs) == KErrNone);
 	if (haveWd) { wd.Logon(wdStat); wd.Resume(); }
 
 	const u32 framesAtStart = frame_counter;
@@ -606,7 +613,7 @@ static TInt runPass(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
 		if (g_wdFired)
 			{
 			logEvent("watchdog", "WATCHDOG",
-				"%s: stalled >%dms at frame %d - aborting pass", mode, (int)KWatchdogMs, i);
+				"%s: stalled >%dms at frame %d - aborting pass", mode, (int)g_watchdogMs, i);
 			stalled = ETrue;
 			break;
 			}
@@ -721,10 +728,14 @@ static TInt runStage1()
 	const long spuInitRc = SPU_init();
 	logEvent("spu_init", spuInitRc ? "SPU_INIT_FAIL" : NULL, "init=%ld", spuInitRc);
 
-	// Без аргументів (запуск з меню апарата) кількість кадрів менша: на 332 МГц
-	// інтерпретатор помітно повільніший за хост, а чекати на телефон незручно.
+	// Без аргументів = запуск з меню апарата (alpha 1.0): граємо GT з диска -
+	// великий бюджет кадрів і довший сторож, щоб не обірвати гру. З аргументами
+	// (деплой/бенчмарк) поведінка стара.
 	if (!haveArgs)
-		framesToRun = KDeviceFrames;
+		{
+		framesToRun = KPlayFrames;
+		g_watchdogMs = KPlayWatchdogMs;
+		}
 
 	logEvent("start", NULL, "stage1 begin, frames=%d bios=%d gputest=%d args=%d",
 		(int)framesToRun, (int)useBios, (int)gpuTest, (int)haveArgs);
@@ -740,20 +751,11 @@ static TInt runStage1()
 		}
 	else
 		{
-		// Спершу інтерпретатор - він відомо працює, тож дає базу для порівняння
-		// навіть якщо динарек упаде наступним. Екран/диск у бенчмарку не чіпаємо.
-		rc = runPass(EFalse, framesToRun, useBios, EFalse, EFalse, EFalse, interpTicks, interpFrames);
-		const TInt rcDrc = runPass(ETrue, framesToRun, useBios, ETrue, EFalse, EFalse, drcTicks, drcFrames);
-		if (rc == KErrNone)
-			rc = rcDrc;
-
-		// Частки на кадр у мкс: цілочисельно, бо ділення в мс губить різницю.
-		const unsigned interpUs = interpFrames ? (unsigned)(interpTicks * 1000 / interpFrames) : 0;
-		const unsigned drcUs = drcFrames ? (unsigned)(drcTicks * 1000 / drcFrames) : 0;
-		logEvent("compare", NULL,
-			"interp %ums/%uf=%uus_per_frame, drc %ums/%uf=%uus_per_frame",
-			(unsigned)interpTicks, (unsigned)interpFrames, interpUs,
-			(unsigned)drcTicks, (unsigned)drcFrames, drcUs);
+		// alpha 1.0: одразу граємо GT - диск+екран+drc+звук. Без бенчмарку двох
+		// режимів (для замірів запускати з аргументами через деплой).
+		rc = runPass(ETrue /*drc*/, framesToRun, ETrue /*bios*/, EFalse /*gputest*/,
+			ETrue /*screen*/, ETrue /*disc*/, drcTicks, drcFrames);
+		(void)interpTicks; (void)interpFrames;
 		}
 
 	// Знімок VRAM для перевірки растеризації на хості (Етап 2). Вивід на екран

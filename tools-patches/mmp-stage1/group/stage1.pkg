@@ -3,7 +3,7 @@
 
 &EN
 
-#{"PS1 Stage1 Core"},(0xE0001002),1,0,0
+#{"PS1Emulator alpha 1.0"},(0xE0001002),1,0,0
 
 %{"PS1Emulator"}
 :"PS1Emulator"

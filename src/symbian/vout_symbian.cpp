@@ -148,6 +148,11 @@ static CWindowGc *g_gc;
 static CFbsBitmap *g_bmp;
 static TSize g_scr;
 
+// Кеш геометрії вписування: чорні поля (FillZ) чистимо лише коли вона змінилась,
+// а не щокадру - решту бітмапа однаково повністю перезаписує копія кадру.
+// Скидається в initL при (пере)створенні бітмапа.
+static TInt g_blitOx = -1, g_blitOy, g_blitW, g_blitH;
+
 // Ввід: неблокуюче опитування подій RWsSession. g_evStat озброюється раз у initL,
 // щокадру voutSymbianPollPad() виснажує чергу й тримає g_pad (біти DKEY_*, active-high).
 static TRequestStatus g_evStat;
@@ -206,6 +211,7 @@ static void initL()
 	User::LeaveIfError(g_gc->Construct());
 	g_bmp = new (ELeave) CFbsBitmap;
 	User::LeaveIfError(g_bmp->Create(g_scr, EColor64K));
+	g_blitOx = -1;   // новий бітмап - примусити FillZ на першому кадрі
 
 	// Ввід: група вже на передньому плані (ordinal 0), тож отримує клавіші.
 	// Озброюємо чергу подій один раз; опитуємо неблокуюче щокадру.
@@ -262,7 +268,13 @@ static void blitCurrent()
 	g_bmp->LockHeap();
 	TUint16 *dst = (TUint16 *)g_bmp->DataAddress();
 	const TInt dstStride = g_bmp->DataStride() / 2;   // у 16-бітних словах
-	Mem::FillZ(dst, dstStride * SH * 2);              // чорні поля
+	// Чорні поля лише коли геометрія змінилась: інакше вони вже чорні з минулого
+	// кадру, а зображення однаково перезаписується. Прибирає memset ~150КБ/кадр.
+	if (ox != g_blitOx || oy != g_blitOy || dstW != g_blitW || dstH != g_blitH)
+		{
+		Mem::FillZ(dst, dstStride * SH * 2);
+		g_blitOx = ox; g_blitOy = oy; g_blitW = dstW; g_blitH = dstH;
+		}
 
 	// Nearest-neighbor через 16.16 фіксед-поінт: акумулятор замість ділення на
 	// кожен піксель. ARM11 не має швидкого апаратного ділення, а профіль показав,
