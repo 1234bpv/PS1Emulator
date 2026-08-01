@@ -75,3 +75,5 @@ LIBRARY         ws32.lib
 LIBRARY         fbscli.lib
 // Звук: потоковий вивід PCM у динамік (CMdaAudioOutputStream).
 LIBRARY         mediaclientaudiostream.lib
+// DSA: CFbsBitGc/CFbsScreenDevice (прямий вивід у буфер екрана).
+LIBRARY         bitgdi.lib

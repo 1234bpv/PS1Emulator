@@ -158,6 +158,38 @@ static TInt g_blitOx = -1, g_blitOy, g_blitW, g_blitH;
 static unsigned long long g_blitFillTicks, g_blitPresentTicks;
 extern "C" unsigned int ndrc_symbian_fastfreq(void);
 
+// DSA (Direct Screen Access): малюємо прямо в буфер екрана замість window-server
+// BitBlt+Flush (той - синхронний раунд-тріп, ~половина часу блиту). За прапорцем
+// (аргумент "dsa"), із відкатом на window-шлях, якщо StartL не вдався або WS
+// забрав екран (AbortNow). Планувальник для DSA-подій дає аудіо-підсистема.
+static TBool g_useDsa;
+static CDirectScreenAccess *g_dsa;
+static CFbsBitGc *g_dsaGc;
+static TBool g_dsaActive;
+static CActiveScheduler *g_dsaSched;   // ненульовий лише якщо його створив DSA
+
+static void dsaStartL()
+	{
+	g_dsa->StartL();
+	g_dsaGc = g_dsa->Gc();
+	g_dsaGc->SetClippingRegion(g_dsa->DrawingRegion());
+	g_dsaActive = ETrue;
+	}
+
+// Спостерігач DSA: WS кличе AbortNow, коли забирає екран (діалог/сповіщення), і
+// Restart, коли можна відновити. Між ними малюємо через window-шлях (fallback).
+class TDsaObserver : public MDirectScreenAccess
+	{
+public:
+	void AbortNow(RDirectScreenAccess::TTerminationReasons) { g_dsaActive = EFalse; }
+	void Restart(RDirectScreenAccess::TTerminationReasons)
+		{
+		g_dsaActive = EFalse;
+		if (g_dsa) { TRAP_IGNORE(dsaStartL()); }
+		}
+	};
+static TDsaObserver g_dsaObs;
+
 // Ввід: неблокуюче опитування подій RWsSession. g_evStat озброюється раз у initL,
 // щокадру voutSymbianPollPad() виснажує чергу й тримає g_pad (біти DKEY_*, active-high).
 static TRequestStatus g_evStat;
@@ -223,6 +255,24 @@ static void initL()
 	// Озброюємо чергу подій один раз; опитуємо неблокуюче щокадру.
 	g_pad = 0;
 	g_ws.EventReady(&g_evStat);
+
+	// DSA: потребує CActiveScheduler (для подій abort/restart). Зазвичай його вже
+	// створила аудіо-підсистема; якщо ні - робимо власний і прибираємо у Finish.
+	g_dsa = NULL; g_dsaGc = NULL; g_dsaActive = EFalse; g_dsaSched = NULL;
+	if (g_useDsa)
+		{
+		if (!CActiveScheduler::Current())
+			{
+			g_dsaSched = new CActiveScheduler;
+			if (g_dsaSched) CActiveScheduler::Install(g_dsaSched);
+			}
+		TRAPD(e, {
+			g_dsa = CDirectScreenAccess::NewL(g_ws, *g_dev, g_win, g_dsaObs);
+			dsaStartL();
+			});
+		if (e != KErrNone)
+			{ delete g_dsa; g_dsa = NULL; g_dsaGc = NULL; g_dsaActive = EFalse; }
+		}
 
 	g_wsReady = ETrue;
 	}
@@ -320,13 +370,28 @@ static void blitCurrent()
 	const TUint _fc1 = User::FastCounter();
 	g_blitFillTicks += (unsigned)(_fc1 - _fc0);
 
-	g_win.Invalidate();
-	g_win.BeginRedraw();
-	g_gc->Activate(g_win);
-	g_gc->BitBlt(TPoint(0, 0), g_bmp);
-	g_gc->Deactivate();
-	g_win.EndRedraw();
-	g_ws.Flush();
+	if (g_useDsa && g_dsaActive && g_dsaGc)
+		{
+		// Обробити можливі abort/restart від WS перед малюванням.
+		if (CActiveScheduler::Current())
+			{ TInt e; while (CActiveScheduler::RunIfReady(e, CActive::EPriorityIdle)) { } }
+		if (g_dsaActive && g_dsaGc)     // не абортнуто під час пампу
+			{
+			g_dsaGc->BitBlt(TPoint(0, 0), g_bmp);
+			CFbsScreenDevice *sd = g_dsa->ScreenDevice();
+			if (sd) sd->Update();       // проштовхнути в буфер екрана
+			}
+		}
+	else
+		{
+		g_win.Invalidate();
+		g_win.BeginRedraw();
+		g_gc->Activate(g_win);
+		g_gc->BitBlt(TPoint(0, 0), g_bmp);
+		g_gc->Deactivate();
+		g_win.EndRedraw();
+		g_ws.Flush();
+		}
 	g_blitPresentTicks += (unsigned)(User::FastCounter() - _fc1);
 	}
 
@@ -385,12 +450,17 @@ extern "C" int voutSymbianFinish(int holdMs)
 	if (holdMs > 0)
 		User::After(holdMs * 1000);
 	g_ws.EventReadyCancel();   // знімаємо озброєний запит подій перед закриттям
+	// DSA тримає вікно/пристрій - знімаємо його першим.
+	if (g_dsa) { delete g_dsa; g_dsa = NULL; g_dsaGc = NULL; g_dsaActive = EFalse; }
 	delete g_bmp; g_bmp = NULL;
 	delete g_gc;  g_gc = NULL;
 	g_win.Close();
 	g_grp.Close();
 	delete g_dev; g_dev = NULL;
 	g_ws.Close();
+	// Планувальник прибираємо лише якщо його створив саме DSA (інакше він аудіо-,
+	// і його зніме ps1SndCloseOutput).
+	if (g_dsaSched) { CActiveScheduler::Install(NULL); delete g_dsaSched; g_dsaSched = NULL; }
 	g_wsReady = EFalse;
 	return KErrNone;
 	}
@@ -403,6 +473,18 @@ extern "C" int voutSymbianShow(int holdMs)
 		return r;
 	voutSymbianPresent();
 	return voutSymbianFinish(holdMs);
+	}
+
+// Увімкнути DSA (прямий доступ до екрана) для present. Викликати ДО voutSymbianInit.
+extern "C" void voutSymbianSetDsa(int aOn)
+	{
+	g_useDsa = aOn ? ETrue : EFalse;
+	}
+
+// Чи справді DSA активний (для логу): 1 = present іде через DSA.
+extern "C" int voutSymbianDsaActive(void)
+	{
+	return (g_useDsa && g_dsaActive) ? 1 : 0;
 	}
 
 // Поділ часу блиту в мс: fill = цикл масштабування, present = BitBlt+Flush.

@@ -222,6 +222,8 @@ void voutSymbianPresent(void);
 int voutSymbianFinish(int holdMs);
 void voutSymbianGpuStats(unsigned *data, unsigned *dataMem, unsigned *dma, unsigned *status);
 void voutSymbianBlitSplit(unsigned *fillMs, unsigned *presentMs);
+void voutSymbianSetDsa(int on);
+int voutSymbianDsaActive(void);
 
 // Лічильники безпосередньо в gpulib: усі шляхи ядра (interp/drc) сходяться туди,
 // тож це достовірний сигнал, чи BIOS реально шле команди малювання.
@@ -421,6 +423,11 @@ static void parseCommandLine(TInt &aFrames, TBool &aUseBios, TBool &aGpuTest, TB
 		aUseDisc = ETrue;
 		aUseBios = ETrue;
 		}
+
+	// DSA-вивід (прямий доступ до екрана замість window-server BitBlt+Flush).
+	_LIT(KDsaArg, "dsa");
+	if (cmd.FindF(KDsaArg) != KErrNotFound)
+		voutSymbianSetDsa(1);
 	}
 
 // Самоперевірка растеризації: подаємо команди GP0 напряму, без BIOS і без гри.
@@ -701,6 +708,7 @@ static TInt runPass(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
 		gpuRasterMs, (unsigned)(tEmu ? gpuRasterMs * 100 / tEmu : 0),
 		blitFillMs, blitPresentMs,
 		(unsigned)aProduced);
+	logEvent("dsa", NULL, "%s: active=%d", mode, voutSymbianDsaActive());
 	}
 
 	// Тримаємо останній кадр (докручуючи аудіо), тоді прибираємо вікно й звук.
