@@ -16,6 +16,11 @@ extern "C" {
 #include "r3000a.h"
 #include "plugins.h"
 #include "psxcounters.h"
+// Привід CD: cdra_init/cdra_open (cdrom-async.c) і CheckCdrom (misc.c) не в наших
+// заголовках. cdra_open робить ISOopen(GetIsoFile) - саме воно відкриває образ.
+int cdra_init(void);
+int cdra_open(void);
+int CheckCdrom(void);
 }
 
 // Скільки кадрів рахувати. Перевизначається першим аргументом командного рядка:
@@ -34,6 +39,9 @@ static const int KProgressEvery = 50;
 // E:\scph7502.bin.
 static const char KBiosDir[]  = "E:";
 static const char KBiosFile[] = "scph7502.bin";
+// Диск гри на картці: вказуємо на .bin (образ даних). cdriso сам знаходить .cue
+// заміною розширення (cdriso.c:359 parsecue) для розкладки доріжок.
+static const char KDiscImg[]  = "E:\\gt.bin";
 
 static FILE *g_log;
 static TUint g_startTick;
@@ -354,13 +362,14 @@ static void openLog()
 // aHaveArgs == EFalse означає запуск з меню телефона - там аргументів немає,
 // і тоді проганяються обидва режими ЦП підряд для порівняння.
 static void parseCommandLine(TInt &aFrames, TBool &aUseBios, TBool &aGpuTest, TBool &aDrc,
-	TBool &aShowScreen, TBool &aHaveArgs)
+	TBool &aShowScreen, TBool &aUseDisc, TBool &aHaveArgs)
 	{
 	aFrames = KDefaultFrames;
 	aUseBios = EFalse;
 	aGpuTest = EFalse;
 	aDrc = EFalse;
 	aShowScreen = EFalse;
+	aUseDisc = EFalse;
 
 	TBuf<256> cmd;
 	User::CommandLine(cmd);
@@ -392,6 +401,15 @@ static void parseCommandLine(TInt &aFrames, TBool &aUseBios, TBool &aGpuTest, TB
 	_LIT(KScreenArg, "screen");
 	if (cmd.FindF(KScreenArg) != KErrNotFound)
 		aShowScreen = ETrue;
+
+	// Завантаження гри з диска (E:\gt.cue). Потребує справжнього BIOS, тож вмикає
+	// і його. CheckCdrom сам визначить регіон (US->NTSC), тож PsxType не форсуємо.
+	_LIT(KDiscArg, "disc");
+	if (cmd.FindF(KDiscArg) != KErrNotFound)
+		{
+		aUseDisc = ETrue;
+		aUseBios = ETrue;
+		}
 	}
 
 // Самоперевірка растеризації: подаємо команди GP0 напряму, без BIOS і без гри.
@@ -437,7 +455,7 @@ static void runGpuSelfTest()
 // (інтерпретатор, потім динарек), тож усе, що псує наступний прогін, має тут
 // прибиратися - звідси EmuShutdown у кінці.
 static TInt runPass(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
-	TBool aShowScreen, TUint &aTicks, u32 &aProduced)
+	TBool aShowScreen, TBool aUseDisc, TUint &aTicks, u32 &aProduced)
 	{
 	const char *mode = aUseDrc ? "drc" : "interp";
 	aTicks = 0;
@@ -479,16 +497,32 @@ static TInt runPass(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
 		// заглушкою; тепер вмикаємо, щоб побачити логотип.
 		Config.SlowBoot = 1;
 
-		// Диска немає, автовизначення (misc.c:483) не спрацює; дамп європейський.
-		Config.PsxType = PSX_TYPE_PAL;
+		// Без диска автовизначення регіону (misc.c) не спрацює - дамп європейський.
+		// З диском регіон визначить CheckCdrom нижче, тож PsxType не форсуємо.
+		if (!aUseDisc)
+			Config.PsxType = PSX_TYPE_PAL;
 		}
 
-	SetIsoFile(NULL);
+	// Диск гри (E:\gt.bin) або його відсутність. SetIsoFile до cdra_init - ISOopen
+	// робить fopen(fname) як основний образ, тож шлях має вказувати на .bin.
+	SetIsoFile(aUseDisc ? KDiscImg : NULL);
 
 	if (EmuInit() == -1)
 		{
 		logEvent("fatal", "EMU_INIT_FAIL", "%s: EmuInit returned -1", mode);
 		return KErrGeneral;
+		}
+
+	// Ініціалізація приводу CD: ядро кличе cdra_init лише в LoadPlugins, який ми
+	// обходимо. CheckCdrom читає диск (регіон, boot-запис), як у frontend/main.c:684.
+	if (aUseDisc)
+		{
+		const int cdInitRc = cdra_init();
+		const int cdOpenRc = cdra_open();      // ISOopen(GetIsoFile) - відкриває образ
+		const int cdChkRc = CheckCdrom();
+		logEvent("disc", (cdInitRc || cdOpenRc) ? "CDRA_FAIL" : NULL,
+			"%s: cdra_init=%d cdra_open=%d checkcdrom=%d region=%d", mode,
+			cdInitRc, cdOpenRc, cdChkRc, (int)Config.PsxRegion);
 		}
 
 	// GPU_init() робиться раз на процес у runStage1 (як LoadPlugins у фронтенді);
@@ -643,8 +677,8 @@ static TInt runPass(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
 static TInt runStage1()
 	{
 	TInt framesToRun;
-	TBool useBios, gpuTest, useDrc, showScreen, haveArgs;
-	parseCommandLine(framesToRun, useBios, gpuTest, useDrc, showScreen, haveArgs);
+	TBool useBios, gpuTest, useDrc, showScreen, useDisc, haveArgs;
+	parseCommandLine(framesToRun, useBios, gpuTest, useDrc, showScreen, useDisc, haveArgs);
 
 	bindStubPlugins();
 
@@ -678,15 +712,15 @@ static TInt runStage1()
 
 	if (haveArgs)
 		{
-		rc = runPass(useDrc, framesToRun, useBios, gpuTest, showScreen,
+		rc = runPass(useDrc, framesToRun, useBios, gpuTest, showScreen, useDisc,
 			useDrc ? drcTicks : interpTicks, useDrc ? drcFrames : interpFrames);
 		}
 	else
 		{
 		// Спершу інтерпретатор - він відомо працює, тож дає базу для порівняння
-		// навіть якщо динарек упаде наступним. Екран у бенчмарку не чіпаємо.
-		rc = runPass(EFalse, framesToRun, useBios, EFalse, EFalse, interpTicks, interpFrames);
-		const TInt rcDrc = runPass(ETrue, framesToRun, useBios, ETrue, EFalse, drcTicks, drcFrames);
+		// навіть якщо динарек упаде наступним. Екран/диск у бенчмарку не чіпаємо.
+		rc = runPass(EFalse, framesToRun, useBios, EFalse, EFalse, EFalse, interpTicks, interpFrames);
+		const TInt rcDrc = runPass(ETrue, framesToRun, useBios, ETrue, EFalse, EFalse, drcTicks, drcFrames);
 		if (rc == KErrNone)
 			rc = rcDrc;
 
