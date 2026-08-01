@@ -410,7 +410,13 @@ static unsigned g_gpData, g_gpDataMem, g_gpDma, g_gpStatus;
 long ps1GpuInit(void)
 	{
 	g_gpData = g_gpDataMem = g_gpDma = g_gpStatus = 0;
-	return GPUinit();
+	const long r = GPUinit();
+	// Пропуск непарних ліній при растеризації черезрядкового (hi-res) контенту:
+	// blitCurrent і так показує лише парне поле, тож малювати непарні - марно.
+	// Умовно на PSX_GPU_STATUS_INTERLACE (gpulib_if.cpp:116), тож 240p не страждає.
+	// Ставимо ПІСЛЯ GPUinit: він робить memset(&gpu.state).
+	gpu.state.downscale_enable = 1;
+	return r;
 	}
 long ps1GpuShutdown(void)                               { return GPUshutdown(); }
 long ps1GpuOpen(unsigned long *d, char *c, char *g)     { return GPUopen(d, c, g); }
