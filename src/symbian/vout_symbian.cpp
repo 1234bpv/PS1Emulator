@@ -148,6 +148,35 @@ static CWindowGc *g_gc;
 static CFbsBitmap *g_bmp;
 static TSize g_scr;
 
+// Ввід: неблокуюче опитування подій RWsSession. g_evStat озброюється раз у initL,
+// щокадру voutSymbianPollPad() виснажує чергу й тримає g_pad (біти DKEY_*, active-high).
+static TRequestStatus g_evStat;
+static unsigned short g_pad;
+
+// Розкладка клавіатури N95 -> кнопки PS1 (біти DKEY_* з plugin_lib.h). Стрілки -
+// хрестовина, центральна - Cross (підтвердити), цифри - лицьові кнопки.
+static TInt mapScanToDkey(TInt aScan)
+	{
+	switch (aScan)
+		{
+		case EStdKeyUpArrow:    return DKEY_UP;
+		case EStdKeyDownArrow:  return DKEY_DOWN;
+		case EStdKeyLeftArrow:  return DKEY_LEFT;
+		case EStdKeyRightArrow: return DKEY_RIGHT;
+		case EStdKeyDevice3:                          // центральна навігаційна
+		case EStdKeyEnter:                            // деякі прошивки шлють центр як Enter
+		case '5':               return DKEY_CROSS;
+		case '0':               return DKEY_CIRCLE;   // назад/скасувати
+		case '7':               return DKEY_SQUARE;
+		case '9':               return DKEY_TRIANGLE;
+		case '1':               return DKEY_L1;
+		case '3':               return DKEY_R1;
+		case '2':               return DKEY_SELECT;
+		case '8':               return DKEY_START;
+		default:                return -1;
+		}
+	}
+
 // PS1 VRAM - BGR555 (біт15 маска, 14-10 B, 9-5 G, 4-0 R); екран EColor64K -
 // RGB565. Зелений розширюємо з 5 до 6 біт, щоб не втратити яскравість.
 static inline TUint16 Bgr555ToRgb565(TUint16 aPix)
@@ -177,6 +206,12 @@ static void initL()
 	User::LeaveIfError(g_gc->Construct());
 	g_bmp = new (ELeave) CFbsBitmap;
 	User::LeaveIfError(g_bmp->Create(g_scr, EColor64K));
+
+	// Ввід: група вже на передньому плані (ordinal 0), тож отримує клавіші.
+	// Озброюємо чергу подій один раз; опитуємо неблокуюче щокадру.
+	g_pad = 0;
+	g_ws.EventReady(&g_evStat);
+
 	g_wsReady = ETrue;
 	}
 
@@ -271,6 +306,32 @@ extern "C" int voutSymbianInit(void)
 	return err;
 	}
 
+// Неблокуюче опитування клавіш: виснажує чергу подій вікон, оновлює g_pad
+// (біти DKEY_*, active-high) на натисканнях/відпусканнях, повертає поточний стан.
+// Без CActiveScheduler: перевіряємо озброєний TRequestStatus напряму.
+extern "C" unsigned short voutSymbianPollPad(void)
+	{
+	if (!g_wsReady)
+		return 0;
+	while (g_evStat != KRequestPending)
+		{
+		TWsEvent ev;
+		g_ws.GetEvent(ev);
+		const TInt t = ev.Type();
+		if (t == EEventKeyDown || t == EEventKeyUp)
+			{
+			const TInt bit = mapScanToDkey(ev.Key()->iScanCode);
+			if (bit >= 0)
+				{
+				if (t == EEventKeyDown) g_pad |= (unsigned short)(1 << bit);
+				else                    g_pad &= (unsigned short)~(1 << bit);
+				}
+			}
+		g_ws.EventReady(&g_evStat);
+		}
+	return g_pad;
+	}
+
 extern "C" void voutSymbianPresent(void)
 	{
 	if (!g_wsReady)
@@ -288,6 +349,7 @@ extern "C" int voutSymbianFinish(int holdMs)
 	if (holdMs > 30000) holdMs = 30000;
 	if (holdMs > 0)
 		User::After(holdMs * 1000);
+	g_ws.EventReadyCancel();   // знімаємо озброєний запит подій перед закриттям
 	delete g_bmp; g_bmp = NULL;
 	delete g_gc;  g_gc = NULL;
 	g_win.Close();

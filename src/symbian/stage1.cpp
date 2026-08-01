@@ -157,15 +157,22 @@ void pl_frame_limit(void)
 
 unsigned short in_keystate[8];
 
+// in_keystate[0] тримає натиснуті кнопки active-high (біти DKEY_*), заповнюється
+// щокадру з клавіш апарата (voutSymbianPollPad). PS1 очікує active-low, звідси ~.
 void PAD1_readPort(struct PadDataS *pad, int *is_multitap)
 	{
-	if (pad) memset(pad, 0, sizeof(*pad));
+	if (pad)
+		{
+		memset(pad, 0, sizeof(*pad));
+		pad->controllerType = PSE_PAD_TYPE_STANDARD;
+		pad->buttonStatus = (unsigned short)~in_keystate[0];
+		}
 	if (is_multitap) *is_multitap = 0;
 	}
 
 void PAD2_readPort(struct PadDataS *pad, int *is_multitap)
 	{
-	if (pad) memset(pad, 0, sizeof(*pad));
+	if (pad) memset(pad, 0, sizeof(*pad));   // порт 2 порожній
 	if (is_multitap) *is_multitap = 0;
 	}
 
@@ -202,6 +209,7 @@ int voutSymbianDump(const char *path);
 int voutSymbianUpdates(void);
 int voutSymbianShow(int holdMs);
 int voutSymbianInit(void);
+unsigned short voutSymbianPollPad(void);
 void voutSymbianPresent(void);
 int voutSymbianFinish(int holdMs);
 void voutSymbianGpuStats(unsigned *data, unsigned *dataMem, unsigned *dma, unsigned *status);
@@ -542,6 +550,11 @@ static TInt runPass(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
 	TBool stalled = EFalse;
 	for (int i = 0; i < aFrames; i++)
 		{
+		// Ввід: свіжий стан кнопок до Execute, бо ядро читає пад усередині кадру.
+		// Лише за наявності вікна (screen); у headless-бенчмарку клавіш нема.
+		if (aShowScreen)
+			in_keystate[0] = voutSymbianPollPad();
+
 		psxRegs.stop = 0;
 		psxCpu->Execute(&psxRegs);
 
