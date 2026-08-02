@@ -56,6 +56,12 @@ if /i "%TARGET%"=="stage1" (
   echo.
   echo [deploy] === libpcsxcore ===
   pushd "%CONFIGS%\core\group"
+  REM reallyclean so this always wins: core463-regen.cmd (opt-in experiment) drops
+  REM a GCCE 4.6.3 pcsxcore.lib in the same place, and abld leaves a foreign
+  REM library alone when its own objects are unchanged. Measured at -0.65% of the
+  REM frame, which is not worth compiling the dynarec with a second compiler.
+  call .\ABLD.BAT reallyclean gcce urel >nul 2>&1
+  call bldmake bldfiles || (popd & echo [deploy] core bldmake FAILED & exit /b 1)
   call .\ABLD.BAT build gcce urel || (popd & echo [deploy] core build FAILED & exit /b 1)
   popd
 

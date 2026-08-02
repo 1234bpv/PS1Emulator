@@ -710,6 +710,9 @@ static void blitCurrent()
 				{
 				const TUint32 *s32 = (const TUint32 *)srow;
 				TUint32 *d32 = (TUint32 *)drow;
+				// __builtin_prefetch тут ПЕРЕВІРЕНО і відкинуто: PLD на кожні два
+				// пікселі - це вісім звернень на лінію кешу, вони лише забивають
+				// слоти завантаження. blitFill 50836 -> 52698 мс на 9000 кадрів.
 				for (TInt i = dstW >> 1; i > 0; i--)
 					{
 					const TUint32 p = *s32++;
