@@ -272,13 +272,17 @@ static void cmdRun(RSocket &aSock, const TDesC8 &aArgs)
     User::WaitForRequest(st);
     TInt exitReason = p.ExitReason();
     TExitType et = p.ExitType();
+    // Категорія паніки поруч із кодом: сам код неоднозначний - "3" це і KERN-EXEC 3
+    // (звернення за недійсною адресою), і третій код будь-якої іншої категорії.
+    TExitCategoryName cat = p.ExitCategory();
     p.Close();
 
     // Код виходу для панічного завершення від'ємний за домовленістю тут.
     TInt code = (et == EExitPanic) ? -1000 - exitReason : exitReason;
-    TBuf8<64> ok; ok.Format(_L8("EXIT %d\n"), code);
+    TBuf8<32> cat8; cat8.Copy(cat.Left(24));
+    TBuf8<96> ok; ok.Format(_L8("EXIT %d %S\n"), code, &cat8);
     reply(aSock, ok);
-    TBuf<64> s; s.Format(_L("RUN exit=%d type=%d"), exitReason, (TInt)et);
+    TBuf<96> s; s.Format(_L("RUN exit=%d type=%d cat=%S"), exitReason, (TInt)et, &cat);
     say(s);
     }
 
