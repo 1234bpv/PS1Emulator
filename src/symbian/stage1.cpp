@@ -294,6 +294,24 @@ static TInt g_playFrames;
 // Аргумент "nosnd": прогін без звуку в динаміку.
 static TBool g_noSound;
 
+// Прискорювачі й якість растеризації. Усі за замовчуванням вимкнені, крім тих,
+// де вимкнення саме по собі є втратою (див. light/blend нижче).
+//   pixskip  - не малювати невидимі пікселі у високих горизонтальних режимах
+//   ilace<N> - пропускати рядки (1 = кожен другий)
+//   gtenf    - не рахувати прапорці GTE в динареку
+//   light/blend - модуляція текстур освітленням і напівпрозорість; вимкнені
+//                 вони були НЕ навмисно, а через нульовий gpu_unai_config_ext
+//   cyclemul<N> - скільки тактів коштує інструкція гостя (175 = штатно)
+static TInt g_hackPixelSkip;
+static TInt g_hackIlace;
+static TBool g_hackGteNoFlags;
+static TInt g_gpuLighting;
+static TInt g_gpuBlending;
+static TInt g_cycleMul;
+
+extern "C" void gpu_unai_set_config(int aPixelSkip, int aIlaceForce,
+	int aLighting, int aFastLighting, int aBlending);
+
 static volatile TInt g_wdRun;    // 1, поки прохід хоче, щоб сторож жив
 static volatile TInt g_wdFired;  // 1, якщо сторож спрацював (спін довше ліміту)
 
@@ -501,6 +519,12 @@ static TInt watchdogThread(TAny *aArg)
 			}
 		User::After(step * 1000);
 		elapsed += step;
+		// Не даємо екрану згаснути. Це не зручність, а умова порівнюваності: коли
+		// дисплей гасне, віконному серверу нема чого компонувати, і present падає
+		// з 12000 до 1700 мс на 9000 кадрів - більше за будь-який ефект, який ми
+		// тут міряємо. Раз на 10 с достатньо.
+		if ((elapsed % 10000) < step)
+			User::ResetInactivityTime();
 		// Міряємо ЗАСТІЙ, а не тривалість проходу: у GUI сесія триває годинами, і
 		// ліміт на весь прохід обривав би гру посеред неї. Зупинка лічильника
 		// кадрів - саме той випадок, заради якого сторож існує (Execute не
@@ -795,7 +819,10 @@ static TInt passSetup(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTes
 	// ніколи не цокають, і петля-очікування в BIOS крутиться вічно (виявлено
 	// семплюванням pc/cycle: pc у bfc04a48-8c, cycle застиг на 555). Решта -
 	// авто-сентинели (-1), які ядро інакше плутає з явним режимом 0.
-	Config.cycle_multiplier = CYCLE_MULT_DEFAULT;
+	// cyclemul<N> дозволяє відхилитись від штатних 175: більше - інструкція
+	// гостя коштує більше тактів, тож на кадр їх виконується менше (кадрів на
+	// секунду більше, ігрова логіка повільніша). Це компроміс, не оптимізація.
+	Config.cycle_multiplier = g_cycleMul > 0 ? g_cycleMul : CYCLE_MULT_DEFAULT;
 	Config.GpuListWalking = -1;
 	Config.FractionalFramerate = -1;
 	Config.AlternativeFlip = -1;
@@ -833,6 +860,13 @@ static TInt passSetup(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTes
 	// NDHACK_NO_SMC_CHECK НЕ вмикати: перевірено на апараті - без вбудованої
 	// перевірки самомодифікації BIOS не стартує взагалі (чорний екран). Скидання
 	// з боку C його не заміняє: BIOS пише свій код звичайними записами, а не DMA.
+
+	// gtenf: не рахувати прапорці GTE. Динарек і так пропускає їх там, де аналіз
+	// живучості довів, що вони не читаються; цей прапорець прибирає їх скрізь.
+	if (g_hackGteNoFlags)
+		ndrc_g.hacks |= NDHACK_GTE_NO_FLAGS;
+	logEvent("hacks", NULL, "%s: ndrc=%08x gtenf=%d cyclemul=%d", mode,
+		(unsigned)ndrc_g.hacks, (int)g_hackGteNoFlags, (int)Config.cycle_multiplier);
 
 	// Диск гри (E:\gt.bin) або його відсутність. SetIsoFile до cdra_init - ISOopen
 	// робить fopen(fname) як основний образ, тож шлях має вказувати на .bin.
@@ -1327,6 +1361,15 @@ static void coreInitOnce()
 	// (gpu.c:1218-1264), тож підключаємо їх до справжніх змінних ядра.
 	ps1GpuSetCallbacks(&frame_counter, &g_gpuHcnt);
 
+	// Конфіг растеризатора - обов'язково ДО GPU_init: renderer_init копіює його
+	// у робочу структуру один раз. Ми не викликаємо GPUrearmedCallbacks, тож без
+	// цього рядка структура лишається нульовою, і вимкненими виявляються не лише
+	// прискорювачі, а й освітлення з напівпрозорістю.
+	gpu_unai_set_config(g_hackPixelSkip, g_hackIlace, g_gpuLighting,
+		g_gpuLighting /*fast*/, g_gpuBlending);
+	logEvent("gpu_cfg", NULL, "pixskip=%d ilace=%d light=%d blend=%d",
+		(int)g_hackPixelSkip, (int)g_hackIlace, (int)g_gpuLighting, (int)g_gpuBlending);
+
 	// GPU_init() раз на процес: виділяє VRAM і виконує do_reset() у gpulib
 	// (gpu.status = 0x14802000, біт 28 = готовність до DMA). Фронтенд робить це в
 	// LoadPlugins() (plugins.c:328); ми обходимо LoadPlugins (нема .so), тож
@@ -1539,6 +1582,35 @@ GLDEF_C TInt E32Main()
 		_LIT(KNoSndArg, "nosnd");
 		if (cl.FindF(KNoSndArg) != KErrNotFound)
 			g_noSound = ETrue;
+		_LIT(KPixSkipArg, "pixskip");
+		if (cl.FindF(KPixSkipArg) != KErrNotFound)
+			g_hackPixelSkip = 1;
+		_LIT(KGteNfArg, "gtenf");
+		if (cl.FindF(KGteNfArg) != KErrNotFound)
+			g_hackGteNoFlags = ETrue;
+		_LIT(KLightArg, "light");
+		if (cl.FindF(KLightArg) != KErrNotFound)
+			g_gpuLighting = 1;
+		_LIT(KBlendArg, "blend");
+		if (cl.FindF(KBlendArg) != KErrNotFound)
+			g_gpuBlending = 1;
+		_LIT(KIlaceArg, "ilace");
+		const TInt ip = cl.FindF(KIlaceArg);
+		if (ip != KErrNotFound)
+			{
+			TLex lex(cl.Mid(ip + 5));
+			TInt n = 0;
+			g_hackIlace = (lex.Val(n) == KErrNone && n > 0) ? n : 1;
+			}
+		_LIT(KCycleMulArg, "cyclemul");
+		const TInt cp = cl.FindF(KCycleMulArg);
+		if (cp != KErrNotFound)
+			{
+			TLex lex(cl.Mid(cp + 8));
+			TInt n = 0;
+			if (lex.Val(n) == KErrNone && n > 0)
+				g_cycleMul = n;
+			}
 		_LIT(KFramesArg, "frames");
 		const TInt fp = cl.FindF(KFramesArg);
 		if (fp != KErrNotFound)
