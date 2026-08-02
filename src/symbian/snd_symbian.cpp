@@ -39,6 +39,13 @@ void SPUregisterScheduleCb(void (*cb)(unsigned int));
 static const TInt KSndRing  = 128 * 1024;   // ~0.37с при 44100 стерео 16-біт
 static const TInt KSndChunk = 8 * 1024;     // ~46мс на один WriteL
 
+// Гучність кроками, керується з оболонки (клавіші * і #). Регулюємо гучність
+// ПОТОКУ, а не spu_config.iVolume: масштабування в мікшері dfsound однаково
+// коштує CPU і псує динамічний діапазон, а тут це робить аудіопідсистема.
+static const TInt KVolSteps   = 10;
+static const TInt KVolDefault = 2;          // на повній динамік апарата перевантажується
+static TInt g_volStep = KVolDefault;
+
 class CSymSnd : public CBase, public MMdaAudioOutputStreamCallback
 	{
 public:
@@ -47,6 +54,7 @@ public:
 	void Feed(const void *aBuf, TInt aBytes);
 	void Pump();
 	TBool WaitOpen(TInt aTimeoutMs);
+	void ApplyVolume();
 private:
 	void ConstructL();
 	void Refill();
@@ -96,9 +104,20 @@ void CSymSnd::MaoscOpenComplete(TInt aError)
 	TRAP_IGNORE(iStream->SetAudioPropertiesL(
 		TMdaAudioDataSettings::ESampleRate44100Hz,
 		TMdaAudioDataSettings::EChannelsStereo));
-	iStream->SetVolume(iStream->MaxVolume());
 	iOpen = ETrue;
+	ApplyVolume();
 	Refill();
+	}
+
+void CSymSnd::ApplyVolume()
+	{
+	if (!iStream || !iOpen)
+		return;
+	const TInt max = iStream->MaxVolume();
+	TInt v = max * g_volStep / KVolSteps;
+	if (v < 0)   v = 0;
+	if (v > max) v = max;
+	iStream->SetVolume(v);
 	}
 
 void CSymSnd::MaoscBufferCopied(TInt /*aError*/, const TDesC8 & /*aBuffer*/)
@@ -145,11 +164,21 @@ void CSymSnd::Refill()
 	if (err != KErrNone) iWriting = EFalse;
 	}
 
+// У GUI планувальник крутить сама оболонка: CIdle віддає йому керування після
+// КОЖНОГО кадру, тож активні об'єкти й так обслуговуються. Вкладений RunIfReady
+// там лише поглиблював би стек рівно в найглибшій точці - усередині кроку
+// емуляції - і давав би реентрантність. У консольній гілці планувальника не
+// крутить ніхто, тому там він лишається.
+static TBool g_pumpAo = ETrue;
+
 void CSymSnd::Pump()
 	{
-	TInt e;
-	while (CActiveScheduler::RunIfReady(e, CActive::EPriorityIdle))
-		{ }
+	if (g_pumpAo)
+		{
+		TInt e;
+		while (CActiveScheduler::RunIfReady(e, CActive::EPriorityIdle))
+			{ }
+		}
 	Refill();
 	}
 
@@ -259,6 +288,28 @@ int ps1SndOpenOutput(void)
 		return err ? err : -1;
 	g_snd = s;
 	return g_snd->WaitOpen(2000) ? 0 : -2;   // -2: відкрилось не вчасно (звук може підхопитись пізніше)
+	}
+
+// Гучність на крок вгору/вниз. Повертає новий рівень (0..KVolSteps). Працює й до
+// відкриття потоку - рівень запам'ятовується й застосується в MaoscOpenComplete.
+int ps1SndVolumeStep(int aDelta)
+	{
+	g_volStep += aDelta;
+	if (g_volStep < 0)         g_volStep = 0;
+	if (g_volStep > KVolSteps) g_volStep = KVolSteps;
+	if (g_snd)
+		g_snd->ApplyVolume();
+	return g_volStep;
+	}
+
+int ps1SndVolumeSteps(void)
+	{
+	return KVolSteps;
+	}
+
+void ps1SndSetPumpAo(int aOn)
+	{
+	g_pumpAo = aOn ? ETrue : EFalse;
 	}
 
 // Обслужити активні об'єкти й долити наступний буфер. Викликати щокадру.
