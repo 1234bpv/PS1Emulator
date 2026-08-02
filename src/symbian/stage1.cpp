@@ -285,6 +285,15 @@ static TInt g_watchdogMs = KWatchdogMs;         // бенчмарк за зам�
 // Аргумент "limit<N>" ставить її для прогонів через демон.
 static TInt g_playLimitMs;
 
+// Скільки кадрів прорахувати. Аргумент "frames<N>". Для замірів це надійніше за
+// обмеження часом: за фіксований час швидша збірка встигає далі по грі й малює
+// ІНШІ сцени, тож порівнювати нема чого. Однакова кількість кадрів із однаковим
+// слідом вводу дає однакову роботу, і різниця в часі - це справді різниця коду.
+static TInt g_playFrames;
+
+// Аргумент "nosnd": прогін без звуку в динаміку.
+static TBool g_noSound;
+
 static volatile TInt g_wdRun;    // 1, поки прохід хоче, щоб сторож жив
 static volatile TInt g_wdFired;  // 1, якщо сторож спрацював (спін довше ліміту)
 
@@ -862,7 +871,9 @@ static TInt passSetup(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTes
 
 	// Вивід у динамік лише в інтерактивних прогонах (screen): у бенчмарку звук
 	// псував би заміри, а вікна/акт.планувальника там нема.
-	if (aShowScreen)
+	// Аргумент "nosnd": не відкривати вивід у динамік. SPU далі мікшує, тож
+	// таймінги емуляції й хід повтору не змінюються - мовчить лише апарат.
+	if (aShowScreen && !g_noSound)
 		{
 		const int sndRc = ps1SndOpenOutput();
 		logEvent("snd_open", sndRc ? "SND_OPEN_WARN" : NULL, "%s: rc=%d", mode, sndRc);
@@ -1351,9 +1362,10 @@ extern "C" int ps1GuiSetup(void)
 	g_watchdogMs = KPlayWatchdogMs;
 	ps1SndSetPumpAo(0);   // планувальник крутить CIdle між кадрами
 	coreInitOnce();
-	logEvent("start", NULL, "stage1 begin (gui), frames=%d cpu=%s input=%d", (int)KPlayFrames,
+	const TInt frames = g_playFrames > 0 ? g_playFrames : KPlayFrames;
+	logEvent("start", NULL, "stage1 begin (gui), frames=%d cpu=%s input=%d", (int)frames,
 		g_guiInterp ? "interp" : "drc", (int)g_inputMode);
-	const TInt rc = passSetup(!g_guiInterp, KPlayFrames, ETrue /*bios*/, EFalse /*gputest*/,
+	const TInt rc = passSetup(!g_guiInterp, frames, ETrue /*bios*/, EFalse /*gputest*/,
 		ETrue /*screen*/, ETrue /*disc*/);
 	// Після passSetup: слід прив'язаний до номера кадру, а лічильник кадрів
 	// починається саме тут.
@@ -1523,6 +1535,18 @@ GLDEF_C TInt E32Main()
 			TInt secs = 0;
 			if (lex.Val(secs) == KErrNone && secs > 0)
 				g_playLimitMs = secs * 1000;
+			}
+		_LIT(KNoSndArg, "nosnd");
+		if (cl.FindF(KNoSndArg) != KErrNotFound)
+			g_noSound = ETrue;
+		_LIT(KFramesArg, "frames");
+		const TInt fp = cl.FindF(KFramesArg);
+		if (fp != KErrNotFound)
+			{
+			TLex lex(cl.Mid(fp + 6));
+			TInt n = 0;
+			if (lex.Val(n) == KErrNone && n > 0)
+				g_playFrames = n;
 			}
 
 		// Той самий вибір файлом-маркером, бо запуск із меню аргументів не має.

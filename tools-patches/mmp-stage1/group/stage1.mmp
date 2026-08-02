@@ -26,6 +26,10 @@ EPOCHEAPSIZE    0x100000 0x2800000
 
 // Ті самі прапорці, що й у ядра. P13: без ORDER-макросів CSL 3.4.3 бере
 // big-endian гілку; заголовки ядра тут теж їх читають.
+// -funit-at-a-time тут НЕ вмикати (лише в pcsxcore/gpuunai): з ним GCC 3.4.3
+// випускає позаконтурні копії inline-віртуальних методів із заголовків MMF
+// (MDataSource/MDataSink), і лінк падає на TMMFMessage::Complete та
+// REComSession::DestroyedImplementation. Саме тому SDK його й вимикає.
 OPTION GCCE     -march=armv6 -D__SIZEOF_POINTER__=4 -DP_HAVE_MMAP=0 \
                 -D__ORDER_LITTLE_ENDIAN__=1234 -D__ORDER_BIG_ENDIAN__=4321 \
                 -D__ORDER_PDP_ENDIAN__=3412 -D__BYTE_ORDER__=1234
@@ -70,6 +74,9 @@ END
 // ESTLIB не має snprintf/vsnprintf (C99); у SDK їх немає в жодній .dso.
 SOURCEPATH      ..\..\..\src\compat
 SOURCE          compat_snprintf.c
+// __aeabi_idiv/__aeabi_uidiv: потрібні об'єктам від GCCE 4.6.3, система їх не
+// експортує (лише *divmod, які кличе 3.4.3). Див. компенсацію у файлі.
+SOURCE          compat_aeabi.c
 
 USERINCLUDE     ..\..\..\src\compat
 USERINCLUDE     ..\..\..\pcsx_rearmed

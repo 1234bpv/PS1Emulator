@@ -60,15 +60,14 @@ if /i "%TARGET%"=="stage1" (
   popd
 
   echo.
-  echo [deploy] === gpu_unai ===
-  pushd "%CONFIGS%\gpu\group"
-  REM Trap 4: abld prints "Dependency list may be incomplete" and then does not
-  REM rebuild when only a MACRO in the .mmp changed. Enabling the assembly
-  REM rasteriser looked like it had no effect for a whole cycle because of this.
-  call .\ABLD.BAT reallyclean gcce urel >nul 2>&1
-  call bldmake bldfiles || (popd & echo [deploy] gpu bldmake FAILED & exit /b 1)
-  call .\ABLD.BAT build gcce urel || (popd & echo [deploy] gpu build FAILED & exit /b 1)
-  popd
+  REM gpu_unai is built outside abld, with GCCE 4.6.3 and the hand-written ARM
+  REM inner loops. Measured against the abld/CSL 3.4.3 build on a fixed 9000-frame
+  REM replay: rasteriser -8.3%, whole frame -3.0%, with every gpulib draw counter
+  REM identical. configs\gpu\group\gpuunai.mmp is kept only as the record of the
+  REM file list and macros - building it with abld would overwrite gpuunai.lib.
+  echo [deploy] === gpu_unai (asm + GCCE 4.6.3) ===
+  call "%~dp0gpuasm-regen.cmd" || (echo [deploy] gpu asm FAILED & exit /b 1)
+  call "%~dp0gpu463-regen.cmd" || (echo [deploy] gpu 4.6.3 build FAILED & exit /b 1)
 )
 
 echo.
