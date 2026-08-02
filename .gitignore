@@ -29,3 +29,6 @@ epoc32/
 
 # runtime cache: last-seen daemon IP
 tools-patches/.daemon_ip
+
+# Тимчасовий файл deploy.cmd (шлях останнього каталогу прогону)
+.rundir.tmp

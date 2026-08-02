@@ -37,6 +37,12 @@ extern "C" void ndrc_symbian_free(void *base)
     g_ndrcOpen = EFalse;
     }
 
+// База кешу трансляцій - щоб діагностика могла сказати, чи PC у згенерованому коді.
+extern "C" unsigned int ndrc_symbian_tcbase(void)
+    {
+    return g_ndrcOpen ? (unsigned int)g_ndrcChunk.Base() : 0;
+    }
+
 extern "C" void ndrc_symbian_imb(void *start, void *end)
     {
     User::IMB_Range(start, end);

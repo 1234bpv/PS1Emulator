@@ -5,6 +5,7 @@
 #include <e32base.h>
 #include <e32std.h>
 #include <e32debug.h>
+#include <f32file.h>
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -16,6 +17,7 @@ extern "C" {
 #include "r3000a.h"
 #include "plugins.h"
 #include "psxcounters.h"
+#include "new_dynarec/new_dynarec.h"     // ndrc_g.hacks
 // Привід CD: cdra_init/cdra_open (cdrom-async.c) і CheckCdrom (misc.c) не в наших
 // заголовках. cdra_open робить ISOopen(GetIsoFile) - саме воно відкриває образ.
 int cdra_init(void);
@@ -237,11 +239,31 @@ extern unsigned int g_gpulibStatusLast;
 // Час растеризації gpu_unai (тики FastCounter) - розділяє CPU vs GPU в "emu".
 extern unsigned long long g_gpulibRenderTicks;
 unsigned int ndrc_symbian_fastfreq(void);
+unsigned int ndrc_symbian_tcbase(void);
 }
 
 // Скільки тримати кадр на екрані, щоб людина встигла глянути (запуск headless
 // по WiFi: дивимось на сам апарат під час прогону).
 static const int KScreenHoldMs = 5000;
+
+// Стан проходу й стадія кадру оголошені тут, а не біля самого циклу: їх читає
+// сторожовий потік (чорна скринька нижче), який визначений раніше за цикл.
+enum TFrameStage { EStageIdle = 0, EStagePoll, EStageExec, EStageBlit, EStageSnd };
+static volatile TInt g_stage;
+
+static struct
+	{
+	const char *mode;
+	TInt frames;
+	TBool showScreen;
+	TBool haveWd;
+	TBool stalled;
+	TInt i;
+	TUint tStart, tPoll, tEmu, tBlit, tSnd;
+	u32 framesAtStart;
+	TUint ticks;
+	u32 produced;
+	} g_pass;
 
 // Захист від зависання. Цикл кадрів покладається на те, що psxCpu->Execute()
 // повертається на межі кадру (pl_frame_limit виставляє psxRegs.stop на VBlank).
@@ -270,17 +292,193 @@ static volatile TUint32 g_wdPc[KWdSamples];
 static volatile TUint32 g_wdCyc[KWdSamples];
 static volatile TInt g_wdSamples;
 
+// Ознака життя циклу кадрів: інкремент на кожен крок.
+static volatile TInt g_wdBeat;
+
+// Ідентифікатор головного потоку: сторож читає його контекст (де саме він виконується).
+static TThreadId g_mainThreadId;
+
 // Завершується КООПЕРАТИВНО: перевіряє g_wdRun короткими кроками й виходить сам,
 // коли прохід його вимкне. Так не треба RThread::Kill (паніка при вбивстві вже
 // мертвого потоку) і немає гонки на завершенні.
+static void crashHandler(TExcType aType);
+
+// Знімок стека з обробника виключень. Ядро кладе збережений контекст збійного
+// коду на стек потоку перед викликом обробника, тож адреса збійної інструкції
+// лежить у цих словах - шукати серед них значення в межах кешу трансляцій або
+// коду програми. Сам обробник у файл не пише: stdio з нього мовчав, а RFs звідти
+// відкривати надто ризиковано (вторинний збій - і не лишиться нічого).
+// Обробник не робить ЖОДНОГО системного виклику до публікації: минулий варіант
+// брав StackInfo і чекав через User::After, і не записав нічого - блокувальний
+// виклик з контексту виключення знімає потік мовчки. Вершина стека тому
+// запам'ятовується заздалегідь (paintStack), а чекає обробник спін-циклом.
+static const TInt KCrashWords = 64;
+static volatile TInt g_crashType = -1;
+static volatile TInt g_crashStep;
+static volatile TUint32 g_crashSp;
+static volatile TUint32 g_crashStack[KCrashWords];
+static volatile TInt g_crashWords;
+static volatile TInt g_crashPublished;
+static TUint32 g_stackBase;
+
+// Слід рекомпілятора (new_dynarec.c): який гостьовий блок і який прохід саме
+// виконувався. Без цього адреса збійної інструкції нічого не каже про причину.
+extern "C" {
+extern unsigned int ndrc_dbg_addr, ndrc_dbg_pass, ndrc_dbg_i, ndrc_dbg_slen, ndrc_dbg_out;
+}
+
 static TInt watchdogThread(TAny *aArg)
 	{
-	const TInt totalMs = (TInt)aArg;
-	const TInt step = 200;
-	TInt elapsed = 0;
-	TInt nextSampleMs = 0;
-	while (g_wdRun && elapsed < totalMs)
+	// Обробник виключень - на потік, а не на процес: без цього збій саме в сторожі
+	// вбивав би процес мовчки, і виглядало б це так само, як збій у циклі кадрів.
+	User::SetExceptionHandler(crashHandler,
+		KExceptionAbort | KExceptionKill | KExceptionUserInterrupt | KExceptionFpe |
+		KExceptionFault | KExceptionInteger | KExceptionDebug);
+
+	// Чорна скринька. KERN-EXEC 3 знімає процес так, що обробник виключень не
+	// встигає нічого записати (перевірено: встановлюється, але не викликається),
+	// тож стан пише СУСІДНІЙ потік - те, що вже лягло на флеш, паніка не відбере.
+	// Нативний RFile, а не stdio: ESTLIB тримає стан C-бібліотеки на потік, і
+	// fopen звідси просто повертав NULL (файл не з'являвся).
+	// Контекст головного потоку: його PC каже, ДЕ він виконується - у кеші
+	// трансляцій (згенерований код) чи в коді програми (сам рекомпілятор). Це
+	// розділяє простір пошуку навпіл, чого сам лічильник стадій не дає.
+	RThread mainT;
+	const TBool haveMainT = (mainT.Open(g_mainThreadId) == KErrNone);
+
+	RFs beatFs;
+	RFile beatFile;
+	TBool haveBeat = EFalse;
+	if (beatFs.Connect() == KErrNone)
 		{
+		_LIT(KBeatPath, "E:\\ps1_beat.jsonl");
+		_LIT(KBeatPrev, "E:\\ps1_beat_prev.jsonl");
+		beatFs.Delete(KBeatPrev);
+		beatFs.Rename(KBeatPath, KBeatPrev);
+		haveBeat = (beatFile.Replace(beatFs, KBeatPath, EFileWrite | EFileShareAny) == KErrNone);
+		}
+
+	const TInt limitMs = (TInt)aArg;
+	// Крок 5 мс: після збою процес живе лічені десятки мілісекунд, і рідший
+	// крок не встигає зафіксувати зупинку (перевірено - на 25 мс губилось).
+	const TInt step = 5;
+	TInt elapsed = 0;
+	TInt idleMs = 0;
+	TInt lastBeat = -1;
+	TInt nextSampleMs = 0;
+	TInt nextBeatMs = 0;
+	TUint32 lastHpc = 0, lastHsp = 0, lastCycle = 0;
+	TBool stuckDumped = EFalse;
+	const TInt KSnapWords = 88;
+	const TInt KSnapBelow = 32;
+	TUint32 snap[KSnapWords];
+	TUint32 snapSp = 0;
+	TInt snapCount = 0;
+	while (g_wdRun && idleMs < limitMs)
+		{
+		if (haveBeat && elapsed >= nextBeatMs)
+			{
+			unsigned gpData = 0, gpDataMem = 0, gpDma = 0, gpStatus = 0;
+			voutSymbianGpuStats(&gpData, &gpDataMem, &gpDma, &gpStatus);
+			// Купа: метадані динареку (блоки, списки переходів, хеш-таблиці)
+			// живуть саме тут і ростуть найшвидше на завантаженні нового коду.
+			// EPOCHEAPSIZE обмежує їх зверху, а невдалий malloc у динареку
+			// перевіряється не скрізь - тоді запис іде за нульовим покажчиком.
+			TInt heapBiggest = 0;
+			const TInt heapAvail = User::Heap().Available(heapBiggest);
+
+			// r13/r14/r15 головного потоку. TArmRegSet - масив 32-бітних слів,
+			// PC у ньому 16-й (індекс 15).
+			TUint32 hsp = 0, hlr = 0, hpc = 0;
+			if (haveMainT)
+				{
+				TBuf8<128> ctx;
+				mainT.Context(ctx);
+				const TUint32 *r = (const TUint32 *)ctx.Ptr();
+				if (ctx.Length() >= 16 * 4)
+					{ hsp = r[13]; hlr = r[14]; hpc = r[15]; }
+				}
+			TBuf8<448> line;
+			line.Format(_L8("{\"ms\":%u,\"stage\":%d,\"frame\":%d,\"pc\":\"%08x\","
+				"\"cycle\":%u,\"gp0\":%u,\"dataMem\":%u,\"dma\":%u,\"gp1\":\"%08x\","
+				"\"heapKb\":%d,\"heapFreeKb\":%d,"
+				"\"hpc\":\"%08x\",\"hlr\":\"%08x\",\"hsp\":\"%08x\",\"tc\":\"%08x\","
+				"\"blk\":\"%08x\",\"rp\":%u,\"ri\":%u,\"rn\":%u,\"out\":\"%08x\"}\n"),
+				(TUint)(User::NTickCount() - g_startTick), (TInt)g_stage, (TInt)g_pass.i,
+				(TUint)psxRegs.pc, (TUint)psxRegs.cycle,
+				(TUint)gpData, (TUint)gpDataMem, (TUint)gpDma, (TUint)gpStatus,
+				(TInt)(User::Heap().Size() / 1024), (TInt)(heapAvail / 1024),
+				hpc, hlr, hsp, (TUint32)ndrc_symbian_tcbase(),
+				(TUint32)ndrc_dbg_addr, (TUint)ndrc_dbg_pass, (TUint)ndrc_dbg_i,
+				(TUint)ndrc_dbg_slen, (TUint32)ndrc_dbg_out);
+			beatFile.Write(line);
+			beatFile.Flush();
+			nextBeatMs += 50;
+
+			// Адреса збійної інструкції без обробника виключень. Той на цьому
+			// апараті не викликається, зате ядро лишає контекст збійного коду на
+			// стеку головного потоку - а сторож живе в тому ж процесі й читає
+			// його пам'ять напряму. Ознака зупинки: pc, sp І лічильник тактів
+			// гостя не змінилися між відліками, хоча стадія - виконання.
+			if (!stuckDumped && g_stage == EStageExec && hpc == lastHpc &&
+				hsp == lastHsp && (TUint32)psxRegs.cycle == lastCycle && hsp)
+				{
+				// Пишемо знімок ПОПЕРЕДНЬОГО відліку, а не свіжий: на цьому кроці
+				// головний потік уже мертвий, його стек відображення не має, і
+				// читання звідти вбивало сам сторож (перевірено - файл обривався).
+				// Одним записом: процес помирає за мілісекунди.
+				stuckDumped = ETrue;
+				TBuf8<1200> rec;
+				rec.Format(_L8("{\"stuck\":1,\"hpc\":\"%08x\",\"excsp\":\"%08x\","
+					"\"hsp\":\"%08x\",\"words\":["), hpc, hsp, snapSp);
+				for (TInt w = 0; w < snapCount; ++w)
+					{
+					if (w) rec.Append(',');
+					rec.AppendFormat(_L8("\"%08x\""), snap[w]);
+					}
+				rec.Append(_L8("]}\n"));
+				beatFile.Write(rec);
+				beatFile.Flush();
+				}
+			else if (hsp)
+				{
+				// Котиться щовідліку, поки потік живий: читати його стек безпечно
+				// лише до збою, а потрібен він саме за станом на момент збою.
+				// Вікно і вниз від sp: невідомо, з якого боку ядро кладе контекст
+				// збійного коду, а кадр збійної функції лежить саме нижче.
+				TUint32 lo = hsp - KSnapBelow * 4;
+				TUint32 top = lo + KSnapWords * 4;
+				if (g_stackBase && top > g_stackBase) top = g_stackBase;
+				const TUint32 *sp = (const TUint32 *)lo;
+				snapCount = (top > lo) ? (TInt)((top - lo) / 4) : 0;
+				if (snapCount > KSnapWords) snapCount = KSnapWords;
+				for (TInt w = 0; w < snapCount; ++w)
+					snap[w] = sp[w];
+				snapSp = lo;
+				}
+			lastHpc = hpc; lastHsp = hsp; lastCycle = (TUint32)psxRegs.cycle;
+			}
+		if (haveBeat && g_crashType >= 0 && !g_crashPublished)
+			{
+			TBuf8<192> head;
+			head.Format(_L8("{\"crash\":%d,\"step\":%d,\"sp\":\"%08x\","
+				"\"blk\":\"%08x\",\"rp\":%u,\"ri\":%u,\"rn\":%u,\"out\":\"%08x\","
+				"\"tc\":\"%08x\",\"stack\":["),
+				(TInt)g_crashType, (TInt)g_crashStep, (TUint32)g_crashSp,
+				(TUint32)ndrc_dbg_addr, (TUint)ndrc_dbg_pass, (TUint)ndrc_dbg_i,
+				(TUint)ndrc_dbg_slen, (TUint32)ndrc_dbg_out,
+				(TUint32)ndrc_symbian_tcbase());
+			beatFile.Write(head);
+			for (TInt w = 0; w < g_crashWords; ++w)
+				{
+				TBuf8<16> cell;
+				cell.Format(_L8("%s\"%08x\""), w ? "," : "", (TUint32)g_crashStack[w]);
+				beatFile.Write(cell);
+				}
+			beatFile.Write(_L8("]}\n"));
+			beatFile.Flush();
+			g_crashPublished = 1;
+			}
 		if (elapsed >= nextSampleMs && g_wdSamples < KWdSamples)
 			{
 			g_wdPc[g_wdSamples] = psxRegs.pc;
@@ -290,12 +488,23 @@ static TInt watchdogThread(TAny *aArg)
 			}
 		User::After(step * 1000);
 		elapsed += step;
+		// Міряємо ЗАСТІЙ, а не тривалість проходу: у GUI сесія триває годинами, і
+		// ліміт на весь прохід обривав би гру посеред неї. Зупинка лічильника
+		// кадрів - саме той випадок, заради якого сторож існує (Execute не
+		// повертається, бо BIOS крутиться до першого VBlank).
+		if (g_wdBeat != lastBeat) { lastBeat = g_wdBeat; idleMs = 0; }
+		else                      { idleMs += step; }
 		}
 	if (g_wdRun)
 		{
 		psxRegs.stop = 1;
 		g_wdFired = 1;
 		}
+	if (haveBeat)
+		beatFile.Close();
+	beatFs.Close();
+	if (haveMainT)
+		mainT.Close();
 	return 0;
 	}
 
@@ -322,6 +531,7 @@ void ps1SndStats(unsigned *feeds, unsigned *samples, int *maxAmp);
 int  ps1SndOpenOutput(void);
 void ps1SndPump(void);
 void ps1SndCloseOutput(void);
+void ps1SndSetPumpAo(int aOn);
 }
 
 // XA/CD-аудіо та freeze для звуку BIOS не потрібні - лишаємо заглушками.
@@ -367,8 +577,23 @@ static void bindStubPlugins()
 
 // --- Точка входу ------------------------------------------------------------
 
+// Один попередній лог зберігаємо: запуск затирає поточний, і цікавий прогін
+// пропадає, щойно застосунок піднімуть ще раз - на цьому вже раз згоріли.
+static void rotateLog(const TDesC &aPath, const TDesC &aPrev)
+	{
+	RFs fs;
+	if (fs.Connect() != KErrNone)
+		return;
+	fs.Delete(aPrev);
+	fs.Rename(aPath, aPrev);
+	fs.Close();
+	}
+
 static void openLog()
 	{
+	_LIT(KLogPath, "E:\\ps1_stage1.jsonl");
+	_LIT(KLogPrev, "E:\\ps1_stage1_prev.jsonl");
+	rotateLog(KLogPath, KLogPrev);
 	// E: - змонтована карта пам'яті, тобто тека хоста: лог видно ззовні емулятора.
 	g_log = fopen("E:\\ps1_stage1.jsonl", "w");
 	if (!g_log)
@@ -481,12 +706,63 @@ static void runGpuSelfTest()
 // Один прогін: ініціалізація ядра, N кадрів, вимкнення. Викликається двічі
 // (інтерпретатор, потім динарек), тож усе, що псує наступний прогін, має тут
 // прибиратися - звідси EmuShutdown у кінці.
-static TInt runPass(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
-	TBool aShowScreen, TBool aUseDisc, TUint &aTicks, u32 &aProduced)
+//
+// Розділений на setup/step/teardown, бо GUI-оболонка виконує кадри по одному з
+// активного об'єкта: суцільний цикл не віддавав би керування планувальнику, і
+// фреймворк CONE не встигав би ні роздати клавіші, ні обробити вихід. Консольна
+// гілка складає три частини назад у runPass, тож її поведінка не змінилась.
+static RThread g_wdThread;
+static TRequestStatus g_wdStat;
+
+// Стек: замір на вершині циклу нічого не дає - глибина набирається всередині
+// psxCpu->Execute (компіляція блоку), і на момент запису вже розкручена назад.
+// Тому фарбуємо вільну частину взірцем один раз, а далі рахуємо, скільки його
+// лишилось незачепленим: це найглибша точка ЗА ВЕСЬ ЧАС, а не миттєва.
+static const TUint32 KStackPaint = 0xA5A5A5A5;
+static TUint32 *g_paintFrom;
+static TUint32 *g_paintTo;
+
+static void paintStack()
+	{
+	TThreadStackInfo info;
+	RThread me;
+	if (me.StackInfo(info) != KErrNone)
+		return;
+	TUint8 here;
+	// Вершина стека - обробникові виключень: там StackInfo викликати вже не можна.
+	g_stackBase = (TUint32)info.iBase;
+	// Запас під поточний кадр виклику, щоб не затерти те, чим користуємось зараз.
+	g_paintFrom = (TUint32 *)info.iLimit;
+	g_paintTo   = (TUint32 *)(((TLinAddr)&here - 256) & ~3u);
+	for (TUint32 *p = g_paintFrom; p < g_paintTo; p++)
+		*p = KStackPaint;
+	}
+
+// Скільки байтів стека жодного разу не використали. Прямує до нуля - переповнення.
+static TInt stackHighWater()
+	{
+	if (!g_paintFrom)
+		return -1;
+	const TUint32 *p = g_paintFrom;
+	while (p < g_paintTo && *p == KStackPaint)
+		p++;
+	return (TInt)((TUint8 *)p - (TUint8 *)g_paintFrom);
+	}
+
+// Вікно належить контейнеру CCoeControl і прив'язується до виведення ще до setup,
+// тож у GUI-режимі власного вікна не створюємо й не закриваємо.
+static TBool g_guiMode;
+// Виставляє оболонка на виході користувача: цикл кадрів завершується штатно.
+static volatile TInt g_guiExit;
+
+static TInt passSetup(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
+	TBool aShowScreen, TBool aUseDisc)
 	{
 	const char *mode = aUseDrc ? "drc" : "interp";
-	aTicks = 0;
-	aProduced = 0;
+	memset(&g_pass, 0, sizeof(g_pass));
+	g_pass.mode = mode;
+	g_pass.frames = aFrames;
+	g_pass.showScreen = aShowScreen;
 
 	g_gpulibWriteData = g_gpulibWriteDataMem = g_gpulibDmaChain = 0;
 	g_gpulibDmaWords = g_gpulibWriteStatus = g_gpulibReadStatus = 0;
@@ -530,6 +806,20 @@ static TInt runPass(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
 		if (!aUseDisc)
 			Config.PsxType = PSX_TYPE_PAL;
 		}
+
+	// Хаки сумісності динареку вимкнено: GT падав рівно після "vsync @8008ab10"
+	// (два прогони поспіль, більш нічого в лозі). Це do_vsync/vsync_hack_assemble -
+	// динарек упізнає петлю "VSync: timeout" і вбудовує замість неї свій ARM-код,
+	// який читає гостьову пам'ять через ram_offset/ROREG. Саме ця гілка потрібна
+	// нам і майже не потрібна на Linux: там RAM лягає за фіксованою адресою
+	// ("RAM is not directly mapped" у нашому лозі - ram_offset != 0). Петля
+	// VSync-timeout крутиться якраз на завантаженні траси, де падіння й ловиться.
+	// Ціна вимкнення - повільніше проходження цієї петлі; PE2-хак нам байдужий.
+	ndrc_g.hacks |= NDHACK_NO_COMPAT_HACKS;
+
+	// NDHACK_NO_SMC_CHECK НЕ вмикати: перевірено на апараті - без вбудованої
+	// перевірки самомодифікації BIOS не стартує взагалі (чорний екран). Скидання
+	// з боку C його не заміняє: BIOS пише свій код звичайними записами, а не DMA.
 
 	// Диск гри (E:\gt.bin) або його відсутність. SetIsoFile до cdra_init - ISOopen
 	// робить fopen(fname) як основний образ, тож шлях має вказувати на .bin.
@@ -594,11 +884,13 @@ static TInt runPass(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
 	flushCoreRepeat();
 	logEvent("exec_begin", NULL, "%s: entering frame loop, %d frames", mode, aFrames);
 
-	// Живий вивід: вікно один раз до циклу, кадр - щокадру всередині.
+	// Живий вивід: вікно один раз до циклу, кадр - щокадру всередині. У GUI воно
+	// вже прив'язане до контейнера CCoeControl, тож свого не створюємо.
 	if (aShowScreen)
 		{
-		const int initRc = voutSymbianInit();
-		logEvent("screen_init", initRc ? "SHOW_FAIL" : NULL, "%s: rc=%d", mode, initRc);
+		const int initRc = g_guiMode ? KErrNone : voutSymbianInit();
+		logEvent("screen_init", initRc ? "SHOW_FAIL" : NULL, "%s: rc=%d gui=%d", mode,
+			initRc, (int)g_guiMode);
 		// Діагностика direct-FB: сирі HAL-параметри буфера проти розміру вікна WS.
 		int fbOk = 0, xpix = 0, ypix = 0, lineB = 0, bpp = 0, firstOff = 0, winW = 0, winH = 0;
 		voutSymbianFbInfo(&fbOk, &xpix, &ypix, &lineB, &bpp, &firstOff, &winW, &winH);
@@ -611,63 +903,254 @@ static TInt runPass(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
 	g_wdRun = 1;
 	g_wdFired = 0;
 	g_wdSamples = 0;
-	RThread wd;
-	TRequestStatus wdStat;
-	const TBool haveWd =
-		(wd.Create(KNullDesC, watchdogThread, 4096, NULL, (TAny *)g_watchdogMs) == KErrNone);
-	if (haveWd) { wd.Logon(wdStat); wd.Resume(); }
+	g_wdBeat = 0;
+	g_mainThreadId = RThread().Id();   // до створення сторожа: він читає наш контекст
+	g_pass.haveWd =
+		(g_wdThread.Create(KNullDesC, watchdogThread, 8192, NULL, (TAny *)g_watchdogMs) == KErrNone);
+	if (g_pass.haveWd)
+		{
+		// Вище за головний: після збою той крутиться в спін-циклі, чекаючи запису,
+		// і сторож мусить його витіснити, а не ділити з ним квант.
+		g_wdThread.SetPriority(EPriorityMore);
+		g_wdThread.Logon(g_wdStat);
+		g_wdThread.Resume();
+		}
 
-	const u32 framesAtStart = frame_counter;
-	const TUint tStart = User::NTickCount();
+	g_pass.framesAtStart = frame_counter;
 	// Профілювання пайплайну: сумарний час (мс) на кожен етап за весь прохід.
 	// NTickCount тут ~1мс; пер-кадрова похибка усереднюється на сотнях кадрів.
-	TUint tPoll = 0, tEmu = 0, tBlit = 0, tSnd = 0;
-	TBool stalled = EFalse;
-	for (int i = 0; i < aFrames; i++)
+	g_pass.tStart = User::NTickCount();
+	return KErrNone;
+	}
+
+// Запис і відтворення вводу. Падіння в динареку відтворюється лише через
+// кількахвилинну гру руками, і кожна перевірка гіпотези коштує окремого сеансу.
+// Слід кнопок, прив'язаний до НОМЕРА КАДРУ (а не до часу), знімає людину з циклу:
+// той самий сеанс проганяється стільки разів, скільки треба.
+//
+// Формат навмисно не JSONL: файл читає сам апарат, і розбір рядка тут має бути
+// тривіальним. Один рядок на ЗМІНУ стану кнопок:  <кадр> <пад hex> <цикл>
+// Цикл потрібен для перевірки самого відтворення: якщо на тому ж кадрі лічильник
+// розійшовся, повтор не точний, і всі висновки з нього нічого не варті.
+enum TInputMode { EInputOff = 0, EInputRecord, EInputPlay };
+static TInputMode g_inputMode;
+_LIT(KInputPath, "E:\\ps1_input.rec");
+
+static RFs g_recFs;
+static RFile g_recFile;
+static TBool g_recOpen;
+static TUint16 g_recLastPad;
+static TBool g_recStarted;
+
+// Відтворення тримається в пам'яті: слід малий (одна зміна на десятки кадрів),
+// а читати з флеші щокадру - додаткова недетермінованість у таймінгах.
+static const TInt KMaxPlayEvents = 8192;
+static TInt *g_playFrame;
+static TUint16 *g_playPad;
+static TUint32 *g_playCycle;
+static TInt g_playCount;
+static TInt g_playNext;
+static TBool g_playDiverged;
+
+static void inputRecordOpen()
+	{
+	if (g_recFs.Connect() != KErrNone)
+		return;
+	_LIT(KInputPrev, "E:\\ps1_input_prev.rec");
+	g_recFs.Delete(KInputPrev);
+	g_recFs.Rename(KInputPath, KInputPrev);
+	g_recOpen = (g_recFile.Replace(g_recFs, KInputPath, EFileWrite | EFileShareAny) == KErrNone);
+	if (!g_recOpen)
+		g_recFs.Close();
+	logEvent("input", g_recOpen ? NULL : "INPUT_OPEN_FAIL", "record open=%d", (int)g_recOpen);
+	}
+
+static void inputPlayLoad()
+	{
+	RFs fs;
+	if (fs.Connect() != KErrNone)
+		return;
+	RFile f;
+	TInt rc = f.Open(fs, KInputPath, EFileRead | EFileShareAny);
+	if (rc != KErrNone)
 		{
-		// Ввід: свіжий стан кнопок до Execute, бо ядро читає пад усередині кадру.
-		// Лише за наявності вікна (screen); у headless-бенчмарку клавіш нема.
-		TUint t0 = User::NTickCount();
-		if (aShowScreen)
-			in_keystate[0] = voutSymbianPollPad();
+		fs.Close();
+		logEvent("input", "INPUT_OPEN_FAIL", "replay open rc=%d", (int)rc);
+		return;
+		}
+	TInt size = 0;
+	f.Size(size);
+	HBufC8 *buf = HBufC8::New(size + 1);
+	if (buf)
+		{
+		TPtr8 p(buf->Des());
+		f.Read(p);
+		}
+	f.Close();
+	fs.Close();
+	if (!buf)
+		return;
 
-		TUint t1 = User::NTickCount(); tPoll += t1 - t0;
-		psxRegs.stop = 0;
-		psxCpu->Execute(&psxRegs);
-		TUint t2 = User::NTickCount(); tEmu += t2 - t1;
-
-		if (g_wdFired)
+	g_playFrame = new TInt[KMaxPlayEvents];
+	g_playPad   = new TUint16[KMaxPlayEvents];
+	g_playCycle = new TUint32[KMaxPlayEvents];
+	if (g_playFrame && g_playPad && g_playCycle)
+		{
+		TLex8 lex(*buf);
+		while (!lex.Eos() && g_playCount < KMaxPlayEvents)
 			{
-			logEvent("watchdog", "WATCHDOG",
-				"%s: stalled >%dms at frame %d - aborting pass", mode, (int)g_watchdogMs, i);
-			stalled = ETrue;
-			break;
-			}
-
-		// Живий кадр на екран. Додає накладні (конвертація+BitBlt), тож псує
-		// заміри - вмикається лише за прапорцем screen, не в бенчмарку.
-		if (aShowScreen)
-			{
-			voutSymbianPresent();
-			TUint t3 = User::NTickCount(); tBlit += t3 - t2;
-			ps1SndPump();   // обслужити аудіо-callback'и й долити буфер
-			tSnd += User::NTickCount() - t3;
-			}
-
-		// Рідкісні маркери: 6 записів на прогін вимір не псують, зате показують,
-		// доки дійшло, коли процес гине без жодного повідомлення.
-		if ((i + 1) % KProgressEvery == 0)
-			{
-			logEvent("progress", NULL, "%s: frame %d/%d ms=%u", mode, i + 1, aFrames,
-				(unsigned)(User::NTickCount() - tStart));
+			TInt fr = 0; TUint32 pad = 0; TUint32 cyc = 0;
+			lex.SkipSpace();
+			if (lex.Val(fr) != KErrNone) break;
+			lex.SkipSpace();
+			if (lex.Val(pad, EHex) != KErrNone) break;
+			lex.SkipSpace();
+			if (lex.Val(cyc, EDecimal) != KErrNone) break;
+			g_playFrame[g_playCount] = fr;
+			g_playPad[g_playCount]   = (TUint16)pad;
+			g_playCycle[g_playCount] = (TUint32)cyc;
+			g_playCount++;
 			}
 		}
-	aTicks = User::NTickCount() - tStart;
-	aProduced = frame_counter - framesAtStart;
+	delete buf;
+	logEvent("input", NULL, "replay events=%d", (int)g_playCount);
+	}
+
+static void inputTraceOpen()
+	{
+	if (g_inputMode == EInputRecord) inputRecordOpen();
+	else if (g_inputMode == EInputPlay) inputPlayLoad();
+	}
+
+static void inputTraceClose()
+	{
+	if (g_recOpen)
+		{
+		g_recFile.Close();
+		g_recFs.Close();
+		g_recOpen = EFalse;
+		}
+	delete[] g_playFrame; g_playFrame = NULL;
+	delete[] g_playPad;   g_playPad = NULL;
+	delete[] g_playCycle; g_playCycle = NULL;
+	g_playCount = g_playNext = 0;
+	}
+
+// Викликається щокадру одразу після опитування клавіш: у записі фіксує зміни,
+// у відтворенні ПЕРЕЗАПИСУЄ in_keystate[0] слідом.
+static void inputTrace(TInt aFrame)
+	{
+	if (g_inputMode == EInputRecord)
+		{
+		if (!g_recOpen) return;
+		const TUint16 pad = in_keystate[0];
+		if (g_recStarted && pad == g_recLastPad) return;
+		g_recStarted = ETrue;
+		g_recLastPad = pad;
+		TBuf8<48> line;
+		line.Format(_L8("%d %04x %u\n"), aFrame, (TUint)pad, (TUint)psxRegs.cycle);
+		g_recFile.Write(line);
+		g_recFile.Flush();
+		return;
+		}
+	if (g_inputMode != EInputPlay || g_playCount == 0)
+		return;
+
+	while (g_playNext < g_playCount && g_playFrame[g_playNext] <= aFrame)
+		{
+		// Розбіжність лічильника циклів на тому самому кадрі означає, що повтор
+		// пішов іншим шляхом (найімовірніше - інший таймінг читання з диска).
+		// Кажемо про це один раз: далі всі відхилення вже похідні.
+		if (!g_playDiverged && g_playFrame[g_playNext] == aFrame &&
+			g_playCycle[g_playNext] != (TUint32)psxRegs.cycle)
+			{
+			g_playDiverged = ETrue;
+			logEvent("input", "REPLAY_DIVERGED",
+				"frame %d: cycle %u, recorded %u (delta %d)",
+				(int)aFrame, (unsigned)psxRegs.cycle, (unsigned)g_playCycle[g_playNext],
+				(int)((TInt32)psxRegs.cycle - (TInt32)g_playCycle[g_playNext]));
+			}
+		in_keystate[0] = g_playPad[g_playNext];
+		g_playNext++;
+		}
+	}
+
+// Один кадр. EFalse = прохід завершено (кадри вичерпано, сторож або вихід).
+static TBool passStep()
+	{
+	if (g_pass.i >= g_pass.frames || g_guiExit)
+		return EFalse;
+
+	const char *mode = g_pass.mode;
+
+	// Ввід: свіжий стан кнопок до Execute, бо ядро читає пад усередині кадру.
+	// Лише за наявності вікна (screen); у headless-бенчмарку клавіш нема.
+	TUint t0 = User::NTickCount();
+	g_stage = EStagePoll;
+	if (g_pass.showScreen)
+		in_keystate[0] = voutSymbianPollPad();
+	inputTrace(g_pass.i);
+
+	TUint t1 = User::NTickCount(); g_pass.tPoll += t1 - t0;
+	g_stage = EStageExec;
+	psxRegs.stop = 0;
+	psxCpu->Execute(&psxRegs);
+	TUint t2 = User::NTickCount(); g_pass.tEmu += t2 - t1;
+	g_wdBeat++;
+
+	if (g_wdFired)
+		{
+		logEvent("watchdog", "WATCHDOG",
+			"%s: stalled >%dms at frame %d - aborting pass", mode, (int)g_watchdogMs, g_pass.i);
+		g_pass.stalled = ETrue;
+		return EFalse;
+		}
+
+	// Живий кадр на екран. Додає накладні (конвертація+BitBlt), тож псує
+	// заміри - вмикається лише за прапорцем screen, не в бенчмарку.
+	if (g_pass.showScreen)
+		{
+		g_stage = EStageBlit;
+		voutSymbianPresent();
+		TUint t3 = User::NTickCount(); g_pass.tBlit += t3 - t2;
+		g_stage = EStageSnd;
+		ps1SndPump();   // обслужити аудіо-callback'и й долити буфер
+		g_pass.tSnd += User::NTickCount() - t3;
+		}
+
+	g_stage = EStageIdle;
+	g_pass.i++;
+
+	// Рідкісні маркери: 6 записів на прогін вимір не псують, зате показують,
+	// доки дійшло, коли процес гине без жодного повідомлення. У GUI прохід іде
+	// годинами, тож крок більший: кожен запис коштує fflush на флеш.
+	const TInt every = g_guiMode ? 1000 : KProgressEvery;
+	if (g_pass.i % every == 0)
+		{
+		logEvent("progress", NULL, "%s: frame %d/%d ms=%u stackUnused=%d", mode,
+			g_pass.i, g_pass.frames,
+			(unsigned)(User::NTickCount() - g_pass.tStart), (int)stackHighWater());
+		}
+	return ETrue;
+	}
+
+// Підсумки проходу, звільнення ядра. Дзеркало passSetup.
+static void passTeardown()
+	{
+	const char *mode = g_pass.mode;
+	const TBool aShowScreen = g_pass.showScreen;
+	g_pass.ticks = User::NTickCount() - g_pass.tStart;
+	g_pass.produced = frame_counter - g_pass.framesAtStart;
+	TUint &tPoll = g_pass.tPoll, &tEmu = g_pass.tEmu, &tBlit = g_pass.tBlit, &tSnd = g_pass.tSnd;
+	const TUint aTicks = g_pass.ticks;
+	const u32 aProduced = g_pass.produced;
+	const TBool stalled = g_pass.stalled;
+
+	inputTraceClose();
 
 	// Роззброїти сторож: просимо вийти й чекаємо, поки він завершиться сам.
 	g_wdRun = 0;
-	if (haveWd) { User::WaitForRequest(wdStat); wd.Close(); }
+	if (g_pass.haveWd) { User::WaitForRequest(g_wdStat); g_wdThread.Close(); g_pass.haveWd = EFalse; }
 
 	// Траєкторія pc/cycle зі сторожа: показує, де саме застрягло виконання.
 	for (TInt s = 0; s < g_wdSamples; s++)
@@ -726,17 +1209,182 @@ static TInt runPass(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
 	}
 
 	// Тримаємо останній кадр (докручуючи аудіо), тоді прибираємо вікно й звук.
+	// У GUI тримати нема сенсу - користувач сам вирішив вийти, і вікно однаково
+	// належить контейнеру (voutSymbianFinish там лише відв'язується).
 	if (aShowScreen)
 		{
+		const int holdMs = g_guiMode ? 0 : KScreenHoldMs;
 		ps1SndPump();
-		voutSymbianFinish(KScreenHoldMs);
+		voutSymbianFinish(holdMs);
 		ps1SndCloseOutput();
 		logEvent("screen", NULL, "%s: presented %u frames, held %dms", mode,
-			(unsigned)aProduced, KScreenHoldMs);
+			(unsigned)aProduced, holdMs);
 		}
 
 	EmuShutdown();
+	}
+
+// Консольна гілка: три частини назад у суцільний прохід.
+static TInt runPass(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
+	TBool aShowScreen, TBool aUseDisc, TUint &aTicks, u32 &aProduced)
+	{
+	aTicks = 0;
+	aProduced = 0;
+	const TInt rc = passSetup(aUseDrc, aFrames, aUseBios, aGpuTest, aShowScreen, aUseDisc);
+	if (rc != KErrNone)
+		return rc;
+	while (passStep())
+		{ }
+	passTeardown();
+	aTicks = g_pass.ticks;
+	aProduced = g_pass.produced;
 	return aProduced ? KErrNone : KErrGeneral;
+	}
+
+// Апаратне виключення (KERN-EXEC 3 і подібні) знімає процес миттєво: підсумковий
+// блок не пишеться, і в лозі лишається сам лише обрив. Обробник встигає записати,
+// ЩО впало - стадія кадру, його номер, гостьовий pc і лічильники GPU. Після
+// повернення звідси помилка виникла б знову, тож виходимо самі.
+static void crashHandler(TExcType aType)
+	{
+	// Тип - найперше й одним записом: якщо далі обробник загине, сторож усе одно
+	// побачить, що виключення взагалі доставлено.
+	g_crashType = (TInt)aType;
+	g_crashStep = 1;
+
+	// Знімок стека вгору від власного кадру: саме там ядро лишило контекст
+	// збійного коду, включно з адресою збійної інструкції.
+	TUint8 here;
+	TUint32 sp = ((TUint32)&here) & ~3u;
+	TUint32 top = sp + KCrashWords * 4;
+	if (g_stackBase && top > g_stackBase)
+		top = g_stackBase;
+	TInt n = (top > sp) ? (TInt)((top - sp) / 4) : 0;
+	if (n > KCrashWords) n = KCrashWords;
+	const TUint32 *p = (const TUint32 *)sp;
+	for (TInt i = 0; i < n; ++i)
+		g_crashStack[i] = p[i];
+	g_crashSp = sp;
+	g_crashWords = n;
+	g_crashStep = 2;
+
+	// Публікує сторож (окремий потік, RFile): з обробника stdio мовчить.
+	// Спін, а не User::After - блокувальний виклик звідси не повертається.
+	for (volatile TInt w = 0; w < 40000000 && !g_crashPublished; ++w)
+		{ }
+	g_crashStep = 3;
+
+	unsigned gpData = 0, gpDataMem = 0, gpDma = 0, gpStatus = 0;
+	voutSymbianGpuStats(&gpData, &gpDataMem, &gpDma, &gpStatus);
+	logEvent("crash", "EXCEPTION",
+		"type=%d stage=%d frame=%d pc=%08x cycle=%u gp0=%u dataMem=%u dma=%u gp1=%u",
+		(int)aType, (int)g_stage, (int)g_pass.i,
+		(unsigned)psxRegs.pc, (unsigned)psxRegs.cycle,
+		gpData, gpDataMem, gpDma, gpStatus);
+	if (g_log)
+		{ fclose(g_log); g_log = NULL; }
+	User::Exit(KErrAbort);
+	}
+
+// Раз на процес, спільне для обох гілок.
+static void coreInitOnce()
+	{
+	// Повна маска: минулого разу обробник не спрацював, і звужена маска - одна з
+	// двох причин (друга - переповнення стека, коли викликати його нема на чому).
+	const TInt excRc = User::SetExceptionHandler(crashHandler,
+		KExceptionAbort | KExceptionKill | KExceptionUserInterrupt | KExceptionFpe |
+		KExceptionFault | KExceptionInteger | KExceptionDebug);
+	logEvent("exc_handler", excRc ? "EXC_INSTALL_FAIL" : NULL, "rc=%d", (int)excRc);
+	paintStack();
+
+	bindStubPlugins();
+
+	// gpulib читає лічильники кадрів і рядків напряму зі структури фронтенду
+	// (gpu.c:1218-1264), тож підключаємо їх до справжніх змінних ядра.
+	ps1GpuSetCallbacks(&frame_counter, &g_gpuHcnt);
+
+	// GPU_init() раз на процес: виділяє VRAM і виконує do_reset() у gpulib
+	// (gpu.status = 0x14802000, біт 28 = готовність до DMA). Фронтенд робить це в
+	// LoadPlugins() (plugins.c:328); ми обходимо LoadPlugins (нема .so), тож
+	// викликаємо самі. Обидва проходи (interp/drc) поділяють один VRAM.
+	const long gpuInitRc = ps1GpuInit();
+	logEvent("gpu_init", gpuInitRc ? "GPU_INIT_FAIL" : NULL, "init=%ld", gpuInitRc);
+
+	// Звук: конфіг dfsound до SPU_init, тоді ініціалізація SPU (раз на процес).
+	ps1SndConfigure();
+	const long spuInitRc = SPU_init();
+	logEvent("spu_init", spuInitRc ? "SPU_INIT_FAIL" : NULL, "init=%ld", spuInitRc);
+	}
+
+// --- Гілка GUI (оболонка AVKON, app_symbian.cpp) ----------------------------
+// Ті самі кроки, що й консольний прохід, але під активний об'єкт: Setup один раз,
+// Step на кожен тік, Shutdown при виході. Прохід один - гра з диска.
+
+static TBool g_guiUp;
+// Аргумент "interp" з деплою: той самий сеанс, але на інтерпретаторі. Розділяє
+// найбільшу розвилку причин падіння - код, згенерований динареком, проти всього
+// іншого (растеризація gpu_unai, ядро, наш вивід).
+static TBool g_guiInterp;
+
+extern "C" void ps1GuiUseInterpreter(void)
+	{
+	g_guiInterp = ETrue;
+	}
+
+extern "C" int ps1GuiSetup(void)
+	{
+	g_guiMode = ETrue;
+	g_guiExit = 0;
+	g_watchdogMs = KPlayWatchdogMs;
+	ps1SndSetPumpAo(0);   // планувальник крутить CIdle між кадрами
+	coreInitOnce();
+	logEvent("start", NULL, "stage1 begin (gui), frames=%d cpu=%s input=%d", (int)KPlayFrames,
+		g_guiInterp ? "interp" : "drc", (int)g_inputMode);
+	const TInt rc = passSetup(!g_guiInterp, KPlayFrames, ETrue /*bios*/, EFalse /*gputest*/,
+		ETrue /*screen*/, ETrue /*disc*/);
+	// Після passSetup: слід прив'язаний до номера кадру, а лічильник кадрів
+	// починається саме тут.
+	inputTraceOpen();
+	g_guiUp = (rc == KErrNone);
+	return rc;
+	}
+
+extern "C" int ps1GuiStep(void)
+	{
+	return passStep() ? 1 : 0;
+	}
+
+extern "C" void ps1GuiShutdown(void)
+	{
+	if (!g_guiUp)
+		return;
+	g_guiUp = EFalse;
+	passTeardown();
+
+	// Знімок VRAM для перевірки растеризації на хості (Етап 2).
+	const int dumpRc = voutSymbianDump("E:\\ps1_vram.bin");
+	logEvent("vram_dump", dumpRc ? "DUMP_FAIL" : NULL, "rc=%d", dumpRc);
+
+	ps1GpuShutdown();   // парний до ps1GpuInit: звільняє VRAM після знімка
+	logEvent("shutdown", NULL, "gui: frames=%u ms=%u",
+		(unsigned)g_pass.produced, (unsigned)g_pass.ticks);
+	}
+
+// Оболонка просить завершити прохід (користувач вийшов).
+extern "C" void ps1GuiRequestExit(void)
+	{
+	g_guiExit = 1;
+	}
+
+// Один потік JSONL на процес: оболонка пише через нього, а не окремим файлом.
+extern "C" void ps1Log(const char *aType, const char *aMsg)
+	{
+	logEvent(aType, NULL, "%s", aMsg ? aMsg : "");
+	}
+
+extern "C" void ps1LogInt(const char *aType, const char *aMsg, int aVal)
+	{
+	logEvent(aType, NULL, "%s=%d", aMsg ? aMsg : "", aVal);
 	}
 
 static TInt runStage1()
@@ -763,23 +1411,7 @@ static TInt runStage1()
 		return KErrNone;
 		}
 
-	bindStubPlugins();
-
-	// gpulib читає лічильники кадрів і рядків напряму зі структури фронтенду
-	// (gpu.c:1218-1264), тож підключаємо їх до справжніх змінних ядра.
-	ps1GpuSetCallbacks(&frame_counter, &g_gpuHcnt);
-
-	// GPU_init() раз на процес: виділяє VRAM і виконує do_reset() у gpulib
-	// (gpu.status = 0x14802000, біт 28 = готовність до DMA). Фронтенд робить це в
-	// LoadPlugins() (plugins.c:328); ми обходимо LoadPlugins (нема .so), тож
-	// викликаємо самі. Обидва проходи (interp/drc) поділяють один VRAM.
-	const long gpuInitRc = ps1GpuInit();
-	logEvent("gpu_init", gpuInitRc ? "GPU_INIT_FAIL" : NULL, "init=%ld", gpuInitRc);
-
-	// Звук: конфіг dfsound до SPU_init, тоді ініціалізація SPU (раз на процес).
-	ps1SndConfigure();
-	const long spuInitRc = SPU_init();
-	logEvent("spu_init", spuInitRc ? "SPU_INIT_FAIL" : NULL, "init=%ld", spuInitRc);
+	coreInitOnce();
 
 	// Без аргументів = запуск з меню апарата (alpha 1.0): граємо GT з диска -
 	// великий бюджет кадрів і довший сторож, щоб не обірвати гру. З аргументами
@@ -823,11 +1455,76 @@ static TInt runStage1()
 	return rc;
 	}
 
+// Оболонка AVKON (app_symbian.cpp). Не повертається, доки застосунок не закрито.
+extern "C" int ps1AppRun(void);
+
 GLDEF_C TInt E32Main()
 	{
 	g_startTick = User::NTickCount();
 	openLog();
-	logEvent("boot", NULL, "stage1 starting");
+
+	TBuf<256> cl;
+	User::CommandLine(cl);
+	cl.Trim();
+	TBuf8<256> cl8;
+	cl8.Copy(cl);
+
+	// Без аргументів = запуск із меню апарата: повноцінний застосунок AVKON. Він
+	// потрібен не лише заради виходу й таск-листа - MBX-EGL створює поверхню лише
+	// на вікні під CCoeEnv. Бенчмарк лишається консольним (аргументи з деплою), бо
+	// там ні вікна, ні фреймворку не треба, а заміри мають лишитись порівнюваними.
+	_LIT(KGuiArg, "gui");
+	_LIT(KGlArg, "gl");
+	const TBool gui = (cl.Length() == 0) || (cl.FindF(KGuiArg) != KErrNotFound);
+	logEvent("boot", NULL, "stage1 starting, mode=%s args=\"%s\"",
+		gui ? "gui" : "console", (const char *)cl8.PtrZ());
+
+	if (gui)
+		{
+		// Прапорці виводу - до старту фреймворку: EikStart не повертається, доки
+		// застосунок живий, а вікно прив'язується вже всередині нього.
+		if (cl.FindF(KGlArg) != KErrNotFound)
+			voutSymbianSetGl(1);
+		_LIT(KInterpArg, "interp");
+		if (cl.FindF(KInterpArg) != KErrNotFound)
+			ps1GuiUseInterpreter();
+		_LIT(KRecArg, "rec");
+		_LIT(KPlayArg, "play");
+		if (cl.FindF(KPlayArg) != KErrNotFound)     g_inputMode = EInputPlay;
+		else if (cl.FindF(KRecArg) != KErrNotFound) g_inputMode = EInputRecord;
+
+		// Той самий вибір файлом-маркером, бо запуск із меню аргументів не має.
+		// Довгий сеанс через демон не варіант: поки він чекає на дочірній процес,
+		// його keepalive не працює, WiFi паркується і з'єднання рветься.
+		// За вмістом, а не за наявністю: демон уміє класти файли, але не видаляти,
+		// тож перемикати режим інакше можна було б лише в один бік.
+		_LIT(KModeMark, "E:\\ps1_interp.txt");
+		RFs markFs;
+		if (markFs.Connect() == KErrNone)
+			{
+			RFile mf;
+			if (mf.Open(markFs, KModeMark, EFileRead | EFileShareAny) == KErrNone)
+				{
+				TBuf8<32> m;
+				mf.Read(m);
+				mf.Close();
+				_LIT8(KInterp, "interp");
+				if (m.Find(KInterp) != KErrNotFound)
+					ps1GuiUseInterpreter();
+				// Той самий маркер керує слідом вводу: "rec" пише, "play" відтворює.
+				_LIT8(KRec, "rec");
+				_LIT8(KPlay, "play");
+				if (m.Find(KPlay) != KErrNotFound)     g_inputMode = EInputPlay;
+				else if (m.Find(KRec) != KErrNotFound) g_inputMode = EInputRecord;
+				}
+			markFs.Close();
+			}
+		const TInt r = ps1AppRun();
+		logEvent("exit", NULL, "gui returned %d", (int)r);
+		if (g_log)
+			fclose(g_log);
+		return r;
+		}
 
 	CTrapCleanup *cleanup = CTrapCleanup::New();
 	if (!cleanup)

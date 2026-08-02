@@ -1,9 +1,12 @@
 ; Stage 1: PlayStation core with the ari64 dynarec. Self-signed, CAPABILITY None.
 ; ASCII only, CRLF only: makesis misparses UTF-8 and LF line endings.
-
+; Shaped like daemon.pkg, the one package this phone does install - executable
+; plus registration resource only. The app resource is delivered by the deploy
+; daemon instead, which is proven to work, until we know what the installer
+; objects to.
 &EN
 
-#{"PS1Emulator alpha 1.0"},(0xE0001002),1,0,1
+#{"PS1Emulator alpha 1.1"},(0xE0001002),1,1,0
 
 %{"PS1Emulator"}
 :"PS1Emulator"
@@ -11,4 +14,4 @@
 [0x101F7961],0,0,0,{"Series60ProductID"}
 
 "\VsCodeProjects\SymbianProjects\S60_3rd_FP1\Epoc32\release\gcce\urel\ps1stage1.exe"-"!:\sys\bin\ps1stage1.exe"
-"\VsCodeProjects\SymbianProjects\S60_3rd_FP1\Epoc32\data\z\private\10003a3f\import\apps\stage1_reg.RSC"-"!:\private\10003a3f\import\apps\stage1_reg.rsc"
+"\VsCodeProjects\SymbianProjects\S60_3rd_FP1\Epoc32\data\z\private\10003a3f\import\apps\ps1stage1_reg.RSC"-"!:\private\10003a3f\import\apps\ps1stage1_reg.rsc"

@@ -1,0 +1,18 @@
+// Ресурс застосунку AVKON. Без нього CEikApplication не стартує: фреймворк
+// відкриває <app>.rsc ще до створення AppUi. Порядок ресурсів фіксований -
+// 1 = підпис, 2 = типова назва документа, 3 = EIK_APP_INFO.
+//
+// Меню й CBA не описуємо: оболонка йде на повний екран, вихід - права софт-клавіша
+// або червона (обидві обробляє AppUi).
+
+NAME PS1E
+
+#include <eikon.rh>
+
+RESOURCE RSS_SIGNATURE { }
+
+RESOURCE TBUF { buf = ""; }
+
+RESOURCE EIK_APP_INFO
+	{
+	}

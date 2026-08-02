@@ -2,6 +2,9 @@
 
 TARGET          ps1stage1.exe
 TARGETTYPE      exe
+// UID2 нуль, як у демона: застосунком EXE робить файл реєстрації, а не UID2.
+// 0x100039CE тут лише додавав ризику - демон із UID2=0 і в меню видно, і пакет
+// його встановлюється, а наш із 0x100039CE - ні.
 UID             0 0xE0001002
 SECUREID        0xE0001002
 VENDORID        0
@@ -16,7 +19,10 @@ CAPABILITY      None
 // повертає KErrTooBig на 512 КБ. У EKA2L1 обидві величини проходили.
 EPOCSTACKSIZE   0x14000
 // Гість PS1: 2 МБ ОЗП + 512 КБ BIOS + 1 МБ VRAM + структури ядра.
-EPOCHEAPSIZE    0x100000 0x1000000
+// Верхня межа - 40 МБ: метадані динареку (блоки, списки переходів, хеш-таблиці)
+// ростуть із кожним новим блоком, і 16 МБ вичерпувалися саме на завантаженні
+// траси. Це стеля зростання, не резервування - вільну пам'ять вона не займає.
+EPOCHEAPSIZE    0x100000 0x2800000
 
 // Ті самі прапорці, що й у ядра. P13: без ORDER-макросів CSL 3.4.3 бере
 // big-endian гілку; заголовки ядра тут теж їх читають.
@@ -30,6 +36,8 @@ MACRO           BASE_ADDR_DYNAMIC=1
 SOURCEPATH      ..\..\..\src\symbian
 SOURCE          stage1.cpp
 SOURCE          vout_symbian.cpp
+// Оболонка AVKON: вікно під CCoeEnv (потрібне EGL), вихід, орієнтація.
+SOURCE          app_symbian.cpp
 // Glue звуку: обгортки ps1Spu* над dfsound + out-драйвер (окремо від plugins.h).
 SOURCE          snd_symbian.cpp
 // Платформна заміна mmap(PROT_EXEC)/__clear_cache для динареку.
@@ -46,8 +54,16 @@ SOURCEPATH      ..\asm
 SOURCE          arm_utils.s
 
 SOURCEPATH      ..\..\..\src\symbian
-// Шлях відносний до SOURCEPATH вище, не до .mmp.
-START RESOURCE  stage1_reg.rss
+// Ресурс застосунку. Ім'я мусить збігатися з app_file у stage1_reg.rss -
+// фреймворк шукає рівно \resource\apps\<app_file>.rsc.
+START RESOURCE  stage1.rss
+TARGET          ps1stage1
+TARGETPATH      \resource\apps
+END
+
+// Реєстрація. apparc вимагає імені рівно <app_file>_reg.rsc, інакше запис
+// не підхоплюється. Шлях відносний до SOURCEPATH вище, не до .mmp.
+START RESOURCE  ps1stage1_reg.rss
 TARGETPATH      \private\10003a3f\import\apps
 END
 
@@ -60,6 +76,7 @@ USERINCLUDE     ..\..\..\pcsx_rearmed
 USERINCLUDE     ..\..\..\pcsx_rearmed\include
 USERINCLUDE     ..\..\..\pcsx_rearmed\libpcsxcore
 USERINCLUDE     ..\..\..\pcsx_rearmed\plugins\gpulib
+USERINCLUDE     ..\..\..\pcsx_rearmed\libpcsxcore\new_dynarec
 USERINCLUDE     ..\..\..\pcsx_rearmed\plugins\dfsound
 
 SYSTEMINCLUDE   \epoc32\include
@@ -79,3 +96,12 @@ LIBRARY         mediaclientaudiostream.lib
 LIBRARY         bitgdi.lib
 // GL ES вивід (MBX): EGL + OpenGL ES 1.1.
 LIBRARY         libgles_cm.lib
+// Оболонка AVKON: CApaApplication, CCoeEnv/CCoeControl, EikStart/CEikonEnv,
+// CAknAppUi, CEikStatusPane/CEikButtonGroupContainer.
+LIBRARY         apparc.lib
+LIBRARY         cone.lib
+LIBRARY         eikcore.lib
+LIBRARY         eikcoctl.lib
+LIBRARY         avkon.lib
+LIBRARY         efsrv.lib
+LIBRARY         apgrfx.lib

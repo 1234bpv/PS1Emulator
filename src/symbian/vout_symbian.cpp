@@ -151,6 +151,13 @@ static CWindowGc *g_gc;
 static CFbsBitmap *g_bmp;
 static TSize g_scr;
 
+// Вікно буває наше (консольна гілка створює g_ws/g_grp/g_win сама) або чуже - від
+// CCoeControl в AVKON-оболонці, бо MBX-EGL вимагає вікна під CCoeEnv. Робота йде
+// через покажчики; закриваємо лише те, що створили самі.
+static TBool g_ownWindow = ETrue;
+static RWsSession *g_wsp = &g_ws;
+static RWindow *g_winp = &g_win;
+
 // Кеш геометрії вписування: чорні поля (FillZ) чистимо лише коли вона змінилась,
 // а не щокадру - решту бітмапа однаково повністю перезаписує копія кадру.
 // Скидається в initL при (пере)створенні бітмапа.
@@ -273,6 +280,8 @@ static TInt mapScanToDkey(TInt aScan)
 		case '9':               return DKEY_TRIANGLE;
 		case '1':               return DKEY_L1;
 		case '3':               return DKEY_R1;
+		case '4':               return DKEY_L2;
+		case '6':               return DKEY_R2;
 		case '2':               return DKEY_SELECT;
 		case '8':               return DKEY_START;
 		default:                return -1;
@@ -292,6 +301,9 @@ static inline TUint16 Bgr555ToRgb565(TUint16 aPix)
 
 static void initL()
 	{
+	g_ownWindow = ETrue;
+	g_wsp = &g_ws;
+	g_winp = &g_win;
 	User::LeaveIfError(g_ws.Connect());
 	g_dev = new (ELeave) CWsScreenDevice(g_ws);
 	User::LeaveIfError(g_dev->Construct());
@@ -370,9 +382,9 @@ static TBool glInitOnWindow()
 		EGL_NONE };
 	EGLConfig cfg; EGLint n = 0;
 	if (!eglChooseConfig(g_eglDpy, attribs, &cfg, 1, &n) || n < 1) return EFalse;
-	g_win.SetRequiredDisplayMode(EColor64K);
-	g_ws.Flush();
-	g_eglSurf = eglCreateWindowSurface(g_eglDpy, cfg, (NativeWindowType)&g_win, NULL);
+	g_winp->SetRequiredDisplayMode(EColor64K);
+	g_wsp->Flush();
+	g_eglSurf = eglCreateWindowSurface(g_eglDpy, cfg, (NativeWindowType)g_winp, NULL);
 	if (g_eglSurf == EGL_NO_SURFACE) return EFalse;
 	g_eglCtx = eglCreateContext(g_eglDpy, cfg, EGL_NO_CONTEXT, NULL);
 	if (g_eglCtx == EGL_NO_CONTEXT) return EFalse;
@@ -581,15 +593,25 @@ static void blitCurrent()
 		CFbsScreenDevice *sd = g_dsa->ScreenDevice();
 		if (sd) sd->Update();           // проштовхнути в буфер екрана
 		}
-	else
+	else if (g_ownWindow)
 		{
-		g_win.Invalidate();
-		g_win.BeginRedraw();
-		g_gc->Activate(g_win);
+		g_winp->Invalidate();
+		g_winp->BeginRedraw();
+		g_gc->Activate(*g_winp);
 		g_gc->BitBlt(TPoint(0, 0), g_bmp);
 		g_gc->Deactivate();
-		g_win.EndRedraw();
-		g_ws.Flush();
+		g_winp->EndRedraw();
+		g_wsp->Flush();
+		}
+	else
+		{
+		// Вікно CONE: малюємо поза парою BeginRedraw/EndRedraw. З Invalidate
+		// фреймворк відповів би власним перемальовуванням (Draw() у контейнера
+		// порожній) і чистив би щойно покладений кадр кольором фону.
+		g_gc->Activate(*g_winp);
+		g_gc->BitBlt(TPoint(0, 0), g_bmp);
+		g_gc->Deactivate();
+		g_wsp->Flush();
 		}
 	g_blitPresentTicks += (unsigned)(User::FastCounter() - _fc1);
 	}
@@ -605,6 +627,56 @@ extern "C" int voutSymbianInit(void)
 	return err;
 	}
 
+// Прив'язка до чужого вікна (AVKON-оболонка): малюємо у вікно CCoeControl і
+// беремо сесію/пристрій/контекст у CCoeEnv. Заміна initL для GUI-гілки - власних
+// RWsSession/RWindowGroup/RWindow не створюємо, тож і не закриваємо їх у Finish.
+void voutSymbianAttachWindow(RWsSession &aWs, CWsScreenDevice &aDev, RWindow &aWin,
+                             CWindowGc &aGc)
+	{
+	// Викликається ще й на зміну орієнтації, тож спершу знімаємо попередню прив'язку.
+	if (g_eglDpy != EGL_NO_DISPLAY)
+		glShutdown();
+
+	g_ownWindow = EFalse;
+	g_wsp = &aWs;
+	g_winp = &aWin;
+	g_dev = &aDev;
+	g_gc = &aGc;
+	g_scr = aWin.Size();
+
+	delete g_bmp; g_bmp = NULL;
+	g_bmp = new CFbsBitmap;
+	if (!g_bmp || g_bmp->Create(g_scr, EColor64K) != KErrNone)
+		{ delete g_bmp; g_bmp = NULL; return; }
+	g_blitOx = -1;
+	g_blitFillTicks = g_blitPresentTicks = 0;
+
+	// Ввід приходить від CONE (OfferKeyEventL -> voutSymbianKeyEvent), тож черга
+	// подій тут не озброюється - інакше два читачі одної сесії ділили б події.
+	g_pad = 0;
+
+	g_glReady = EFalse;
+	if (g_useGl)
+		{
+		TRAPD(ge, { if (!glInitOnWindow()) glShutdown(); });
+		if (ge != KErrNone) { glShutdown(); }
+		}
+
+	g_wsReady = ETrue;
+	}
+
+// Клавіша від CONE: оновлює g_pad (біти DKEY_*, active-high). Повертає 1, якщо
+// код розкладено на кнопку PS1 (тоді контейнер поглинає подію).
+extern "C" int voutSymbianKeyEvent(int aScanCode, int aDown)
+	{
+	const TInt bit = mapScanToDkey(aScanCode);
+	if (bit < 0)
+		return 0;
+	if (aDown) g_pad |= (unsigned short)(1 << bit);
+	else       g_pad &= (unsigned short)~(1 << bit);
+	return 1;
+	}
+
 // Неблокуюче опитування клавіш: виснажує чергу подій вікон, оновлює g_pad
 // (біти DKEY_*, active-high) на натисканнях/відпусканнях, повертає поточний стан.
 // Без CActiveScheduler: перевіряємо озброєний TRequestStatus напряму.
@@ -612,6 +684,8 @@ extern "C" unsigned short voutSymbianPollPad(void)
 	{
 	if (!g_wsReady)
 		return 0;
+	if (!g_ownWindow)
+		return g_pad;   // події роздає CONE, черга тут не озброєна
 	while (g_evStat != KRequestPending)
 		{
 		TWsEvent ev;
@@ -646,19 +720,32 @@ extern "C" int voutSymbianFinish(int holdMs)
 		return KErrNotReady;
 	if (holdMs < 0) holdMs = 0;
 	if (holdMs > 30000) holdMs = 30000;
-	if (holdMs > 0)
+	if (holdMs > 0 && g_ownWindow)
 		User::After(holdMs * 1000);
-	g_ws.EventReadyCancel();   // знімаємо озброєний запит подій перед закриттям
+	if (g_ownWindow)
+		g_ws.EventReadyCancel();   // знімаємо озброєний запит подій перед закриттям
 	// GL тримає EGL-поверхню на вікні - знімаємо перед закриттям вікна.
 	if (g_eglDpy != EGL_NO_DISPLAY) glShutdown();
 	// DSA тримає вікно/пристрій - знімаємо його першим.
 	if (g_dsa) { delete g_dsa; g_dsa = NULL; g_dsaGc = NULL; g_dsaActive = EFalse; }
 	delete g_bmp; g_bmp = NULL;
-	delete g_gc;  g_gc = NULL;
-	g_win.Close();
-	g_grp.Close();
-	delete g_dev; g_dev = NULL;
-	g_ws.Close();
+	if (g_ownWindow)
+		{
+		delete g_gc;  g_gc = NULL;
+		g_win.Close();
+		g_grp.Close();
+		delete g_dev; g_dev = NULL;
+		g_ws.Close();
+		}
+	else
+		{
+		// Сесія, пристрій, контекст і вікно належать CCoeEnv/контейнеру - лише
+		// відпускаємо покажчики й повертаємось до власної (консольної) розкладки.
+		g_gc = NULL; g_dev = NULL;
+		g_ownWindow = ETrue;
+		g_wsp = &g_ws;
+		g_winp = &g_win;
+		}
 	// Планувальник прибираємо лише якщо його створив саме DSA (інакше він аудіо-,
 	// і його зніме ps1SndCloseOutput).
 	if (g_dsaSched) { CActiveScheduler::Install(NULL); delete g_dsaSched; g_dsaSched = NULL; }
