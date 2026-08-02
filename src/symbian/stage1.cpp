@@ -281,6 +281,10 @@ static const TInt KPlayFrames = 200000;
 static const TInt KPlayWatchdogMs = 1200000;    // 20 хв
 static TInt g_watchdogMs = KWatchdogMs;         // бенчмарк за замовчуванням
 
+// Стеля тривалості сеансу, мс. Нуль - без обмеження (звичайна гра з меню).
+// Аргумент "limit<N>" ставить її для прогонів через демон.
+static TInt g_playLimitMs;
+
 static volatile TInt g_wdRun;    // 1, поки прохід хоче, щоб сторож жив
 static volatile TInt g_wdFired;  // 1, якщо сторож спрацював (спін довше ліміту)
 
@@ -1080,6 +1084,15 @@ static TBool passStep()
 	{
 	if (g_pass.i >= g_pass.frames || g_guiExit)
 		return EFalse;
+	// Стеля на сеанс. Поки йде налагодження виводу, прогін має завершуватись сам:
+	// демон блокований на дочірньому процесі й не шле keepalive, тож довга сесія
+	// щоразу коштує розриву WiFi і повторного пошуку апарата в мережі.
+	if (g_playLimitMs > 0 && (TInt)(User::NTickCount() - g_pass.tStart) >= g_playLimitMs)
+		{
+		logEvent("timelimit", NULL, "%s: %d ms reached at frame %d",
+			g_pass.mode, (int)g_playLimitMs, (int)g_pass.i);
+		return EFalse;
+		}
 
 	const char *mode = g_pass.mode;
 
@@ -1387,6 +1400,16 @@ extern "C" void ps1LogInt(const char *aType, const char *aMsg, int aVal)
 	logEvent(aType, NULL, "%s=%d", aMsg ? aMsg : "", aVal);
 	}
 
+extern "C" void ps1LogFmt(const char *aType, const char *aFmt, ...)
+	{
+	char buf[256];
+	va_list ap;
+	va_start(ap, aFmt);
+	vsnprintf(buf, sizeof(buf), aFmt, ap);
+	va_end(ap);
+	logEvent(aType, NULL, "%s", buf);
+	}
+
 static TInt runStage1()
 	{
 	TInt framesToRun;
@@ -1492,6 +1515,15 @@ GLDEF_C TInt E32Main()
 		_LIT(KPlayArg, "play");
 		if (cl.FindF(KPlayArg) != KErrNotFound)     g_inputMode = EInputPlay;
 		else if (cl.FindF(KRecArg) != KErrNotFound) g_inputMode = EInputRecord;
+		_LIT(KLimitArg, "limit");
+		const TInt lp = cl.FindF(KLimitArg);
+		if (lp != KErrNotFound)
+			{
+			TLex lex(cl.Mid(lp + 5));
+			TInt secs = 0;
+			if (lex.Val(secs) == KErrNone && secs > 0)
+				g_playLimitMs = secs * 1000;
+			}
 
 		// Той самий вибір файлом-маркером, бо запуск із меню аргументів не має.
 		// Довгий сеанс через демон не варіант: поки він чекає на дочірній процес,
@@ -1516,6 +1548,9 @@ GLDEF_C TInt E32Main()
 				_LIT8(KPlay, "play");
 				if (m.Find(KPlay) != KErrNotFound)     g_inputMode = EInputPlay;
 				else if (m.Find(KRec) != KErrNotFound) g_inputMode = EInputRecord;
+				_LIT8(KGl, "gl");
+				if (m.Find(KGl) != KErrNotFound)
+					voutSymbianSetGl(1);
 				}
 			markFs.Close();
 			}

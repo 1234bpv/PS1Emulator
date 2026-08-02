@@ -35,6 +35,9 @@ static struct {
 	int blanks;
 } g_vout;
 
+// Лог оболонки (stage1.cpp): вивід сам JSONL не пише, але стан EGL/GL видно лише тут.
+extern "C" void ps1LogFmt(const char *aType, const char *aFmt, ...);
+
 extern "C" {
 
 int vout_init(void)
@@ -198,13 +201,28 @@ static TInt g_fbAddr, g_fbBpp, g_fbLineBytes, g_fbFirstOff, g_fbXpix, g_fbYpix;
 // eglSwapBuffers. GPU робить масштабування і present. За прапорцем "gl", із
 // відкатом на window-BitBlt. Колір: BGR555->RGB565 при заповненні текстури.
 //
-// СТАТУС (2026-08-01): НЕ працює в НАШІЙ оболонці. eglCreateWindowSurface панікує
-// на нашому "голому" RWindow (трасування: begin/getDisplay/initialize/chooseConfig/
-// displaymode ok -> крах на createWindowSurface). Причина: робочі порти (ClassiCube)
-// створюють EGL-поверхню на вікні CCoeControl У РАМКАХ фреймворку CONE (CCoeEnv), а
-// MBX-EGL, схоже, спирається на CCoeEnv::Static(), якого консольний stage1 не має.
-// Щоб увімкнути GL, оболонку треба перевести на CCoeEnv/AVKON (велика зміна). Код
-// лишено за прапорцем як основу. Перевірено GL ES 1.1 у SDK (libgles_cm.lib) - є.
+// СТАТУС (2026-08-02): ПРАЦЮЄ і дає коректну картинку під AVKON/CONE (на голому
+// RWindow консольної версії eglCreateWindowSurface панікував - MBX-EGL спирається
+// на CCoeEnv::Static()), але на N95 8GB вчетверо ПОВІЛЬНІШЕ за bitmap-шлях, тож
+// лишається вимкненим за замовчуванням (прапорець "gl").
+//
+// Заміряно на GT, той самий слід вводу (мс на кадр):
+//   bitmap: fill  8.0 + present  3.7 = 11.7  -> ~30 fps
+//   GL:     fill 23.9 + present 22.3 = 46.2  -> ~15 fps
+//
+// Два обмеження, обидва виміряні й обидва не обходяться на цьому апараті:
+//  1. Драйвер віддає ЛИШЕ 32-бітні конфіги (configs=4, have16=0). Поверхня тому
+//     обов'язково 32-бітна, а панель 16-бітна - перетворення 32->16 неминуче:
+//     або в EGL, або в композиторі. Звідси 22.3 мс на present, що саме по собі
+//     вдвічі більше за ВЕСЬ bitmap-шлях.
+//  2. MBX тримає текстури у twiddled-порядку, тож завантаження кадру коштує
+//     23.9 мс (5.4 МБ/с) навіть після переходу на текстуру точно за розміром
+//     джерела і повне glTexImage2D замість підобласті (спершу було 73 мс).
+//
+// Загальний висновок: GL виграє там, де GPU малює ГЕОМЕТРІЮ. Віддавати через
+// нього готовий кадр, порахований процесором, на MBX Lite завжди дорожче за
+// прямий blit. Реальний виграш дав би лише растеризатор PS1 на GPU замість
+// gpu_unai - це окремий рендерер, а не налаштування.
 static const TInt KGlTexW = 1024;   // POT, покриває ширину дисплея <=1024
 static const TInt KGlTexH = 256;    // POT, покриває поле <=256 рядків
 static TBool      g_useGl;
@@ -212,7 +230,10 @@ static TBool      g_glReady;
 static EGLDisplay g_eglDpy = EGL_NO_DISPLAY;
 static EGLSurface g_eglSurf = EGL_NO_SURFACE;
 static EGLContext g_eglCtx = EGL_NO_CONTEXT;
+static EGLConfig  g_eglCfg;
 static GLuint     g_glTex;
+static TInt       g_glW, g_glH;      // розміри EGL-поверхні (не вікна)
+static TBool      g_glLogged;        // діагностику першого кадру пишемо один раз
 static TUint16   *g_glBuf;           // буфер конвертації (rows*w, RGB565)
 static TBool glInitOnWindow();       // визначені нижче, кличуться з initL
 static void  glShutdown();
@@ -362,10 +383,33 @@ static void initL()
 
 // Трасування з негайним флешем: переживає панік (TRAP не ловить), щоб знати, на
 // якому EGL/GL-виклику падає ініціалізація. Читається з E:\gltrace.txt.
-// EGL/GL ES ініціалізація на наявному g_win. Повертає EFalse -> відкат на window.
-// УВАГА: eglCreateWindowSurface панікує на нашому голому RWindow (нема CCoeEnv,
-// на який спирається MBX-EGL) - див. коментар до глобалів. Лишено для майбутнього
-// переходу оболонки на CONE/AVKON.
+// EGL/GL ES ініціалізація на наявному вікні. Повертає EFalse -> відкат на bitmap.
+// Вимагає вікна під CCoeEnv (AVKON), інакше eglCreateWindowSurface панікує.
+// Що саме дав драйвер: розміри поверхні й РЕАЛЬНІ розрядності конфігу. Запит
+// 5-6-5 не зобов'язує драйвер його віддати, а невідповідність формату вікна і
+// поверхні виглядає саме як зіпсовані кольори, а не як помилка.
+static void glLogState(const char *aWhere)
+	{
+	EGLint sw = 0, sh = 0, r = 0, g = 0, b = 0, a = 0, id = 0;
+	eglQuerySurface(g_eglDpy, g_eglSurf, EGL_WIDTH, &sw);
+	eglQuerySurface(g_eglDpy, g_eglSurf, EGL_HEIGHT, &sh);
+	if (g_eglCfg)
+		{
+		eglGetConfigAttrib(g_eglDpy, g_eglCfg, EGL_RED_SIZE, &r);
+		eglGetConfigAttrib(g_eglDpy, g_eglCfg, EGL_GREEN_SIZE, &g);
+		eglGetConfigAttrib(g_eglDpy, g_eglCfg, EGL_BLUE_SIZE, &b);
+		eglGetConfigAttrib(g_eglDpy, g_eglCfg, EGL_ALPHA_SIZE, &a);
+		eglGetConfigAttrib(g_eglDpy, g_eglCfg, EGL_CONFIG_ID, &id);
+		}
+	EGLint bs = 0;
+	if (g_eglCfg) eglGetConfigAttrib(g_eglDpy, g_eglCfg, EGL_BUFFER_SIZE, &bs);
+	ps1LogFmt("gl", "%s surf=%dx%d win=%dx%d cfg=%d rgba=%d%d%d%d bufsz=%d winmode=%d egl=0x%x glerr=0x%x",
+		aWhere, (int)sw, (int)sh, (int)g_scr.iWidth, (int)g_scr.iHeight,
+		(int)id, (int)r, (int)g, (int)b, (int)a, (int)bs,
+		(int)(g_winp ? g_winp->DisplayMode() : 0),
+		(unsigned)eglGetError(), (unsigned)glGetError());
+	}
+
 static TBool glInitOnWindow()
 	{
 	g_eglDpy = eglGetDisplay(EGL_DEFAULT_DISPLAY);
@@ -380,22 +424,67 @@ static TBool glInitOnWindow()
 		EGL_BLUE_SIZE,    5,
 		EGL_DEPTH_SIZE,   0,
 		EGL_NONE };
-	EGLConfig cfg; EGLint n = 0;
-	if (!eglChooseConfig(g_eglDpy, attribs, &cfg, 1, &n) || n < 1) return EFalse;
-	g_winp->SetRequiredDisplayMode(EColor64K);
+	// КЛЮЧОВЕ для не-ScreenPlay пристроїв (а N95/S60v3 саме такий). Symbian
+	// Developer Library, "Symbian-Specific Behavior": режим відображення RWindow
+	// МУСИТЬ збігатися з розрядністю буфера EGL-поверхні. Інакше вміст поверхні
+	// читається як інший формат: 32-бітний буфер, прочитаний як 16-бітний, дає
+	// і зсунуті кольори (чорний виглядає жовтим), і вдвічі ширшу картинку.
+	//
+	// eglChooseConfig до того ж трактує розрядності як МІНІМУМИ і на запит 5-6-5
+	// повертає 8888, тож вибирати доводиться самим - і саме за розрядністю, яку
+	// вікно погодилось прийняти.
+	EGLConfig cfgs[32]; EGLint n = 0;
+	if (!eglChooseConfig(g_eglDpy, attribs, cfgs, 32, &n) || n < 1) return EFalse;
+
+	EGLint want16 = 0, want32 = 0;
+	for (EGLint i = 0; i < n; i++)
+		{
+		EGLint bs = 0;
+		eglGetConfigAttrib(g_eglDpy, cfgs[i], EGL_BUFFER_SIZE, &bs);
+		if (bs == 16) want16 = 1;
+		if (bs == 32) want32 = 1;
+		}
+	// Просимо режим, для якого конфіг узагалі існує; 16 біт дешевше, тож перше.
+	TDisplayMode dm = EColor64K;
+	if (!want16 && want32) dm = EColor16MU;
+	g_winp->SetRequiredDisplayMode(dm);
 	g_wsp->Flush();
+	const TDisplayMode got = g_winp->DisplayMode();
+	const EGLint gotBits = (got == EColor64K) ? 16 : (got == EColor16M ? 24 : 32);
+
+	EGLConfig cfg = cfgs[0]; EGLint cfgBits = 0;
+	for (EGLint i = 0; i < n; i++)
+		{
+		EGLint bs = 0;
+		eglGetConfigAttrib(g_eglDpy, cfgs[i], EGL_BUFFER_SIZE, &bs);
+		if (bs == gotBits) { cfg = cfgs[i]; cfgBits = bs; break; }
+		}
+	g_eglCfg = cfg;
+	ps1LogFmt("gl", "configs=%d have16=%d have32=%d wantMode=%d gotMode=%d bits=%d cfgBits=%d",
+		(int)n, (int)want16, (int)want32, (int)dm, (int)got, (int)gotBits, (int)cfgBits);
 	g_eglSurf = eglCreateWindowSurface(g_eglDpy, cfg, (NativeWindowType)g_winp, NULL);
 	if (g_eglSurf == EGL_NO_SURFACE) return EFalse;
 	g_eglCtx = eglCreateContext(g_eglDpy, cfg, EGL_NO_CONTEXT, NULL);
 	if (g_eglCtx == EGL_NO_CONTEXT) return EFalse;
 	if (!eglMakeCurrent(g_eglDpy, g_eglSurf, g_eglSurf, g_eglCtx)) return EFalse;
+	// Без очікування вертикальної синхронізації: емулятор і так не тримає 60 Гц,
+	// а блокування у swap додається просто до часу кадру.
+	eglSwapInterval(g_eglDpy, 0);
 
 	g_glBuf = (TUint16 *)User::Alloc(KGlTexW * KGlTexH * 2);
 	if (!g_glBuf) return EFalse;
 
-	glViewport(0, 0, g_scr.iWidth, g_scr.iHeight);
+	// Геометрія - з поверхні, а не з вікна: вікно автоповертається, і розбіжність
+	// між ними дає саме "неправильний масштаб".
+	EGLint sw = 0, sh = 0;
+	eglQuerySurface(g_eglDpy, g_eglSurf, EGL_WIDTH, &sw);
+	eglQuerySurface(g_eglDpy, g_eglSurf, EGL_HEIGHT, &sh);
+	if (sw > 0 && sh > 0) { g_glW = sw; g_glH = sh; }
+	else                  { g_glW = g_scr.iWidth; g_glH = g_scr.iHeight; }
+
+	glViewport(0, 0, g_glW, g_glH);
 	glMatrixMode(GL_PROJECTION); glLoadIdentity();
-	glOrthof(0, (GLfloat)g_scr.iWidth, (GLfloat)g_scr.iHeight, 0, -1, 1);  // top-left origin
+	glOrthof(0, (GLfloat)g_glW, (GLfloat)g_glH, 0, -1, 1);  // top-left origin
 	glMatrixMode(GL_MODELVIEW); glLoadIdentity();
 	glClearColor(0, 0, 0, 1);
 	glDisable(GL_DEPTH_TEST);
@@ -406,11 +495,15 @@ static TBool glInitOnWindow()
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	// Нулями, а не NULL: у NULL-варіанті вміст текстури не визначений, і все, що
+	// вибірка зачепить поза залитою ділянкою, показує сміття драйвера.
+	Mem::FillZ(g_glBuf, KGlTexW * KGlTexH * 2);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, KGlTexW, KGlTexH, 0,
-		GL_RGB, GL_UNSIGNED_SHORT_5_6_5, NULL);
+		GL_RGB, GL_UNSIGNED_SHORT_5_6_5, g_glBuf);
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	g_glReady = ETrue;
+	glLogState("init");
 	return ETrue;
 	}
 
@@ -419,26 +512,41 @@ static TBool glInitOnWindow()
 static void glPresentFrame(const TUint8 *vbytes, TInt startByte,
                            TInt sw, TInt sh, TBool field, TInt srcRows)
 	{
+	// Ті самі два лічильники, що й на bitmap-шляху, щоб цифри були зіставні:
+	// "fill" = конвертація + завантаження текстури, "present" = малювання + swap.
+	const TUint _gc0 = User::FastCounter();
 	TInt hf = field ? srcRows : sh;
 	if (hf > KGlTexH) hf = KGlTexH;
 	TInt w = sw; if (w > KGlTexW) w = KGlTexW;
+
+	// Текстура рівно під джерело (найменший POT), а не постійні 1024x256: MBX
+	// зберігає текстури у twiddled-порядку, тож драйвер перекладає ВСЮ область
+	// на кожному завантаженні, і зайві мегабайти оплачуються щокадру.
+	TInt potW = 16; while (potW < w)  potW <<= 1;
+	TInt potH = 16; while (potH < hf) potH <<= 1;
+
 	for (TInt y = 0; y < hf; y++)
 		{
 		const TInt ssy = field ? y * 2 : y;
 		const TUint16 *srow = (const TUint16 *)(vbytes + startByte) + ssy * 1024;
-		TUint16 *drow = g_glBuf + y * w;   // упаковано з кроком w
+		TUint16 *drow = g_glBuf + y * potW;
 		for (TInt x = 0; x < w; x++)
 			drow[x] = Bgr555ToRgb565(srow[x]);
 		}
 	glBindTexture(GL_TEXTURE_2D, g_glTex);
-	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, hf, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, g_glBuf);
+	// Повне перевизначення рівня замість підобласті: часткове завантаження в
+	// twiddled-текстуру - це read-modify-write усього рівня.
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, potW, potH, 0,
+		GL_RGB, GL_UNSIGNED_SHORT_5_6_5, g_glBuf);
+	const TUint _gc1 = User::FastCounter();
+	g_blitFillTicks += (unsigned)(_gc1 - _gc0);
 
 	// Летербокс зі збереженням пропорцій (аспект за повною висотою sh).
-	const TInt SW = g_scr.iWidth, SH = g_scr.iHeight;
+	const TInt SW = g_glW, SH = g_glH;
 	TInt dstW = SW, dstH = sh * SW / sw;
 	if (dstH > SH) { dstH = SH; dstW = sw * SH / sh; }
 	const TInt ox = (SW - dstW) / 2, oy = (SH - dstH) / 2;
-	const GLfloat u = (GLfloat)w / KGlTexW, v = (GLfloat)hf / KGlTexH;
+	const GLfloat u = (GLfloat)w / potW, v = (GLfloat)hf / potH;
 	const GLfloat x0 = (GLfloat)ox, y0 = (GLfloat)oy, x1 = (GLfloat)(ox + dstW), y1 = (GLfloat)(oy + dstH);
 	const GLfloat verts[8] = { x0, y0,  x1, y0,  x0, y1,  x1, y1 };
 	const GLfloat texc[8]  = { 0, 0,   u, 0,    0, v,    u, v };
@@ -448,6 +556,18 @@ static void glPresentFrame(const TUint8 *vbytes, TInt startByte,
 	glTexCoordPointer(2, GL_FLOAT, 0, texc);
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 	eglSwapBuffers(g_eglDpy, g_eglSurf);
+	g_blitPresentTicks += (unsigned)(User::FastCounter() - _gc1);
+
+	// Один раз після першого кадру: помилка GL тут означає, що завантаження
+	// текстури або малювання не відбулося, хоча ініціалізація пройшла.
+	if (!g_glLogged)
+		{
+		g_glLogged = ETrue;
+		ps1LogFmt("gl", "frame1 src=%dx%d field=%d tex=%dx%d dst=%dx%d+%d+%d",
+			(int)sw, (int)sh, (int)field, (int)w, (int)hf,
+			(int)dstW, (int)dstH, (int)ox, (int)oy);
+		glLogState("frame1");
+		}
 	}
 
 static void glShutdown()
@@ -460,8 +580,17 @@ static void glShutdown()
 		eglTerminate(g_eglDpy);
 		}
 	g_eglDpy = EGL_NO_DISPLAY; g_eglSurf = EGL_NO_SURFACE; g_eglCtx = EGL_NO_CONTEXT;
+	g_eglCfg = NULL;
 	User::Free(g_glBuf); g_glBuf = NULL;
 	g_glReady = EFalse;
+	// Повертаємо 16-бітний режим вікна: під GL ми піднімали його до 32 біт, і
+	// лишити так означало б платити за перетворення ще й на bitmap-шляху, куди
+	// відкат і веде.
+	if (g_winp)
+		{
+		g_winp->SetRequiredDisplayMode(EColor64K);
+		if (g_wsp) g_wsp->Flush();
+		}
 	}
 
 // Масштабує поточний g_vout у g_bmp (nearest-neighbor, збереження пропорцій,

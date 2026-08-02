@@ -32,6 +32,7 @@ int  ps1SndVolumeStep(int aDelta);
 int  ps1SndVolumeSteps(void);
 int  voutSymbianKeyEvent(int aScanCode, int aDown);
 int  voutSymbianFinish(int aHoldMs);
+int  voutSymbianGlActive(void);
 }
 
 // Прив'язка виведення до вікна CONE (vout_symbian.cpp). Без extern "C": типи Symbian.
@@ -155,7 +156,9 @@ void CPs1AppUi::ConstructL()
 	AddToStackL(iContainer);
 
 	AttachOutput();
-	ps1Log("gui", "window attached");
+	// Чи піднявся EGL, видно лише звідси: далі відкат на BitBlt мовчазний, і без
+	// цього рядка "gl не дав приросту" не відрізнити від "gl не увімкнувся".
+	ps1LogInt("gui", "window attached, gl=", voutSymbianGlActive());
 
 	// Найнижчий пріоритет: події CONE (клавіші, перемальовування, вихід)
 	// обслуговуються між кадрами, а не після кінця сесії.
