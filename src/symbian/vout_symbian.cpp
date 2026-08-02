@@ -700,10 +700,35 @@ static void blitCurrent()
 		else
 			{
 			const TUint16 *srow = (const TUint16 *)(vbytes + startByte) + ssy * 1024;
-			for (TInt dx = 0; dx < dstW; dx++)
+			// Масштаб 1:1 по горизонталі - переважний випадок: вихід PS1 (256 або
+			// 320) після вписування в 320x240 дає рівно крок 0x10000. Тоді ні
+			// акумулятор, ні зсув не потрібні, і два пікселі конвертуються разом
+			// у 32-бітному регістрі: удвічі менше звернень до пам'яті і вдвічі
+			// менше операцій на піксель.
+			if (sxStep == 0x10000u &&
+				!(((TUint)srow | (TUint)drow) & 3) && !(dstW & 1))
 				{
-				drow[dx] = Bgr555ToRgb565(srow[sxf >> 16]);
-				sxf += sxStep;
+				const TUint32 *s32 = (const TUint32 *)srow;
+				TUint32 *d32 = (TUint32 *)drow;
+				for (TInt i = dstW >> 1; i > 0; i--)
+					{
+					const TUint32 p = *s32++;
+					*d32++ = ((p & 0x001f001fu) << 11) | ((p << 1) & 0x07c007c0u)
+					       | ((p >> 4) & 0x00200020u) | ((p >> 10) & 0x001f001fu);
+					}
+				}
+			else if (sxStep == 0x10000u)
+				{
+				for (TInt dx = 0; dx < dstW; dx++)
+					drow[dx] = Bgr555ToRgb565(srow[dx]);
+				}
+			else
+				{
+				for (TInt dx = 0; dx < dstW; dx++)
+					{
+					drow[dx] = Bgr555ToRgb565(srow[sxf >> 16]);
+					sxf += sxStep;
+					}
 				}
 			}
 		}
