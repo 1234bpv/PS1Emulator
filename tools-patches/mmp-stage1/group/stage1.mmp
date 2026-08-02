@@ -115,3 +115,7 @@ LIBRARY         eikcoctl.lib
 LIBRARY         avkon.lib
 LIBRARY         efsrv.lib
 LIBRARY         apgrfx.lib
+// Меню налаштувань: CDesCArrayFlat (список образів) і метрики CFont.
+LIBRARY         estor.lib
+LIBRARY         bafl.lib
+LIBRARY         gdi.lib

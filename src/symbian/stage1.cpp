@@ -312,6 +312,14 @@ static TInt g_cycleMul;
 extern "C" void gpu_unai_set_config(int aPixelSkip, int aIlaceForce,
 	int aLighting, int aFastLighting, int aBlending);
 
+// Пропуск виведення: кожен (N+1)-й кадр показуємо, решту лише рахуємо. Емуляцію
+// і растеризацію це НЕ пропускає - економить саме вивід (конвертація + вікно),
+// а це 13 з 37 мс кадру. Чесніше називати це пропуском показу, а не кадрів.
+static TInt g_frameskip;
+
+// Образ диска, обраний у меню. Порожній - беремо KDiscImg.
+static char g_discPath[256];
+
 static volatile TInt g_wdRun;    // 1, поки прохід хоче, щоб сторож жив
 static volatile TInt g_wdFired;  // 1, якщо сторож спрацював (спін довше ліміту)
 
@@ -870,7 +878,7 @@ static TInt passSetup(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTes
 
 	// Диск гри (E:\gt.bin) або його відсутність. SetIsoFile до cdra_init - ISOopen
 	// робить fopen(fname) як основний образ, тож шлях має вказувати на .bin.
-	SetIsoFile(aUseDisc ? KDiscImg : NULL);
+	SetIsoFile(aUseDisc ? (g_discPath[0] ? g_discPath : KDiscImg) : NULL);
 
 	if (EmuInit() == -1)
 		{
@@ -1169,7 +1177,11 @@ static TBool passStep()
 	if (g_pass.showScreen)
 		{
 		g_stage = EStageBlit;
-		voutSymbianPresent();
+		// Пропуск показу: емуляція й растеризація йдуть щокадру, на екран
+		// потрапляє кожен (skip+1)-й. Звук пампимо завжди - інакше буфер
+		// спорожніє саме на пропущених кадрах.
+		if (!g_frameskip || (g_pass.i % (g_frameskip + 1)) == 0)
+			voutSymbianPresent();
 		TUint t3 = User::NTickCount(); g_pass.tBlit += t3 - t2;
 		g_stage = EStageSnd;
 		ps1SndPump();   // обслужити аудіо-callback'и й долити буфер
@@ -1453,6 +1465,36 @@ extern "C" void ps1Log(const char *aType, const char *aMsg)
 extern "C" void ps1LogInt(const char *aType, const char *aMsg, int aVal)
 	{
 	logEvent(aType, NULL, "%s=%d", aMsg ? aMsg : "", aVal);
+	}
+
+// Налаштування з меню. Викликається ДО ps1GuiSetup, тобто до будь-якої
+// ініціалізації ядра й растеризатора - інакше частина з них не подіє.
+extern "C" void ps1CfgApply(const char *aDisc, int aInterp, int aFrameskip,
+	int aIlace, int aLight, int aBlend, int aPixSkip, int aGteNf,
+	int aSound, int aGl)
+	{
+	g_discPath[0] = 0;
+	if (aDisc && aDisc[0])
+		{
+		TInt i = 0;
+		while (aDisc[i] && i < (TInt)sizeof(g_discPath) - 1)
+			{ g_discPath[i] = aDisc[i]; i++; }
+		g_discPath[i] = 0;
+		}
+	g_guiInterp      = aInterp ? ETrue : EFalse;
+	g_frameskip      = aFrameskip > 0 ? aFrameskip : 0;
+	g_hackIlace      = aIlace;
+	g_gpuLighting    = aLight;
+	g_gpuBlending    = aBlend;
+	g_hackPixelSkip  = aPixSkip;
+	g_hackGteNoFlags = aGteNf ? ETrue : EFalse;
+	g_noSound        = aSound ? EFalse : ETrue;
+	voutSymbianSetGl(aGl);
+	logEvent("cfg", NULL, "disc=%s interp=%d skip=%d ilace=%d light=%d blend=%d "
+		"pixskip=%d gtenf=%d snd=%d gl=%d",
+		g_discPath[0] ? g_discPath : KDiscImg, (int)aInterp, (int)aFrameskip,
+		(int)aIlace, (int)aLight, (int)aBlend, (int)aPixSkip, (int)aGteNf,
+		(int)aSound, (int)aGl);
 	}
 
 extern "C" void ps1LogFmt(const char *aType, const char *aFmt, ...)
