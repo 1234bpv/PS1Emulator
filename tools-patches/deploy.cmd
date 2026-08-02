@@ -62,6 +62,11 @@ if /i "%TARGET%"=="stage1" (
   echo.
   echo [deploy] === gpu_unai ===
   pushd "%CONFIGS%\gpu\group"
+  REM Trap 4: abld prints "Dependency list may be incomplete" and then does not
+  REM rebuild when only a MACRO in the .mmp changed. Enabling the assembly
+  REM rasteriser looked like it had no effect for a whole cycle because of this.
+  call .\ABLD.BAT reallyclean gcce urel >nul 2>&1
+  call bldmake bldfiles || (popd & echo [deploy] gpu bldmake FAILED & exit /b 1)
   call .\ABLD.BAT build gcce urel || (popd & echo [deploy] gpu build FAILED & exit /b 1)
   popd
 )

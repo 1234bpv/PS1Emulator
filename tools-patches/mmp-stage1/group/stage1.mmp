@@ -83,6 +83,9 @@ SYSTEMINCLUDE   \epoc32\include
 SYSTEMINCLUDE   \epoc32\include\libc
 
 STATICLIBRARY   gpuunai.lib
+// Рукописні ARM-цикли растеризатора. Зібрані окремо новішим асемблером -
+// див. коментар у gpuunai.mmp і tools-patches\gpuasm-regen.cmd.
+STATICLIBRARY   gpuasm.lib
 STATICLIBRARY   pcsxcore.lib
 LIBRARY         euser.lib
 LIBRARY         hal.lib

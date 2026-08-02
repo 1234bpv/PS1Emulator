@@ -2,8 +2,10 @@
 // Статична бібліотека, як і pcsxcore.lib.
 //
 // P16: асемблер gpu_arm.S не збирається GAS-ом з CSL 3.4.3 (не підставляє
-// параметри макроса всередині .if), тому вмикаємо чисті C-шляхи через
-// GPU_UNAI_NO_ARM_ASM. Швидкодія - після коректності.
+// параметри макроса всередині .if - падає на кожному виклику макроса). Обійдено:
+// файл збирається новішим асемблером GCCE 4.6.3 і подається в лінк окремою
+// бібліотекою gpuasm.lib (tools-patches\gpuasm-regen.cmd), решта - як була.
+// Профіль гоночної фази показав, що саме ці цикли й домінують.
 
 TARGET          gpuunai.lib
 TARGETTYPE      lib
@@ -15,7 +17,7 @@ OPTION GCCE     -march=armv6 -D__SIZEOF_POINTER__=4 -DP_HAVE_MMAP=0 \
 
 MACRO           REARMED
 MACRO           USE_GPULIB=1
-MACRO           GPU_UNAI_NO_ARM_ASM
+// GPU_UNAI_ARM_ASM вмикається в gpu_unai.h сам, якщо не заборонити явно.
 
 SOURCEPATH      ..\..\..\pcsx_rearmed\plugins\gpulib
 SOURCE          gpu.c
