@@ -248,6 +248,8 @@ int voutSymbianRawDump(const char *path, int bytes);
 int voutSymbianVisTest(int raw);
 void voutSymbianSetOverlay(int on);
 void voutSymbianSetNoUpdate(int on);
+void voutSymbianSetSmooth(int on);
+void voutSymbianSetFxaa(int threshold, int max);
 void voutSymbianSetStats(int fpsX10, int msX10);
 static TBool g_fbVis;
 
@@ -349,6 +351,9 @@ static TInt g_gpuFrameskip;
 
 // Зонди для замірів (лише командний рядок, у меню їх немає).
 static TBool g_hackNoStalls;
+// Кадр першого знімка екрана; 3300 - трасa, менші значення потрапляють у меню гри,
+// де вона працює в 640x480 і видно роботу масштабування.
+static TInt g_dumpAt = 3300;
 
 // Накладка з метриками. Вікно усереднення ~0,5 с: за одним кадром число стрибало
 // б так, що прочитати його з екрана неможливо.
@@ -1277,7 +1282,7 @@ static TBool passStep()
 	// показує, чи виграш від показу за латчем не є артефактом стенду.
 	// Знімки екрана в характерних точках: меню гри (2D) і траса (3D). Порівняння
 	// цих двох файлів відповідає на питання, чому 2D не видно, а відео видно.
-	if (g_pass.showScreen && (g_pass.i == 3300 || g_pass.i == 6000))
+	if (g_pass.showScreen && (g_pass.i == g_dumpAt || g_pass.i == 6000))
 		{
 		char p[32];
 		snprintf(p, sizeof(p), "E:\\ps1_scr%d.bin", (int)g_pass.i);
@@ -1291,7 +1296,7 @@ static TBool passStep()
 		logEvent("hal_dump", hr ? "HAL_FAIL" : NULL, "frame=%d rc=%d", g_pass.i, hr);
 		// Візерунок відомо робочим шляхом + сирий дамп: розкладку буфера екрана
 		// (байтів на піксель, крок) визначаємо потім на хості.
-		if (g_pass.i == 3300)
+		if (g_pass.i == g_dumpAt)
 			{
 			int m = 0, t = 0, bad[4];
 			const int rb = voutSymbianReadBack(0, &m, &t, bad);
@@ -1853,6 +1858,37 @@ GLDEF_C TInt E32Main()
 		g_hackNoStalls = (cl.FindF(KNoStallsArg) != KErrNotFound);
 		_LIT(KNoUpdateArg, "noupdate");
 		voutSymbianSetNoUpdate(cl.FindF(KNoUpdateArg) != KErrNotFound ? 1 : 0);
+		_LIT(KNoSmoothArg, "nosmooth");
+		voutSymbianSetSmooth(cl.FindF(KNoSmoothArg) != KErrNotFound ? 0 : 1);
+		// Прототип згладжування: "fxaa" бере нижній поріг 3, "fxaa6" - шість.
+		// "fxmax14" ставить верхній, щоб не чіпати контрастний текст. Типово вимкнено.
+		_LIT(KFxMaxArg, "fxmax");
+		TInt fxMax = 31;
+		const TInt fmp = cl.FindF(KFxMaxArg);
+		if (fmp != KErrNotFound)
+			{
+			TLex lex(cl.Mid(fmp + 5));
+			TInt n = 0;
+			if (lex.Val(n) == KErrNone && n > 0)
+				fxMax = n;
+			}
+		_LIT(KFxaaArg, "fxaa");
+		const TInt fxp = cl.FindF(KFxaaArg);
+		if (fxp != KErrNotFound)
+			{
+			TLex lex(cl.Mid(fxp + 4));
+			TInt n = 0;
+			voutSymbianSetFxaa((lex.Val(n) == KErrNone && n > 0) ? n : 3, fxMax);
+			}
+		_LIT(KDumpAtArg, "dumpat");
+		const TInt dap = cl.FindF(KDumpAtArg);
+		if (dap != KErrNotFound)
+			{
+			TLex lex(cl.Mid(dap + 6));
+			TInt n = 0;
+			if (lex.Val(n) == KErrNone && n > 0)
+				g_dumpAt = n;
+			}
 		// Пропуск ПОКАЗУ (кадр малюється й викидається) - для порівняння з gpuskip.
 		_LIT(KShowSkipArg, "showskip");
 		const TInt ssp = cl.FindF(KShowSkipArg);

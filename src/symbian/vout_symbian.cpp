@@ -528,6 +528,44 @@ blitRow8888(TUint32 *aDst, const TUint16 *aSrc, TInt aPixels)
 		} while (--aPixels);
 	}
 
+// Середнє двох пікселів BGR555 без переповнення між сусідніми полями:
+// (a&b) + (((a^b) & mask) >> 1). Маска гасить молодший біт кожного з трьох
+// 5-бітних полів, тож перенесення з одного кольору в інший неможливе.
+static inline TUint16 Avg555(TUint16 aA, TUint16 aB)
+	{
+	return (TUint16)((aA & aB) + (((aA ^ aB) & 0x7bde) >> 1));
+	}
+
+// FXAA-lite для масштабу 1:1. Яскравість беремо як зелений канал: у BGR555 це два
+// такти, а зелений дає близько 60% світності - повне перетворення коштувало б
+// вдесятеро більше на кожну з п'яти вибірок. Розмиваємо лише там, де перепад
+// перевищує поріг, і лише ВПОПЕРЕК знайденої межі; результат - 50% центру плюс по
+// 25% двох сусідів. Виклик робиться тільки для 1 <= aX < dstW-1, тож меж не перевіряє.
+static inline TUint16 FxaaPixel(const TUint16 *aRow, const TUint16 *aUp,
+                                const TUint16 *aDn, TInt aX, TInt aThr, TInt aMax)
+	{
+	const TUint16 m = aRow[aX];
+	const TUint16 w = aRow[aX - 1], e = aRow[aX + 1];
+	const TUint16 n = aUp[aX], s = aDn[aX];
+	const TInt lm = (m >> 5) & 0x1f;
+	const TInt lw = (w >> 5) & 0x1f, le = (e >> 5) & 0x1f;
+	const TInt ln = (n >> 5) & 0x1f, ls = (s >> 5) & 0x1f;
+	TInt lo = lm, hi = lm;
+	if (lw < lo) lo = lw; else if (lw > hi) hi = lw;
+	if (le < lo) lo = le; else if (le > hi) hi = le;
+	if (ln < lo) lo = ln; else if (ln > hi) hi = ln;
+	if (ls < lo) lo = ls; else if (ls > hi) hi = ls;
+	// Верхня межа боронить інтерфейс: білий текст на темному тлі дає майже повний
+	// розмах зеленого, тоді як сходинки на затінених гранях - помірний. Без неї
+	// фільтр однаково розмиває і те, й інше, бо для нього це та сама межа.
+	const TInt range = hi - lo;
+	if (range < aThr || range > aMax)
+		return m;
+	const TInt gv = (ln > ls) ? ln - ls : ls - ln;   // перепад по вертикалі
+	const TInt gh = (lw > le) ? lw - le : le - lw;   // ...і по горизонталі
+	return (gv >= gh) ? Avg555(m, Avg555(n, s)) : Avg555(m, Avg555(w, e));
+	}
+
 // PS1 VRAM - BGR555 (біт15 маска, 14-10 B, 9-5 G, 4-0 R); екран EColor64K -
 // RGB565. Зелений розширюємо з 5 до 6 біт, щоб не втратити яскравість.
 static inline TUint16 Bgr555ToRgb565(TUint16 aPix)
@@ -875,6 +913,9 @@ static const TInt KOvlCols  = 9;    // "999.9 fps" - найдовший з ря�
 static const TInt KOvlPad   = 2;
 
 static TBool g_noUpdate;    // зонд: пропустити Update() екрана (див. сетер нижче)
+static TBool g_smoothDown = ETrue;   // усереднювати при зменшенні (див. blitCurrent)
+static TInt  g_fxaaThr;              // нижній поріг FXAA у ступенях зеленого; 0 - вимкнено
+static TInt  g_fxaaMax = 31;         // верхній: понад нього не чіпаємо (текст інтерфейсу)
 
 static TInt g_ovlOn;
 static TInt g_ovlFpsX10 = -1;
@@ -1055,6 +1096,20 @@ static void blitCurrent()
 	const TUint sxStep = ((TUint)sw << 16) / (TUint)dstW;
 	const TUint syStep = ((TUint)srcH << 16) / (TUint)dstH;
 
+	// Зменшення понад 1,5x простим проріджуванням викидає кожен другий стовпець, а з
+	// ним і тонкі штрихи шрифту: у 640x480 крок виходить рівно 2,0. Черезрядкові
+	// режими до того ж тримають половину рядків у другому полі, яке ми не читаємо
+	// взагалі. Тому беремо середнє блоку 2x2 - це та роздільність, яку ми справді
+	// показуємо. hAvg вимагає зменшення >1,5x, тож sx+1 гарантовано не вийде за рядок.
+	// При "Skip lines" вертикального середнього немає: непарних рядків растеризатор
+	// не переписує, там залишки попередніх кадрів.
+	const TBool hAvg = g_smoothDown && !rgb24 && sxStep > 0x18000u;
+	const TBool vAvg = g_smoothDown && !rgb24 && field && !g_ilaceOut;
+	const TInt  hOff = hAvg ? 1 : 0;
+	// FXAA має сенс лише при 1:1: там кожен піксель джерела лягає в свій піксель
+	// екрана, і сходинки видно як є. Де є зменшення, згладжує вже блоковий фільтр.
+	const TBool fxaa = g_fxaaThr > 0 && !rgb24 && sxStep == 0x10000u && !vAvg && dstW > 2;
+
 	// Попередній рядок-джерело і куди його поклали: коли наступний рядок приймача
 	// читає те саме джерело (масштабування вгору або пропуск рядків), копія готового
 	// рядка дешевша за повторну конвертацію.
@@ -1095,9 +1150,56 @@ static void blitCurrent()
 		else
 			{
 			const TUint16 *srow = (const TUint16 *)(vbytes + startByte) + ssy * 1024;
+			if (fxaa)
+				{
+				// Сусідні рядки VRAM; на першому й останньому беремо власний.
+				const TUint16 *rowU = (ssy > 0)      ? srow - 1024 : srow;
+				const TUint16 *rowD = (ssy + 1 < sh) ? srow + 1024 : srow;
+				const TInt thr = g_fxaaThr, mx = g_fxaaMax;
+				if (pixB == 4)
+					{
+					TUint32 *d32 = (TUint32 *)drow;
+					d32[0] = Bgr555ToXrgb8888(srow[0]);
+					for (TInt dx = 1; dx < dstW - 1; dx++)
+						d32[dx] = Bgr555ToXrgb8888(FxaaPixel(srow, rowU, rowD, dx, thr, mx));
+					d32[dstW - 1] = Bgr555ToXrgb8888(srow[dstW - 1]);
+					}
+				else
+					{
+					drow[0] = Bgr555ToRgb565(srow[0]);
+					for (TInt dx = 1; dx < dstW - 1; dx++)
+						drow[dx] = Bgr555ToRgb565(FxaaPixel(srow, rowU, rowD, dx, thr, mx));
+					drow[dstW - 1] = Bgr555ToRgb565(srow[dstW - 1]);
+					}
+				}
+			else if (hAvg || vAvg)
+				{
+				const TUint16 *s2 = vAvg ? srow + 1024 : srow;
+				if (pixB == 4)
+					{
+					TUint32 *d32 = (TUint32 *)drow;
+					for (TInt dx = 0; dx < dstW; dx++, sxf += sxStep)
+						{
+						const TInt sx = (TInt)(sxf >> 16);
+						d32[dx] = Bgr555ToXrgb8888(Avg555(
+							Avg555(srow[sx], srow[sx + hOff]),
+							Avg555(s2[sx],   s2[sx + hOff])));
+						}
+					}
+				else
+					{
+					for (TInt dx = 0; dx < dstW; dx++, sxf += sxStep)
+						{
+						const TInt sx = (TInt)(sxf >> 16);
+						drow[dx] = Bgr555ToRgb565(Avg555(
+							Avg555(srow[sx], srow[sx + hOff]),
+							Avg555(s2[sx],   s2[sx + hOff])));
+						}
+					}
+				}
 			// 32-бітний буфер екрана: конвертуємо прямо в XRGB8888, без проміжного
 			// 16-бітного бітмапа і без перетворення 565->8888 у bitgdi.
-			if (pixB == 4)
+			else if (pixB == 4)
 				{
 				TUint32 *d32 = (TUint32 *)drow;
 				if (sxStep == 0x10000u)
@@ -1422,6 +1524,21 @@ extern "C" int voutSymbianShow(int holdMs)
 extern "C" void voutSymbianSetNoUpdate(int aOn)
 	{
 	g_noUpdate = aOn ? ETrue : EFalse;
+	}
+
+// Поріг FXAA у ступенях зеленого (0..31); 0 вимикає фільтр. Прототип: діє лише
+// при масштабі 1:1, тобто в 3D-режимі 320x240.
+extern "C" void voutSymbianSetFxaa(int aThreshold, int aMax)
+	{
+	g_fxaaThr = (aThreshold > 0 && aThreshold < 32) ? aThreshold : 0;
+	g_fxaaMax = (aMax > 0 && aMax < 32) ? aMax : 31;
+	}
+
+// Усереднення блоку при зменшенні замість проріджування. Читаність шрифтів у
+// режимах 640x* залежить від нього повністю.
+extern "C" void voutSymbianSetSmooth(int aOn)
+	{
+	g_smoothDown = aOn ? ETrue : EFalse;
 	}
 
 // Увімкнути DSA (прямий доступ до екрана) для present. Викликати ДО voutSymbianInit.
