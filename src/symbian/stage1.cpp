@@ -213,7 +213,7 @@ long ps1GpuDmaChain(uint32_t *rambase, uint32_t start_addr, uint32_t *progress_a
 long ps1GpuFreeze(uint32_t type, GPUFreeze_t *freeze, uint16_t **vram_ptr);
 void ps1GpuVBlank(int is_vblank, int lcf);
 void ps1GpuGetScreenInfo(int *y, int *base_hres);
-void ps1GpuSetCallbacks(unsigned int *frameCount, unsigned int *hcnt);
+void ps1GpuSetCallbacks(unsigned int *frameCount, unsigned int *hcnt, int frameskip);
 
 int voutSymbianDump(const char *path);
 int voutSymbianScreenDump(const char *path);
@@ -339,6 +339,22 @@ static char g_discPath[256];
 
 static volatile TInt g_wdRun;    // 1, поки прохід хоче, щоб сторож жив
 static volatile TInt g_wdFired;  // 1, якщо сторож спрацював (спін довше ліміту)
+// Пропуск РАСТЕРИЗАЦІЇ силами gpulib: скільки кадрів поспіль дозволено не малювати
+// (0 - вимкнено). На відміну від g_frameskip вище, тут пропускається сама робота, а
+// не лише її показ; gpulib ще й тримає власні охоронні перевірки (не пропускає,
+// коли гра малює просто у видиму область).
+static TInt g_gpuFrameskip;
+
+// Зонди для замірів (лише командний рядок, у меню їх немає).
+static TBool g_hackNoStalls;
+
+// Накладка з метриками. Вікно усереднення ~0,5 с: за одним кадром число стрибало
+// б так, що прочитати його з екрана неможливо.
+static const TInt KFpsWindowMs = 500;
+static TBool g_fpsOverlay;
+static TUint g_fpsWinTick;
+static TInt  g_fpsWinFrame;
+
 
 // Діагностика: сторож семплює pc/cycle раз на ~2 с. Траєкторія показує, чи
 // виконання стоїть на одній інструкції (хендлер висить), чи повзе - без цього
@@ -1451,14 +1467,10 @@ static void coreInitOnce()
 
 	bindStubPlugins();
 
-	// gpulib читає лічильники кадрів і рядків напряму зі структури фронтенду
-	// (gpu.c:1218-1264), тож підключаємо їх до справжніх змінних ядра.
-	ps1GpuSetCallbacks(&frame_counter, &g_gpuHcnt);
-
 	// Конфіг растеризатора - обов'язково ДО GPU_init: renderer_init копіює його
-	// у робочу структуру один раз. Ми не викликаємо GPUrearmedCallbacks, тож без
-	// цього рядка структура лишається нульовою, і вимкненими виявляються не лише
-	// прискорювачі, а й освітлення з напівпрозорістю.
+	// у робочу структуру один раз. GPUrearmedCallbacks (нижче) викликаємо з
+	// нульовою структурою, тож без цього рядка конфіг лишається нульовим, і
+	// вимкненими виявляються не лише прискорювачі, а й освітлення з напівпрозорістю.
 	gpu_unai_set_config(g_hackPixelSkip, g_hackIlace, g_gpuLighting,
 		g_gpuLighting /*fast*/, g_gpuBlending);
 	// Вивід мусить знати про пропуск рядків: інакше він показує непарні рядки VRAM,
@@ -1508,6 +1520,13 @@ extern "C" int ps1GuiSetup(void)
 	const TInt rc = passSetup(!g_guiInterp, frames, ETrue /*bios*/, EFalse /*gputest*/,
 		ETrue /*screen*/, ETrue /*disc*/);
 	// Після passSetup: слід прив'язаний до номера кадру, а лічильник кадрів
+	// Колбеки - суворо ПІСЛЯ GPU_init: GPUinit робить memset на gpu.state і
+	// gpu.frameskip (gpu.c:355-359) і повертає лічильник кадрів на власний нуль.
+	// Стояло це вище й тихо скасовувалось: gpulib увесь час бачив frame_count=0,
+	// а frameskip.set=0 не давав пропуску растеризації спрацювати взагалі.
+	ps1GpuSetCallbacks(&frame_counter, &g_gpuHcnt, g_gpuFrameskip);
+	logEvent("gpu_cbs", NULL, "frameskip=%d", (int)g_gpuFrameskip);
+
 	// починається саме тут.
 	inputTraceOpen();
 	g_guiUp = (rc == KErrNone);

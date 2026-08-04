@@ -1706,7 +1706,9 @@ void ps1GpuGetScreenInfo(int *y, int *hres)             { GPUgetScreenInfo(y, hr
 
 // Мінімальний набір: gpulib читає лічильники напряму (gpu.c:1218-1264), решта
 // полів - нулі. thread_rendering = 0, бо USE_ASYNC_GPU не задано.
-void ps1GpuSetCallbacks(unsigned int *frameCount, unsigned int *hcnt)
+// cbs МУСИТЬ пережити виклик: gpulib лишає в себе вказівники на fskip_advice /
+// fskip_force / fskip_dirty усередині неї, а не копії.
+void ps1GpuSetCallbacks(unsigned int *frameCount, unsigned int *hcnt, int aFrameskip)
 	{
 	static struct rearmed_cbs cbs;
 	memset(&cbs, 0, sizeof(cbs));
@@ -1717,3 +1719,7 @@ void ps1GpuSetCallbacks(unsigned int *frameCount, unsigned int *hcnt)
 	}
 
 } // extern "C"
+	// Пропуск растеризації силами gpulib: скільки кадрів поспіль дозволено НЕ
+	// малювати. Копіюється в gpu.frameskip.set саме тут, тож значення має бути
+	// відоме до виклику.
+	cbs.frameskip = aFrameskip;
