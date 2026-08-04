@@ -447,30 +447,80 @@ static TDsaObserver g_dsaObs;
 static TRequestStatus g_evStat;
 static unsigned short g_pad;
 
-// Розкладка клавіатури N95 -> кнопки PS1 (біти DKEY_* з plugin_lib.h). Стрілки -
-// хрестовина, центральна - Cross (підтвердити), цифри - лицьові кнопки.
-static TInt mapScanToDkey(TInt aScan)
+// Розкладка клавіатури -> кнопки PS1 (біти DKEY_* з plugin_lib.h). Таблиця, а не
+// switch: оболонка дає перепризначати клавіші з меню, і єдине джерело правди про
+// типову розкладку має лишатись тут - консольна гілка меню не проходить.
+// Порядок = порядок рядків у меню керування.
+const TInt KPadButtons = 14;
+static const unsigned char KPadBit[KPadButtons] =
 	{
-	switch (aScan)
+	DKEY_UP, DKEY_DOWN, DKEY_LEFT, DKEY_RIGHT,
+	DKEY_CROSS, DKEY_CIRCLE, DKEY_SQUARE, DKEY_TRIANGLE,
+	DKEY_L1, DKEY_R1, DKEY_L2, DKEY_R2, DKEY_SELECT, DKEY_START
+	};
+
+// Типова розкладка N95: стрілки - хрестовина, центральна - Cross (підтвердити),
+// цифри - лицьові кнопки. Другий код на кнопку - для клавіш із двома джерелами.
+static const short KPadDefScan[KPadButtons] =
+	{
+	EStdKeyUpArrow, EStdKeyDownArrow, EStdKeyLeftArrow, EStdKeyRightArrow,
+	EStdKeyDevice3, '0', '7', '9',
+	'1', '3', '4', '6', '2', '8'
+	};
+static const short KPadDefAlt[KPadButtons] =
+	{ -1, -1, -1, -1, '5', -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+
+static short g_keyScan[KPadButtons];
+static short g_keyAlt[KPadButtons];
+// Кнопки-засувки: одне натискання притискає кнопку назавжди, наступне відпускає.
+// У гонках так тримають газ, не затискаючи клавішу весь заїзд.
+static unsigned short g_padToggle;
+static TBool g_keyMapReady;
+
+static void keyMapDefaults()
+	{
+	for (TInt i = 0; i < KPadButtons; i++)
+		{ g_keyScan[i] = KPadDefScan[i]; g_keyAlt[i] = KPadDefAlt[i]; }
+	g_padToggle = 0;
+	g_keyMapReady = ETrue;
+	}
+
+// Деякі прошивки шлють центральну навігаційну як Enter. Зводимо коди ДО пошуку в
+// таблиці, щоб перепризначення центру тягло за собою й Enter.
+static TInt aliasScan(TInt aScan)
+	{
+	if (aScan == EStdKeyEnter || aScan == EStdKeyNkpEnter)
+		return EStdKeyDevice3;
+	return aScan;
+	}
+
+// Маска кнопок PS1, на які розкладено цей код. Кілька кнопок на один код
+// дозволені навмисно: так одна клавіша тисне, скажімо, і "вгору", і газ.
+static unsigned short maskForScan(TInt aScan)
+	{
+	if (!g_keyMapReady)
+		keyMapDefaults();
+	const TInt sc = aliasScan(aScan);
+	unsigned short m = 0;
+	for (TInt i = 0; i < KPadButtons; i++)
+		if (g_keyScan[i] == sc || g_keyAlt[i] == sc)
+			m |= (unsigned short)(1 << KPadBit[i]);
+	return m;
+	}
+
+// Засувки перемикаються на натисканні й ігнорують відпускання; звичайні кнопки
+// просто повторюють стан клавіші.
+static void padApply(unsigned short aMask, TInt aDown)
+	{
+	const unsigned short tog  = (unsigned short)(aMask & g_padToggle);
+	const unsigned short norm = (unsigned short)(aMask & ~g_padToggle);
+	if (aDown)
 		{
-		case EStdKeyUpArrow:    return DKEY_UP;
-		case EStdKeyDownArrow:  return DKEY_DOWN;
-		case EStdKeyLeftArrow:  return DKEY_LEFT;
-		case EStdKeyRightArrow: return DKEY_RIGHT;
-		case EStdKeyDevice3:                          // центральна навігаційна
-		case EStdKeyEnter:                            // деякі прошивки шлють центр як Enter
-		case '5':               return DKEY_CROSS;
-		case '0':               return DKEY_CIRCLE;   // назад/скасувати
-		case '7':               return DKEY_SQUARE;
-		case '9':               return DKEY_TRIANGLE;
-		case '1':               return DKEY_L1;
-		case '3':               return DKEY_R1;
-		case '4':               return DKEY_L2;
-		case '6':               return DKEY_R2;
-		case '2':               return DKEY_SELECT;
-		case '8':               return DKEY_START;
-		default:                return -1;
+		g_pad ^= tog;
+		g_pad |= norm;
 		}
+	else
+		g_pad &= (unsigned short)~norm;
 	}
 
 // Гарячий цикл конвертації: два пікселі за 32-бітне слово. Винесений в окрему
@@ -1388,12 +1438,48 @@ void voutSymbianAttachWindow(RWsSession &aWs, CWsScreenDevice &aDev, RWindow &aW
 // код розкладено на кнопку PS1 (тоді контейнер поглинає подію).
 extern "C" int voutSymbianKeyEvent(int aScanCode, int aDown)
 	{
-	const TInt bit = mapScanToDkey(aScanCode);
-	if (bit < 0)
+	const unsigned short m = maskForScan(aScanCode);
+	if (!m)
 		return 0;
-	if (aDown) g_pad |= (unsigned short)(1 << bit);
-	else       g_pad &= (unsigned short)~(1 << bit);
+	padApply(m, aDown);
 	return 1;
+	}
+
+// Розкладка з меню: по одному основному й запасному коду на кнопку в порядку
+// KPadBit (-1 = не призначено), aToggle - маска біт DKEY_* для кнопок-засувок.
+extern "C" void voutSymbianSetKeyMap(const int *aScan, const int *aAlt, int aCount,
+                                     unsigned int aToggle)
+	{
+	keyMapDefaults();
+	const TInt n = aCount < KPadButtons ? aCount : KPadButtons;
+	for (TInt i = 0; i < n; i++)
+		{
+		if (aScan) g_keyScan[i] = (short)aScan[i];
+		if (aAlt)  g_keyAlt[i]  = (short)aAlt[i];
+		}
+	g_padToggle = (unsigned short)aToggle;
+	// Засувка, ввімкнена до зміни розкладки, лишилась би притиснутою назавжди.
+	g_pad = 0;
+	}
+
+extern "C" int voutSymbianPadButtons(void)
+	{
+	return KPadButtons;
+	}
+
+// Типовий код клавіші для кнопки: меню будує з нього власні початкові значення,
+// щоб розкладка описувалась в одному місці.
+extern "C" int voutSymbianDefaultKey(int aIdx, int aAlt)
+	{
+	if (aIdx < 0 || aIdx >= KPadButtons)
+		return -1;
+	return aAlt ? KPadDefAlt[aIdx] : KPadDefScan[aIdx];
+	}
+
+// Біт DKEY_* кнопки за її порядковим номером у меню.
+extern "C" int voutSymbianPadBit(int aIdx)
+	{
+	return (aIdx >= 0 && aIdx < KPadButtons) ? KPadBit[aIdx] : -1;
 	}
 
 // Неблокуюче опитування клавіш: виснажує чергу подій вікон, оновлює g_pad
@@ -1412,12 +1498,9 @@ extern "C" unsigned short voutSymbianPollPad(void)
 		const TInt t = ev.Type();
 		if (t == EEventKeyDown || t == EEventKeyUp)
 			{
-			const TInt bit = mapScanToDkey(ev.Key()->iScanCode);
-			if (bit >= 0)
-				{
-				if (t == EEventKeyDown) g_pad |= (unsigned short)(1 << bit);
-				else                    g_pad &= (unsigned short)~(1 << bit);
-				}
+			const unsigned short m = maskForScan(ev.Key()->iScanCode);
+			if (m)
+				padApply(m, t == EEventKeyDown);
 			}
 		g_ws.EventReady(&g_evStat);
 		}
