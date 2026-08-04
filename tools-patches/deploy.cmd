@@ -141,7 +141,12 @@ if "%PHONE%"=="" (
 echo [deploy] phone card on %PHONE%
 
 REM Cache the daemon's last-known IP off the card so wifi mode can default to it.
-if exist "%PHONE%\daemon_ip.txt" copy /y "%PHONE%\daemon_ip.txt" "%~dp0.daemon_ip" >nul 2>&1
+REM The phone writes that file as UTF-16, and "for /f" below reads it as ASCII -
+REM a plain copy yields "192.1" and the cache never works. Transcode it here.
+if exist "%PHONE%\daemon_ip.txt" powershell -NoProfile -Command ^
+  "$t=[System.IO.File]::ReadAllText('%PHONE%\daemon_ip.txt',[System.Text.Encoding]::Unicode).Trim();" ^
+  "if($t -notmatch '^\d+\.\d+\.\d+\.\d+'){$t=[System.IO.File]::ReadAllText('%PHONE%\daemon_ip.txt').Trim()};" ^
+  "[System.IO.File]::WriteAllText('%~dp0.daemon_ip',$t+[char]13+[char]10,[System.Text.Encoding]::ASCII)" >nul 2>&1
 
 if /i "%TARGET%"=="collect" goto :collect
 

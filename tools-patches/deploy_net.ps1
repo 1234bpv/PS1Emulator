@@ -82,7 +82,10 @@ function Find-Daemon($port) {
             $iar = $c.BeginConnect($ip, $port, $null, $null)
             $pending += [pscustomobject]@{ Ip = $ip; Client = $c; Iar = $iar }
         }
-        Start-Sleep -Milliseconds 600   # let LAN connects race to completion
+        # 600 ms was not enough: the phone answers over WiFi slower than wired
+        # hosts, so the scan "found nothing" with the daemon plainly running.
+        # This costs exactly one pause per subnet sweep.
+        Start-Sleep -Milliseconds 2500  # let LAN connects race to completion
         $hits = @()
         foreach ($p in $pending) {
             if ($p.Iar.IsCompleted) {
@@ -199,6 +202,16 @@ if (-not $Ip -or $Ip -in @('scan', 'auto')) {
 }
 
 $client = Connect-Daemon $Ip $Port
+
+# Rewrite the IP cache as plain ASCII. The phone writes E:\daemon_ip.txt as
+# UTF-16 (Symbian descriptors), deploy.cmd copies it byte for byte, and then
+# reads it back through "for /f" as ASCII - yielding "192.1" instead of the
+# address. That is why the cache never hit and every call fell back to a scan.
+try {
+    [System.IO.File]::WriteAllText("$PSScriptRoot\.daemon_ip", "$Ip`r`n",
+        [System.Text.Encoding]::ASCII)
+} catch { }
+
 try {
     $stream = $client.GetStream()
 
