@@ -31,12 +31,11 @@ del /q "%TMPDIR%\*.o" 2>nul
 set INC=-I"%PROJ%\src\compat" -I"%FORK%" -I"%FORK%\include" -I"%FORK%\libpcsxcore" -I"%FORK%\plugins\gpulib" -I"%FORK%\plugins\gpu_unai" -I"%SDKINC%" -I"%SDKINC%\libc"
 REM gcce.h is the prelude abld force-includes; without it the Symbian libc
 REM headers do not even parse (IMPORT_C is undefined).
-set FLAGS=-c -O2 -march=armv6 -mtune=arm1136j-s -fno-exceptions -fno-rtti -fpermissive -fshort-wchar -include "%SDKINC%\gcce\gcce.h" -D__SYMBIAN32__ -D__EPOC32__ -D__GCCE__ -D__EABI__ -D__MARM__ -D__MARM_ARMV5__ -D__SERIES60_3X__ -D__SERIES60_31__ -DREARMED -DUSE_GPULIB=1 -D__SIZEOF_POINTER__=4 -DP_HAVE_MMAP=0
+set FLAGS=-c -O2 -march=armv6 -mtune=arm1136j-s -fno-exceptions -fno-rtti -fpermissive -fshort-wchar -include "%SDKINC%\gcce\gcce.h" -D__SYMBIAN32__ -D__EPOC32__ -D__GCCE__ -D__EABI__ -D__MARM__ -D__MARM_ARMV5__ -D__SERIES60_3X__ -D__SERIES60_31__ -DREARMED -DUSE_GPULIB=1 -D__SIZEOF_POINTER__=4 -DP_HAVE_MMAP=0 -DGPU_UNAI_NO_OLD -DGPU_UNAI_USE_YDIV_TABLE
 
 "%NEWBIN%\arm-none-symbianelf-gcc.exe" %FLAGS% %INC% -o "%TMPDIR%\gpu.o"       "%FORK%\plugins\gpulib\gpu.c"  || exit /b 1
 "%NEWBIN%\arm-none-symbianelf-gcc.exe" %FLAGS% %INC% -o "%TMPDIR%\prim.o"      "%FORK%\plugins\gpulib\prim.c" || exit /b 1
 "%NEWBIN%\arm-none-symbianelf-g++.exe" %FLAGS% %INC% -o "%TMPDIR%\gpulib_if.o" "%FORK%\plugins\gpu_unai\gpulib_if.cpp" || exit /b 1
-"%NEWBIN%\arm-none-symbianelf-g++.exe" %FLAGS% %INC% -I"%FORK%\plugins\gpu_unai\old" -o "%TMPDIR%\oldif.o" "%FORK%\plugins\gpu_unai\old\if.cpp" || exit /b 1
 
 for %%F in ("%TMPDIR%\*.o") do (
   "%NEWBIN%\arm-none-symbianelf-objcopy.exe" -R .ARM.attributes "%%F" || exit /b 1
@@ -45,7 +44,7 @@ for %%F in ("%TMPDIR%\*.o") do (
 )
 
 del /q "%OUTLIB%\gpuunai.lib" 2>nul
-"%OLDBIN%\arm-none-symbianelf-ar.exe" rc "%OUTLIB%\gpuunai.lib" "%TMPDIR%\gpu.o" "%TMPDIR%\prim.o" "%TMPDIR%\gpulib_if.o" "%TMPDIR%\oldif.o" || exit /b 1
+"%OLDBIN%\arm-none-symbianelf-ar.exe" rc "%OUTLIB%\gpuunai.lib" "%TMPDIR%\gpu.o" "%TMPDIR%\prim.o" "%TMPDIR%\gpulib_if.o" || exit /b 1
 "%OLDBIN%\arm-none-symbianelf-ranlib.exe" "%OUTLIB%\gpuunai.lib" || exit /b 1
 
 echo [gpu463] gpuunai.lib rebuilt with GCCE 4.6.3
