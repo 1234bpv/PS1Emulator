@@ -1551,6 +1551,32 @@ extern "C" void voutSymbianPresent(void)
 	TRAP_IGNORE(blitCurrent());
 	}
 
+// Пауза виводу на час меню в грі. DSA знімаємо: поки він тримає екран, малювання
+// вікном лягало б під нього. На поверненні піднімаємо назад і одразу відновлюємо
+// кадр - латч "показувати лише змінене" інакше лишав би меню на екрані, доки гра
+// не перемалює видиму область, а на статичній сцені це надовго.
+extern "C" void voutSymbianSuspend(int aOn)
+	{
+	if (!g_wsReady)
+		return;
+	if (aOn)
+		{
+		// Клавіші, затиснуті на момент відкриття меню, відпускання вже не дістануть:
+		// меню поглинає події. Засувки лишаємо - у них саме такий сенс.
+		g_pad &= g_padToggle;
+		if (g_dsa && g_dsaActive)
+			{ g_dsa->Cancel(); g_dsaActive = EFalse; }
+		return;
+		}
+	if (g_dsa && !g_dsaActive)
+		TRAP_IGNORE(dsaStartL());
+	g_blitOx = -1;
+	g_voutPending = 1;
+	g_voutStale = 0;
+	if (g_bmp)
+		TRAP_IGNORE(blitCurrent());
+	}
+
 extern "C" int voutSymbianFinish(int holdMs)
 	{
 	if (!g_wsReady)

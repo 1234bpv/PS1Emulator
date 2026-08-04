@@ -1618,11 +1618,22 @@ extern "C" void ps1LogInt(const char *aType, const char *aMsg, int aVal)
 	logEvent(aType, NULL, "%s=%d", aMsg ? aMsg : "", aVal);
 	}
 
+// Рівень 1..5 з меню -> поріг контрасту. Менший поріг захоплює більше пікселів:
+// заміряно на трасі 10 -> 26% кадру, 6 -> 33%, 2 -> 60%. Верхньої межі НЕ ставимо:
+// з нею фільтр пропускав саме найконтрастніші межі, тобто ті, які єдині й помітні
+// на екрані - перевірено на апараті, ефекту не було видно.
+static void applyFxaaLevel(TInt aLevel)
+	{
+	static const TInt KFxaaThr[6] = { 0, 10, 8, 6, 4, 2 };
+	voutSymbianSetFxaa(KFxaaThr[(aLevel >= 0 && aLevel <= 5) ? aLevel : 0], 31);
+	}
+
 // Налаштування з меню. Викликається ДО ps1GuiSetup, тобто до будь-якої
 // ініціалізації ядра й растеризатора - інакше частина з них не подіє.
 extern "C" void ps1CfgApply(const char *aDisc, int aInterp,
 	int aIlace, int aLight, int aBlend, int aPixSkip, int aGteNf,
-	int aSound, int aGl, int aDirty, int aDsa, int aFps, int aGpuSkip, int aCycle)
+	int aSound, int aGl, int aDirty, int aDsa, int aFps, int aGpuSkip, int aCycle,
+	int aSmooth, int aFxaa)
 	{
 	g_discPath[0] = 0;
 	if (aDisc && aDisc[0])
@@ -1650,12 +1661,62 @@ extern "C" void ps1CfgApply(const char *aDisc, int aInterp,
 	g_gpuFrameskip = aGpuSkip > 0 ? aGpuSkip : 0;
 	if (aCycle > 0)
 		g_cycleMul = aCycle;
+	voutSymbianSetSmooth(aSmooth);
+	applyFxaaLevel(aFxaa);
 	logEvent("cfg", NULL, "disc=%s interp=%d ilace=%d light=%d blend=%d "
-		"pixskip=%d gtenf=%d snd=%d gl=%d dirty=%d dsa=%d fps=%d gpuskip=%d cyclemul=%d",
+		"pixskip=%d gtenf=%d snd=%d gl=%d dirty=%d dsa=%d fps=%d gpuskip=%d cyclemul=%d "
+		"smooth=%d fxaa=%d",
 		g_discPath[0] ? g_discPath : KDiscImg, (int)aInterp,
 		(int)aIlace, (int)aLight, (int)aBlend, (int)aPixSkip, (int)aGteNf,
 		(int)aSound, (int)aGl, (int)aDirty, (int)aDsa, (int)aFps, (int)aGpuSkip,
-		(int)aCycle);
+		(int)aCycle, (int)aSmooth, (int)aFxaa);
+	}
+
+// Те саме, але з меню, відкритого вже в грі. Сюди потрапляє лише те, що можна
+// перемкнути між кадрами; вибір диска, гілка процесора, GL, DSA, звук і хаки GTE
+// потребують повторної ініціалізації й лишаються за ps1CfgApply. Викликати можна
+// тільки з паузи (тік CIdle не в кадрі): нижче є скидання кеша трансляцій.
+extern "C" void ps1CfgApplyLive(int aIlace, int aLight, int aBlend, int aPixSkip,
+	int aFps, int aGpuSkip, int aCycle, int aSmooth, int aFxaa, int aDirty)
+	{
+	g_hackIlace     = aIlace;
+	g_gpuLighting   = aLight;
+	g_gpuBlending   = aBlend;
+	g_hackPixelSkip = aPixSkip;
+	gpu_unai_set_config(g_hackPixelSkip, g_hackIlace, g_gpuLighting,
+		g_gpuLighting /*fast*/, g_gpuBlending);
+	gpu_unai_apply_config();
+	voutSymbianSetIlaceOut(g_hackIlace ? 1 : 0);
+
+	g_fpsOverlay = aFps ? ETrue : EFalse;
+	voutSymbianSetOverlay(aFps);
+	voutSymbianSetSmooth(aSmooth);
+	applyFxaaLevel(aFxaa);
+	voutSymbianSetDirtyOnly(aDirty);
+
+	if (aGpuSkip != g_gpuFrameskip)
+		{
+		g_gpuFrameskip = aGpuSkip > 0 ? aGpuSkip : 0;
+		// Єдиний шлях до gpu.frameskip.set - повторні колбеки, а вони знову
+		// перезаписують конфіг растеризатора (див. коментар у coreInitOnce).
+		ps1GpuSetCallbacks(&frame_counter, &g_gpuHcnt, g_gpuFrameskip);
+		gpu_unai_apply_config();
+		}
+
+	if (aCycle > 0 && aCycle != g_cycleMul)
+		{
+		g_cycleMul = aCycle;
+		Config.cycle_multiplier = g_cycleMul;
+		// ApplyConfig сам скидає кеш трансляцій, коли множник змінився: блоки,
+		// зібрані під старе значення, інакше лишились би з чужим таймінгом.
+		if (psxCpu && psxCpu->ApplyConfig)
+			psxCpu->ApplyConfig();
+		}
+
+	logEvent("cfg_live", NULL, "ilace=%d light=%d blend=%d pixskip=%d fps=%d "
+		"gpuskip=%d cyclemul=%d smooth=%d fxaa=%d dirty=%d",
+		(int)aIlace, (int)aLight, (int)aBlend, (int)aPixSkip, (int)aFps,
+		(int)aGpuSkip, (int)aCycle, (int)aSmooth, (int)aFxaa, (int)aDirty);
 	}
 
 extern "C" void ps1LogFmt(const char *aType, const char *aFmt, ...)
