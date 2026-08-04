@@ -236,7 +236,18 @@ void ps1SpuWriteRegister(unsigned long r, unsigned short v, unsigned int c) { SP
 unsigned short ps1SpuReadRegister(unsigned long r, unsigned int c)          { return SPUreadRegister(r, c); }
 void ps1SpuWriteDMAMem(unsigned short *m, int s, unsigned int c) { SPUwriteDMAMem(m, s, c); }
 void ps1SpuReadDMAMem(unsigned short *m, int s, unsigned int c)  { SPUreadDMAMem(m, s, c); }
-void ps1SpuAsync(unsigned int a, unsigned int b)                { SPUasync(a, b); }
+// Мікшування SPU - частина "emu", і досі вона була невіддільна від CPU. Хук той
+// самий, що для растеризації: без нього не сказати, чи звук узагалі помітний у
+// кадрі. Аргумент "nosnd" лише не відкриває динамік, мікшер працює далі.
+extern "C" unsigned int ndrc_symbian_fastcount(void);
+unsigned long long g_spuMixTicks;
+
+void ps1SpuAsync(unsigned int a, unsigned int b)
+	{
+	const unsigned int t0 = ndrc_symbian_fastcount();
+	SPUasync(a, b);
+	g_spuMixTicks += (unsigned int)(ndrc_symbian_fastcount() - t0);
+	}
 void ps1SpuRegisterCallback(void (*cb)(int))                    { SPUregisterCallback(cb); }
 void ps1SpuRegisterScheduleCb(void (*cb)(unsigned int))         { SPUregisterScheduleCb(cb); }
 

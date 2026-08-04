@@ -37,9 +37,9 @@ int  voutSymbianKeyEvent(int aScanCode, int aDown);
 int  voutSymbianFinish(int aHoldMs);
 int  voutSymbianGlActive(void);
 void ps1ScreenShot(void);
-void ps1CfgApply(const char *aDisc, int aInterp, int aFrameskip, int aIlace,
+void ps1CfgApply(const char *aDisc, int aInterp, int aIlace,
 	int aLight, int aBlend, int aPixSkip, int aGteNf, int aSound, int aGl,
-	int aDirty, int aDsa);
+	int aDirty, int aDsa, int aFps, int aGpuSkip, int aCycle);
 }
 
 // Прив'язка виведення до вікна CONE (vout_symbian.cpp). Без extern "C": типи Symbian.
@@ -56,9 +56,20 @@ static const TUid KUidPs1App = { 0xE0001002 };
 // перебудову ієрархії контролів заради того самого результату.
 enum TCfgItem
 	{
-	ECfgGame = 0, ECfgCpu, ECfgSkip, ECfgIlace, ECfgLight, ECfgBlend,
-	ECfgPixSkip, ECfgGteNf, ECfgSound, ECfgGl, ECfgDirty, ECfgDsa, ECfgCount
+	// Пропуску ПОКАЗУ ("Show every") тут навмисно немає: він малює кадр і викидає
+	// його, тобто платить за дорогу частину. Заміряно -4,3% проти -22,5% у
+	// ECfgGpuSkip. Лишився як зонд командного рядка "showskip".
+	ECfgGame = 0, ECfgCpu, ECfgIlace, ECfgLight, ECfgBlend,
+	ECfgPixSkip, ECfgGteNf, ECfgSound, ECfgGl, ECfgDirty, ECfgDsa, ECfgFps,
+	ECfgGpuSkip, ECfgCycle, ECfgCount
 	};
+
+// Множник тактів PS1. Типове значення upstream - CYCLE_MULT_DEFAULT (175); більше
+// означає "процесор PS1 повільніший", тобто менше роботи нам і менше плавності грі.
+const TInt KCycleDefault = 175;
+const TInt KCycleMin = 100;
+const TInt KCycleMax = 300;
+const TInt KCycleStep = 25;
 
 _LIT(KCfgPath, "E:\\ps1_settings.txt");
 _LIT(KImgDir, "E:\\");
@@ -70,13 +81,15 @@ public:
 	void Load();
 	void Save() const;
 	TInt &Value(TInt aItem);
-	TInt iGame, iInterp, iSkip, iIlace, iLight, iBlend, iPixSkip, iGteNf, iSound, iGl;
-	TInt iDirty, iDsa;
+	TInt iGame, iInterp, iIlace, iLight, iBlend, iPixSkip, iGteNf, iSound, iGl;
+	TInt iDirty, iDsa, iFps, iGpuSkip, iCycle;
 	};
 
 void TPs1Cfg::SetDefaults()
 	{
-	iGame = iInterp = iSkip = iIlace = iPixSkip = iGteNf = iGl = 0;
+	iGame = iInterp = iIlace = iPixSkip = iGteNf = iGl = iFps = 0;
+	iGpuSkip = 0;
+	iCycle = KCycleDefault;
 	// Освітлення й напівпрозорість типово УВІМКНЕНІ: без них текстури малюються
 	// без затінення, і це не пришвидшення, а брак. Вимкнути можна тут же.
 	iLight = iBlend = 1;
@@ -94,7 +107,6 @@ TInt &TPs1Cfg::Value(TInt aItem)
 	switch (aItem)
 		{
 		case ECfgCpu:     return iInterp;
-		case ECfgSkip:    return iSkip;
 		case ECfgIlace:   return iIlace;
 		case ECfgLight:   return iLight;
 		case ECfgBlend:   return iBlend;
@@ -104,6 +116,9 @@ TInt &TPs1Cfg::Value(TInt aItem)
 		case ECfgGl:      return iGl;
 		case ECfgDirty:   return iDirty;
 		case ECfgDsa:     return iDsa;
+		case ECfgFps:     return iFps;
+		case ECfgGpuSkip: return iGpuSkip;
+		case ECfgCycle:   return iCycle;
 		default:          return iGame;
 		}
 	}
@@ -139,8 +154,9 @@ void TPs1Cfg::Save() const
 	if (f.Replace(fs, KCfgPath, EFileWrite | EFileShareAny) == KErrNone)
 		{
 		TBuf8<128> b;
-		b.Format(_L8("%d %d %d %d %d %d %d %d %d %d %d %d\n"), iGame, iInterp, iSkip,
-			iIlace, iLight, iBlend, iPixSkip, iGteNf, iSound, iGl, iDirty, iDsa);
+		b.Format(_L8("%d %d %d %d %d %d %d %d %d %d %d %d %d %d\n"), iGame, iInterp,
+			iIlace, iLight, iBlend, iPixSkip, iGteNf, iSound, iGl, iDirty,
+			iDsa, iFps, iGpuSkip, iCycle);
 		f.Write(b);
 		f.Close();
 		}
@@ -242,9 +258,6 @@ void CPs1Container::ItemText(TInt aItem, TDes &aOut) const
 			aOut.Format(_L("CPU:         %S"), c.iInterp ?
 				&_L("interpreter") : &_L("dynarec"));
 			break;
-		case ECfgSkip:
-			aOut.Format(_L("Show every:  %d frame(s)"), c.iSkip + 1);
-			break;
 		case ECfgIlace:
 			aOut.Format(_L("Skip lines:  %S"), c.iIlace ? &KOn() : &KOff());
 			break;
@@ -271,6 +284,23 @@ void CPs1Container::ItemText(TInt aItem, TDes &aOut) const
 			break;
 		case ECfgDsa:
 			aOut.Format(_L("Direct draw: %S"), c.iDsa ? &KOn() : &KOff());
+			break;
+		case ECfgFps:
+			aOut.Format(_L("FPS meter:   %S"), c.iFps ? &KOn() : &KOff());
+			break;
+		// Пропуск САМОЇ растеризації, на відміну від "Show every" вище, який малює
+		// кадр і потім викидає його.
+		case ECfgGpuSkip:
+			if (c.iGpuSkip)
+				aOut.Format(_L("Draw every:  %d frame(s)"), c.iGpuSkip + 1);
+			else
+				aOut.Copy(_L("Draw every:  frame"));
+			break;
+		case ECfgCycle:
+			if (c.iCycle == KCycleDefault)
+				aOut.Format(_L("PS1 cycles:  %d (default)"), c.iCycle);
+			else
+				aOut.Format(_L("PS1 cycles:  %d"), c.iCycle);
 			break;
 		}
 	}
@@ -350,9 +380,9 @@ void CPs1Container::ApplyAndStart()
 		}
 	TBuf8<256> path8;
 	path8.Copy(path);
-	ps1CfgApply((const char *)path8.PtrZ(), iCfg.iInterp, iCfg.iSkip, iCfg.iIlace,
+	ps1CfgApply((const char *)path8.PtrZ(), iCfg.iInterp, iCfg.iIlace,
 		iCfg.iLight, iCfg.iBlend, iCfg.iPixSkip, iCfg.iGteNf, iCfg.iSound, iCfg.iGl,
-		iCfg.iDirty, iCfg.iDsa);
+		iCfg.iDirty, iCfg.iDsa, iCfg.iFps, iCfg.iGpuSkip, iCfg.iCycle);
 	iMenu = EFalse;
 	}
 
@@ -387,11 +417,17 @@ TKeyResponse CPs1Container::OfferKeyEventL(const TKeyEvent &aKeyEvent, TEventCod
 				const TInt n = iImages->Count();
 				if (n) v = (v + n + d) % n;
 				}
-			else if (iSel == ECfgSkip)
+			else if (iSel == ECfgGpuSkip)
 				{
 				v += d;
 				if (v < 0) v = 3;
 				if (v > 3) v = 0;
+				}
+			else if (iSel == ECfgCycle)
+				{
+				v += d * KCycleStep;
+				if (v < KCycleMin) v = KCycleMax;
+				if (v > KCycleMax) v = KCycleMin;
 				}
 			else
 				v = v ? 0 : 1;

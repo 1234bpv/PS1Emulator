@@ -246,6 +246,9 @@ int voutSymbianHalDump(const char *path);
 int voutSymbianHalAddr(void);
 int voutSymbianRawDump(const char *path, int bytes);
 int voutSymbianVisTest(int raw);
+void voutSymbianSetOverlay(int on);
+void voutSymbianSetNoUpdate(int on);
+void voutSymbianSetStats(int fpsX10, int msX10);
 static TBool g_fbVis;
 
 // Лічильники безпосередньо в gpulib: усі шляхи ядра (interp/drc) сходяться туди,
@@ -255,6 +258,8 @@ extern unsigned int g_gpulibDmaWords, g_gpulibWriteStatus, g_gpulibReadStatus;
 extern unsigned int g_gpulibStatusLast;
 // Час растеризації gpu_unai (тики FastCounter) - розділяє CPU vs GPU в "emu".
 extern unsigned long long g_gpulibRenderTicks;
+// Час мікшування SPU (тики FastCounter) - відділяє звук від CPU всередині "emu".
+extern unsigned long long g_spuMixTicks;
 unsigned int ndrc_symbian_fastfreq(void);
 unsigned int ndrc_symbian_tcbase(void);
 }
@@ -334,11 +339,6 @@ extern "C" void gpu_unai_set_config(int aPixelSkip, int aIlaceForce,
 // а це 13 з 37 мс кадру. Чесніше називати це пропуском показу, а не кадрів.
 static TInt g_frameskip;
 
-// Образ диска, обраний у меню. Порожній - беремо KDiscImg.
-static char g_discPath[256];
-
-static volatile TInt g_wdRun;    // 1, поки прохід хоче, щоб сторож жив
-static volatile TInt g_wdFired;  // 1, якщо сторож спрацював (спін довше ліміту)
 // Пропуск РАСТЕРИЗАЦІЇ силами gpulib: скільки кадрів поспіль дозволено не малювати
 // (0 - вимкнено). На відміну від g_frameskip вище, тут пропускається сама робота, а
 // не лише її показ; gpulib ще й тримає власні охоронні перевірки (не пропускає,
@@ -355,6 +355,11 @@ static TBool g_fpsOverlay;
 static TUint g_fpsWinTick;
 static TInt  g_fpsWinFrame;
 
+// Образ диска, обраний у меню. Порожній - беремо KDiscImg.
+static char g_discPath[256];
+
+static volatile TInt g_wdRun;    // 1, поки прохід хоче, щоб сторож жив
+static volatile TInt g_wdFired;  // 1, якщо сторож спрацював (спін довше ліміту)
 
 // Діагностика: сторож семплює pc/cycle раз на ~2 с. Траєкторія показує, чи
 // виконання стоїть на одній інструкції (хендлер висить), чи повзе - без цього
@@ -848,6 +853,7 @@ static TInt passSetup(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTes
 	g_gpulibDmaWords = g_gpulibWriteStatus = g_gpulibReadStatus = 0;
 	g_gpulibStatusLast = 0;
 	g_gpulibRenderTicks = 0;
+	g_spuMixTicks = 0;
 
 	// Мінімальний еквівалент emu_core_preinit() з frontend/main.c:435.
 	memset(&Config, 0, sizeof(Config));
@@ -903,6 +909,11 @@ static TInt passSetup(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTes
 	// NDHACK_NO_SMC_CHECK НЕ вмикати: перевірено на апараті - без вбудованої
 	// перевірки самомодифікації BIOS не стартує взагалі (чорний екран). Скидання
 	// з боку C його не заміняє: BIOS пише свій код звичайними записами, а не DMA.
+
+	// nostalls: не емулювати затримки конвеєра R3000. Точність за швидкодію -
+	// сумісність падає, тож лише явним аргументом.
+	if (g_hackNoStalls)
+		ndrc_g.hacks |= NDHACK_NO_STALLS;
 
 	// gtenf: не рахувати прапорці GTE. Динарек і так пропускає їх там, де аналіз
 	// живучості довів, що вони не читаються; цей прапорець прибирає їх скрізь.
@@ -1012,6 +1023,11 @@ static TInt passSetup(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTes
 	// Профілювання пайплайну: сумарний час (мс) на кожен етап за весь прохід.
 	// NTickCount тут ~1мс; пер-кадрова похибка усереднюється на сотнях кадрів.
 	g_pass.tStart = User::NTickCount();
+	// Вікно накладки відкриваємо разом із проходом, а не при вмиканні в меню: між
+	// меню і першим кадром лежить ініціалізація ядра (BIOS, образ диска), і перше
+	// значення вийшло б утричі заниженим.
+	g_fpsWinTick = g_pass.tStart;
+	g_fpsWinFrame = 0;
 	return KErrNone;
 	}
 
@@ -1226,6 +1242,23 @@ static TBool passStep()
 	g_stage = EStageIdle;
 	g_pass.i++;
 
+	// Метрики для накладки. Рахуємо КАДРИ ЕМУЛЯЦІЇ, а не показані: при "Show every"
+	// показаних менше, і саме емуляційний темп є мірою швидкодії. Ділення тут два
+	// на пів секунди - на тлі кадру це нуль.
+	if (g_fpsOverlay && g_pass.showScreen)
+		{
+		const TUint now = User::NTickCount();
+		const TUint dt = now - g_fpsWinTick;
+		const TInt  df = g_pass.i - g_fpsWinFrame;
+		if (df > 0 && dt >= (TUint)KFpsWindowMs)
+			{
+			voutSymbianSetStats((TInt)(((TUint)df * 10000 + dt / 2) / dt),
+			                    (TInt)((dt * 10 + (TUint)df / 2) / (TUint)df));
+			g_fpsWinTick = now;
+			g_fpsWinFrame = g_pass.i;
+			}
+		}
+
 	// Рідкісні маркери: 6 записів на прогін вимір не псують, зате показують,
 	// доки дійшло, коли процес гине без жодного повідомлення. У GUI прохід іде
 	// годинами, тож крок більший: кожен запис коштує fflush на флеш.
@@ -1360,17 +1393,18 @@ static void passTeardown()
 	// emu - це CPU (drc) + генерація звуку. Показує, CPU чи GPU оптимізувати далі.
 	const unsigned freq = ndrc_symbian_fastfreq();
 	const unsigned gpuRasterMs = (unsigned)(g_gpulibRenderTicks * 1000ULL / (freq ? freq : 1));
+	const unsigned spuMixMs = (unsigned)(g_spuMixTicks * 1000ULL / (freq ? freq : 1));
 	unsigned blitFillMs = 0, blitPresentMs = 0;
 	voutSymbianBlitSplit(&blitFillMs, &blitPresentMs);
 	logEvent("profile", NULL,
-		"%s: total=%ums poll=%ums(%u%%) emu=%ums(%u%%) blit=%ums(%u%%) snd=%ums(%u%%) gpuRaster=%ums(%u%% of emu) blitFill=%ums blitPresent=%ums frames=%u",
+		"%s: total=%ums poll=%ums(%u%%) emu=%ums(%u%%) blit=%ums(%u%%) snd=%ums(%u%%) gpuRaster=%ums(%u%% of emu) spuMix=%ums blitFill=%ums blitPresent=%ums frames=%u",
 		mode, (unsigned)tTot,
 		(unsigned)tPoll, (unsigned)(tPoll * 100 / den),
 		(unsigned)tEmu,  (unsigned)(tEmu * 100 / den),
 		(unsigned)tBlit, (unsigned)(tBlit * 100 / den),
 		(unsigned)tSnd,  (unsigned)(tSnd * 100 / den),
 		gpuRasterMs, (unsigned)(tEmu ? gpuRasterMs * 100 / tEmu : 0),
-		blitFillMs, blitPresentMs,
+		spuMixMs, blitFillMs, blitPresentMs,
 		(unsigned)aProduced);
 	logEvent("dsa", NULL, "%s: active=%d gl=%d fbPlatform=%d", mode,
 		voutSymbianDsaActive(), voutSymbianGlActive(), voutSymbianFbFromPlatform());
@@ -1486,6 +1520,13 @@ static void coreInitOnce()
 	const long gpuInitRc = ps1GpuInit();
 	logEvent("gpu_init", gpuInitRc ? "GPU_INIT_FAIL" : NULL, "init=%ld", gpuInitRc);
 
+	// Колбеки - суворо ПІСЛЯ GPU_init: GPUinit робить memset на gpu.state і
+	// gpu.frameskip (gpu.c:355-359) і повертає лічильник кадрів на власний нуль.
+	// Стояло це вище й тихо скасовувалось: gpulib увесь час бачив frame_count=0,
+	// а frameskip.set=0 не давав пропуску растеризації спрацювати взагалі.
+	ps1GpuSetCallbacks(&frame_counter, &g_gpuHcnt, g_gpuFrameskip);
+	logEvent("gpu_cbs", NULL, "frameskip=%d", (int)g_gpuFrameskip);
+
 	// Звук: конфіг dfsound до SPU_init, тоді ініціалізація SPU (раз на процес).
 	ps1SndConfigure();
 	const long spuInitRc = SPU_init();
@@ -1520,13 +1561,6 @@ extern "C" int ps1GuiSetup(void)
 	const TInt rc = passSetup(!g_guiInterp, frames, ETrue /*bios*/, EFalse /*gputest*/,
 		ETrue /*screen*/, ETrue /*disc*/);
 	// Після passSetup: слід прив'язаний до номера кадру, а лічильник кадрів
-	// Колбеки - суворо ПІСЛЯ GPU_init: GPUinit робить memset на gpu.state і
-	// gpu.frameskip (gpu.c:355-359) і повертає лічильник кадрів на власний нуль.
-	// Стояло це вище й тихо скасовувалось: gpulib увесь час бачив frame_count=0,
-	// а frameskip.set=0 не давав пропуску растеризації спрацювати взагалі.
-	ps1GpuSetCallbacks(&frame_counter, &g_gpuHcnt, g_gpuFrameskip);
-	logEvent("gpu_cbs", NULL, "frameskip=%d", (int)g_gpuFrameskip);
-
 	// починається саме тут.
 	inputTraceOpen();
 	g_guiUp = (rc == KErrNone);
@@ -1573,9 +1607,9 @@ extern "C" void ps1LogInt(const char *aType, const char *aMsg, int aVal)
 
 // Налаштування з меню. Викликається ДО ps1GuiSetup, тобто до будь-якої
 // ініціалізації ядра й растеризатора - інакше частина з них не подіє.
-extern "C" void ps1CfgApply(const char *aDisc, int aInterp, int aFrameskip,
+extern "C" void ps1CfgApply(const char *aDisc, int aInterp,
 	int aIlace, int aLight, int aBlend, int aPixSkip, int aGteNf,
-	int aSound, int aGl, int aDirty, int aDsa)
+	int aSound, int aGl, int aDirty, int aDsa, int aFps, int aGpuSkip, int aCycle)
 	{
 	g_discPath[0] = 0;
 	if (aDisc && aDisc[0])
@@ -1586,7 +1620,6 @@ extern "C" void ps1CfgApply(const char *aDisc, int aInterp, int aFrameskip,
 		g_discPath[i] = 0;
 		}
 	g_guiInterp      = aInterp ? ETrue : EFalse;
-	g_frameskip      = aFrameskip > 0 ? aFrameskip : 0;
 	g_hackIlace      = aIlace;
 	g_gpuLighting    = aLight;
 	g_gpuBlending    = aBlend;
@@ -1599,11 +1632,17 @@ extern "C" void ps1CfgApply(const char *aDisc, int aInterp, int aFrameskip,
 	// тож саму прив'язку треба переробити - інакше прапорець подіє лише з наступного
 	// запуску. Це робить ps1GuiReattach() у першому тіку.
 	voutSymbianSetDsa(aDsa);
-	logEvent("cfg", NULL, "disc=%s interp=%d skip=%d ilace=%d light=%d blend=%d "
-		"pixskip=%d gtenf=%d snd=%d gl=%d dirty=%d dsa=%d",
-		g_discPath[0] ? g_discPath : KDiscImg, (int)aInterp, (int)aFrameskip,
+	g_fpsOverlay = aFps ? ETrue : EFalse;
+	voutSymbianSetOverlay(aFps);
+	g_gpuFrameskip = aGpuSkip > 0 ? aGpuSkip : 0;
+	if (aCycle > 0)
+		g_cycleMul = aCycle;
+	logEvent("cfg", NULL, "disc=%s interp=%d ilace=%d light=%d blend=%d "
+		"pixskip=%d gtenf=%d snd=%d gl=%d dirty=%d dsa=%d fps=%d gpuskip=%d cyclemul=%d",
+		g_discPath[0] ? g_discPath : KDiscImg, (int)aInterp,
 		(int)aIlace, (int)aLight, (int)aBlend, (int)aPixSkip, (int)aGteNf,
-		(int)aSound, (int)aGl, (int)aDirty, (int)aDsa);
+		(int)aSound, (int)aGl, (int)aDirty, (int)aDsa, (int)aFps, (int)aGpuSkip,
+		(int)aCycle);
 	}
 
 extern "C" void ps1LogFmt(const char *aType, const char *aFmt, ...)
@@ -1747,13 +1786,18 @@ GLDEF_C TInt E32Main()
 		// Показ за латчем типово увімкнений; "nodirty" вимикає.
 		_LIT(KNoDirtyArg, "nodirty");
 		voutSymbianSetDirtyOnly(cl.FindF(KNoDirtyArg) != KErrNotFound ? 0 : 1);
-		// direct-FB типово ВИМКНЕНИЙ: ламає 16-бітні режими гри на апараті.
-		// Вмикається явним "dsa" - лишається для пошуку причини.
+		// direct-FB коректний (причина була в Update() без регіону) і в меню
+		// увімкнений типово. Тут лишається вимкненим і вмикається явним "dsa":
+		// бенчмарк має лишатись зіставним із раніше знятими числами.
 		_LIT(KDsaArgG, "dsa");
 		voutSymbianSetDsa(cl.FindF(KDsaArgG) != KErrNotFound ? 1 : 0);
 		// Візуальний A/B шляхів виводу на кадрі 3300 (потрібні очі).
 		_LIT(KFbVisArg, "fbvis");
 		g_fbVis = (cl.FindF(KFbVisArg) != KErrNotFound);
+		// Накладка з метриками. У бенчмарку типово вимкнена: вона малює по кадру.
+		_LIT(KFpsArg, "fps");
+		g_fpsOverlay = (cl.FindF(KFpsArg) != KErrNotFound);
+		voutSymbianSetOverlay(g_fpsOverlay ? 1 : 0);
 		_LIT(KRowCopyArgG, "rowcopy");
 		if (cl.FindF(KRowCopyArgG) != KErrNotFound)
 			voutSymbianSetRowCopy(1);
@@ -1795,6 +1839,29 @@ GLDEF_C TInt E32Main()
 			TLex lex(cl.Mid(ip + 5));
 			TInt n = 0;
 			g_hackIlace = (lex.Val(n) == KErrNone && n > 0) ? n : 1;
+			}
+		// Замірні зонди: без емуляції затримок конвеєра / без Update() екрана.
+		_LIT(KNoStallsArg, "nostalls");
+		g_hackNoStalls = (cl.FindF(KNoStallsArg) != KErrNotFound);
+		_LIT(KNoUpdateArg, "noupdate");
+		voutSymbianSetNoUpdate(cl.FindF(KNoUpdateArg) != KErrNotFound ? 1 : 0);
+		// Пропуск ПОКАЗУ (кадр малюється й викидається) - для порівняння з gpuskip.
+		_LIT(KShowSkipArg, "showskip");
+		const TInt ssp = cl.FindF(KShowSkipArg);
+		if (ssp != KErrNotFound)
+			{
+			TLex lex(cl.Mid(ssp + 8));
+			TInt n = 0;
+			g_frameskip = (lex.Val(n) == KErrNone && n > 0) ? n : 1;
+			}
+		// Пропуск растеризації в gpulib: "gpuskip1" - не малювати кожен другий кадр.
+		_LIT(KGpuSkipArg, "gpuskip");
+		const TInt gsp = cl.FindF(KGpuSkipArg);
+		if (gsp != KErrNotFound)
+			{
+			TLex lex(cl.Mid(gsp + 7));
+			TInt n = 0;
+			g_gpuFrameskip = (lex.Val(n) == KErrNone && n > 0) ? n : 1;
 			}
 		_LIT(KCycleMulArg, "cyclemul");
 		const TInt cp = cl.FindF(KCycleMulArg);

@@ -842,6 +842,121 @@ static void glShutdown()
 		}
 	}
 
+// --- Накладка з лічильником кадрів -------------------------------------------
+
+// Шрифт 5x7, лише ті знаки, що трапляються в рядку метрик. Малюємо самі, а не
+// текстом bitgdi: під direct-FB ми пишемо в буфер екрана повз нього, тож його
+// текст ліг би в інший буфер, а розділити ці два шляхи довелось би однаково.
+static const char KOvlChars[] = "0123456789. fpsm";
+static const TUint8 KOvlFont[16][7] =
+	{
+	{ 0x0E,0x11,0x13,0x15,0x19,0x11,0x0E },   // 0
+	{ 0x04,0x0C,0x04,0x04,0x04,0x04,0x0E },   // 1
+	{ 0x0E,0x11,0x01,0x02,0x04,0x08,0x1F },   // 2
+	{ 0x1F,0x02,0x04,0x02,0x01,0x11,0x0E },   // 3
+	{ 0x02,0x06,0x0A,0x12,0x1F,0x02,0x02 },   // 4
+	{ 0x1F,0x10,0x1E,0x01,0x01,0x11,0x0E },   // 5
+	{ 0x06,0x08,0x10,0x1E,0x11,0x11,0x0E },   // 6
+	{ 0x1F,0x01,0x02,0x04,0x08,0x08,0x08 },   // 7
+	{ 0x0E,0x11,0x11,0x0E,0x11,0x11,0x0E },   // 8
+	{ 0x0E,0x11,0x11,0x0F,0x01,0x02,0x0C },   // 9
+	{ 0x00,0x00,0x00,0x00,0x00,0x0C,0x0C },   // .
+	{ 0x00,0x00,0x00,0x00,0x00,0x00,0x00 },   // пробіл
+	{ 0x06,0x09,0x08,0x1C,0x08,0x08,0x08 },   // f
+	{ 0x00,0x00,0x1E,0x11,0x1E,0x10,0x10 },   // p
+	{ 0x00,0x00,0x0F,0x10,0x0E,0x01,0x1E },   // s
+	{ 0x00,0x00,0x1A,0x15,0x15,0x15,0x15 }    // m
+	};
+
+static const TInt KOvlScale = 2;    // 5x7 на 320x240 без збільшення не читається
+static const TInt KOvlCellW = 6 * KOvlScale;
+static const TInt KOvlCellH = 8 * KOvlScale;
+static const TInt KOvlCols  = 9;    // "999.9 fps" - найдовший з рядків
+static const TInt KOvlPad   = 2;
+
+static TBool g_noUpdate;    // зонд: пропустити Update() екрана (див. сетер нижче)
+
+static TInt g_ovlOn;
+static TInt g_ovlFpsX10 = -1;
+static TInt g_ovlMsX10;
+
+// Показувати накладку. Значення дає stage1: він рахує КАДРИ ЕМУЛЯЦІЇ, а сюди
+// доходить лише показаний кадр, тож лічити тут означало б міряти інше число.
+extern "C" void voutSymbianSetOverlay(int aOn)
+	{
+	g_ovlOn = aOn ? 1 : 0;
+	}
+
+extern "C" void voutSymbianSetStats(int aFpsX10, int aMsX10)
+	{
+	g_ovlFpsX10 = aFpsX10;
+	g_ovlMsX10 = aMsX10;
+	}
+
+static void ovlFillRect(TUint8 *aDst, TInt aStrideB, TInt aPixB, TInt aX, TInt aY,
+                        TInt aW, TInt aH, TUint32 aCol)
+	{
+	for (TInt y = 0; y < aH; y++)
+		{
+		TUint8 *row = aDst + (aY + y) * aStrideB + aX * aPixB;
+		if (aPixB == 4)
+			{
+			TUint32 *d = (TUint32 *)row;
+			for (TInt x = 0; x < aW; x++) d[x] = aCol;
+			}
+		else
+			{
+			TUint16 *d = (TUint16 *)row;
+			for (TInt x = 0; x < aW; x++) d[x] = (TUint16)aCol;
+			}
+		}
+	}
+
+static void ovlText(TUint8 *aDst, TInt aStrideB, TInt aPixB, TInt aX, TInt aY,
+                    const char *aStr, TUint32 aCol)
+	{
+	for (; *aStr; aStr++, aX += KOvlCellW)
+		{
+		const char *p = strchr(KOvlChars, *aStr);
+		if (!p)
+			continue;   // невідомий знак лишає порожню клітинку
+		const TUint8 *g = KOvlFont[p - KOvlChars];
+		for (TInt gy = 0; gy < 7; gy++)
+			{
+			const TUint8 bits = g[gy];
+			if (!bits)
+				continue;
+			for (TInt gx = 0; gx < 5; gx++)
+				if (bits & (0x10 >> gx))
+					ovlFillRect(aDst, aStrideB, aPixB, aX + gx * KOvlScale,
+						aY + gy * KOvlScale, KOvlScale, KOvlScale, aCol);
+			}
+		}
+	}
+
+// Рядок метрик у лівому верхньому куті приймача. Кліп по розміру екрана
+// обов'язковий: під direct-FB приймач - буфер LCD, і запис повз нього пішов би
+// у чужу пам'ять. Підкладка суцільна, бо чорні поля перемальовуються лише при
+// зміні геометрії - без неї попередні цифри лишались би на місці.
+static void drawOverlay(TUint8 *aDst, TInt aStrideB, TInt aPixB, TInt aSW, TInt aSH)
+	{
+	if (!g_ovlOn || g_ovlFpsX10 < 0)
+		return;
+	const TInt boxW = KOvlCols * KOvlCellW + 2 * KOvlPad;
+	const TInt boxH = 2 * KOvlCellH + 2 * KOvlPad;
+	if (aSW < boxW || aSH < boxH)
+		return;
+
+	char l1[16], l2[16];
+	snprintf(l1, sizeof(l1), "%d.%d fps", g_ovlFpsX10 / 10, g_ovlFpsX10 % 10);
+	snprintf(l2, sizeof(l2), "%d.%d ms", g_ovlMsX10 / 10, g_ovlMsX10 % 10);
+
+	const TUint32 white = (aPixB == 4) ? 0x00ffffffu : 0xffffu;
+	ovlFillRect(aDst, aStrideB, aPixB, 0, 0, boxW, boxH, 0);
+	ovlText(aDst, aStrideB, aPixB, KOvlPad, KOvlPad, l1, white);
+	ovlText(aDst, aStrideB, aPixB, KOvlPad, KOvlPad + KOvlCellH, l2, white);
+	}
+
 // Масштабує поточний g_vout у g_bmp (nearest-neighbor, збереження пропорцій,
 // чорні поля) і блитає у вікно.
 static void blitCurrent()
@@ -890,6 +1005,8 @@ static void blitCurrent()
 
 	// GL ES шлях (MBX): GPU масштабує й презентує (eglSwapBuffers). Замінює весь
 	// bitmap+present нижче. rgb24 поки лишаємо на bitmap-шляху (не перевірено).
+	// Накладки тут немає: приймач - текстура GL, а не лінійний буфер. Шлях і так
+	// вчетверо повільніший за блит, тож дублювати заради нього шрифт нема сенсу.
 	if (g_glReady && !rgb24)
 		{
 		glPresentFrame(vbytes, startByte, sw, sh, field, srcRows);
@@ -1020,6 +1137,9 @@ static void blitCurrent()
 				}
 			}
 		}
+	// Після конвертації, до present: накладка має лягти поверх кадру, а не бути
+	// затертою ним. Ціна входить у виміряний час блиту навмисно - вона реальна.
+	drawOverlay(dstB, dstStrideB, pixB, SW, SH);
 	if (!directFb)
 		g_bmp->UnlockHeap();
 	const TUint _fc1 = User::FastCounter();
@@ -1030,7 +1150,7 @@ static void blitCurrent()
 		// Кадр уже в буфері екрана - present-копія не потрібна. Оновлення просимо
 		// з ЯВНИМ регіоном: ми писали повз bitgdi, тож його власна "брудна" область
 		// лишається порожньою і Update() без аргументу може не проштовхнути нічого.
-		CFbsScreenDevice *sd = g_dsa ? g_dsa->ScreenDevice() : NULL;
+		CFbsScreenDevice *sd = g_noUpdate ? NULL : (g_dsa ? g_dsa->ScreenDevice() : NULL);
 		if (sd)
 			{
 			const RRegion *rgn = g_dsa->DrawingRegion();
@@ -1213,6 +1333,14 @@ extern "C" void voutSymbianPresent(void)
 	vout_update(&gpu, gpu.screen.src_x, gpu.screen.src_y);
 	g_voutSelfCall = 0;
 
+	// Пропуск растеризації в gpulib: показувати можна ЛИШЕ кадри, які він справді
+	// намалював. Ознака - латч, виставлений його ж викликом vout_update
+	// (GPUupdateLace виходить раніше для пропущених, gpu.c:1181-1185). Причини (2)
+	// і (3) нижче тут не діють: гра гортає буфери й для непромальованих кадрів, тож
+	// вони показали б порожній буфер - це й був чорний екран при frameskip.
+	if (gpu.frameskip.set && !g_voutPending)
+		return;
+
 	if (g_dirtyOnly)
 		{
 		// Три незалежні причини показати кадр:
@@ -1285,6 +1413,15 @@ extern "C" int voutSymbianShow(int holdMs)
 		return r;
 	voutSymbianPresent();
 	return voutSymbianFinish(holdMs);
+	}
+
+// Зонд: не викликати Update() екрана взагалі. Під direct-FB пікселі вже в буфері
+// LCD, тож питання лише в тому, скільки коштує сам виклик - і чи він блокується на
+// кадровій розгортці. Не для звичайного вжитку: без Update() частина апаратів
+// нічого не покаже.
+extern "C" void voutSymbianSetNoUpdate(int aOn)
+	{
+	g_noUpdate = aOn ? ETrue : EFalse;
 	}
 
 // Увімкнути DSA (прямий доступ до екрана) для present. Викликати ДО voutSymbianInit.
@@ -1715,11 +1852,11 @@ void ps1GpuSetCallbacks(unsigned int *frameCount, unsigned int *hcnt, int aFrame
 	cbs.gpu_frame_count = frameCount;
 	cbs.gpu_hcnt = hcnt;
 	cbs.thread_rendering = 0;
-	GPUrearmedCallbacks(&cbs);
-	}
-
-} // extern "C"
 	// Пропуск растеризації силами gpulib: скільки кадрів поспіль дозволено НЕ
 	// малювати. Копіюється в gpu.frameskip.set саме тут, тож значення має бути
 	// відоме до виклику.
 	cbs.frameskip = aFrameskip;
+	GPUrearmedCallbacks(&cbs);
+	}
+
+} // extern "C"
