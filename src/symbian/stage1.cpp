@@ -333,6 +333,8 @@ static TInt g_cycleMul;
 
 extern "C" void gpu_unai_set_config(int aPixelSkip, int aIlaceForce,
 	int aLighting, int aFastLighting, int aBlending);
+// Копіює конфіг у робочу структуру растеризатора вже після renderer_init.
+extern "C" void gpu_unai_apply_config(void);
 
 // Пропуск виведення: кожен (N+1)-й кадр показуємо, решту лише рахуємо. Емуляцію
 // і растеризацію це НЕ пропускає - економить саме вивід (конвертація + вікно),
@@ -1525,6 +1527,12 @@ static void coreInitOnce()
 	// Стояло це вище й тихо скасовувалось: gpulib увесь час бачив frame_count=0,
 	// а frameskip.set=0 не давав пропуску растеризації спрацювати взагалі.
 	ps1GpuSetCallbacks(&frame_counter, &g_gpuHcnt, g_gpuFrameskip);
+	// І одразу назад конфіг растеризатора: GPUrearmedCallbacks усередині кличе
+	// renderer_set_config (gpu.c:1288), а той безумовно перезаписує lighting,
+	// blending та ilace_force полями cbs->gpu_unai, яких ми не заповнюємо. Відколи
+	// колбеки переїхали ПІСЛЯ GPU_init, це мовчки вимикало освітлення й
+	// напівпрозорість незалежно від меню.
+	gpu_unai_apply_config();
 	logEvent("gpu_cbs", NULL, "frameskip=%d", (int)g_gpuFrameskip);
 
 	// Звук: конфіг dfsound до SPU_init, тоді ініціалізація SPU (раз на процес).
