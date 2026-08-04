@@ -38,6 +38,25 @@ static struct {
 // Лог оболонки (stage1.cpp): вивід сам JSONL не пише, але стан EGL/GL видно лише тут.
 extern "C" void ps1LogFmt(const char *aType, const char *aFmt, ...);
 
+// Дублювати парний рядок VRAM замість застарілого непарного (режим "Skip lines"
+// растеризатора взагалі не переписує непарні рядки). Вмикає stage1 разом із хаком.
+static int g_ilaceOut;
+// Виставляється у vout_update, скидається після показу: чи є кадр, якого ще не показали.
+// Одиниця на старті - перший кадр показати треба до будь-якого малювання.
+static int g_voutPending = 1;
+// Скільки разів САМЕ gpulib повідомив про новий кадр (Z2): частка від числа кадрів
+// показує стелю виграшу від показу за латчем.
+static int g_voutGpulib;
+// Ознака нашого власного виклику vout_update, щоб не зводити ним латч.
+static int g_voutSelfCall;
+// Скільки кадрів поспіль показ пропущено через відсутність нового вмісту.
+static int g_voutStale;
+// Область, яку реально показали востаннє: зміна цих значень означає, що гра
+// перемкнула буфер, навіть якщо нічого не малювала.
+static int g_lastShownOffset = -1, g_lastShownW = -1, g_lastShownH = -1;
+// Показувати лише за латчем замість безумовного показу щокадру (прапорець "dirty").
+static TBool g_dirtyOnly;
+
 extern "C" {
 
 int vout_init(void)
@@ -74,6 +93,15 @@ int vout_update(struct psx_gpu *gpu, int src_x, int src_y)
 	g_vout.rgb24  = (bpp == 24);
 	g_vout.x = x; g_vout.y = y; g_vout.w = w; g_vout.h = h;
 	g_vout.updates++;
+	// Латч "є новий кадр": gpulib кличе vout_update лише коли область показу
+	// справді змінилась (GPUupdateLace виходить достроково без fb_dirty_display_area).
+	// Наш власний виклик із voutSymbianPresent латч не зводить і в лічильник не йде -
+	// інакше Z2 показував би просто кількість кадрів.
+	if (!g_voutSelfCall)
+		{
+		g_voutPending = 1;
+		g_voutGpulib++;
+		}
 
 	gpu->state.dims_changed = 0;
 	return 1;
@@ -132,6 +160,33 @@ extern "C" int voutSymbianUpdates(void)
 	return g_vout.updates;
 	}
 
+
+// Z2: скільки кадрів gpulib вважав новими. Менше за число кадрів рівно настільки,
+// наскільки показ за латчем може зекономити.
+extern "C" int voutSymbianGpulibUpdates(void)
+	{
+	return g_voutGpulib;
+	}
+
+// Діагностика застиглого екрана. Розрізняє два випадки, які ззовні однакові:
+// (а) гра нічого не малює й не гортає буфери - завмирання КОРЕКТНЕ;
+// (б) гра малює або міняє адресу початку кадру, а ми цього не показуємо - ВАДА.
+// Для (б) вирішальні саме fb_dirty і поточні gpu.screen проти нашого g_vout.
+extern "C" void voutSymbianDbgState(int *aFbDirty, int *aFbDirtyArea, int *aStatus,
+                                    int *aSrcX, int *aSrcY, int *aScrW, int *aScrH,
+                                    int *aVoutOffset, int *aStale)
+	{
+	if (aFbDirty)     *aFbDirty     = gpu.state.fb_dirty;
+	if (aFbDirtyArea) *aFbDirtyArea = gpu.state.fb_dirty_display_area;
+	if (aStatus)      *aStatus      = (int)gpu.status;
+	if (aSrcX)        *aSrcX        = gpu.screen.src_x;
+	if (aSrcY)        *aSrcY        = gpu.screen.src_y;
+	if (aScrW)        *aScrW        = gpu.screen.w;
+	if (aScrH)        *aScrH        = gpu.screen.h;
+	if (aVoutOffset)  *aVoutOffset  = g_vout.offset;
+	if (aStale)       *aStale       = g_voutStale;
+	}
+
 // --- Живий вивід кадру на екран (window server + BitBlt, Етап 2) ------------
 // Вікно/контекст/бітмап створюються ОДИН раз (Init), кадр блитається ЩОКАДРУ
 // (Present), наприкінці - тримання й прибирання (Finish). Так на екрані видно
@@ -171,16 +226,25 @@ static TInt g_blitOx = -1, g_blitOy, g_blitW, g_blitH;
 static unsigned long long g_blitFillTicks, g_blitPresentTicks;
 extern "C" unsigned int ndrc_symbian_fastfreq(void);
 
-// DSA (Direct Screen Access) + direct-FB (запис прямо в LCD через HAL-адресу).
-// СТАТУС: законсервований експеримент (типово off), глухий кут на N95 8GB -
-// перевірено 2026-08-01 тест-патерном ("fbtest"):
-//   1) WS композитить порожнє вікно поверх наших сирих HAL-записів (кадр блимав
-//      частку секунди й зникав) - координований лише шлях через g_dsaGc->BitBlt,
-//      а це та сама пропускна здатність, що й window;
-//   2) HAL віддає ЛОГІЧНУ (повернуту) геометрію 320x240/640B, а сира пам'ять -
-//      ФІЗИЧНА портретна 240x320/480B -> діагональний stride-зсув при автоповороті.
-// Present упирається в bandwidth LCD; чисто його побити може лише MBX (EGL). Код
-// лишено за прапорцем як основу/довідку. Вмикання: аргумент "dsa" (+"fbtest").
+// DSA (Direct Screen Access) + direct-FB: кадр масштабується й конвертується
+// одразу в буфер екрана, тобто fill і present зливаються в один прохід.
+// СТАТУС (2026-08-04): ПРАЦЮЄ, типово увімкнено, -0,93 мс на кадр (30,13 проти
+// 31,06 з освітленням і напівпрозорістю). Вимикається пунктом меню "Direct draw"
+// або відсутністю аргументу "dsa" в прогонах з командного рядка.
+//
+// Ламався він через ОДНЕ: sd->Update() без аргументу нічого не проштовхував.
+// Ми пишемо повз bitgdi, тож його власна "брудна" область лишається порожньою.
+// Оновлення треба просити з явним регіоном - беремо DrawingRegion() самого DSA.
+//
+// Діагноз 2026-08-01 ("HAL віддає повернуту геометрію", "WS композитить поверх")
+// не підтвердився ЖОДНОЮ частиною: буфер один (halAddr == Bits() == 0xcb400000),
+// сторінка одна (fbPages=0/1 за 1500 кадрів), а розкладка драйвера правильна -
+// візерунок, покладений bitgdi, читається назад сирим покажчиком 64/64.
+// Той зонд виконувався в консольній гілці, а гра йде в GUI - звідси хибний висновок.
+//
+// rgb24 у цей шлях не пускаємо (гілка пише 16-бітними словами й не перевірена),
+// тож 24-бітні заставки й відео йдуть віконним шляхом. Саме через це вада колись
+// читалась як "відео видно, а 2D - ні".
 static TBool g_useDsa;
 static CDirectScreenAccess *g_dsa;
 static CFbsBitGc *g_dsaGc;
@@ -192,10 +256,19 @@ static CActiveScheduler *g_dsaSched;   // ненульовий лише якщо
 // не оверхед). Лише коли DSA активний (володіє екраном) і формат = RGB565.
 static TBool    g_fbOk;
 static TUint16 *g_fbBase;    // адреса першого пікселя
-static TInt     g_fbStride;  // 16-бітних слів на рядок
+static TInt     g_fbStride;  // 16-бітних слів на рядок (сумісність зі старим кодом)
+static TInt     g_fbStrideB; // байтів на рядок - єдина достовірна величина
+static TInt     g_fbPixBytes;// байтів на піксель буфера екрана: 2 (565) або 4 (XRGB8888)
+static TInt     g_fbMode;    // TDisplayMode від платформи, -1 = невідомо
 static TInt     g_fbW, g_fbH;
 // Сирі HAL-значення (для діагностики "двох вікон" - stride/розміри/буфер).
 static TInt g_fbAddr, g_fbBpp, g_fbLineBytes, g_fbFirstOff, g_fbXpix, g_fbYpix;
+// Базу й крок віддала платформа (CFbsScreenDevice), а не HAL.
+static TBool g_fbFromPlatform;
+// Present порядковим Mem::Copy у буфер екрана замість CWindowGc/CFbsBitGc::BitBlt.
+// Кадр так само конвертується в бітмап (відомо коректний шлях), а на екран іде
+// простою копією рядків - без механіки bitgdi, яка й коштує більшість present.
+static TBool g_useRowCopy;
 
 // EGL/GL ES 1.1 вивід (MBX): кадр PS1 -> текстура -> текстурований квад ->
 // eglSwapBuffers. GPU робить масштабування і present. За прапорцем "gl", із
@@ -237,6 +310,7 @@ static TBool      g_glLogged;        // діагностику першого к
 static TUint16   *g_glBuf;           // буфер конвертації (rows*w, RGB565)
 static TBool glInitOnWindow();       // визначені нижче, кличуться з initL
 static void  glShutdown();
+extern "C" int voutSymbianScreenDump(const char *aPath);   // визначений нижче
 
 static void queryFramebuffer()
 	{
@@ -250,10 +324,96 @@ static void queryFramebuffer()
 	HAL::Get(HALData::EDisplayYPixels, g_fbYpix);
 	if (g_fbAddr == 0 || g_fbBpp != 16 || g_fbLineBytes < 2 || g_fbXpix < 1 || g_fbYpix < 1)
 		return;   // формат не підходить - лишаємось на window-шляху
-	g_fbBase   = (TUint16 *)((TUint8 *)g_fbAddr + g_fbFirstOff);
-	g_fbStride = g_fbLineBytes / 2;
+	g_fbBase     = (TUint16 *)((TUint8 *)g_fbAddr + g_fbFirstOff);
+	g_fbStrideB  = g_fbLineBytes;
+	g_fbPixBytes = 2;
 	g_fbW = g_fbXpix; g_fbH = g_fbYpix;
+	g_fbFromPlatform = EFalse;
+	g_fbMode = -1;
+
+	// Розкладку беремо ВІД ПЛАТФОРМИ, коли вона її віддає: Stride() - це
+	// ScanLineBytes() драйвера, тобто те, чим малює сам bitgdi, а Bits() - початок
+	// першого пікселя. HAL-значення лишаються запасним варіантом. Попередня спроба
+	// direct-FB спиралася лише на HAL і давала перекошений кадр; це найдешевша
+	// відповідь на питання, чи розкладки взагалі різні.
+	CFbsScreenDevice *sd = g_dsa ? g_dsa->ScreenDevice() : NULL;
+	if (sd)
+		{
+		const TUint32 *bits = sd->Bits();
+		const TInt strideB  = sd->Stride();
+		const TSize sz      = sd->SizeInPixels();
+		const TDisplayMode dm = sd->DisplayMode();
+		const TInt pix = (dm == EColor64K) ? 2 : ((dm == EColor16MU || dm == EColor16MA) ? 4 : 0);
+		if (bits && pix && strideB >= sz.iWidth * pix && sz.iWidth > 0 && sz.iHeight > 0)
+			{
+			g_fbBase     = (TUint16 *)bits;
+			g_fbStrideB  = strideB;
+			g_fbPixBytes = pix;
+			g_fbW = sz.iWidth; g_fbH = sz.iHeight;
+			g_fbFromPlatform = ETrue;
+			g_fbMode = (TInt)dm;
+			}
+		}
+	g_fbStride = g_fbStrideB / 2;
 	g_fbOk = ETrue;
+	}
+
+// Скільки разів драйвер віддав іншу адресу першого пікселя і які саме адреси.
+// Якщо їх більше однієї - у драйвера дві сторінки, і запис у кешовану адресу
+// лягає в ту, яку панель саме зараз не сканує. Це рівно та картина, яку описав
+// власник апарата: частина старого кадру плюс артефакти в окремих ділянках.
+static TInt   g_fbBaseChanges;
+static TInt   g_fbBaseSeen;
+static TUint32 g_fbBaseList[4];
+
+// Перечитати розкладку в драйвера. Дешево (акцесори), тож можна щокадру.
+static void refreshFbFromPlatform()
+	{
+	CFbsScreenDevice *sd = (g_dsa && g_dsaActive) ? g_dsa->ScreenDevice() : NULL;
+	if (!sd)
+		return;
+	const TUint32 *bits = sd->Bits();
+	if (!bits)
+		return;
+	const TUint32 b = (TUint32)bits;
+	TInt i;
+	for (i = 0; i < g_fbBaseSeen; i++)
+		if (g_fbBaseList[i] == b)
+			break;
+	if (i == g_fbBaseSeen && g_fbBaseSeen < 4)
+		g_fbBaseList[g_fbBaseSeen++] = b;
+	if ((TUint32)g_fbBase != b)
+		{
+		g_fbBaseChanges++;
+		g_fbBase    = (TUint16 *)bits;
+		g_fbStrideB = sd->Stride();
+		g_fbStride  = g_fbStrideB / 2;
+		}
+	}
+
+extern "C" void voutSymbianFbPages(int *aChanges, int *aSeen, int *aB0, int *aB1)
+	{
+	if (aChanges) *aChanges = g_fbBaseChanges;
+	if (aSeen)    *aSeen    = g_fbBaseSeen;
+	if (aB0)      *aB0      = (int)(g_fbBaseSeen > 0 ? g_fbBaseList[0] : 0);
+	if (aB1)      *aB1      = (int)(g_fbBaseSeen > 1 ? g_fbBaseList[1] : 0);
+	}
+
+static void queryFramebuffer();
+
+// Чи віддав нам WS увесь екран. CFbsBitGc сам поважає регіон відсікання, а сирий
+// запис і порядкова копія - ні: вони пишуть увесь прямокутник. Якщо поверх з'явився
+// системний діалог, регіон звужується, і без цієї перевірки ми б його замалювали.
+static TBool dsaCoversScreen()
+	{
+	if (!g_dsa)
+		return EFalse;
+	const RRegion *rgn = g_dsa->DrawingRegion();
+	if (!rgn || rgn->Count() != 1)
+		return EFalse;
+	const TRect r = rgn->BoundingRect();
+	return (r.iTl.iX == 0 && r.iTl.iY == 0 &&
+	        r.Width() >= g_scr.iWidth && r.Height() >= g_scr.iHeight);
 	}
 
 static void dsaStartL()
@@ -261,6 +421,10 @@ static void dsaStartL()
 	g_dsa->StartL();
 	g_dsaGc = g_dsa->Gc();
 	g_dsaGc->SetClippingRegion(g_dsa->DrawingRegion());
+	// Геометрію перезапитуємо на КОЖЕН старт, не раз у initL: після
+	// ETerminateRotation режим екрана інший, а стара база/крок дали б перекошений
+	// кадр - самостійна причина "зсуву", яку 2026-08-01 не відокремили.
+	queryFramebuffer();
 	g_dsaActive = ETrue;
 	}
 
@@ -309,6 +473,61 @@ static TInt mapScanToDkey(TInt aScan)
 		}
 	}
 
+// Гарячий цикл конвертації: два пікселі за 32-бітне слово. Винесений в окрему
+// функцію НАВМИСНО - усередині blitCurrent забагато живих змінних, і GCCE 3.4.3
+// витісняв маски на стек, перезавантажуючи їх на кожній ітерації (15 інструкцій
+// замість 11). Тут розподільник регістрів має вільні руки.
+//
+// Порожня asm-вставка робить константи непрозорими для оптимізатора: інакше
+// компілятор синтезує кожну 32-бітну маску ланцюжком із чотирьох BIC прямо в
+// циклі - 16 із 28 інструкцій на два пікселі (перевірено дизасемблером).
+//
+// __builtin_prefetch відкинуто в ЦЬОМУ розміщенні: одне PLD на два пікселі - це
+// вісім звернень на лінію кешу. Заміряні +3,7% дорівнюють вартості однієї зайвої
+// інструкції на 28, тобто користі не було. Один PLD на 32 байти не перевірявся.
+// Форма з підкресленнями обов'язкова: у заголовках уже є макрос noinline.
+static void __attribute__((__noinline__))
+blitRow565(TUint32 *aDst, const TUint32 *aSrc, TInt aPairs)
+	{
+	TUint32 cRB = 0x001f001fu, cG54 = 0x07c007c0u, cG0 = 0x00200020u;
+	__asm__ __volatile__ ("" : "+r"(cRB), "+r"(cG54), "+r"(cG0));
+	do
+		{
+		const TUint32 p = *aSrc++;
+		*aDst++ = ((p & cRB) << 11) | ((p << 1) & cG54)
+		        | ((p >> 4) & cG0) | ((p >> 10) & cRB);
+		} while (--aPairs);
+	}
+
+// Те саме для 32-бітного буфера екрана (EColor16MU/16MA, XRGB8888).
+//
+// ЗАМІРЯНО зондом 2026-08-03: платформа віддає stride=1280B при 320 пікселях і
+// DisplayMode=EColor16MU, тобто буфер екрана 32-бітний, тоді як HAL повідомляє
+// bpp=16 і line=640B. Саме на HAL-числа спиралась спроба direct-FB 2026-08-01 -
+// звідси й був "зсув": ми писали 16-бітні пікселі з кроком 640 у 32-бітний буфер
+// з кроком 1280. Тут конвертуємо одразу в цільовий формат, тож зникає і проміжний
+// бітмап, і перетворення 565->8888 усередині bitgdi (а воно і є більшість present).
+//
+// 5 біт -> 8 робимо як (v<<3)|(v>>2): це множення на 255/31 із точністю до одиниці,
+// без таблиць і без ділення.
+static void __attribute__((__noinline__))
+blitRow8888(TUint32 *aDst, const TUint16 *aSrc, TInt aPixels)
+	{
+	TUint32 m5 = 0x1fu;
+	__asm__ __volatile__ ("" : "+r"(m5));
+	do
+		{
+		const TUint32 p = *aSrc++;
+		const TUint32 r = p & m5;
+		const TUint32 g = (p >> 5) & m5;
+		const TUint32 b = (p >> 10) & m5;
+		*aDst++ = 0xff000000u
+		        | (((r << 3) | (r >> 2)) << 16)
+		        | (((g << 3) | (g >> 2)) << 8)
+		        |  ((b << 3) | (b >> 2));
+		} while (--aPixels);
+	}
+
 // PS1 VRAM - BGR555 (біт15 маска, 14-10 B, 9-5 G, 4-0 R); екран EColor64K -
 // RGB565. Зелений розширюємо з 5 до 6 біт, щоб не втратити яскравість.
 static inline TUint16 Bgr555ToRgb565(TUint16 aPix)
@@ -318,6 +537,16 @@ static inline TUint16 Bgr555ToRgb565(TUint16 aPix)
 	const TUint b = (aPix >> 10) & 0x1f;
 	const TUint g6 = (g << 1) | (g >> 4);
 	return (TUint16)((r << 11) | (g6 << 5) | b);
+	}
+
+static inline TUint32 Bgr555ToXrgb8888(TUint16 aPix)
+	{
+	const TUint32 r = aPix & 0x1f;
+	const TUint32 g = (aPix >> 5) & 0x1f;
+	const TUint32 b = (aPix >> 10) & 0x1f;
+	return 0xff000000u | (((r << 3) | (r >> 2)) << 16)
+	                   | (((g << 3) | (g >> 2)) << 8)
+	                   |  ((b << 3) | (b >> 2));
 	}
 
 static void initL()
@@ -335,8 +564,29 @@ static void initL()
 	User::LeaveIfError(g_win.Construct(g_grp, (TUint32)&g_win));
 	g_scr = g_dev->SizeInPixels();
 	g_win.SetExtent(TPoint(0, 0), g_scr);
-	g_win.SetBackgroundColor(KRgbBlack);
+	// Під DSA/direct-FB заливка фону і redraw store - це право WS перемалювати наше
+	// вікно поверх кадру, який ми поклали в екран повз нього. SetBackgroundColor()
+	// БЕЗ аргументу означає "не чистити"; це виправлення коректності, не швидкодії
+	// (заміряно, що оверхед WS тут нульовий).
+	if (g_useDsa)
+		{
+		g_win.SetBackgroundColor();
+		g_win.EnableRedrawStore(EFalse);
+		g_win.SetNonFading(ETrue);
+		}
+	else
+		g_win.SetBackgroundColor(KRgbBlack);
 	g_win.Activate();
+	if (g_useDsa)
+		{
+		// Валідувати вікно ОДИН раз до захоплення екрана: Activate лишає вікно
+		// недійсним, і відкладений server-initiated redraw спрацював би вже після
+		// StartL, затерши перший кадр.
+		g_win.Invalidate();
+		g_win.BeginRedraw();
+		g_win.EndRedraw();
+		g_ws.Flush();
+		}
 	g_gc = new (ELeave) CWindowGc(g_dev);
 	User::LeaveIfError(g_gc->Construct());
 	g_bmp = new (ELeave) CFbsBitmap;
@@ -374,8 +624,7 @@ static void initL()
 			});
 		if (e != KErrNone)
 			{ delete g_dsa; g_dsa = NULL; g_dsaGc = NULL; g_dsaActive = EFalse; }
-		else
-			queryFramebuffer();   // прямий запис у LCD, якщо формат підходить
+		// Геометрію під direct-FB запитує сам dsaStartL - і на кожному рестарті.
 		}
 
 	g_wsReady = ETrue;
@@ -622,7 +871,10 @@ static void blitCurrent()
 	// екран, який WS уже забрав.
 	if (g_useDsa && CActiveScheduler::Current())
 		{ TInt _e; while (CActiveScheduler::RunIfReady(_e, CActive::EPriorityIdle)) { } }
-	const TBool directFb = (g_useDsa && g_dsaActive && g_fbOk);
+	// rgb24 у прямий буфер не пускаємо: та гілка пише 16-бітними словами й не
+	// перевірена на залізі, а помилка тут - запис повз буфер екрана.
+	const TBool directFb = (g_useDsa && g_dsaActive && g_fbOk && !g_useRowCopy &&
+	                        !rgb24 && dsaCoversScreen());
 
 	// Вписуємо джерело в екран зі збереженням пропорцій. Орієнтацію НЕ обертаємо
 	// самі: апарат робить автоповорот вікна за акселерометром. У directFb цілимось
@@ -653,24 +905,29 @@ static void blitCurrent()
 	const TInt oy = (SH - dstH) / 2;
 
 	const TUint _fc0 = User::FastCounter();
-	TUint16 *dst;
-	TInt dstStride;
+	// Адресуємо рядки в БАЙТАХ: буфер екрана може бути 32-бітним (заміряно:
+	// EColor16MU, stride 1280B при 320 пікселях), а бітмап у нас 16-бітний.
+	TUint8 *dstB;
+	TInt dstStrideB, pixB;
 	if (directFb)
 		{
-		dst = g_fbBase;             // прямо в LCD - зливаємо fill і present в один прохід
-		dstStride = g_fbStride;
+		refreshFbFromPlatform();    // драйвер може міняти сторінку між кадрами
+		dstB = (TUint8 *)g_fbBase;  // прямо в LCD - зливаємо fill і present в один прохід
+		dstStrideB = g_fbStrideB;
+		pixB = g_fbPixBytes;
 		}
 	else
 		{
 		g_bmp->LockHeap();
-		dst = (TUint16 *)g_bmp->DataAddress();
-		dstStride = g_bmp->DataStride() / 2;   // у 16-бітних словах
+		dstB = (TUint8 *)g_bmp->DataAddress();
+		dstStrideB = g_bmp->DataStride();
+		pixB = 2;
 		}
 	// Чорні поля лише коли геометрія змінилась: інакше вони вже чорні з минулого
 	// кадру, а зображення однаково перезаписується. Прибирає memset ~150КБ/кадр.
 	if (ox != g_blitOx || oy != g_blitOy || dstW != g_blitW || dstH != g_blitH)
 		{
-		Mem::FillZ(dst, dstStride * SH * 2);
+		Mem::FillZ(dstB, dstStrideB * SH);
 		g_blitOx = ox; g_blitOy = oy; g_blitW = dstW; g_blitH = dstH;
 		}
 
@@ -680,11 +937,32 @@ static void blitCurrent()
 	const TInt srcH = field ? srcRows : sh;           // рядків-джерел для кроку
 	const TUint sxStep = ((TUint)sw << 16) / (TUint)dstW;
 	const TUint syStep = ((TUint)srcH << 16) / (TUint)dstH;
+
+	// Попередній рядок-джерело і куди його поклали: коли наступний рядок приймача
+	// читає те саме джерело (масштабування вгору або пропуск рядків), копія готового
+	// рядка дешевша за повторну конвертацію.
+	TInt prevSsy = -1;
+	const TUint16 *prevDrow = NULL;
+
 	for (TInt dy = 0; dy < dstH; dy++)
 		{
 		const TInt srcLine = (TInt)((syStep * (TUint)dy) >> 16);
-		const TInt ssy = field ? srcLine * 2 : srcLine;
-		TUint16 *drow = dst + (oy + dy) * dstStride + ox;
+		TInt ssy = field ? srcLine * 2 : srcLine;
+		// Растеризатор із "Skip lines" не переписує непарні рядки VRAM ніколи, тож
+		// вони тримають вміст попередніх кадрів (статичні накладки лишали слід).
+		// Беремо парний рядок замість застарілого непарного.
+		if (g_ilaceOut && !field)
+			ssy &= ~1;
+		TUint16 *drow = (TUint16 *)(dstB + (oy + dy) * dstStrideB + ox * pixB);
+		// Копіюємо готовий рядок лише в бітмап. При direct-FB приймач - буфер екрана,
+		// і читання з нього не заміряне: заміряно тільки лінійний ЗАПИС. Некешоване
+		// читання коштувало б повну латентність пам'яті, тож там конвертуємо заново.
+		if (ssy == prevSsy && prevDrow && !directFb)
+			{
+			Mem::Copy(drow, prevDrow, dstW * pixB);
+			continue;
+			}
+		prevSsy = ssy; prevDrow = drow;
 		TUint sxf = 0;
 		if (rgb24)
 			{
@@ -700,25 +978,32 @@ static void blitCurrent()
 		else
 			{
 			const TUint16 *srow = (const TUint16 *)(vbytes + startByte) + ssy * 1024;
+			// 32-бітний буфер екрана: конвертуємо прямо в XRGB8888, без проміжного
+			// 16-бітного бітмапа і без перетворення 565->8888 у bitgdi.
+			if (pixB == 4)
+				{
+				TUint32 *d32 = (TUint32 *)drow;
+				if (sxStep == 0x10000u)
+					blitRow8888(d32, srow, dstW);
+				else
+					{
+					for (TInt dx = 0; dx < dstW; dx++)
+						{
+						d32[dx] = Bgr555ToXrgb8888(srow[sxf >> 16]);
+						sxf += sxStep;
+						}
+					}
+				}
 			// Масштаб 1:1 по горизонталі - переважний випадок: вихід PS1 (256 або
 			// 320) після вписування в 320x240 дає рівно крок 0x10000. Тоді ні
 			// акумулятор, ні зсув не потрібні, і два пікселі конвертуються разом
 			// у 32-бітному регістрі: удвічі менше звернень до пам'яті і вдвічі
 			// менше операцій на піксель.
-			if (sxStep == 0x10000u &&
+			else if (sxStep == 0x10000u &&
 				!(((TUint)srow | (TUint)drow) & 3) && !(dstW & 1))
 				{
-				const TUint32 *s32 = (const TUint32 *)srow;
-				TUint32 *d32 = (TUint32 *)drow;
-				// __builtin_prefetch тут ПЕРЕВІРЕНО і відкинуто: PLD на кожні два
-				// пікселі - це вісім звернень на лінію кешу, вони лише забивають
-				// слоти завантаження. blitFill 50836 -> 52698 мс на 9000 кадрів.
-				for (TInt i = dstW >> 1; i > 0; i--)
-					{
-					const TUint32 p = *s32++;
-					*d32++ = ((p & 0x001f001fu) << 11) | ((p << 1) & 0x07c007c0u)
-					       | ((p >> 4) & 0x00200020u) | ((p >> 10) & 0x001f001fu);
-					}
+				// dstW парний і >=2 (умова гілки), тож лічильник гарантовано >=1.
+				blitRow565((TUint32 *)drow, (const TUint32 *)srow, dstW >> 1);
 				}
 			else if (sxStep == 0x10000u)
 				{
@@ -742,7 +1027,38 @@ static void blitCurrent()
 
 	if (directFb)
 		{
-		// Кадр уже в буфері екрана - present-копія не потрібна.
+		// Кадр уже в буфері екрана - present-копія не потрібна. Оновлення просимо
+		// з ЯВНИМ регіоном: ми писали повз bitgdi, тож його власна "брудна" область
+		// лишається порожньою і Update() без аргументу може не проштовхнути нічого.
+		CFbsScreenDevice *sd = g_dsa ? g_dsa->ScreenDevice() : NULL;
+		if (sd)
+			{
+			const RRegion *rgn = g_dsa->DrawingRegion();
+			if (rgn && !rgn->CheckError()) sd->Update(*rgn);
+			else                           sd->Update();
+			}
+		}
+	// Порядкова копія має сенс лише коли формат бітмапа й екрана збігається.
+	// На цьому апараті екран 32-бітний, тож шлях неактивний - лишається як варіант
+	// для апаратів із 16-бітним буфером.
+	else if (g_useRowCopy && g_dsaActive && g_fbOk && g_fbPixBytes == 2 &&
+	         dsaCoversScreen())
+		{
+		// Порядкова копія бітмапа в буфер екрана. Заміряно, що клієнт-серверна
+		// механіка WS коштує ~нуль (наш власний bitgdi-блит без IPC вийшов ДОРОЖЧИМ
+		// за віконний шлях), тобто present - це вартість самої процедури копіювання
+		// в bitgdi. Плоский Mem::Copy робить ту саму роботу без неї.
+		g_bmp->LockHeap();
+		const TUint8 *src = (const TUint8 *)g_bmp->DataAddress();
+		const TInt sstride = g_bmp->DataStride();
+		const TInt rows  = SH < g_fbH ? SH : g_fbH;
+		const TInt bytes = (SW < g_fbW ? SW : g_fbW) * 2;
+		TUint8 *dstp = (TUint8 *)g_fbBase;
+		for (TInt y = 0; y < rows; y++)
+			Mem::Copy(dstp + y * g_fbStride * 2, src + y * sstride, bytes);
+		g_bmp->UnlockHeap();
+		CFbsScreenDevice *sd = g_dsa->ScreenDevice();
+		if (sd) sd->Update();
 		}
 	else if (g_useDsa && g_dsaActive && g_dsaGc)
 		{
@@ -819,6 +1135,30 @@ void voutSymbianAttachWindow(RWsSession &aWs, CWsScreenDevice &aDev, RWindow &aW
 		if (ge != KErrNone) { glShutdown(); }
 		}
 
+	// DSA у GUI-гілці. Раніше він піднімався лише в initL (консольний шлях), тож
+	// прогони "gui ... dsa" мовчки лишались на віконному BitBlt: у логу dsa active=0.
+	// Викликається і на поворот екрана, тому спершу знімаємо попередній.
+	if (g_dsa) { delete g_dsa; g_dsa = NULL; g_dsaGc = NULL; g_dsaActive = EFalse; }
+	if (g_useDsa)
+		{
+		// Заливка фону й redraw store - це право WS перемалювати вікно поверх кадру,
+		// який ми кладемо в екран повз нього. Аргументу немає = "не чистити".
+		aWin.SetBackgroundColor();
+		aWin.EnableRedrawStore(EFalse);
+		aWin.SetNonFading(ETrue);
+		if (!CActiveScheduler::Current())
+			{
+			g_dsaSched = new CActiveScheduler;
+			if (g_dsaSched) CActiveScheduler::Install(g_dsaSched);
+			}
+		TRAPD(e, {
+			g_dsa = CDirectScreenAccess::NewL(aWs, aDev, aWin, g_dsaObs);
+			dsaStartL();
+			});
+		if (e != KErrNone)
+			{ delete g_dsa; g_dsa = NULL; g_dsaGc = NULL; g_dsaActive = EFalse; }
+		}
+
 	g_wsReady = ETrue;
 	}
 
@@ -866,8 +1206,35 @@ extern "C" void voutSymbianPresent(void)
 	{
 	if (!g_wsReady)
 		return;
-	// Оновити g_vout поточним кадром напряму (gpulib робить це рідко), тоді блит.
+	// g_vout тримаємо синхронним із поточною областю показу ЗАВЖДИ, навіть коли
+	// показувати не збираємось. Інакше при зміні адреси початку кадру ми показали б
+	// стару область - тобто чужий буфер, а не застиглий кадр.
+	g_voutSelfCall = 1;
 	vout_update(&gpu, gpu.screen.src_x, gpu.screen.src_y);
+	g_voutSelfCall = 0;
+
+	if (g_dirtyOnly)
+		{
+		// Три незалежні причини показати кадр:
+		//  1) gpulib повідомив про новий вміст видимої області;
+		//  2) змінилась сама область показу (гра гортає готові буфери, нічого не
+		//     малюючи - тоді fb_dirty_display_area не виставляється, і сигналу немає);
+		//  3) стеля несвіжості - страховка від будь-якого пропущеного сигналу
+		//     і від чужого малювання поверх нашого кадру під DSA.
+		// Заміряно на GT: у гоночній фазі оновлюється 50% кадрів; у меню бували
+		// вікна по 300 кадрів, де гра малювала лише в невидимий буфер і не гортала -
+		// там показувати справді нема чого, і (3) не дає екрану виглядати мертвим.
+		const TBool areaChanged = (g_vout.offset != g_lastShownOffset ||
+		                           g_vout.w != g_lastShownW ||
+		                           g_vout.h != g_lastShownH);
+		if (!g_voutPending && !areaChanged && ++g_voutStale < 10)
+			return;
+		}
+	g_lastShownOffset = g_vout.offset;
+	g_lastShownW = g_vout.w;
+	g_lastShownH = g_vout.h;
+	g_voutPending = 0;
+	g_voutStale = 0;
 	TRAP_IGNORE(blitCurrent());
 	}
 
@@ -932,6 +1299,153 @@ extern "C" void voutSymbianSetGl(int aOn)
 	g_useGl = aOn ? ETrue : EFalse;
 	}
 
+// Растеризатор працює в режимі "Skip lines": непарні рядки VRAM застарілі.
+extern "C" void voutSymbianSetIlaceOut(int aOn)
+	{
+	g_ilaceOut = aOn ? 1 : 0;
+	}
+
+// Показувати лише кадри, для яких gpulib повідомив про зміну.
+extern "C" void voutSymbianSetDirtyOnly(int aOn)
+	{
+	g_dirtyOnly = aOn ? ETrue : EFalse;
+	}
+
+// Present порядковою копією в буфер екрана замість BitBlt. Потребує DSA.
+extern "C" void voutSymbianSetRowCopy(int aOn)
+	{
+	g_useRowCopy = aOn ? ETrue : EFalse;
+	if (aOn)
+		g_useDsa = ETrue;   // копія в екран без захоплення екрана некоректна
+	}
+
+// Звідки взято базу й крок буфера екрана: 1 = від платформи, 0 = з HAL.
+extern "C" int voutSymbianFbFromPlatform(void)
+	{
+	return g_fbFromPlatform ? 1 : 0;
+	}
+
+// Геометрія кадру після вписування (Z3): що саме віддає гра і куди воно лягає.
+extern "C" void voutSymbianGeom(int *aSrcW, int *aSrcH, int *aDstW, int *aDstH,
+                                int *aOx, int *aOy)
+	{
+	if (aSrcW) *aSrcW = g_vout.w;
+	if (aSrcH) *aSrcH = g_vout.h;
+	if (aDstW) *aDstW = g_blitW;
+	if (aDstH) *aDstH = g_blitH;
+	if (aOx)   *aOx   = g_blitOx;
+	if (aOy)   *aOy   = g_blitOy;
+	}
+
+// Z1: розкладка екрана ВІД ПЛАТФОРМИ, а не з HAL. CFbsScreenDevice::Bits()/Stride()
+// публічні (bitdev.h:145-146) і експортуються з bitgdi.dso; Stride() - це
+// ScanLineBytes() драйвера, тобто те, чим малює сама платформа. Bits() може
+// повернути NULL, якщо драйвер не реалізує MFastBlit2 - це теж відповідь.
+// Плюс орієнтація режиму екрана: якщо не Normal, поворот застосовує GC, і сирий
+// лінійний запис за HAL-адресою дає перекіс - саме те, що бачили 2026-08-01.
+extern "C" void voutSymbianScreenLayout(int *aBits, int *aStride, int *aW, int *aH,
+                                        int *aMode, int *aRotation, int *aHalBase)
+	{
+	if (aBits)     *aBits     = 0;
+	if (aStride)   *aStride   = 0;
+	if (aW)        *aW        = 0;
+	if (aH)        *aH        = 0;
+	if (aMode)     *aMode     = -1;
+	if (aRotation) *aRotation = -1;
+	if (aHalBase)  *aHalBase  = (int)g_fbBase;
+
+	CFbsScreenDevice *sd = (g_dsa && g_dsaActive) ? g_dsa->ScreenDevice() : NULL;
+	if (sd)
+		{
+		if (aBits)   *aBits   = (int)sd->Bits();
+		if (aStride) *aStride = sd->Stride();
+		const TSize sz = sd->SizeInPixels();
+		if (aW)      *aW      = sz.iWidth;
+		if (aH)      *aH      = sz.iHeight;
+		if (aMode)   *aMode   = (int)sd->DisplayMode();
+		}
+	if (g_dev && aRotation)
+		{
+		TPixelsAndRotation par;
+		TRAPD(e, g_dev->GetScreenModeSizeAndRotation(g_dev->CurrentScreenMode(), par));
+		if (e == KErrNone)
+			*aRotation = (int)par.iRotation;
+		}
+	}
+
+// Z1/M-RB: чи доходять сирі записи за HAL-адресою до сканованого буфера і в якій
+// розкладці. Малюємо візерунок ВІДОМО РОБОЧИМ шляхом (DSA BitBlt), читаємо назад
+// сирим покажчиком і рахуємо збіги. Розшифровка: збіглось усе - HAL-адреса є
+// видимим буфером; f(y,x) замість f(x,y) - поворот; сталий зсув - інший крок;
+// нічого - подвійна буферизація або чужий буфер.
+// aMode 0 = намалювати візерунок і перевірити, 1 = лише перевірити (через кадри).
+extern "C" int voutSymbianReadBack(int aMode, int *aMatch, int *aTotal, int *aFirstBad)
+	{
+	if (aMatch)   *aMatch   = 0;
+	if (aTotal)   *aTotal   = 0;
+	if (aFirstBad) { aFirstBad[0] = aFirstBad[1] = aFirstBad[2] = aFirstBad[3] = -1; }
+	if (!g_fbOk || !g_fbBase || !g_bmp)
+		return -1;
+
+	const TInt W = g_fbW < g_scr.iWidth ? g_fbW : g_scr.iWidth;
+	const TInt H = g_fbH < g_scr.iHeight ? g_fbH : g_scr.iHeight;
+	if (W < 8 || H < 8)
+		return -2;
+
+	if (aMode == 0)
+		{
+		g_bmp->LockHeap();
+		TUint16 *bits = (TUint16 *)g_bmp->DataAddress();
+		const TInt bstride = g_bmp->DataStride() / 2;
+		for (TInt y = 0; y < H; y++)
+			for (TInt x = 0; x < W; x++)
+				bits[y * bstride + x] = (TUint16)(x * 7 + y * 13 + 1);
+		g_bmp->UnlockHeap();
+		if (!g_dsaGc)
+			return -3;
+		g_dsaGc->BitBlt(TPoint(0, 0), g_bmp);
+		CFbsScreenDevice *sd = g_dsa ? g_dsa->ScreenDevice() : NULL;
+		if (sd) sd->Update();
+		}
+
+	TInt match = 0, total = 0, bad = 0;
+	for (TInt gy = 0; gy < 8; gy++)
+		for (TInt gx = 0; gx < 8; gx++)
+			{
+			const TInt x = gx * (W / 8) + 3;
+			const TInt y = gy * (H / 8) + 3;
+			if (x >= W || y >= H)
+				continue;
+			// Порівнюємо в 16 бітах: бітмап заповнено RGB565, а буфер екрана може
+			// бути 32-бітним - тоді беремо той самий піксель у своєму форматі й
+			// зводимо назад до 565, інакше "розбіжність" означала б лише формат.
+			const TUint16 want = (TUint16)(x * 7 + y * 13 + 1);
+			const TUint8 *rowp = (const TUint8 *)g_fbBase + y * g_fbStrideB;
+			TUint16 got;
+			if (g_fbPixBytes == 4)
+				{
+				const TUint32 v = ((const TUint32 *)rowp)[x];
+				got = (TUint16)((((v >> 16) & 0xff) >> 3) << 11 |
+				                (((v >> 8) & 0xff) >> 2) << 5 |
+				                 ((v & 0xff) >> 3));
+				}
+			else
+				got = ((const TUint16 *)rowp)[x];
+			total++;
+			if (want == got)
+				match++;
+			else if (!bad && aFirstBad)
+				{
+				aFirstBad[0] = x; aFirstBad[1] = y;
+				aFirstBad[2] = want; aFirstBad[3] = got;
+				bad = 1;
+				}
+			}
+	if (aMatch) *aMatch = match;
+	if (aTotal) *aTotal = total;
+	return 0;
+	}
+
 // Чи справді GL активний (для логу): 1 = present іде через GPU/EGL.
 extern "C" int voutSymbianGlActive(void)
 	{
@@ -950,12 +1464,15 @@ extern "C" int voutSymbianDsaActive(void)
 extern "C" int voutSymbianFbTest(void)
 	{
 	if (!g_fbOk || !g_fbBase) return -1;
-	const TInt W = g_fbW, H = g_fbH, S = g_fbStride;
-	TUint16 *fb = g_fbBase;
-	const TUint16 BLUE = 0x001f, WHITE = 0xffff, RED = 0xf800, GREEN = 0x07e0, YELLOW = 0xffe0, CYAN = 0x07ff;
+	const TInt W = g_fbW, H = g_fbH;
+	TUint8 *fb = (TUint8 *)g_fbBase;
+	// Кольори задаємо в BGR555 і конвертуємо у формат буфера: він може бути і
+	// 16-бітним, і 32-бітним (на N95 8GB заміряно EColor16MU).
+	const TUint16 BLUE = 0x7c00, WHITE = 0x7fff, RED = 0x001f,
+	              GREEN = 0x03e0, YELLOW = 0x03ff, CYAN = 0x7fe0;
 	for (TInt y = 0; y < H; y++)
 		{
-		TUint16 *row = fb + y * S;
+		TUint8 *row = fb + y * g_fbStrideB;
 		for (TInt x = 0; x < W; x++)
 			{
 			TUint16 c = BLUE;
@@ -965,11 +1482,156 @@ extern "C" int voutSymbianFbTest(void)
 			else if (x < 40 && y >= H - 40) c = CYAN;                      // ЛН кут
 			else if (x >= W - 40 && y >= H - 40) c = YELLOW;               // ПН кут
 			else if (x == y) c = WHITE;                                    // діагональ
-			row[x] = c;
+			if (g_fbPixBytes == 4) ((TUint32 *)row)[x] = Bgr555ToXrgb8888(c);
+			else                   ((TUint16 *)row)[x] = Bgr555ToRgb565(c);
 			}
 		}
 	if (g_dsa && g_dsaActive)
 		{ CFbsScreenDevice *sd = g_dsa->ScreenDevice(); if (sd) sd->Update(); }
+	return 0;
+	}
+
+// Візуальний A/B для direct-FB: та сама картинка двома шляхами. aRaw=0 - через
+// bitgdi (DSA BitBlt), тобто шлях, який точно показує; aRaw=1 - сирим записом у
+// той самий буфер. Кольори різні, щоб їх не сплутати: зелене поле = bitgdi,
+// червоне = сирий запис. Що з'явилось на панелі, те й відповідає на питання,
+// чи доходить сирий запис до показу взагалі.
+extern "C" int voutSymbianVisTest(int aRaw)
+	{
+	if (!g_fbOk || !g_fbBase || !g_bmp)
+		return -1;
+	const TInt W = aRaw ? g_fbW : g_scr.iWidth;
+	const TInt H = aRaw ? g_fbH : g_scr.iHeight;
+	if (W < 16 || H < 16)
+		return -2;
+	const TUint16 bg   = aRaw ? 0x001f : 0x03e0;   // BGR555: червоний / зелений
+	const TUint16 fg   = 0x7fff;                   // білий
+
+	if (!aRaw)
+		g_bmp->LockHeap();
+	TUint8 *dst = aRaw ? (TUint8 *)g_fbBase : (TUint8 *)g_bmp->DataAddress();
+	const TInt stride = aRaw ? g_fbStrideB : g_bmp->DataStride();
+	const TInt pix    = aRaw ? g_fbPixBytes : 2;
+	for (TInt y = 0; y < H; y++)
+		{
+		TUint8 *row = dst + y * stride;
+		for (TInt x = 0; x < W; x++)
+			{
+			// Хрест по центру плюс рамка: за ними видно і зсув, і поворот.
+			const TBool cross = (x >= W / 2 - 3 && x <= W / 2 + 3) ||
+			                    (y >= H / 2 - 3 && y <= H / 2 + 3);
+			const TBool frame = (x < 3 || x >= W - 3 || y < 3 || y >= H - 3);
+			const TUint16 c = (cross || frame) ? fg : bg;
+			if (pix == 4) ((TUint32 *)row)[x] = Bgr555ToXrgb8888(c);
+			else          ((TUint16 *)row)[x] = Bgr555ToRgb565(c);
+			}
+		}
+	if (!aRaw)
+		{
+		g_bmp->UnlockHeap();
+		if (!g_dsaGc)
+			return -3;
+		g_dsaGc->BitBlt(TPoint(0, 0), g_bmp);
+		}
+	CFbsScreenDevice *sd = g_dsa ? g_dsa->ScreenDevice() : NULL;
+	if (sd)
+		{
+		const RRegion *rgn = g_dsa->DrawingRegion();
+		if (rgn && !rgn->CheckError()) sd->Update(*rgn);
+		else                           sd->Update();
+		}
+	return 0;
+	}
+
+// Знімок того, що РЕАЛЬНО лежить у буфері екрана. Дамп VRAM показує вхід
+// конвертації, тобто не відрізняє "гра не намалювала" від "ми не показали".
+// Тут читаємо назад саме те, що бачить панель.
+extern "C" int voutSymbianScreenDump(const char *aPath)
+	{
+	if (!g_fbOk || !g_fbBase)
+		return -1;
+	FILE *f = fopen(aPath, "wb");
+	if (!f)
+		return -2;
+	char hdr[160];
+	const int n = snprintf(hdr, sizeof(hdr),
+		"PS1SCR %d %d %d %d vout=%d,%d,%d,%d off=%d rgb24=%d\n",
+		g_fbW, g_fbH, g_fbStrideB, g_fbPixBytes,
+		g_vout.x, g_vout.y, g_vout.w, g_vout.h, g_vout.offset, g_vout.rgb24);
+	fwrite(hdr, 1, n, f);
+	for (TInt y = 0; y < g_fbH; y++)
+		fwrite((const TUint8 *)g_fbBase + y * g_fbStrideB, 1, g_fbW * g_fbPixBytes, f);
+	fclose(f);
+	return 0;
+	}
+
+// Знімок на вимогу: що бачить панель + що намалювала гра + стан шляху виводу.
+// Різниця між двома файлами локалізує ваду: правильна VRAM і зіпсований екран
+// означають помилку виводу, зіпсована VRAM - помилку растеризації.
+extern "C" void ps1ScreenShot(void)
+	{
+	const int sr = voutSymbianScreenDump("E:\\ps1_scrkey.bin");
+	const int vr = voutSymbianDump("E:\\ps1_vramkey.bin");
+	ps1LogFmt("screen_dump",
+		"manual: scr=%d vram=%d vout=%d,%d,%d,%d off=%d rgb24=%d dsa=%d fbPlat=%d "
+		"fb=%dx%d stride=%dB pix=%d mode=%d",
+		sr, vr, g_vout.x, g_vout.y, g_vout.w, g_vout.h, g_vout.offset, g_vout.rgb24,
+		(int)(g_useDsa && g_dsaActive), (int)g_fbFromPlatform,
+		g_fbW, g_fbH, g_fbStrideB, g_fbPixBytes, g_fbMode);
+	}
+
+// Знімок буфера за HAL-адресою - того, який (за замірами 2026-08-01) справді
+// сканується панеллю. Буфер драйвера (Bits()) і цей - різні описи: драйвер каже
+// 1280 Б/рядок і 32 біти, HAL - 640 Б і 16. Порівняння двох дампів відповідає на
+// питання, чи доїжджає наш кадр із буфера драйвера до сканованого.
+// Сирий дамп буфера екрана БЕЗ припущень про розкладку. Разом із візерунком
+// x*7+y*13+1, покладеним відомо робочим шляхом (DSA BitBlt), дозволяє визначити
+// байтів на піксель і крок рядка вже на хості, без нових прогонів на апараті.
+// aBytes обмежено тим, що ми й так пишемо щокадру, тобто свідомо відображеним.
+extern "C" int voutSymbianRawDump(const char *aPath, int aBytes)
+	{
+	if (!g_fbOk || !g_fbBase)
+		return -1;
+	const int maxB = g_fbH * g_fbStrideB;
+	if (aBytes <= 0 || aBytes > maxB)
+		aBytes = maxB;
+	FILE *f = fopen(aPath, "wb");
+	if (!f)
+		return -2;
+	char hdr[160];
+	const int n = snprintf(hdr, sizeof(hdr),
+		"PS1RAW base=0x%x bytes=%d platStride=%d platPix=%d %dx%d hal=0x%x halLine=%d halBpp=%d %dx%d\n",
+		(unsigned)g_fbBase, aBytes, g_fbStrideB, g_fbPixBytes, g_fbW, g_fbH,
+		(unsigned)g_fbAddr, g_fbLineBytes, g_fbBpp, g_fbXpix, g_fbYpix);
+	fwrite(hdr, 1, n, f);
+	fwrite((const TUint8 *)g_fbBase, 1, aBytes, f);
+	fclose(f);
+	return 0;
+	}
+
+// Адреса окремо від дампа: якщо вона фізична, читання вб'є потік, і в логу має
+// лишитись хоча б саме число.
+extern "C" int voutSymbianHalAddr(void)
+	{
+	return g_fbAddr;
+	}
+
+extern "C" int voutSymbianHalDump(const char *aPath)
+	{
+	if (!g_fbAddr || g_fbLineBytes < 2 || g_fbYpix < 1)
+		return -1;
+	FILE *f = fopen(aPath, "wb");
+	if (!f)
+		return -2;
+	char hdr[160];
+	const int n = snprintf(hdr, sizeof(hdr),
+		"PS1HAL addr=0x%x bpp=%d line=%d first=%d %dx%d plat=0x%x platStride=%d platPix=%d\n",
+		(unsigned)g_fbAddr, g_fbBpp, g_fbLineBytes, g_fbFirstOff, g_fbXpix, g_fbYpix,
+		(unsigned)g_fbBase, g_fbStrideB, g_fbPixBytes);
+	fwrite(hdr, 1, n, f);
+	// Рівно стільки, скільки описав HAL: читати далі - вихід за відображення.
+	fwrite((const TUint8 *)g_fbAddr + g_fbFirstOff, 1, g_fbLineBytes * g_fbYpix, f);
+	fclose(f);
 	return 0;
 	}
 

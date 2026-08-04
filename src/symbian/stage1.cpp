@@ -216,7 +216,9 @@ void ps1GpuGetScreenInfo(int *y, int *base_hres);
 void ps1GpuSetCallbacks(unsigned int *frameCount, unsigned int *hcnt);
 
 int voutSymbianDump(const char *path);
+int voutSymbianScreenDump(const char *path);
 int voutSymbianUpdates(void);
+int voutSymbianGpulibUpdates(void);
 int voutSymbianShow(int holdMs);
 int voutSymbianInit(void);
 unsigned short voutSymbianPollPad(void);
@@ -230,6 +232,21 @@ void voutSymbianSetGl(int on);
 int voutSymbianGlActive(void);
 void voutSymbianFbInfo(int *ok, int *xpix, int *ypix, int *lineBytes, int *bpp, int *firstOff, int *winW, int *winH);
 int voutSymbianFbTest(void);
+void voutSymbianSetIlaceOut(int on);
+void voutSymbianSetDirtyOnly(int on);
+void voutSymbianSetRowCopy(int on);
+int voutSymbianFbFromPlatform(void);
+void voutSymbianGeom(int *srcW, int *srcH, int *dstW, int *dstH, int *ox, int *oy);
+void voutSymbianDbgState(int *fbDirty, int *fbDirtyArea, int *status, int *srcX,
+	int *srcY, int *scrW, int *scrH, int *voutOffset, int *stale);
+void voutSymbianScreenLayout(int *bits, int *stride, int *w, int *h, int *mode, int *rotation, int *halBase);
+int voutSymbianReadBack(int mode, int *match, int *total, int *firstBad);
+void voutSymbianFbPages(int *changes, int *seen, int *b0, int *b1);
+int voutSymbianHalDump(const char *path);
+int voutSymbianHalAddr(void);
+int voutSymbianRawDump(const char *path, int bytes);
+int voutSymbianVisTest(int raw);
+static TBool g_fbVis;
 
 // Лічильники безпосередньо в gpulib: усі шляхи ядра (interp/drc) сходяться туди,
 // тож це достовірний сигнал, чи BIOS реально шле команди малювання.
@@ -698,10 +715,12 @@ static void parseCommandLine(TInt &aFrames, TBool &aUseBios, TBool &aGpuTest, TB
 		aUseBios = ETrue;
 		}
 
-	// DSA-вивід (прямий доступ до екрана замість window-server BitBlt+Flush).
-	_LIT(KDsaArg, "dsa");
-	if (cmd.FindF(KDsaArg) != KErrNotFound)
-		voutSymbianSetDsa(1);
+	// DSA-вивід (прямий запис у буфер екрана). Типово ВИМКНЕНИЙ - ламає 16-бітні
+	// режими гри; вмикається явним "dsa" для пошуку причини.
+	_LIT(KDsaArgC, "dsa");
+	voutSymbianSetDsa(cmd.FindF(KDsaArgC) != KErrNotFound ? 1 : 0);
+	_LIT(KNoDirtyArgC, "nodirty");
+	voutSymbianSetDirtyOnly(cmd.FindF(KNoDirtyArgC) != KErrNotFound ? 0 : 1);
 
 	// GL ES вивід (MBX): GPU масштабує й презентує через eglSwapBuffers.
 	_LIT(KGlArg, "gl");
@@ -1201,6 +1220,68 @@ static TBool passStep()
 			g_pass.i, g_pass.frames,
 			(unsigned)(User::NTickCount() - g_pass.tStart), (int)stackHighWater());
 		}
+
+	// Z2+Z3: скільки кадрів гра справді оновила і в якій геометрії. updates - це
+	// лічильник викликів vout_update; різниця між фазами меню (0-4000) і траси
+	// показує, чи виграш від показу за латчем не є артефактом стенду.
+	// Знімки екрана в характерних точках: меню гри (2D) і траса (3D). Порівняння
+	// цих двох файлів відповідає на питання, чому 2D не видно, а відео видно.
+	if (g_pass.showScreen && (g_pass.i == 3300 || g_pass.i == 6000))
+		{
+		char p[32];
+		snprintf(p, sizeof(p), "E:\\ps1_scr%d.bin", (int)g_pass.i);
+		const int sr = voutSymbianScreenDump(p);
+		// Адресу пишемо ДО читання: якщо вона фізична, читання вб'є потік.
+		logEvent("screen_dump", sr ? "SCR_FAIL" : NULL, "frame=%d rc=%d halAddr=0x%x",
+			g_pass.i, sr, (unsigned)voutSymbianHalAddr());
+		// Той самий кадр із буфера за HAL-адресою: чи доїхав він до сканованого.
+		snprintf(p, sizeof(p), "E:\\ps1_hal%d.bin", (int)g_pass.i);
+		const int hr = voutSymbianHalDump(p);
+		logEvent("hal_dump", hr ? "HAL_FAIL" : NULL, "frame=%d rc=%d", g_pass.i, hr);
+		// Візерунок відомо робочим шляхом + сирий дамп: розкладку буфера екрана
+		// (байтів на піксель, крок) визначаємо потім на хості.
+		if (g_pass.i == 3300)
+			{
+			int m = 0, t = 0, bad[4];
+			const int rb = voutSymbianReadBack(0, &m, &t, bad);
+			const int rr = voutSymbianRawDump("E:\\ps1_raw.bin", 0);
+			logEvent("fb_pattern", NULL, "rb=%d match=%d/%d bad=%d,%d want=0x%x got=0x%x raw=%d",
+				rb, m, t, bad[0], bad[1], (unsigned)bad[2], (unsigned)bad[3], rr);
+			if (g_fbVis)
+				{
+				// Спершу зелений хрест через bitgdi, потім червоний сирим записом,
+				// по 5 с кожен. Що з них видно на панелі - те й відповідь.
+				const int v0 = voutSymbianVisTest(0);
+				User::After(5000000);
+				const int v1 = voutSymbianVisTest(1);
+				User::After(5000000);
+				logEvent("fb_vis", NULL, "bitgdi=%d raw=%d", v0, v1);
+				}
+			}
+		}
+
+	if (g_pass.showScreen && (g_pass.i % 100) == 0)
+		{
+		int srcW = 0, srcH = 0, dstW = 0, dstH = 0, ox = 0, oy = 0;
+		voutSymbianGeom(&srcW, &srcH, &dstW, &dstH, &ox, &oy);
+		int fbd = 0, fbda = 0, st = 0, sx = 0, sy = 0, sw = 0, sh = 0, voff = 0, stale = 0;
+		voutSymbianDbgState(&fbd, &fbda, &st, &sx, &sy, &sw, &sh, &voff, &stale);
+		// gp0/dma - лічильники команд малювання: якщо в застиглому вікні вони
+		// РОСТУТЬ, гра малює, а ми не показуємо (вада). Якщо стоять - гра справді
+		// нічого не робить, і завмирання коректне.
+		// fbPages: скільки РІЗНИХ адрес першого пікселя віддав драйвер. >1 означає
+		// подвійну буферизацію, тобто запис у кешовану адресу лягає повз панель.
+		int fbChg = 0, fbSeen = 0, fbB0 = 0, fbB1 = 0;
+		voutSymbianFbPages(&fbChg, &fbSeen, &fbB0, &fbB1);
+		logEvent("vout_geom", NULL,
+			"frame=%d upd=%d gpulibUpd=%d src=%dx%d dst=%dx%d off=%d,%d "
+			"gp0=%u dma=%u fbDirty=%d fbDirtyArea=%d status=0x%x scr=%dx%d src=%d,%d "
+			"voutOff=%d stale=%d fbPages=%d/%d fb0=0x%x fb1=0x%x",
+			g_pass.i, voutSymbianUpdates(), voutSymbianGpulibUpdates(),
+			srcW, srcH, dstW, dstH, ox, oy,
+			g_gpulibWriteData, g_gpulibDmaChain, fbd, fbda, (unsigned)st,
+			sw, sh, sx, sy, voff, stale, fbChg, fbSeen, (unsigned)fbB0, (unsigned)fbB1);
+		}
 	return ETrue;
 	}
 
@@ -1275,7 +1356,8 @@ static void passTeardown()
 		gpuRasterMs, (unsigned)(tEmu ? gpuRasterMs * 100 / tEmu : 0),
 		blitFillMs, blitPresentMs,
 		(unsigned)aProduced);
-	logEvent("dsa", NULL, "%s: active=%d gl=%d", mode, voutSymbianDsaActive(), voutSymbianGlActive());
+	logEvent("dsa", NULL, "%s: active=%d gl=%d fbPlatform=%d", mode,
+		voutSymbianDsaActive(), voutSymbianGlActive(), voutSymbianFbFromPlatform());
 	}
 
 	// Тримаємо останній кадр (докручуючи аудіо), тоді прибираємо вікно й звук.
@@ -1379,6 +1461,9 @@ static void coreInitOnce()
 	// прискорювачі, а й освітлення з напівпрозорістю.
 	gpu_unai_set_config(g_hackPixelSkip, g_hackIlace, g_gpuLighting,
 		g_gpuLighting /*fast*/, g_gpuBlending);
+	// Вивід мусить знати про пропуск рядків: інакше він показує непарні рядки VRAM,
+	// яких растеризатор не переписував, і статичні накладки лишають слід на екрані.
+	voutSymbianSetIlaceOut(g_hackIlace ? 1 : 0);
 	logEvent("gpu_cfg", NULL, "pixskip=%d ilace=%d light=%d blend=%d",
 		(int)g_hackPixelSkip, (int)g_hackIlace, (int)g_gpuLighting, (int)g_gpuBlending);
 
@@ -1471,7 +1556,7 @@ extern "C" void ps1LogInt(const char *aType, const char *aMsg, int aVal)
 // ініціалізації ядра й растеризатора - інакше частина з них не подіє.
 extern "C" void ps1CfgApply(const char *aDisc, int aInterp, int aFrameskip,
 	int aIlace, int aLight, int aBlend, int aPixSkip, int aGteNf,
-	int aSound, int aGl)
+	int aSound, int aGl, int aDirty, int aDsa)
 	{
 	g_discPath[0] = 0;
 	if (aDisc && aDisc[0])
@@ -1490,11 +1575,16 @@ extern "C" void ps1CfgApply(const char *aDisc, int aInterp, int aFrameskip,
 	g_hackGteNoFlags = aGteNf ? ETrue : EFalse;
 	g_noSound        = aSound ? EFalse : ETrue;
 	voutSymbianSetGl(aGl);
+	voutSymbianSetDirtyOnly(aDirty);
+	// DSA піднімається у voutSymbianAttachWindow, а меню віддає конфіг ПІСЛЯ нього,
+	// тож саму прив'язку треба переробити - інакше прапорець подіє лише з наступного
+	// запуску. Це робить ps1GuiReattach() у першому тіку.
+	voutSymbianSetDsa(aDsa);
 	logEvent("cfg", NULL, "disc=%s interp=%d skip=%d ilace=%d light=%d blend=%d "
-		"pixskip=%d gtenf=%d snd=%d gl=%d",
+		"pixskip=%d gtenf=%d snd=%d gl=%d dirty=%d dsa=%d",
 		g_discPath[0] ? g_discPath : KDiscImg, (int)aInterp, (int)aFrameskip,
 		(int)aIlace, (int)aLight, (int)aBlend, (int)aPixSkip, (int)aGteNf,
-		(int)aSound, (int)aGl);
+		(int)aSound, (int)aGl, (int)aDirty, (int)aDsa);
 	}
 
 extern "C" void ps1LogFmt(const char *aType, const char *aFmt, ...)
@@ -1525,6 +1615,32 @@ static TInt runStage1()
 		voutSymbianFbInfo(&fbOk, &xp, &yp, &lb, &bpp, &fo, &ww, &wh);
 		logEvent("fb", NULL, "init=%d ok=%d hal=%dx%d line=%dB bpp=%d first=%d win=%dx%d",
 			ir, fbOk, xp, yp, lb, bpp, fo, ww, wh);
+
+		// Z1: розкладка ВІД ПЛАТФОРМИ поряд із HAL-значеннями. Якщо stride або база
+		// різняться - це і є пряме пояснення перекошеного кадру 2026-08-01.
+		int bits = 0, stride = 0, sw = 0, sh = 0, mode = -1, rot = -1, halBase = 0;
+		voutSymbianScreenLayout(&bits, &stride, &sw, &sh, &mode, &rot, &halBase);
+		logEvent("screen_layout", NULL,
+			"bits=0x%x halBase=0x%x stride=%dB size=%dx%d mode=%d rotation=%d "
+			"halLine=%dB fromPlatform=%d",
+			bits, halBase, stride, sw, sh, mode, rot, lb,
+			voutSymbianFbFromPlatform());
+
+		// Z1/M-RB: візерунок відомо робочим шляхом, читання назад сирим покажчиком.
+		int m = 0, t = 0, badA[4];
+		const int rb0 = voutSymbianReadBack(0, &m, &t, badA);
+		logEvent("readback", rb0 ? "RB_FAIL" : NULL,
+			"pass=first rc=%d match=%d/%d firstBad=(%d,%d) want=0x%x got=0x%x",
+			rb0, m, t, badA[0], badA[1], badA[2], badA[3]);
+
+		// Повтор без нового малювання: якщо збіги зникли - подвійна буферизація.
+		User::After(100000);
+		int m2 = 0, t2 = 0, badB[4];
+		const int rb1 = voutSymbianReadBack(1, &m2, &t2, badB);
+		logEvent("readback", rb1 ? "RB_FAIL" : NULL,
+			"pass=repeat rc=%d match=%d/%d firstBad=(%d,%d) want=0x%x got=0x%x",
+			rb1, m2, t2, badB[0], badB[1], badB[2], badB[3]);
+
 		const int tr = voutSymbianFbTest();
 		logEvent("fbtest", tr ? "NO_FB" : NULL, "rc=%d - pattern held 8s", tr);
 		voutSymbianFinish(8000);
@@ -1605,6 +1721,23 @@ GLDEF_C TInt E32Main()
 		// застосунок живий, а вікно прив'язується вже всередині нього.
 		if (cl.FindF(KGlArg) != KErrNotFound)
 			voutSymbianSetGl(1);
+		// "dsa"/"rowcopy" тут ОБОВ'ЯЗКОВО: parseCommandLine розбирає їх лише в
+		// консольній гілці, а вікно в GUI прив'язується до неї - прапорець приходив
+		// би після того, як DSA треба було підняти, і прогін мовчки йшов віконним
+		// шляхом (у логу dsa active=0 при заданому dsa).
+		// Показ за латчем типово увімкнений; "nodirty" вимикає.
+		_LIT(KNoDirtyArg, "nodirty");
+		voutSymbianSetDirtyOnly(cl.FindF(KNoDirtyArg) != KErrNotFound ? 0 : 1);
+		// direct-FB типово ВИМКНЕНИЙ: ламає 16-бітні режими гри на апараті.
+		// Вмикається явним "dsa" - лишається для пошуку причини.
+		_LIT(KDsaArgG, "dsa");
+		voutSymbianSetDsa(cl.FindF(KDsaArgG) != KErrNotFound ? 1 : 0);
+		// Візуальний A/B шляхів виводу на кадрі 3300 (потрібні очі).
+		_LIT(KFbVisArg, "fbvis");
+		g_fbVis = (cl.FindF(KFbVisArg) != KErrNotFound);
+		_LIT(KRowCopyArgG, "rowcopy");
+		if (cl.FindF(KRowCopyArgG) != KErrNotFound)
+			voutSymbianSetRowCopy(1);
 		_LIT(KInterpArg, "interp");
 		if (cl.FindF(KInterpArg) != KErrNotFound)
 			ps1GuiUseInterpreter();

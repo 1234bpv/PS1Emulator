@@ -36,8 +36,10 @@ int  ps1SndVolumeSteps(void);
 int  voutSymbianKeyEvent(int aScanCode, int aDown);
 int  voutSymbianFinish(int aHoldMs);
 int  voutSymbianGlActive(void);
+void ps1ScreenShot(void);
 void ps1CfgApply(const char *aDisc, int aInterp, int aFrameskip, int aIlace,
-	int aLight, int aBlend, int aPixSkip, int aGteNf, int aSound, int aGl);
+	int aLight, int aBlend, int aPixSkip, int aGteNf, int aSound, int aGl,
+	int aDirty, int aDsa);
 }
 
 // Прив'язка виведення до вікна CONE (vout_symbian.cpp). Без extern "C": типи Symbian.
@@ -55,7 +57,7 @@ static const TUid KUidPs1App = { 0xE0001002 };
 enum TCfgItem
 	{
 	ECfgGame = 0, ECfgCpu, ECfgSkip, ECfgIlace, ECfgLight, ECfgBlend,
-	ECfgPixSkip, ECfgGteNf, ECfgSound, ECfgGl, ECfgCount
+	ECfgPixSkip, ECfgGteNf, ECfgSound, ECfgGl, ECfgDirty, ECfgDsa, ECfgCount
 	};
 
 _LIT(KCfgPath, "E:\\ps1_settings.txt");
@@ -69,6 +71,7 @@ public:
 	void Save() const;
 	TInt &Value(TInt aItem);
 	TInt iGame, iInterp, iSkip, iIlace, iLight, iBlend, iPixSkip, iGteNf, iSound, iGl;
+	TInt iDirty, iDsa;
 	};
 
 void TPs1Cfg::SetDefaults()
@@ -78,6 +81,12 @@ void TPs1Cfg::SetDefaults()
 	// без затінення, і це не пришвидшення, а брак. Вимкнути можна тут же.
 	iLight = iBlend = 1;
 	iSound = 1;
+	// Показ за латчем gpulib: заміряно -6,7 мс на кадр без втрати картинки.
+	iDirty = 1;
+	// Прямий запис у буфер екрана: заміряно -0,93 мс на кадр. Ламався він через
+	// Update() без регіону (bitgdi не знав про наш запис, тож нічого не проштовхував);
+	// з явним регіоном картинка коректна - перевірено на N95 8GB.
+	iDsa = 1;
 	}
 
 TInt &TPs1Cfg::Value(TInt aItem)
@@ -93,6 +102,8 @@ TInt &TPs1Cfg::Value(TInt aItem)
 		case ECfgGteNf:   return iGteNf;
 		case ECfgSound:   return iSound;
 		case ECfgGl:      return iGl;
+		case ECfgDirty:   return iDirty;
+		case ECfgDsa:     return iDsa;
 		default:          return iGame;
 		}
 	}
@@ -128,8 +139,8 @@ void TPs1Cfg::Save() const
 	if (f.Replace(fs, KCfgPath, EFileWrite | EFileShareAny) == KErrNone)
 		{
 		TBuf8<128> b;
-		b.Format(_L8("%d %d %d %d %d %d %d %d %d %d\n"), iGame, iInterp, iSkip,
-			iIlace, iLight, iBlend, iPixSkip, iGteNf, iSound, iGl);
+		b.Format(_L8("%d %d %d %d %d %d %d %d %d %d %d %d\n"), iGame, iInterp, iSkip,
+			iIlace, iLight, iBlend, iPixSkip, iGteNf, iSound, iGl, iDirty, iDsa);
 		f.Write(b);
 		f.Close();
 		}
@@ -177,7 +188,13 @@ void CPs1Container::ConstructL(const TRect &aRect)
 	ScanImagesL();
 	iCfg.Load();
 	if (iCfg.iGame >= iImages->Count()) iCfg.iGame = 0;
-	iMenu = ETrue;
+	// Меню лише при запуску з апарата. Із аргументами (деплой, бенчмарк) параметри
+	// задає командний рядок, і stage1 розбирає її сам - меню тут чекало б натискання,
+	// якого в записаному сліді вводу немає, і прогін стояв би до вбивства демоном.
+	TBuf<256> cl;
+	User::CommandLine(cl);
+	cl.Trim();
+	iMenu = (cl.Length() == 0);
 	ActivateL();
 	}
 
@@ -249,6 +266,12 @@ void CPs1Container::ItemText(TInt aItem, TDes &aOut) const
 		default:
 			aOut.Format(_L("GL output:   %S"), c.iGl ? &KOn() : &KOff());
 			break;
+		case ECfgDirty:
+			aOut.Format(_L("Skip repeats:%S"), c.iDirty ? &KOn() : &KOff());
+			break;
+		case ECfgDsa:
+			aOut.Format(_L("Direct draw: %S"), c.iDsa ? &KOn() : &KOff());
+			break;
 		}
 	}
 
@@ -276,7 +299,17 @@ void CPs1Container::Draw(const TRect & /*aRect*/) const
 	gc.DrawText(_L("PS1Emulator"), TPoint(r.iTl.iX + 6, y));
 	y += lh + 2;
 
-	for (TInt i = 0; i < ECfgCount; i++)
+	// Список прокручуємо: пунктів більше, ніж влазить у 240 рядків екрана, і без
+	// цього нижні просто зникали. Вікно тримаємо навколо вибраного пункту.
+	const TInt avail = r.iBr.iY - y - lh - 6;      // мінус рядок підказки внизу
+	TInt visible = avail > 0 ? avail / lh : ECfgCount;
+	if (visible > ECfgCount) visible = ECfgCount;
+	if (visible < 1) visible = 1;
+	TInt first = iSel - visible / 2;
+	if (first > ECfgCount - visible) first = ECfgCount - visible;
+	if (first < 0) first = 0;
+
+	for (TInt i = first; i < first + visible; i++)
 		{
 		TBuf<80> line;
 		ItemText(i, line);
@@ -295,7 +328,13 @@ void CPs1Container::Draw(const TRect & /*aRect*/) const
 
 	y += 4;
 	gc.SetPenColor(TRgb(0x90, 0x90, 0x90));
-	gc.DrawText(_L("left/right change, OK starts, C exits"), TPoint(r.iTl.iX + 6, y));
+	TBuf<64> hint;
+	if (visible < ECfgCount)
+		hint.Format(_L("%d-%d/%d  L/R change, OK start, C exit"),
+			first + 1, first + visible, ECfgCount);
+	else
+		hint.Copy(_L("left/right change, OK starts, C exits"));
+	gc.DrawText(hint, TPoint(r.iTl.iX + 6, y));
 	gc.DiscardFont();
 	}
 
@@ -312,7 +351,8 @@ void CPs1Container::ApplyAndStart()
 	TBuf8<256> path8;
 	path8.Copy(path);
 	ps1CfgApply((const char *)path8.PtrZ(), iCfg.iInterp, iCfg.iSkip, iCfg.iIlace,
-		iCfg.iLight, iCfg.iBlend, iCfg.iPixSkip, iCfg.iGteNf, iCfg.iSound, iCfg.iGl);
+		iCfg.iLight, iCfg.iBlend, iCfg.iPixSkip, iCfg.iGteNf, iCfg.iSound, iCfg.iGl,
+		iCfg.iDirty, iCfg.iDsa);
 	iMenu = EFalse;
 	}
 
@@ -367,6 +407,14 @@ TKeyResponse CPs1Container::OfferKeyEventL(const TKeyEvent &aKeyEvent, TEventCod
 	if (aType == EEventKeyDown && aKeyEvent.iScanCode == EStdKeyDevice1)
 		{
 		CEikonEnv::Static()->EikAppUi()->HandleCommandL(EEikCmdExit);
+		return EKeyWasConsumed;
+		}
+
+	// Ліва софт-клавіша - знімок екрана на вимогу. Ставити його ПІСЛЯ блоку
+	// гучності не можна: там # і * уже поглинаються, і обробник не дістає керування.
+	if (aType == EEventKeyDown && aKeyEvent.iScanCode == EStdKeyDevice0)
+		{
+		ps1ScreenShot();
 		return EKeyWasConsumed;
 		}
 
@@ -484,6 +532,10 @@ TInt CPs1AppUi::Tick()
 	if (!iStarted)
 		{
 		iStarted = ETrue;
+		// Перечіпляємо вивід: DSA піднімається саме тут, а прапорець із меню
+		// приходить у ps1CfgApply уже ПІСЛЯ первинної прив'язки в ConstructL.
+		// Без цього "Direct draw: on" подіяв би лише з наступного запуску.
+		AttachOutput();
 		if (ps1GuiSetup() != KErrNone)
 			{
 			ps1Log("gui", "emu setup failed - exiting");
