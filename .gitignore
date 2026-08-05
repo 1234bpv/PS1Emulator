@@ -11,6 +11,9 @@ pcsx_rearmed/
 *.bin
 *.cue
 *.chd
+*.cbn
+*.cbin
+*.pbp
 
 # Логи EKA2L1, якщо його випадково запустили з кореня проєкту
 EKA2L1*.log

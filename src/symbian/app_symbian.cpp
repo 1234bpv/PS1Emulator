@@ -397,16 +397,21 @@ TBool CPs1Container::AutoPickGameL()
 // --- Файловий огляд ---------------------------------------------------------
 
 // .cue не показуємо: cdriso виводить його з .bin за розширенням, і окремий пункт
-// лише плутав би. .pbp ядро відкриває напряму.
+// лише плутав би. Стиснуті образи ядро відкриває саме: .pbp блоками по 16 секторів,
+// .cbn/.cbin (контейнер CISO) - посекторно. CHD не підтримано: HAVE_CHD не задано.
 static TBool isImageName(const TDesC &aName)
 	{
 	if (aName.Length() < 5)
 		return EFalse;
 	TBuf<8> ext;
+	ext.Copy(aName.Right(5));
+	ext.LowerCase();
+	if (ext == _L(".cbin"))
+		return ETrue;
 	ext.Copy(aName.Right(4));
 	ext.LowerCase();
 	return ext == _L(".bin") || ext == _L(".img") || ext == _L(".iso") ||
-	       ext == _L(".pbp");
+	       ext == _L(".pbp") || ext == _L(".cbn");
 	}
 
 void CPs1Container::ScanDirL()
