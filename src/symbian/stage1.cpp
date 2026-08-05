@@ -22,6 +22,8 @@ extern "C" {
 // заголовках. cdra_open робить ISOopen(GetIsoFile) - саме воно відкриває образ.
 int cdra_init(void);
 int cdra_open(void);
+int cdra_readTrack(const unsigned char *time);
+void cdra_close(void);
 int CheckCdrom(void);
 }
 
@@ -262,7 +264,12 @@ extern unsigned int g_gpulibStatusLast;
 extern unsigned long long g_gpulibRenderTicks;
 // Час мікшування SPU (тики FastCounter) - відділяє звук від CPU всередині "emu".
 extern unsigned long long g_spuMixTicks;
+// Час читання сектора з образу (тики FastCounter) разом з розпакуванням, якщо
+// образ стиснений, і кількість читань - ціна формату образу всередині "emu".
+extern unsigned long long g_cdReadTicks;
+extern unsigned int g_cdReadCount;
 unsigned int ndrc_symbian_fastfreq(void);
+unsigned int ndrc_symbian_fastcount(void);
 unsigned int ndrc_symbian_tcbase(void);
 }
 
@@ -861,6 +868,8 @@ static TInt passSetup(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTes
 	g_gpulibStatusLast = 0;
 	g_gpulibRenderTicks = 0;
 	g_spuMixTicks = 0;
+	g_cdReadTicks = 0;
+	g_cdReadCount = 0;
 
 	// Мінімальний еквівалент emu_core_preinit() з frontend/main.c:435.
 	memset(&Config, 0, sizeof(Config));
@@ -1401,17 +1410,18 @@ static void passTeardown()
 	const unsigned freq = ndrc_symbian_fastfreq();
 	const unsigned gpuRasterMs = (unsigned)(g_gpulibRenderTicks * 1000ULL / (freq ? freq : 1));
 	const unsigned spuMixMs = (unsigned)(g_spuMixTicks * 1000ULL / (freq ? freq : 1));
+	const unsigned cdReadMs = (unsigned)(g_cdReadTicks * 1000ULL / (freq ? freq : 1));
 	unsigned blitFillMs = 0, blitPresentMs = 0;
 	voutSymbianBlitSplit(&blitFillMs, &blitPresentMs);
 	logEvent("profile", NULL,
-		"%s: total=%ums poll=%ums(%u%%) emu=%ums(%u%%) blit=%ums(%u%%) snd=%ums(%u%%) gpuRaster=%ums(%u%% of emu) spuMix=%ums blitFill=%ums blitPresent=%ums frames=%u",
+		"%s: total=%ums poll=%ums(%u%%) emu=%ums(%u%%) blit=%ums(%u%%) snd=%ums(%u%%) gpuRaster=%ums(%u%% of emu) spuMix=%ums cdRead=%ums(%u reads) blitFill=%ums blitPresent=%ums frames=%u",
 		mode, (unsigned)tTot,
 		(unsigned)tPoll, (unsigned)(tPoll * 100 / den),
 		(unsigned)tEmu,  (unsigned)(tEmu * 100 / den),
 		(unsigned)tBlit, (unsigned)(tBlit * 100 / den),
 		(unsigned)tSnd,  (unsigned)(tSnd * 100 / den),
 		gpuRasterMs, (unsigned)(tEmu ? gpuRasterMs * 100 / tEmu : 0),
-		spuMixMs, blitFillMs, blitPresentMs,
+		spuMixMs, cdReadMs, g_cdReadCount, blitFillMs, blitPresentMs,
 		(unsigned)aProduced);
 	logEvent("dsa", NULL, "%s: active=%d gl=%d fbPlatform=%d", mode,
 		voutSymbianDsaActive(), voutSymbianGlActive(), voutSymbianFbFromPlatform());
@@ -1826,6 +1836,56 @@ static TInt runStage1()
 // Оболонка AVKON (app_symbian.cpp). Не повертається, доки застосунок не закрито.
 extern "C" int ps1AppRun(void);
 
+// Зонд вартості читання сектора. Кадровий прогін для порівняння форматів образу
+// не годиться: cdRead там ~5 с із 175, і денний розкид самого апарата (той самий
+// .bin давав 3950 і 5504 мс) більший за різницю між форматами. Тут емуляції немає
+// зовсім, тож міряється рівно читання плюс розпакування.
+// Крок 1 - послідовно (кеш блока влучає), великий крок - кожне читання в новий
+// блок, тобто гірша межа.
+static void cdBenchPass(const char *aPath, TInt aCount, TInt aStride)
+	{
+	g_cdReadTicks = 0;
+	g_cdReadCount = 0;
+	TInt ok = 0, fail = 0;
+	const unsigned int t0 = ndrc_symbian_fastcount();
+	for (TInt i = 0; i < aCount; i++)
+		{
+		const TInt s = i * aStride + 150;
+		unsigned char msf[3];
+		msf[0] = (unsigned char)(s / (60 * 75));
+		msf[1] = (unsigned char)((s / 75) % 60);
+		msf[2] = (unsigned char)(s % 75);
+		if (cdra_readTrack(msf) < 0)
+			fail++;
+		else
+			ok++;
+		}
+	const unsigned int dt = ndrc_symbian_fastcount() - t0;
+	const unsigned freq = ndrc_symbian_fastfreq();
+	const unsigned d = freq ? freq : 1;
+
+	logEvent("cdbench", fail ? "READ_FAIL" : NULL,
+		"%s stride=%d: ok=%d fail=%d wall=%ums us/read=%u inner=%ums(%u reads)",
+		aPath, (int)aStride, ok, fail,
+		(unsigned)((TUint64)dt * 1000 / d),
+		(unsigned)(ok ? (TUint64)dt * 1000000 / d / ok : 0),
+		(unsigned)(g_cdReadTicks * 1000ULL / d), g_cdReadCount);
+	}
+
+// Відкриваємо образ один раз на запуск: повторний cdra_init/cdra_open на вже
+// відкритому образі ISOopen відхиляє ("it's already open").
+static void cdBench(const char *aPath)
+	{
+	SetIsoFile(aPath);
+	if (cdra_init() != 0)
+		{ logEvent("cdbench", "INIT_FAIL", "%s", aPath); return; }
+	if (cdra_open() != 0)
+		{ logEvent("cdbench", "OPEN_FAIL", "%s", aPath); return; }
+	cdBenchPass(aPath, 20000, 1);
+	cdBenchPass(aPath, 2000, 37);
+	cdra_close();
+	}
+
 GLDEF_C TInt E32Main()
 	{
 	g_startTick = User::NTickCount();
@@ -1846,6 +1906,29 @@ GLDEF_C TInt E32Main()
 	const TBool gui = (cl.Length() == 0) || (cl.FindF(KGuiArg) != KErrNotFound);
 	logEvent("boot", NULL, "stage1 starting, mode=%s args=\"%s\"",
 		gui ? "gui" : "console", (const char *)cl8.PtrZ());
+
+	// "cdbench imgX cdbench imgY ..." не буває: один образ на запуск, шлях з img.
+	_LIT(KCdBenchArg, "cdbench");
+	if (cl.FindF(KCdBenchArg) != KErrNotFound)
+		{
+		_LIT(KImgA, "img");
+		const TInt ip = cl.FindF(KImgA);
+		TBuf<64> p(_L("E:\\"));
+		if (ip != KErrNotFound)
+			{
+			TPtrC nm = cl.Mid(ip + 3);
+			const TInt sp2 = nm.Locate(' ');
+			if (sp2 >= 0)
+				nm.Set(nm.Left(sp2));
+			p.Append(nm.Left(p.MaxLength() - p.Length()));
+			}
+		else
+			p.Copy(_L("E:\\gt.bin"));
+		TBuf8<64> p8;
+		p8.Copy(p);
+		cdBench((const char *)p8.PtrZ());
+		return KErrNone;
+		}
 
 	if (gui)
 		{
@@ -1894,6 +1977,26 @@ GLDEF_C TInt E32Main()
 		_LIT(KNoSndArg, "nosnd");
 		if (cl.FindF(KNoSndArg) != KErrNotFound)
 			g_noSound = ETrue;
+		// Образ диска для прогону: "img<файл>" бере E:\<файл> замість KDiscImg.
+		// Меню сюди не дістає (ps1CfgApply у консольній гілці не викликається), а
+		// порівняння форматів образу одним слідом вводу інакше не зняти.
+		_LIT(KImgArg, "img");
+		const TInt imp = cl.FindF(KImgArg);
+		if (imp != KErrNotFound)
+			{
+			TPtrC nm = cl.Mid(imp + 3);
+			const TInt sp = nm.Locate(' ');
+			if (sp >= 0)
+				nm.Set(nm.Left(sp));
+			TBuf<64> p(_L("E:\\"));
+			p.Append(nm.Left(p.MaxLength() - p.Length()));
+			TBuf8<64> p8;
+			p8.Copy(p);
+			const TInt n = p8.Length();
+			for (TInt i = 0; i < n; i++)
+				g_discPath[i] = (char)p8[i];
+			g_discPath[n] = 0;
+			}
 		_LIT(KPixSkipArg, "pixskip");
 		if (cl.FindF(KPixSkipArg) != KErrNotFound)
 			g_hackPixelSkip = 1;
