@@ -6,6 +6,7 @@
 #   deploy_net.ps1 -Ip 192.168.1.50 -PutFile <local> -Remote <devpath>
 #   deploy_net.ps1 -Ip 192.168.1.50 -Run "E:\sys\bin\ps1stage1.exe 300"
 #   deploy_net.ps1 -Ip 192.168.1.50 -GetFile <devpath> -OutFile <local>
+#   deploy_net.ps1 -Ip 192.168.1.50 -DelFile "E:\a.tmp,E:\b.tmp"
 #   deploy_net.ps1 -Ip ... -Cycle -PutFile <exe> -Remote <devpath> -Run "<cmdline>" `
 #                  -GetFile <devlog> -OutFile <local>   # push -> run -> pull, in order
 #
@@ -22,6 +23,9 @@ param(
     [string]$Run,
     [string]$GetFile,
     [string]$OutFile,
+    # One or more device paths to delete, comma-separated. Runs last, so a cycle
+    # can pull a log and then drop the scratch files it came from.
+    [string]$DelFile,
     [switch]$Cycle,
     [int]$RunTimeoutSec = 180
 )
@@ -176,6 +180,18 @@ function Do-Run($stream, [string]$cmdline, [int]$timeoutSec) {
     else { throw "RUN failed: $resp" }
 }
 
+function Do-Del($stream, [string]$remote) {
+    foreach ($r in ($remote -split ',')) {
+        $t = $r.Trim()
+        if (-not $t) { continue }
+        Write-Host "[net] DEL $t"
+        Send-Text $stream ("DEL {0}`n" -f $t)
+        $resp = Read-Line $stream
+        # Not fatal: deleting something already gone is the normal cleanup case.
+        if (-not $resp.StartsWith("OK")) { Write-Host "[net] DEL $t -> $resp" }
+    }
+}
+
 function Do-Get($stream, [string]$remote, [string]$out) {
     Write-Host "[net] GET $remote -> $out"
     Send-Text $stream ("GET {0}`n" -f $remote)
@@ -219,6 +235,7 @@ try {
     if ($PutFile -and $HashRemote)  { Do-PutHash $stream $PutFile $HashRemote }
     if ($Run)                       { Do-Run $stream $Run $RunTimeoutSec }
     if ($GetFile -and $OutFile)     { Do-Get $stream $GetFile $OutFile }
+    if ($DelFile)                   { Do-Del $stream $DelFile }
 
     Send-Text $stream "BYE`n"
     try { [void](Read-Line $stream) } catch {}

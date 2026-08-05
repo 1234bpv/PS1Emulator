@@ -31,6 +31,8 @@
 #include <commdb.h>
 #include <cdbcols.h>
 #include <commdbconnpref.h>
+#include <w32std.h>
+#include <apgwgnam.h>
 
 static const TInt  KPort       = 2323;
 static const TInt  KChunk      = 8192;
@@ -240,6 +242,26 @@ static void cmdGet(RSocket &aSock, const TDesC8 &aArgs)
     say(s);
     }
 
+// "DEL <шлях>". Без неї тимчасовий файл з картки можна лише перезаписати порожнім,
+// а місце під образи диска рахується гігабайтами.
+static void cmdDel(RSocket &aSock, const TDesC8 &aArgs)
+    {
+    TFileName path;
+    path.Copy(aArgs);
+    path.TrimAll();
+
+    TInt r = g_fs.Delete(path);
+    if (r != KErrNone)
+        {
+        TBuf8<64> e; e.Format(_L8("ERR delete %d\n"), r);
+        reply(aSock, e);
+        return;
+        }
+    reply(aSock, _L8("OK 0\n"));
+    TBuf<KMaxFileName + 16> s; s.Format(_L("DEL %S ok"), &path);
+    say(s);
+    }
+
 // "RUN <exe> <аргументи>". Запускає процес і чекає завершення - ПК так дізнається,
 // що прогін скінчився й лог готовий. Радіо під час обчислення простоює.
 static void cmdRun(RSocket &aSock, const TDesC8 &aArgs)
@@ -302,6 +324,7 @@ static TBool serveOne(RSocket &aSock)
         if (cmd == _L8("PUT"))       cmdPut(aSock, args);
         else if (cmd == _L8("GET"))  cmdGet(aSock, args);
         else if (cmd == _L8("RUN"))  cmdRun(aSock, args);
+        else if (cmd == _L8("DEL"))  cmdDel(aSock, args);
         else if (cmd == _L8("BYE"))  { reply(aSock, _L8("BYE\n")); return ETrue; }
         else if (cmd == _L8("STOP")) { reply(aSock, _L8("BYE\n")); return EFalse; }
         else                         reply(aSock, _L8("ERR unknown\n"));
@@ -532,7 +555,26 @@ static void killOtherInstances()
             continue;
         if (p.Id() != myId && p.ExitType() == EExitPending)
             {
+            // Дочекатися справжньої смерті, а не 500 мс наосліп: доки процес
+            // живий, esock тримає його слухавий сокет, і новий демон крутився на
+            // Bind з -14 по колу, доки хтось не запускав його вручну.
+            TRequestStatus lg;
+            p.Logon(lg);
             p.Kill(0);
+            RTimer tmr;
+            if (tmr.CreateLocal() == KErrNone)
+                {
+                TRequestStatus tm;
+                tmr.After(tm, 5 * 1000000);
+                User::WaitForRequest(lg, tm);
+                if (lg != KRequestPending)
+                    { tmr.Cancel(); User::WaitForRequest(tm); }
+                else
+                    { p.LogonCancel(lg); User::WaitForRequest(lg); }
+                tmr.Close();
+                }
+            else
+                User::WaitForRequest(lg);
             killed++;
             }
         p.Close();
@@ -540,7 +582,167 @@ static void killOtherInstances()
     if (killed)
         {
         TBuf<64> s; s.Format(_L("killed %d stale instance(s)"), killed); say(s);
-        User::After(500 * 1000);   // дати ядру звільнити сокет/семафор
+        User::After(500 * 1000);   // семафору теж треба мить
+        }
+    }
+
+// Окремий потік: головний увесь час стоїть у User::WaitForRequest на сокеті, тож
+// подій вікна не бачить - через це демон не закривався ні з диспетчера завдань,
+// ні з клавіші. Тут - власна група вікон із підписом, яка на це відповідає.
+// Власна сесія ФС: лог головного потоку належить йому, а дескриптори на Symbian
+// між потоками не передаються. Без цього сліду минула спроба звелась до здогадів.
+static RFs   g_uiFs;
+static RFile g_uiLog;
+static TBool g_uiLogOk;
+
+static void uiSay(const TDesC8 &aMsg)
+    {
+    if (!g_uiLogOk)
+        return;
+    TBuf8<200> line;
+    line.Copy(aMsg.Left(180));
+    line.Append(_L8("\r\n"));
+    g_uiLog.Write(line);
+    g_uiLog.Flush();
+    }
+
+static void uiSayNum(const char *aTag, TInt aVal)
+    {
+    TBuf8<200> s;
+    s.Format(_L8("%s=%d"), aTag, aVal);
+    uiSay(s);
+    }
+
+static TInt watcherThread(TAny *)
+    {
+    CTrapCleanup *cleanup = CTrapCleanup::New();
+    if (!cleanup)
+        return KErrNoMemory;
+
+    if (g_uiFs.Connect() == KErrNone)
+        {
+        _LIT(KUiLog, "E:\\ps1_daemon_ui.log");
+        g_uiLogOk = (g_uiLog.Replace(g_uiFs, KUiLog, EFileWrite | EFileShareAny) == KErrNone);
+        }
+    uiSay(_L8("watcher start"));
+
+    RWsSession ws;
+    TInt r = ws.Connect();
+    uiSayNum("ws.Connect", r);
+    if (r != KErrNone)
+        { delete cleanup; return r; }
+
+    RWindowGroup grp(ws);
+    r = grp.Construct((TUint32)&grp, ETrue);
+    uiSayNum("grp.Construct", r);
+    if (r != KErrNone)
+        { ws.Close(); delete cleanup; return r; }
+    grp.EnableReceiptOfFocus(ETrue);
+
+    // Групі потрібне бодай одне вікно, інакше вона не може дістати фокус: подія
+    // EEventFocusGained не приходить ніколи, і клавіші сюди не потрапляють. Тому
+    // ж диспетчер завдань не бачив у ній цілі. RBlankWindow - єдиний тип, який не
+    // вимагає обробки перемальовування. Один піксель у кутку.
+    RBlankWindow win(ws);
+    TInt wr = win.Construct(grp, (TUint32)&win);
+    uiSayNum("win.Construct", wr);
+    if (wr == KErrNone)
+        {
+        win.SetExtent(TPoint(0, 0), TSize(1, 1));
+        win.SetColor(KRgbBlack);
+        win.Activate();
+        }
+    // SetOrdinalPosition(-1) тут БУЛО і воно шкодило: група виходила з нормального
+    // z-порядку разом із втратою права бути ціллю диспетчера. Вікно на один піксель
+    // фокус саме по собі не забирає, тож ховати групу більше не треба.
+
+    // Підпис у списку завдань. RespondsToShutdownEvent - саме за ним диспетчер
+    // вирішує, чи слати EEventUser; AppUid - за ним він будує сам запис у списку.
+    const TUid KUidDaemon = { 0xE0001004 };   // той самий, що в daemon.mmp
+    CApaWindowGroupName *wgn = NULL;
+    TRAPD(err, wgn = CApaWindowGroupName::NewL(ws));
+    uiSayNum("wgname", err);
+    if (err == KErrNone && wgn)
+        {
+        wgn->SetAppUid(KUidDaemon);
+        wgn->SetSystem(EFalse);
+        wgn->SetHidden(EFalse);
+        wgn->SetRespondsToShutdownEvent(ETrue);
+        TRAP_IGNORE(wgn->SetCaptionL(_L("PS1 deploy daemon")));
+        uiSayNum("setname", wgn->SetWindowGroupName(grp));
+        delete wgn;
+        }
+
+    TInt reason = 0;
+    TBool focused = EFalse;
+    for (;;)
+        {
+        TRequestStatus st;
+        ws.EventReady(&st);
+        User::WaitForRequest(st);
+        TWsEvent e;
+        ws.GetEvent(e);
+        const TInt t = e.Type();
+
+        // Кожна подія в лог: якщо закриття знову не спрацює, буде видно, чи
+        // диспетчер узагалі щось шле і що саме.
+        TBuf8<64> ev;
+        ev.Format(_L8("ev=%d focused=%d"), t, (TInt)focused);
+        uiSay(ev);
+
+        if (t == EEventFocusGained) { focused = ETrue;  continue; }
+        if (t == EEventFocusLost)   { focused = EFalse; continue; }
+
+        if (t == EEventUser)                 // диспетчер завдань просить закритися
+            { reason = -1; break; }
+        // Клавіші - лише коли вікно спереду. Без цієї умови демон ловив чужі
+        // натискання й помер посеред заливки образу.
+        if (t == EEventKeyDown && focused)
+            {
+            const TInt sc = e.Key()->iScanCode;
+            // Той самий набір, що й в емуляторі: права софт-клавіша, Esc, Backspace.
+            if (sc == EStdKeyDevice1 || sc == EStdKeyEscape || sc == EStdKeyBackspace)
+                { reason = sc; break; }
+            }
+        }
+
+    // Слід причини окремою сесією ФС: лог головного потоку чіпати звідси не можна.
+    // Без цього запису попереднє раптове зникнення демона довелось би вгадувати.
+    RFs rfs;
+    if (rfs.Connect() == KErrNone)
+        {
+        RFile rf;
+        _LIT(KWhy, "E:\\ps1_daemon_close.txt");
+        if (rf.Replace(rfs, KWhy, EFileWrite | EFileShareAny) == KErrNone)
+            {
+            TBuf8<64> s;
+            s.Format(_L8("closed by %s (%d), tick=%u\r\n"),
+                reason == -1 ? "task list" : "key", reason,
+                (unsigned)User::NTickCount());
+            rf.Write(s);
+            rf.Close();
+            }
+        rfs.Close();
+        }
+
+    grp.Close();
+    ws.Close();
+    delete cleanup;
+    // Головний потік стоїть на сокеті й вийти сам не може. Вбити процес тут
+    // безпечно рівно тому ж, чому це робить killOtherInstances() при перезапуску.
+    RDebug::RawPrint(_L8("ps1daemon: close requested, exiting"));
+    RProcess().Kill(KErrNone);
+    return KErrNone;
+    }
+
+static void startWatcher()
+    {
+    RThread t;
+    _LIT(KName, "ps1daemon_ui");
+    if (t.Create(KName, watcherThread, KDefaultStackSize, NULL, NULL) == KErrNone)
+        {
+        t.Resume();
+        t.Close();
         }
     }
 
@@ -548,6 +750,7 @@ static void mainL()
     {
     _LIT(KTitle, "PS1 deploy daemon");
     TRAP_IGNORE(g_console = Console::NewL(KTitle, TSize(KConsFullScreen, KConsFullScreen)));
+    startWatcher();
 
     User::LeaveIfError(g_fs.Connect());
     // Відкрити стійкий лог якнайраніше (одразу після ФС), щоб покрити весь старт.
@@ -601,7 +804,15 @@ static void mainL()
             TInetAddr addr;
             addr.SetPort(KPort);
             addr.SetAddress(KInetAddrAny);
-            lr = g_listener.Bind(addr);
+            // Порт може ще дотлівати після попереднього екземпляра - це дешевше
+            // перечекати тут, ніж розривати й піднімати з'єднання заново.
+            for (TInt attempt = 0; attempt < 10; attempt++)
+                {
+                lr = g_listener.Bind(addr);
+                if (lr != KErrInUse)
+                    break;
+                User::After(1000 * 1000);
+                }
             }
         if (lr == KErrNone)
             lr = g_listener.Listen(4);

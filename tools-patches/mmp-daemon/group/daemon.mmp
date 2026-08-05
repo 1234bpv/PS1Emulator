@@ -35,3 +35,6 @@ LIBRARY         efsrv.lib
 LIBRARY         esock.lib
 LIBRARY         insock.lib
 LIBRARY         commdb.lib
+// Група вікон із підписом: закриття з диспетчера завдань і з софт-клавіші.
+LIBRARY         ws32.lib
+LIBRARY         apgrfx.lib
