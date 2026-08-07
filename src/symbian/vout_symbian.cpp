@@ -250,6 +250,9 @@ static CDirectScreenAccess *g_dsa;
 static CFbsBitGc *g_dsaGc;
 static TBool g_dsaActive;
 static CActiveScheduler *g_dsaSched;   // ненульовий лише якщо його створив DSA
+// Чи можна крутити планувальник із блиту. У консольній гілці нікому більше цього
+// робити, у GUI - заборонено (реентрантність, те саме правило, що в snd_symbian).
+static TBool g_pumpAo = ETrue;
 
 // Прямий запис у буфер LCD (HAL): масштабуємо кадр одразу в екран, зливаючи fill
 // і present в один прохід (профіль показав: present - це bandwidth копії 150КБ,
@@ -433,11 +436,18 @@ static void dsaStartL()
 class TDsaObserver : public MDirectScreenAccess
 	{
 public:
-	void AbortNow(RDirectScreenAccess::TTerminationReasons) { g_dsaActive = EFalse; }
-	void Restart(RDirectScreenAccess::TTerminationReasons)
+	void AbortNow(RDirectScreenAccess::TTerminationReasons aR)
 		{
 		g_dsaActive = EFalse;
-		if (g_dsa) { TRAP_IGNORE(dsaStartL()); }
+		ps1LogFmt("dsa", "abort reason=%d", (int)aR);
+		}
+	void Restart(RDirectScreenAccess::TTerminationReasons aR)
+		{
+		g_dsaActive = EFalse;
+		TInt e = KErrNotReady;
+		if (g_dsa) { TRAP(e, dsaStartL()); }
+		ps1LogFmt("dsa", "restart reason=%d err=%d active=%d", (int)aR, (int)e,
+			(int)g_dsaActive);
 		}
 	};
 static TDsaObserver g_dsaObs;
@@ -878,10 +888,12 @@ static void glPresentFrame(const TUint8 *vbytes, TInt startByte,
 	const TUint _gc1 = User::FastCounter();
 	g_blitFillTicks += (unsigned)(_gc1 - _gc0);
 
-	// Летербокс зі збереженням пропорцій (аспект за повною висотою sh).
+	// Ціль 4:3 незалежно від розміру джерела - те саме правило, що на шляху блиту
+	// (пікселі PS1 не квадратні).
 	const TInt SW = g_glW, SH = g_glH;
-	TInt dstW = SW, dstH = sh * SW / sw;
-	if (dstH > SH) { dstH = SH; dstW = sw * SH / sh; }
+	TInt dstW = SW, dstH = SW * 3 / 4;
+	if (dstH > SH) { dstH = SH; dstW = SH * 4 / 3; }
+	if (dstW > SW) dstW = SW;
 	const TInt ox = (SW - dstW) / 2, oy = (SH - dstH) / 2;
 	const GLfloat u = (GLfloat)w / potW, v = (GLfloat)hf / potH;
 	const GLfloat x0 = (GLfloat)ox, y0 = (GLfloat)oy, x1 = (GLfloat)(ox + dstW), y1 = (GLfloat)(oy + dstH);
@@ -970,9 +982,10 @@ static TInt  g_fxaaMax = 31;         // верхній: понад нього н
 static TInt g_ovlOn;
 static TInt g_ovlFpsX10 = -1;
 static TInt g_ovlMsX10;
+static unsigned int g_presents;   // кадрів справді покладено на екран
 
-// Показувати накладку. Значення дає stage1: він рахує КАДРИ ЕМУЛЯЦІЇ, а сюди
-// доходить лише показаний кадр, тож лічити тут означало б міряти інше число.
+// Показувати накладку. Числа рахує stage1 за лічильником показаних кадрів
+// (voutSymbianPresents) і власним часом кадру.
 extern "C" void voutSymbianSetOverlay(int aOn)
 	{
 	g_ovlOn = aOn ? 1 : 0;
@@ -1074,8 +1087,12 @@ static void blitCurrent()
 	if (sh < 1) sh = 1;
 
 	// Пампимо планувальник (DSA abort/restart) до вибору цілі, щоб не писати в
-	// екран, який WS уже забрав.
-	if (g_useDsa && CActiveScheduler::Current())
+	// екран, який WS уже забрав. У GUI вимкнено (див. g_pumpAo): там кадр і так
+	// закінчується поверненням у планувальник, а на виході з меню цей блит іде
+	// ЗСЕРЕДИНИ обробника клавіші, і пампити звідси означає рекурсивно зайти в
+	// активний об'єкт подій вікна. Він після цього не переозброюється, і клавіші
+	// з фокусом більше не приходять узагалі - гра лишається живою, але глухою.
+	if (g_pumpAo && g_useDsa && CActiveScheduler::Current())
 		{ TInt _e; while (CActiveScheduler::RunIfReady(_e, CActive::EPriorityIdle)) { } }
 	// rgb24 у прямий буфер не пускаємо: та гілка пише 16-бітними словами й не
 	// перевірена на залізі, а помилка тут - запис повз буфер екрана.
@@ -1104,9 +1121,16 @@ static void blitCurrent()
 		return;
 		}
 
+	// Ціль - найбільший прямокутник 4:3, що вміщується в екран, і джерело
+	// розтягується в нього ЦІЛКОМ, яким би не був його розмір. Пікселі PS1 не
+	// квадратні: 256x240, 320x240, 512x240 і 640x480 - те саме зображення на весь
+	// екран телевізора, різна лише щільність. Аспект за розміром джерела давав у
+	// 256-піксельних режимах вузьку картинку посеред екрана (меню NFS, геймплей
+	// Colony Wars).
 	TInt dstW = SW;
-	TInt dstH = sh * SW / sw;
-	if (dstH > SH) { dstH = SH; dstW = sw * SH / sh; }
+	TInt dstH = SW * 3 / 4;
+	if (dstH > SH) { dstH = SH; dstW = SH * 4 / 3; }
+	if (dstW > SW) dstW = SW;
 	if (dstW < 1) dstW = 1;
 	if (dstH < 1) dstH = 1;
 	const TInt ox = (SW - dstW) / 2;
@@ -1548,7 +1572,16 @@ extern "C" void voutSymbianPresent(void)
 	g_lastShownH = g_vout.h;
 	g_voutPending = 0;
 	g_voutStale = 0;
+	g_presents++;
 	TRAP_IGNORE(blitCurrent());
+	}
+
+// Кадри, що справді потрапили на екран: усе, що вище повернулось достроково
+// (пропуск растеризації, "показувати лише змінене"), сюди не рахується. Саме це
+// число бачить око, і саме воно йде в накладку.
+extern "C" unsigned int voutSymbianPresents(void)
+	{
+	return g_presents;
 	}
 
 // Пауза виводу на час меню в грі. DSA знімаємо: поки він тримає екран, малювання
@@ -1566,15 +1599,20 @@ extern "C" void voutSymbianSuspend(int aOn)
 		g_pad &= g_padToggle;
 		if (g_dsa && g_dsaActive)
 			{ g_dsa->Cancel(); g_dsaActive = EFalse; }
+		ps1LogFmt("dsa", "suspend on dsa=%d", (int)(g_dsa != NULL));
 		return;
 		}
+	TInt se = KErrNone;
 	if (g_dsa && !g_dsaActive)
-		TRAP_IGNORE(dsaStartL());
+		TRAP(se, dsaStartL());
+	ps1LogFmt("dsa", "suspend off err=%d active=%d", (int)se, (int)g_dsaActive);
 	g_blitOx = -1;
 	g_voutPending = 1;
 	g_voutStale = 0;
+	TInt be = KErrNone;
 	if (g_bmp)
-		TRAP_IGNORE(blitCurrent());
+		TRAP(be, blitCurrent());
+	ps1LogFmt("dsa", "suspend done blit=%d", (int)be);
 	}
 
 extern "C" int voutSymbianFinish(int holdMs)
@@ -1654,6 +1692,13 @@ extern "C" void voutSymbianSetSmooth(int aOn)
 extern "C" void voutSymbianSetDsa(int aOn)
 	{
 	g_useDsa = aOn ? ETrue : EFalse;
+	}
+
+// Парне до ps1SndSetPumpAo: у GUI планувальник крутить оболонка, і робити це ще
+// й із блиту не можна.
+extern "C" void voutSymbianSetPumpAo(int aOn)
+	{
+	g_pumpAo = aOn ? ETrue : EFalse;
 	}
 
 // Увімкнути GL ES вивід (MBX). Викликати ДО voutSymbianInit.
@@ -1933,8 +1978,8 @@ extern "C" int voutSymbianScreenDump(const char *aPath)
 // означають помилку виводу, зіпсована VRAM - помилку растеризації.
 extern "C" void ps1ScreenShot(void)
 	{
-	const int sr = voutSymbianScreenDump("E:\\ps1_scrkey.bin");
-	const int vr = voutSymbianDump("E:\\ps1_vramkey.bin");
+	const int sr = voutSymbianScreenDump("E:\\PS1\\logs\\ps1_scrkey.bin");
+	const int vr = voutSymbianDump("E:\\PS1\\logs\\ps1_vramkey.bin");
 	ps1LogFmt("screen_dump",
 		"manual: scr=%d vram=%d vout=%d,%d,%d,%d off=%d rgb24=%d dsa=%d fbPlat=%d "
 		"fb=%dx%d stride=%dB pix=%d mode=%d",
