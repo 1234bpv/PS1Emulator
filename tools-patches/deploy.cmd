@@ -5,7 +5,6 @@ REM deploy.cmd - build, sign, deploy to the device and collect logs back.
 REM
 REM   deploy.cmd stage1          build core+gpu+stage1, sign, copy SIS to phone
 REM   deploy.cmd stage0          build stage0, sign, copy SIS to phone
-REM   deploy.cmd daemon          build+sign the WiFi deploy daemon, copy SIS to phone
 REM   deploy.cmd stage1 fast     copy the EXE only (needs the SIS installed once
 REM                              before, and the loader check lifted - see below)
 REM   deploy.cmd stage1 wifi [ip] [runargs]
@@ -18,10 +17,14 @@ REM                              Pass "scan" explicitly to force discovery. A st
 REM                              given/cached ip also falls back to a scan automatically.
 REM   deploy.cmd collect         pull *.jsonl and ps1_vram.bin off the phone
 REM
-REM Mass-storage modes (stage*, daemon, fast, collect) need the phone in "Mass
-REM storage" USB mode; the memory card then appears as a removable drive and is
-REM found automatically. The wifi mode needs the phone OFF mass storage and the
-REM daemon running instead.
+REM Mass-storage modes (stage*, fast, collect) need the phone in "Mass storage"
+REM USB mode; the memory card then appears as a removable drive and is found
+REM automatically. The wifi mode needs the phone OFF mass storage and the daemon
+REM running instead.
+REM
+REM The daemon itself lives one level up, in ..\..\SymbianDeployDaemon - it is
+REM shared with every other Symbian project here. Build and install it from
+REM there; this script only talks to it, through that project's deploy_net.ps1.
 REM
 REM Three traps this script exists to close, all of them silent failures that
 REM cost a debugging session each:
@@ -43,8 +46,13 @@ if "%TARGET%"=="" set TARGET=stage1
 
 if /i "%TARGET%"=="collect" goto :find_phone
 
-if /i not "%TARGET%"=="stage0" if /i not "%TARGET%"=="stage1" if /i not "%TARGET%"=="daemon" (
-  echo [deploy] unknown target "%TARGET%" - expected stage0, stage1, daemon or collect
+if /i "%TARGET%"=="daemon" (
+  echo [deploy] the daemon moved out: build it in ..\..\SymbianDeployDaemon
+  echo [deploy]   ..\..\SymbianDeployDaemon\tools\build.cmd
+  exit /b 2
+)
+if /i not "%TARGET%"=="stage0" if /i not "%TARGET%"=="stage1" (
+  echo [deploy] unknown target "%TARGET%" - expected stage0, stage1 or collect
   exit /b 2
 )
 
@@ -219,7 +227,7 @@ REM phone's own side too. Push -> launch -> pull, all headless.
 REM The removable-media hash lives on the SYSTEM drive C:\sys\hash\<name>, not on
 REM the card - the loader checks it there. The daemon runs on the phone, so it can
 REM reach C:; a PC in mass-storage mode cannot (that is why "fast" is deprecated).
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0deploy_net.ps1" ^
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0..\..\SymbianDeployDaemon\tools\deploy_net.ps1" ^
   -Ip %DIP% ^
   -PutFile "%RELDIR%\ps1%TARGET%.exe" -Remote "E:\sys\bin\ps1%TARGET%.exe" ^
   -HashRemote "C:\sys\hash\ps1%TARGET%.exe" ^

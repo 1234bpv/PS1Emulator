@@ -55,6 +55,8 @@ SymbianProjects/                         ← СПІЛЬНЕ для всіх Symb
 ├── S60_3rd_FP1/                          S60 3rd FP1 SDK (epoc32 tree) — EPOCROOT
 ├── toolchain/  CSL_Arm_Toolchain/ + gcce/ компілятори GCCE (3.4.3 + 4.6.3) + SETUP.md
 ├── firmware/   n95-8gb/ + nokia-701/     прошивки VPL (надає людина, легальний дамп)
+├── SymbianDeployDaemon/                  демон розгортання по WiFi + PC-клієнт
+│                                         (deploy_net.ps1); спільний для всіх проектів
 └── PS1Emulator/                          ← ЦЕЙ проект
     ├── CLAUDE.md  AGENTS.md               головні правила
     ├── pcsx-rearmed-symbian-port-plan.md  план (джерело правди по архітектурі)
