@@ -6,7 +6,7 @@
 ; objects to.
 &EN
 
-#{"PS1Emulator alpha 1.1"},(0xE0001002),1,1,0
+#{"PS1Emulator alpha 1.2"},(0xE0001002),1,2,0
 
 %{"PS1Emulator"}
 :"PS1Emulator"

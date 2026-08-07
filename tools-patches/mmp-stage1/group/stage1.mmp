@@ -30,9 +30,12 @@ EPOCHEAPSIZE    0x100000 0x2800000
 // випускає позаконтурні копії inline-віртуальних методів із заголовків MMF
 // (MDataSource/MDataSink), і лінк падає на TMMFMessage::Complete та
 // REComSession::DestroyedImplementation. Саме тому SDK його й вимикає.
+// Z7_ST: у LZMA SDK 24.x однопотоковий режим зветься так, а не _7ZIP_ST.
+// Другого рядка OPTION GCCE тут бути не може - він замінює цей, а не додає.
 OPTION GCCE     -march=armv6 -D__SIZEOF_POINTER__=4 -DP_HAVE_MMAP=0 \
                 -D__ORDER_LITTLE_ENDIAN__=1234 -D__ORDER_BIG_ENDIAN__=4321 \
-                -D__ORDER_PDP_ENDIAN__=3412 -D__BYTE_ORDER__=1234
+                -D__ORDER_PDP_ENDIAN__=3412 -D__BYTE_ORDER__=1234 -DZ7_ST=1 \
+                -DMY_CPU_LE=1 -DMY_CPU_32BIT=1
 
 // Мусить збігатися з pcsxcore.mmp: заголовки динареку читають цей макрос.
 MACRO           BASE_ADDR_DYNAMIC=1
@@ -46,6 +49,22 @@ SOURCE          app_symbian.cpp
 SOURCE          snd_symbian.cpp
 // Платформна заміна mmap(PROT_EXEC)/__clear_cache для динареку.
 SOURCE          ndrc_mem_symbian.cpp
+// Імпорт ігор: .cue -> PBP з обнуленим ECC, розпакування архівів.
+SOURCE          imgconv.cpp
+SOURCE          archive.cpp
+SOURCE          arc7z.cpp
+SOURCE          arcrar.cpp
+
+// LZMA SDK (public domain) - розбір заголовка .7z і потокове розпакування.
+SOURCEPATH      ..\..\..\src\lzma
+// 7zDec.c потрібен не заради розпакування даних (їх ми женемо потоково самі), а
+// тому, що заголовок .7z сам стиснений, і 7zArcIn.c розгортає його через
+// SzAr_DecodeFolder. Фільтри - звідти ж, для заголовків із ланцюгом кодерів.
+SOURCE          7zArcIn.c 7zBuf.c 7zCrc.c 7zCrcOpt.c 7zDec.c 7zStream.c
+SOURCE          CpuArch.c LzmaDec.c Lzma2Dec.c
+SOURCE          Bcj2.c Bra.c Bra86.c BraIA64.c Delta.c
+
+SOURCEPATH      ..\..\..\src\symbian
 
 // Звук: dfsound (портабельна гілка). spu.c втягує reverb/adsr/xa через #include.
 // NEON off (потребує ARMv7+__ARM_NEON__), ssat під HAVE_ARMV6 - безпечно для ARM11.
@@ -79,6 +98,9 @@ SOURCE          compat_snprintf.c
 SOURCE          compat_aeabi.c
 
 USERINCLUDE     ..\..\..\src\compat
+USERINCLUDE     ..\..\..\src\lzma
+// zlib: DEFLATE при збиранні .pbp і INFLATE при читанні .zip.
+USERINCLUDE     ..\..\..\pcsx_rearmed\deps\libchdr\deps\zlib-1.3.1
 USERINCLUDE     ..\..\..\pcsx_rearmed
 USERINCLUDE     ..\..\..\pcsx_rearmed\include
 USERINCLUDE     ..\..\..\pcsx_rearmed\libpcsxcore
