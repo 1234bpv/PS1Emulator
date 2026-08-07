@@ -18,6 +18,7 @@ extern "C" {
 #include "plugins.h"
 #include "psxcounters.h"
 #include "new_dynarec/new_dynarec.h"     // ndrc_g.hacks
+#include "sio.h"                         // LoadMcds
 // Привід CD: cdra_init/cdra_open (cdrom-async.c) і CheckCdrom (misc.c) не в наших
 // заголовках. cdra_open робить ISOopen(GetIsoFile) - саме воно відкриває образ.
 int cdra_init(void);
@@ -26,6 +27,9 @@ int cdra_readTrack(const unsigned char *time);
 void cdra_close(void);
 int CheckCdrom(void);
 }
+
+// Поза extern "C": інтерфейс імпорту - C++ (класи, посилання).
+#include "imgconv.h"
 
 // Скільки кадрів рахувати. Перевизначається першим аргументом командного рядка:
 // EKA2L1 передає його через --run "<exe>" "<args>". Лог потрапляє на хост лише
@@ -38,14 +42,11 @@ static const int KProgressEvery = 50;
 
 // Ядро складає шлях як "%s/%s" (psxmem.c:312) - пряма скісна в тексті навмисна,
 // це перевірка, чи ESTLIB приймає її замість зворотної.
-// Корінь картки E: замість C:\bios: демон розгортання (v1) не створює тек, а
-// E: точно існує й читабельний (туди ж пишеться лог). Дамп заливається на
-// E:\scph7502.bin.
-static const char KBiosDir[]  = "E:";
+static const char KBiosDir[]  = "E:\\PS1\\bios";
 static const char KBiosFile[] = "scph7502.bin";
 // Диск гри на картці: вказуємо на .bin (образ даних). cdriso сам знаходить .cue
 // заміною розширення (cdriso.c:359 parsecue) для розкладки доріжок.
-static const char KDiscImg[]  = "E:\\gt.bin";
+static const char KDiscImg[]  = "E:\\PS1\\games\\gt.bin";
 
 static FILE *g_log;
 static TUint g_startTick;
@@ -220,6 +221,7 @@ void ps1GpuSetCallbacks(unsigned int *frameCount, unsigned int *hcnt, int frames
 int voutSymbianDump(const char *path);
 int voutSymbianScreenDump(const char *path);
 int voutSymbianUpdates(void);
+unsigned int voutSymbianPresents(void);
 int voutSymbianGpulibUpdates(void);
 int voutSymbianShow(int holdMs);
 int voutSymbianInit(void);
@@ -253,6 +255,7 @@ void voutSymbianSetNoUpdate(int on);
 void voutSymbianSetSmooth(int on);
 void voutSymbianSetFxaa(int threshold, int max);
 void voutSymbianSetStats(int fpsX10, int msX10);
+void voutSymbianSetPumpAo(int on);
 static TBool g_fbVis;
 
 // Лічильники безпосередньо в gpulib: усі шляхи ядра (interp/drc) сходяться туди,
@@ -368,9 +371,18 @@ static const TInt KFpsWindowMs = 500;
 static TBool g_fpsOverlay;
 static TUint g_fpsWinTick;
 static TInt  g_fpsWinFrame;
+static TUint g_fpsWinShown;   // лічильник показаних кадрів на початку вікна
 
 // Образ диска, обраний у меню. Порожній - беремо KDiscImg.
 static char g_discPath[256];
+// Ім'я дампу BIOS у теці E:\PS1\bios (без шляху - його дає Config.BiosDir).
+// Порожнє означає типовий KBiosFile; задається з меню, зокрема окремо на гру.
+static char g_biosFile[64];
+
+// Вікно належить контейнеру CCoeControl і прив'язується до виведення ще до setup,
+// тож у GUI-режимі власного вікна не створюємо й не закриваємо. Оголошено тут,
+// бо від нього залежить частота діагностичних записів у сторожі (нижче).
+static TBool g_guiMode;
 
 static volatile TInt g_wdRun;    // 1, поки прохід хоче, щоб сторож жив
 static volatile TInt g_wdFired;  // 1, якщо сторож спрацював (спін довше ліміту)
@@ -442,8 +454,8 @@ static TInt watchdogThread(TAny *aArg)
 	TBool haveBeat = EFalse;
 	if (beatFs.Connect() == KErrNone)
 		{
-		_LIT(KBeatPath, "E:\\ps1_beat.jsonl");
-		_LIT(KBeatPrev, "E:\\ps1_beat_prev.jsonl");
+		_LIT(KBeatPath, "E:\\PS1\\logs\\ps1_beat.jsonl");
+		_LIT(KBeatPrev, "E:\\PS1\\logs\\ps1_beat_prev.jsonl");
 		beatFs.Delete(KBeatPrev);
 		beatFs.Rename(KBeatPath, KBeatPrev);
 		haveBeat = (beatFile.Replace(beatFs, KBeatPath, EFileWrite | EFileShareAny) == KErrNone);
@@ -504,7 +516,12 @@ static TInt watchdogThread(TAny *aArg)
 				(TUint)ndrc_dbg_slen, (TUint32)ndrc_dbg_out);
 			beatFile.Write(line);
 			beatFile.Flush();
-			nextBeatMs += 50;
+			// Кожен удар - це запис із Flush на картку пам'яті, тобто службова
+			// операція FAT посеред кадру. У полюванні на збій (консоль) 50 мс
+			// виправдані: після падіння процес живе десятки мілісекунд. У грі це
+			// 20 звернень до флеш-пам'яті щосекунди - рівно ті регулярні
+			// підфризування, які видно на геймплеї, тож там крок секундний.
+			nextBeatMs += g_guiMode ? 1000 : 50;
 
 			// Адреса збійної інструкції без обробника виключень. Той на цьому
 			// апараті не викликається, зате ядро лишає контекст збійного коду на
@@ -686,13 +703,28 @@ static void rotateLog(const TDesC &aPath, const TDesC &aPrev)
 	fs.Close();
 	}
 
+// Тека емулятора має існувати до першого fopen: ESTLIB тек не створює, і без
+// цього і лог, і образи мовчки не відкривались би на чистому апараті.
+void ps1EnsureDirs()
+	{
+	RFs fs;
+	if (fs.Connect() != KErrNone)
+		return;
+	fs.MkDirAll(_L("E:\\PS1\\games\\"));
+	fs.MkDirAll(_L("E:\\PS1\\bios\\"));
+	fs.MkDirAll(_L("E:\\PS1\\cfg\\"));
+	fs.MkDirAll(_L("E:\\PS1\\saves\\"));
+	fs.MkDirAll(_L("E:\\PS1\\logs\\"));
+	fs.Close();
+	}
+
 static void openLog()
 	{
-	_LIT(KLogPath, "E:\\ps1_stage1.jsonl");
-	_LIT(KLogPrev, "E:\\ps1_stage1_prev.jsonl");
+	_LIT(KLogPath, "E:\\PS1\\logs\\ps1_stage1.jsonl");
+	_LIT(KLogPrev, "E:\\PS1\\logs\\ps1_stage1_prev.jsonl");
 	rotateLog(KLogPath, KLogPrev);
 	// E: - змонтована карта пам'яті, тобто тека хоста: лог видно ззовні емулятора.
-	g_log = fopen("E:\\ps1_stage1.jsonl", "w");
+	g_log = fopen("E:\\PS1\\logs\\ps1_stage1.jsonl", "w");
 	if (!g_log)
 		g_log = fopen("C:\\ps1_stage1.jsonl", "w");
 	}
@@ -848,9 +880,6 @@ static TInt stackHighWater()
 	return (TInt)((TUint8 *)p - (TUint8 *)g_paintFrom);
 	}
 
-// Вікно належить контейнеру CCoeControl і прив'язується до виведення ще до setup,
-// тож у GUI-режимі власного вікна не створюємо й не закриваємо.
-static TBool g_guiMode;
 // Виставляє оболонка на виході користувача: цикл кадрів завершується штатно.
 static volatile TInt g_guiExit;
 
@@ -897,7 +926,12 @@ static TInt passSetup(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTes
 	if (aUseBios)
 		{
 		strcpy(Config.BiosDir, KBiosDir);
-		strcpy(Config.Bios[PSX_REGION_EU], KBiosFile);
+		// Один і той самий дамп у всі три слоти: регіон визначає CheckCdrom за
+		// диском, і класти файл лише в європейський слот означало б, що для
+		// японської гри BIOS мовчки не підхопиться.
+		const char *bios = g_biosFile[0] ? g_biosFile : KBiosFile;
+		for (int rg = 0; rg < PSX_REGION_COUNT; rg++)
+			strcpy(Config.Bios[rg], bios);
 		Config.PsxRegion = PSX_REGION_EU;
 
 		// SlowBoot=1: повний бут із заставкою (логотип SCE/PS). З 0 емулятор
@@ -942,11 +976,17 @@ static TInt passSetup(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTes
 	// робить fopen(fname) як основний образ, тож шлях має вказувати на .bin.
 	SetIsoFile(aUseDisc ? (g_discPath[0] ? g_discPath : KDiscImg) : NULL);
 
+	// Карти пам'яті. Ядро вантажить їх не саме - це робив frontend, який ми не
+	// беремо, тож досі збереження ігор мовчки нікуди не потрапляли.
+	strcpy(Config.Mcd1, "E:\\PS1\\saves\\card1.mcd");
+	strcpy(Config.Mcd2, "E:\\PS1\\saves\\card2.mcd");
+
 	if (EmuInit() == -1)
 		{
 		logEvent("fatal", "EMU_INIT_FAIL", "%s: EmuInit returned -1", mode);
 		return KErrGeneral;
 		}
+	LoadMcds(Config.Mcd1, Config.Mcd2);
 
 	// Ініціалізація приводу CD: ядро кличе cdra_init лише в LoadPlugins, який ми
 	// обходимо. CheckCdrom читає диск (регіон, boot-запис), як у frontend/main.c:684.
@@ -1044,6 +1084,7 @@ static TInt passSetup(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTes
 	// значення вийшло б утричі заниженим.
 	g_fpsWinTick = g_pass.tStart;
 	g_fpsWinFrame = 0;
+	g_fpsWinShown = voutSymbianPresents();   // лічильник живе через проходи
 	return KErrNone;
 	}
 
@@ -1058,7 +1099,7 @@ static TInt passSetup(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTes
 // розійшовся, повтор не точний, і всі висновки з нього нічого не варті.
 enum TInputMode { EInputOff = 0, EInputRecord, EInputPlay };
 static TInputMode g_inputMode;
-_LIT(KInputPath, "E:\\ps1_input.rec");
+_LIT(KInputPath, "E:\\PS1\\logs\\ps1_input.rec");
 
 static RFs g_recFs;
 static RFile g_recFile;
@@ -1080,7 +1121,7 @@ static void inputRecordOpen()
 	{
 	if (g_recFs.Connect() != KErrNone)
 		return;
-	_LIT(KInputPrev, "E:\\ps1_input_prev.rec");
+	_LIT(KInputPrev, "E:\\PS1\\logs\\ps1_input_prev.rec");
 	g_recFs.Delete(KInputPrev);
 	g_recFs.Rename(KInputPath, KInputPrev);
 	g_recOpen = (g_recFile.Replace(g_recFs, KInputPath, EFileWrite | EFileShareAny) == KErrNone);
@@ -1258,20 +1299,24 @@ static TBool passStep()
 	g_stage = EStageIdle;
 	g_pass.i++;
 
-	// Метрики для накладки. Рахуємо КАДРИ ЕМУЛЯЦІЇ, а не показані: при "Show every"
-	// показаних менше, і саме емуляційний темп є мірою швидкодії. Ділення тут два
-	// на пів секунди - на тлі кадру це нуль.
+	// Метрики для накладки. fps - ПОКАЗАНІ кадри: емуляційний темп залежить від
+	// множника тактів PS1 і росте там, де на екрані плавності не додається, тобто
+	// міряє не те, що видно. ms лишається часом на кадр емуляції - це ціна кадру,
+	// і саме з нею зіставні заміри в лозі. Ділення тут два на пів секунди.
 	if (g_fpsOverlay && g_pass.showScreen)
 		{
 		const TUint now = User::NTickCount();
 		const TUint dt = now - g_fpsWinTick;
 		const TInt  df = g_pass.i - g_fpsWinFrame;
+		const TUint shown = voutSymbianPresents();
 		if (df > 0 && dt >= (TUint)KFpsWindowMs)
 			{
-			voutSymbianSetStats((TInt)(((TUint)df * 10000 + dt / 2) / dt),
+			const TUint ds = shown - g_fpsWinShown;
+			voutSymbianSetStats((TInt)((ds * 10000 + dt / 2) / dt),
 			                    (TInt)((dt * 10 + (TUint)df / 2) / (TUint)df));
 			g_fpsWinTick = now;
 			g_fpsWinFrame = g_pass.i;
+			g_fpsWinShown = shown;
 			}
 		}
 
@@ -1294,13 +1339,13 @@ static TBool passStep()
 	if (g_pass.showScreen && (g_pass.i == g_dumpAt || g_pass.i == 6000))
 		{
 		char p[32];
-		snprintf(p, sizeof(p), "E:\\ps1_scr%d.bin", (int)g_pass.i);
+		snprintf(p, sizeof(p), "E:\\PS1\\logs\\ps1_scr%d.bin", (int)g_pass.i);
 		const int sr = voutSymbianScreenDump(p);
 		// Адресу пишемо ДО читання: якщо вона фізична, читання вб'є потік.
 		logEvent("screen_dump", sr ? "SCR_FAIL" : NULL, "frame=%d rc=%d halAddr=0x%x",
 			g_pass.i, sr, (unsigned)voutSymbianHalAddr());
 		// Той самий кадр із буфера за HAL-адресою: чи доїхав він до сканованого.
-		snprintf(p, sizeof(p), "E:\\ps1_hal%d.bin", (int)g_pass.i);
+		snprintf(p, sizeof(p), "E:\\PS1\\logs\\ps1_hal%d.bin", (int)g_pass.i);
 		const int hr = voutSymbianHalDump(p);
 		logEvent("hal_dump", hr ? "HAL_FAIL" : NULL, "frame=%d rc=%d", g_pass.i, hr);
 		// Візерунок відомо робочим шляхом + сирий дамп: розкладку буфера екрана
@@ -1309,7 +1354,7 @@ static TBool passStep()
 			{
 			int m = 0, t = 0, bad[4];
 			const int rb = voutSymbianReadBack(0, &m, &t, bad);
-			const int rr = voutSymbianRawDump("E:\\ps1_raw.bin", 0);
+			const int rr = voutSymbianRawDump("E:\\PS1\\logs\\ps1_raw.bin", 0);
 			logEvent("fb_pattern", NULL, "rb=%d match=%d/%d bad=%d,%d want=0x%x got=0x%x raw=%d",
 				rb, m, t, bad[0], bad[1], (unsigned)bad[2], (unsigned)bad[3], rr);
 			if (g_fbVis)
@@ -1325,7 +1370,9 @@ static TBool passStep()
 			}
 		}
 
-	if (g_pass.showScreen && (g_pass.i % 100) == 0)
+	// Той самий рахунок, що й для сторожа: кожен logEvent - це fflush на картку.
+	// Сто кадрів - це раз на три секунди гри, і саме на цьому кадрі йде затримка.
+	if (g_pass.showScreen && (g_pass.i % (g_guiMode ? 3000 : 100)) == 0)
 		{
 		int srcW = 0, srcH = 0, dstW = 0, dstH = 0, ox = 0, oy = 0;
 		voutSymbianGeom(&srcW, &srcH, &dstW, &dstH, &ox, &oy);
@@ -1439,6 +1486,16 @@ static void passTeardown()
 		logEvent("screen", NULL, "%s: presented %u frames, held %dms", mode,
 			(unsigned)aProduced, holdMs);
 		}
+
+	// Дзеркало passSetup у зворотному порядку. Ядро цього не робить: у фронтенді
+	// плагіни й привід закриває ClosePlugins, який ми обходимо (нема .so).
+	// Ключове тут - cdra_close: ISOopen першим рядком повертає 0, якщо образ уже
+	// відкрито ("it's already open"), тож без закриття наступний cdra_open мовчки
+	// НЕ відкриває новий диск. Гра після зміни диска діставала попередній образ із
+	// чужою таблицею доріжок - звідси й зависання на логотипі.
+	SPU_close();
+	ps1GpuClose();
+	cdra_close();
 
 	EmuShutdown();
 	}
@@ -1577,6 +1634,7 @@ extern "C" int ps1GuiSetup(void)
 	g_guiExit = 0;
 	g_watchdogMs = KPlayWatchdogMs;
 	ps1SndSetPumpAo(0);   // планувальник крутить CIdle між кадрами
+	voutSymbianSetPumpAo(0);
 	coreInitOnce();
 	const TInt frames = g_playFrames > 0 ? g_playFrames : KPlayFrames;
 	logEvent("start", NULL, "stage1 begin (gui), frames=%d cpu=%s input=%d", (int)frames,
@@ -1592,7 +1650,54 @@ extern "C" int ps1GuiSetup(void)
 
 extern "C" int ps1GuiStep(void)
 	{
+	if (!g_guiUp)
+		return 0;
 	return passStep() ? 1 : 0;
+	}
+
+// Перезапуск проходу в тому ж процесі: інший диск (або інша гілка процесора,
+// BIOS, звук, GL, DSA) вимагає повторної ініціалізації ядра. Саме так працює
+// консольна гілка - два проходи підряд, - тож пара teardown/setup перевірена.
+// VRAM, кеш трансляцій і SPU лишаються від coreInitOnce: вони на процес.
+//
+// Два окремі виклики, а не один: між ними оболонка мусить наново прив'язати
+// вивід. passTeardown відв'язує вікно (voutSymbianFinish), тож прив'язка ДО
+// нього пропадала - гра рахувала кадри, а на екрані лишався останній кадр
+// попередньої. Кликати лише з тіку CIdle, не з обробника клавіші: усередині є
+// і звук, і DSA.
+extern "C" void ps1GuiEndPass(void)
+	{
+	if (!g_guiUp)
+		return;
+	g_guiUp = EFalse;
+	passTeardown();
+	}
+
+extern "C" int ps1GuiStartPass(void)
+	{
+	g_guiExit = 0;
+	const TInt frames = g_playFrames > 0 ? g_playFrames : KPlayFrames;
+	const TInt rc = passSetup(!g_guiInterp, frames, ETrue /*bios*/, EFalse /*gputest*/,
+		ETrue /*screen*/, ETrue /*disc*/);
+	inputTraceOpen();
+	g_guiUp = (rc == KErrNone);
+	logEvent("game", rc ? "RESTART_FAIL" : NULL, "restart rc=%d disc=%s", (int)rc,
+		g_discPath[0] ? g_discPath : KDiscImg);
+	return rc;
+	}
+
+// Закриття гри посеред сеансу: образ, який зараз читає ядро, збираються стиснути,
+// а конвертер має його і прочитати, і видалити. Прохід згортаємо повністю - назад
+// його вже не підняти (VRAM і кеш трансляцій одні на процес), тож оболонка після
+// цього лишає в меню тільки вихід.
+extern "C" void ps1GuiCloseGame(void)
+	{
+	if (!g_guiUp)
+		return;
+	g_guiUp = EFalse;
+	g_guiExit = 1;
+	passTeardown();
+	logEvent("game", NULL, "closed: disc goes to import");
 	}
 
 extern "C" void ps1GuiShutdown(void)
@@ -1603,7 +1708,7 @@ extern "C" void ps1GuiShutdown(void)
 	passTeardown();
 
 	// Знімок VRAM для перевірки растеризації на хості (Етап 2).
-	const int dumpRc = voutSymbianDump("E:\\ps1_vram.bin");
+	const int dumpRc = voutSymbianDump("E:\\PS1\\logs\\ps1_vram.bin");
 	logEvent("vram_dump", dumpRc ? "DUMP_FAIL" : NULL, "rc=%d", dumpRc);
 
 	ps1GpuShutdown();   // парний до ps1GpuInit: звільняє VRAM після знімка
@@ -1640,7 +1745,7 @@ static void applyFxaaLevel(TInt aLevel)
 
 // Налаштування з меню. Викликається ДО ps1GuiSetup, тобто до будь-якої
 // ініціалізації ядра й растеризатора - інакше частина з них не подіє.
-extern "C" void ps1CfgApply(const char *aDisc, int aInterp,
+extern "C" void ps1CfgApply(const char *aDisc, const char *aBios, int aInterp,
 	int aIlace, int aLight, int aBlend, int aPixSkip, int aGteNf,
 	int aSound, int aGl, int aDirty, int aDsa, int aFps, int aGpuSkip, int aCycle,
 	int aSmooth, int aFxaa)
@@ -1652,6 +1757,14 @@ extern "C" void ps1CfgApply(const char *aDisc, int aInterp,
 		while (aDisc[i] && i < (TInt)sizeof(g_discPath) - 1)
 			{ g_discPath[i] = aDisc[i]; i++; }
 		g_discPath[i] = 0;
+		}
+	g_biosFile[0] = 0;
+	if (aBios && aBios[0])
+		{
+		TInt i = 0;
+		while (aBios[i] && i < (TInt)sizeof(g_biosFile) - 1)
+			{ g_biosFile[i] = aBios[i]; i++; }
+		g_biosFile[i] = 0;
 		}
 	g_guiInterp      = aInterp ? ETrue : EFalse;
 	g_hackIlace      = aIlace;
@@ -1673,6 +1786,7 @@ extern "C" void ps1CfgApply(const char *aDisc, int aInterp,
 		g_cycleMul = aCycle;
 	voutSymbianSetSmooth(aSmooth);
 	applyFxaaLevel(aFxaa);
+	logEvent("cfg_bios", NULL, "bios=%s", g_biosFile[0] ? g_biosFile : KBiosFile);
 	logEvent("cfg", NULL, "disc=%s interp=%d ilace=%d light=%d blend=%d "
 		"pixskip=%d gtenf=%d snd=%d gl=%d dirty=%d dsa=%d fps=%d gpuskip=%d cyclemul=%d "
 		"smooth=%d fxaa=%d",
@@ -1823,7 +1937,7 @@ static TInt runStage1()
 
 	// Знімок VRAM для перевірки растеризації на хості (Етап 2). Вивід на екран
 	// тепер живий, усередині runPass (кадр за кадром), а не одноразово тут.
-	const int dumpRc = voutSymbianDump("E:\\ps1_vram.bin");
+	const int dumpRc = voutSymbianDump("E:\\PS1\\logs\\ps1_vram.bin");
 	logEvent("vram_dump", dumpRc ? "DUMP_FAIL" : NULL, "rc=%d", dumpRc);
 
 	// Парний до ps1GpuInit(): звільняє VRAM після знімка (звідси - після дампу).
@@ -1889,6 +2003,7 @@ static void cdBench(const char *aPath)
 GLDEF_C TInt E32Main()
 	{
 	g_startTick = User::NTickCount();
+	ps1EnsureDirs();
 	openLog();
 
 	TBuf<256> cl;
@@ -1907,13 +2022,79 @@ GLDEF_C TInt E32Main()
 	logEvent("boot", NULL, "stage1 starting, mode=%s args=\"%s\"",
 		gui ? "gui" : "console", (const char *)cl8.PtrZ());
 
+	// Зонд імпорту: "conv img<файл>" бере E:\PS1\games\<файл> і збирає з нього
+	// .pbp поруч. Перевіряти конвертацію через меню наосліп неможливо, а тут
+	// результат можна забрати на хост і звірити psxpack.py.
+	_LIT(KConvArg, "conv");
+	if (cl.FindF(KConvArg) != KErrNotFound)
+		{
+		_LIT(KImgC, "img");
+		const TInt ip = cl.FindF(KImgC);
+		TFileName p(_L("E:\\PS1\\games\\"));
+		if (ip != KErrNotFound)
+			{
+			TPtrC nm = cl.Mid(ip + 3);
+			const TInt sp2 = nm.Locate(' ');
+			if (sp2 >= 0)
+				nm.Set(nm.Left(sp2));
+			p.Append(nm.Left(p.MaxLength() - p.Length()));
+			}
+		_LIT(KCopyArg, "storeas");
+		const TConvMode mode = (cl.FindF(KCopyArg) != KErrNotFound)
+			? EConvModeCopy : EConvModePbp;
+		// Консольна гілка йде до створення cleanup stack у runStage1, а TRAP без
+		// нього - паніка E32USER-CBase 69.
+		CTrapCleanup *cs = CTrapCleanup::New();
+		if (!cs)
+			return KErrNoMemory;
+		logEvent("conv", NULL, "probe entered");
+		// Тільки в купі: CDesCArrayFlat - C-клас, а вони на стеку не живуть.
+		CDesCArrayFlat *list = new CDesCArrayFlat(1);
+		if (!list)
+			{
+			delete cs;
+			return KErrNoMemory;
+			}
+		TRAPD(err, list->AppendL(p));
+		if (err != KErrNone)
+			{
+			delete list;
+			delete cs;
+			return err;
+			}
+		const TUint t0 = User::NTickCount();
+		TBuf8<KMaxFileName> p8;
+		p8.Copy(p);
+		logEvent("conv", NULL, "src=%s mode=%d", (const char *)p8.PtrZ(), (int)mode);
+		const TInt sr = ConvStart(*list, mode, EFalse, _L("E:\\PS1\\games\\"));
+		logEvent("conv", NULL, "start=%d", (int)sr);
+		TConvStat st;
+		st.iState = EConvRun;
+		while (sr == KErrNone && st.iState == EConvRun)
+			{
+			User::After(200000);
+			ConvStat(st);
+			}
+		ConvRelease();
+		TBuf8<64> msg8;
+		msg8.Copy(st.iMsg);
+		logEvent("conv", st.iState == EConvErr ? "CONV_FAIL" : NULL,
+			"state=%d pct=%d ms=%u msg=%s", (int)st.iState, (int)st.iPercent,
+			(unsigned)(User::NTickCount() - t0), (const char *)msg8.PtrZ());
+		delete list;
+		delete cs;
+		if (g_log)
+			fclose(g_log);
+		return KErrNone;
+		}
+
 	// "cdbench imgX cdbench imgY ..." не буває: один образ на запуск, шлях з img.
 	_LIT(KCdBenchArg, "cdbench");
 	if (cl.FindF(KCdBenchArg) != KErrNotFound)
 		{
 		_LIT(KImgA, "img");
 		const TInt ip = cl.FindF(KImgA);
-		TBuf<64> p(_L("E:\\"));
+		TBuf<64> p(_L("E:\\PS1\\games\\"));
 		if (ip != KErrNotFound)
 			{
 			TPtrC nm = cl.Mid(ip + 3);
@@ -1923,7 +2104,7 @@ GLDEF_C TInt E32Main()
 			p.Append(nm.Left(p.MaxLength() - p.Length()));
 			}
 		else
-			p.Copy(_L("E:\\gt.bin"));
+			p.Copy(_L("E:\\PS1\\games\\gt.bin"));
 		TBuf8<64> p8;
 		p8.Copy(p);
 		cdBench((const char *)p8.PtrZ());
@@ -1988,7 +2169,7 @@ GLDEF_C TInt E32Main()
 			const TInt sp = nm.Locate(' ');
 			if (sp >= 0)
 				nm.Set(nm.Left(sp));
-			TBuf<64> p(_L("E:\\"));
+			TBuf<64> p(_L("E:\\PS1\\games\\"));
 			p.Append(nm.Left(p.MaxLength() - p.Length()));
 			TBuf8<64> p8;
 			p8.Copy(p);
@@ -2095,7 +2276,7 @@ GLDEF_C TInt E32Main()
 		// його keepalive не працює, WiFi паркується і з'єднання рветься.
 		// За вмістом, а не за наявністю: демон уміє класти файли, але не видаляти,
 		// тож перемикати режим інакше можна було б лише в один бік.
-		_LIT(KModeMark, "E:\\ps1_interp.txt");
+		_LIT(KModeMark, "E:\\PS1\\logs\\ps1_interp.txt");
 		RFs markFs;
 		if (markFs.Connect() == KErrNone)
 			{
