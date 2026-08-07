@@ -7,6 +7,7 @@
 // ніколи не віддав би керування CONE, і ні клавіші, ні вихід не дійшли б сюди.
 
 #include <e32base.h>
+#include <basched.h>          // KLeaveExit
 #include <eikstart.h>
 #include <eikenv.h>
 #include <eikspane.h>
@@ -24,20 +25,26 @@
 #include <badesca.h>
 #include <gdi.h>
 
+#include "imgconv.h"
+
 extern "C" {
 int  ps1GuiSetup(void);
 int  ps1GuiStep(void);
 void ps1GuiShutdown(void);
 void ps1GuiRequestExit(void);
+void ps1GuiCloseGame(void);
+void ps1GuiEndPass(void);
+int  ps1GuiStartPass(void);
 void ps1Log(const char *aType, const char *aMsg);
 void ps1LogInt(const char *aType, const char *aMsg, int aVal);
+void ps1LogFmt(const char *aType, const char *aFmt, ...);
 int  ps1SndVolumeStep(int aDelta);
 int  ps1SndVolumeSteps(void);
 int  voutSymbianKeyEvent(int aScanCode, int aDown);
 int  voutSymbianFinish(int aHoldMs);
 int  voutSymbianGlActive(void);
 void ps1ScreenShot(void);
-void ps1CfgApply(const char *aDisc, int aInterp, int aIlace,
+void ps1CfgApply(const char *aDisc, const char *aBios, int aInterp, int aIlace,
 	int aLight, int aBlend, int aPixSkip, int aGteNf, int aSound, int aGl,
 	int aDirty, int aDsa, int aFps, int aGpuSkip, int aCycle, int aSmooth,
 	int aFxaa);
@@ -72,7 +79,7 @@ enum TCfgItem
 	// Пропуску ПОКАЗУ ("Show every") тут навмисно немає: він малює кадр і викидає
 	// його, тобто платить за дорогу частину. Заміряно -4,3% проти -22,5% у
 	// ECfgGpuSkip. Лишився як зонд командного рядка "showskip".
-	ECfgStart = 0, ECfgGame, ECfgProfile,
+	ECfgStart = 0, ECfgGame, ECfgAdd, ECfgBios, ECfgProfile,
 	ECfgLight, ECfgBlend, ECfgIlace, ECfgPixSkip, ECfgSmooth, ECfgFxaa,
 	ECfgDirty, ECfgDsa, ECfgGl,
 	ECfgCpu, ECfgGteNf, ECfgGpuSkip, ECfgCycle, ECfgFps,
@@ -92,7 +99,7 @@ static const TText *const KSecName[ESecCount] =
 
 static const unsigned char KItemSection[ECfgCount] =
 	{
-	ESecGame, ESecGame, ESecGame,
+	ESecGame, ESecGame, ESecGame, ESecGame, ESecGame,
 	ESecVideo, ESecVideo, ESecVideo, ESecVideo, ESecVideo, ESecVideo,
 	ESecVideo, ESecVideo, ESecVideo,
 	ESecSpeed, ESecSpeed, ESecSpeed, ESecSpeed, ESecSpeed,
@@ -103,7 +110,8 @@ static const unsigned char KItemSection[ECfgCount] =
 
 static const TText *const KItemLabel[ECfgCount] =
 	{
-	_S("Start"), _S("Game"), _S("Per-game profile"),
+	_S("Start"), _S("Game"), _S("Add games..."), _S("BIOS"),
+	_S("Per-game profile"),
 	_S("Lighting"), _S("Transparency"), _S("Skip lines"), _S("Pixel skip"),
 	_S("Smooth scale"), _S("Edge smooth"), _S("Skip repeats"), _S("Direct draw"),
 	_S("GL output"),
@@ -119,7 +127,7 @@ static const TText *const KItemLabel[ECfgCount] =
 // старий файл лишається придатним, відсутні ключі беруть типове значення.
 static const char *const KCfgKey[ECfgCount] =
 	{
-	NULL, NULL, "profile",
+	NULL, NULL, NULL, NULL, "profile",
 	"light", "blend", "ilace", "pixskip", "smooth", "fxaa",
 	"dirty", "dsa", "gl",
 	"cpu", "gtenf", "gpuskip", "cycle", "fps",
@@ -132,13 +140,15 @@ static const char *const KCfgKey[ECfgCount] =
 // у списку позначені зірочкою.
 static TBool restartOnly(TInt aItem)
 	{
-	return aItem == ECfgGame || aItem == ECfgCpu || aItem == ECfgGteNf ||
-	       aItem == ECfgSound || aItem == ECfgGl || aItem == ECfgDsa;
+	return aItem == ECfgGame || aItem == ECfgBios || aItem == ECfgCpu ||
+	       aItem == ECfgGteNf || aItem == ECfgSound || aItem == ECfgGl ||
+	       aItem == ECfgDsa;
 	}
 
 static TBool isCommand(TInt aItem)
 	{
-	return aItem == ECfgStart || aItem == ECfgGame || aItem == ECfgKeys ||
+	return aItem == ECfgStart || aItem == ECfgGame || aItem == ECfgAdd ||
+	       aItem == ECfgBios || aItem == ECfgKeys ||
 	       aItem == ECfgReset || aItem == ECfgExit;
 	}
 
@@ -152,9 +162,12 @@ const TInt KCycleStep = 25;
 // Із запасом до кількості кнопок, яку віддає vout: розкладка описана там.
 const TInt KPadMax = 16;
 
-_LIT(KCfgPath, "E:\\ps1_settings.txt");
-_LIT(KProfDir, "E:\\ps1cfg\\");
-_LIT(KImgDir, "E:\\");
+// Єдина тека емулятора. Усе, що він читає й пише, лежить під нею: інакше корінь
+// картки заростав файлами, і які з них стосуються якої гри, ззовні не видно.
+_LIT(KCfgPath, "E:\\PS1\\cfg\\ps1_settings.txt");
+_LIT(KProfDir, "E:\\PS1\\cfg\\");
+_LIT(KImgDir,  "E:\\PS1\\games\\");
+_LIT(KBiosDir, "E:\\PS1\\bios\\");
 
 class TPs1Cfg
 	{
@@ -164,6 +177,10 @@ public:
 	TInt iInterp, iIlace, iLight, iBlend, iPixSkip, iGteNf, iSound, iGl;
 	TInt iDirty, iDsa, iFps, iGpuSkip, iCycle, iSmooth, iFxaa, iProfile;
 	TInt iKeyScan[KPadMax], iKeyAlt[KPadMax], iKeyHold[KPadMax];
+	// Ім'я дампу BIOS у E:\PS1\bios (без шляху). Порожнє - типовий scph7502.bin.
+	// Лежить у профілі гри, тож ігри, випущені лише в одному регіоні, дістають
+	// свій BIOS без перемикання вручну.
+	TFileName iBios;
 	TInt iDummy;    // приймач для пунктів-команд, у яких значення немає
 	};
 
@@ -183,6 +200,7 @@ void TPs1Cfg::SetDefaults()
 	// без затінення, і це не пришвидшення, а брак. Вимкнути можна тут же.
 	iLight = iBlend = 1;
 	iSound = 1;
+	iBios.Zero();
 	// Окремий набір налаштувань на гру: розкладка й швидкісні хаки в гонці та в
 	// рпг потрібні різні, а перебирати їх щоразу вручну - те саме меню двічі.
 	iProfile = 1;
@@ -262,7 +280,21 @@ static void keyName(TInt aScan, TDes &aOut)
 
 // --- Контейнер: вікно для кадру + меню + клавіші -----------------------------
 
-enum TMenuPage { EPageNone = 0, EPageMain, EPageFiles, EPageKeys };
+enum TMenuPage
+	{
+	EPageNone = 0, EPageMain, EPageFiles, EPageKeys,
+	EPageImport,      // огляд із позначками для пакетного імпорту
+	EPageBios,        // вибір дампу BIOS (у т.ч. з архіву)
+	EPageAsk,         // питання так/ні перед довгою дією
+	EPageProgress
+	};
+
+// Що показувати в огляді. Огляд один, а приймальні різні: гру беруть із образів,
+// імпорт - ще й з архівів, BIOS - із дампів.
+enum TScanMode { EScanGames = 0, EScanImport, EScanBios };
+
+// Питання, що чекає відповіді на EPageAsk.
+enum TAskWhat { EAskNone = 0, EAskMode, EAskDelete };
 
 class CPs1Container : public CCoeControl
 	{
@@ -270,10 +302,15 @@ public:
 	static CPs1Container *NewL(const TRect &aRect);
 	~CPs1Container();
 	TKeyResponse OfferKeyEventL(const TKeyEvent &aKeyEvent, TEventCode aType);
+	TKeyResponse DispatchKeyL(const TKeyEvent &aKeyEvent, TEventCode aType);
 	// CCoeControl::Window() захищений, а виведенню потрібне саме це вікно.
 	RWindow &FrameWindow() { return Window(); }
 	TBool MenuActive() const { return iPage != EPageNone; }
+	void MenuTick();
 	void ApplyAndStart();
+	// Чи просив користувач те, що діє лише з новою ініціалізацією ядра. Читає тік:
+	// перезапускати прохід із обробника клавіші не можна (звук, DSA, планувальник).
+	TBool TakeRestart() { const TBool r = iRestartReq; iRestartReq = EFalse; return r; }
 private:
 	void ConstructL(const TRect &aRect);
 	void Draw(const TRect &aRect) const;
@@ -283,6 +320,9 @@ private:
 	void DrawMain(CWindowGc &gc, const TRect &aBody) const;
 	void DrawKeys(CWindowGc &gc, const TRect &aBody) const;
 	void DrawFiles(CWindowGc &gc, const TRect &aBody) const;
+	void DrawAsk(CWindowGc &gc, const TRect &aBody) const;
+	TBool RunningGamePicked() const;
+	void DrawProgress(CWindowGc &gc, const TRect &aBody) const;
 	void DrawRow(CWindowGc &gc, const TRect &aBody, TInt aY, TInt aLh,
 	             const TDesC &aLeft, const TDesC &aRight, TBool aSel) const;
 	void ItemLabel(TInt aItem, TDes &aOut) const;
@@ -292,14 +332,25 @@ private:
 	TKeyResponse MainKeyL(TInt aScan);
 	TKeyResponse FilesKeyL(TInt aScan);
 	TKeyResponse KeysKeyL(TInt aScan);
+	TKeyResponse ImportKeyL(TInt aScan);
+	TKeyResponse BiosKeyL(TInt aScan);
+	TKeyResponse AskKeyL(TInt aScan);
+	TKeyResponse ProgressKeyL(TInt aScan);
 	void OpenMenu();
 	void CloseMenu();
 
 	// файловий огляд
+	void MigrateOldLayout();
 	void ScanDirL();
 	void BrowseEnterL();
 	void BrowseUpL();
 	TBool AutoPickGameL();
+
+	// імпорт
+	void CurrentEntry(TDes &aOut) const;
+	TInt PickedIndex(const TDesC &aPath) const;
+	void TogglePickL();
+	void StartImportL();
 
 	// збереження
 	void ProfilePath(TDes &aOut) const;
@@ -309,8 +360,18 @@ private:
 	void SaveAll() const;
 	void SetGameL(const TDesC &aPath);
 	void ApplyKeyMap() const;
+	void SnapRestart();
+	TBool RestartNeeded() const;
 
 	CDesCArray *iBrowse;      // вміст поточного каталогу; каталоги з '\' у кінці
+	// Позначені для імпорту - повними шляхами, а не номерами рядків: інакше
+	// позначки губилися б при першому ж переході в іншу теку.
+	CDesCArray *iPicked;
+	TInt iScanMode;
+	TInt iTickDiv;            // дільник тіків для перемальовування поступу
+	TInt iAsk;                // питання, що чекає відповіді
+	TInt iAskSel;
+	TInt iConvMode;           // відповідь на EAskMode
 	TFileName iBrowsePath;    // порожній = список дисків
 	TFileName iGamePath;
 	TInt iPage;
@@ -321,6 +382,12 @@ private:
 	TInt iConfirm;            // пункт, що чекає підтвердження (-1 - ні)
 	TInt iPadCount;
 	TBool iStartedOnce;       // конфіг уже віддано ядру, далі лише живі зміни
+	TBool iGameClosed;        // гру згорнуто заради імпорту її ж образу
+	TBool iRestartReq;        // з меню вийшли зі зміною, що вимагає нового проходу
+	// Значення пунктів зі зірочкою на момент старту проходу: різниця з поточними -
+	// і є привід перезапустити емуляцію.
+	TFileName iGameAtStart, iBiosAtStart;
+	TInt iInterpAtStart, iGteNfAtStart, iSoundAtStart, iGlAtStart, iDsaAtStart;
 	TBool iCliMode;           // запуск із аргументами: меню в грі не чіпаємо
 	TPs1Cfg iCfg;
 	};
@@ -340,11 +407,13 @@ void CPs1Container::ConstructL(const TRect &aRect)
 	SetRect(aRect);
 	Window().SetBackgroundColor(KRgbBlack);
 	iBrowse = new (ELeave) CDesCArrayFlat(16);
+	iPicked = new (ELeave) CDesCArrayFlat(8);
 	iPadCount = voutSymbianPadButtons();
 	if (iPadCount > KPadMax) iPadCount = KPadMax;
 	iCapture = -1;
 	iConfirm = -1;
 
+	MigrateOldLayout();
 	iCfg.SetDefaults();
 	LoadCfg(KCfgPath);
 	// Профіль гри перекриває загальні налаштування - але тільки якщо він є.
@@ -373,7 +442,10 @@ void CPs1Container::ConstructL(const TRect &aRect)
 
 CPs1Container::~CPs1Container()
 	{
+	ConvCancel();
+	ConvRelease();
 	delete iBrowse;
+	delete iPicked;
 	}
 
 // Перший образ у корені карти - щоб перший запуск не вимагав походу в огляд.
@@ -394,6 +466,53 @@ TBool CPs1Container::AutoPickGameL()
 	return EFalse;
 	}
 
+// Розкладка до появи E:\PS1\: налаштування в корені картки, профілі в E:\ps1cfg\,
+// дамп BIOS поруч із ними. Переносимо перейменуванням (той самий том, тож дані не
+// копіюються); образи лишаємо на місці - вони великі, а огляд і так ходить усюди.
+void CPs1Container::MigrateOldLayout()
+	{
+	RFs fs;
+	if (fs.Connect() != KErrNone)
+		return;
+	TEntry e;
+	if (fs.Entry(KCfgPath, e) != KErrNone)
+		fs.Rename(_L("E:\\ps1_settings.txt"), KCfgPath);
+
+	CDir *dir = NULL;
+	if (fs.GetDir(_L("E:\\ps1cfg\\*.txt"), KEntryAttNormal, ESortByName, dir) == KErrNone
+	    && dir)
+		{
+		for (TInt i = 0; i < dir->Count(); i++)
+			{
+			TFileName from(_L("E:\\ps1cfg\\"));
+			TFileName to(KProfDir);
+			from.Append((*dir)[i].iName);
+			to.Append((*dir)[i].iName);
+			if (fs.Entry(to, e) != KErrNone)
+				fs.Rename(from, to);
+			}
+		delete dir;
+		dir = NULL;
+		fs.RmDir(_L("E:\\ps1cfg\\"));
+		}
+
+	if (fs.GetDir(_L("E:\\scph*.bin"), KEntryAttNormal, ESortByName, dir) == KErrNone
+	    && dir)
+		{
+		for (TInt i = 0; i < dir->Count(); i++)
+			{
+			TFileName from(_L("E:\\"));
+			TFileName to(KBiosDir);
+			from.Append((*dir)[i].iName);
+			to.Append((*dir)[i].iName);
+			if (fs.Entry(to, e) != KErrNone)
+				fs.Rename(from, to);
+			}
+		delete dir;
+		}
+	fs.Close();
+	}
+
 // --- Файловий огляд ---------------------------------------------------------
 
 // .cue не показуємо: cdriso виводить його з .bin за розширенням, і окремий пункт
@@ -412,6 +531,33 @@ static TBool isImageName(const TDesC &aName)
 	ext.LowerCase();
 	return ext == _L(".bin") || ext == _L(".img") || ext == _L(".iso") ||
 	       ext == _L(".pbp") || ext == _L(".cbn");
+	}
+
+// Для імпорту показуємо ще й .cue (він несе розкладку доріжок, і брати треба
+// саме його) та архіви.
+static TBool isImportName(const TDesC &aName)
+	{
+	if (isImageName(aName) || ConvIsArchiveName(aName))
+		return ETrue;
+	if (aName.Length() < 4)
+		return EFalse;
+	TBuf<8> ext;
+	ext.Copy(aName.Right(4));
+	ext.LowerCase();
+	return ext == _L(".cue");
+	}
+
+// Дампи BIOS: розширення в дикій природі різні, тож беремо ще й архіви.
+static TBool isBiosName(const TDesC &aName)
+	{
+	if (ConvIsArchiveName(aName))
+		return ETrue;
+	if (aName.Length() < 4)
+		return EFalse;
+	TBuf<8> ext;
+	ext.Copy(aName.Right(4));
+	ext.LowerCase();
+	return ext == _L(".bin") || ext == _L(".rom");
 	}
 
 void CPs1Container::ScanDirL()
@@ -462,8 +608,16 @@ void CPs1Container::ScanDirL()
 					iBrowse->AppendL(n);
 					}
 			for (TInt i = 0; i < dir->Count(); i++)
-				if (!(*dir)[i].IsDir() && isImageName((*dir)[i].iName))
-					iBrowse->AppendL((*dir)[i].iName);
+				{
+				if ((*dir)[i].IsDir())
+					continue;
+				const TPtrC n = (*dir)[i].iName;
+				const TBool ok = (iScanMode == EScanImport) ? isImportName(n)
+					: (iScanMode == EScanBios) ? isBiosName(n)
+					: isImageName(n);
+				if (ok)
+					iBrowse->AppendL(n);
+				}
 			CleanupStack::PopAndDestroy(dir);
 			}
 		}
@@ -504,6 +658,10 @@ void CPs1Container::BrowseEnterL()
 	full.Append(n);
 	SetGameL(full);
 	iPage = EPageMain;
+	// Курсор на перший пункт: диск обрано, і наступне, чого хоче користувач, -
+	// запустити його. Лишити курсор на "Game" означало б, що OK знову відкриває
+	// огляд файлів, а як застосувати вибір - невідомо.
+	iSel = ECfgStart;
 	}
 
 // Зміна гри при увімкнених профілях: спершу зберігаємо налаштування попередньої,
@@ -594,6 +752,11 @@ void CPs1Container::ParseCfg(const TDesC8 &aTxt)
 			iGamePath.Copy(val.Left(iGamePath.MaxLength()));
 			continue;
 			}
+		if (key == _L8("bios"))
+			{
+			iCfg.iBios.Copy(val.Left(iCfg.iBios.MaxLength()));
+			continue;
+			}
 		if (key.Length() > 3 && key.Left(3) == _L8("btn"))
 			{
 			TLex8 lk(key.Mid(3));
@@ -639,6 +802,15 @@ void CPs1Container::SaveCfg(const TDesC &aPath, TBool aWithGame) const
 			TBuf8<KMaxFileName> g;
 			g.Copy(iGamePath);
 			line.Format(_L8("game=%S\n"), &g);
+			f.Write(line);
+			}
+		// BIOS пишемо в обидва файли: у профілі він на гру, у загальному - типовий
+		// для тих ігор, що свого профілю ще не мають.
+		if (iCfg.iBios.Length())
+			{
+			TBuf8<KMaxFileName> b;
+			b.Copy(iCfg.iBios);
+			line.Format(_L8("bios=%S\n"), &b);
 			f.Write(line);
 			}
 		for (TInt i = 0; i < ECfgCount; i++)
@@ -688,7 +860,12 @@ void CPs1Container::ItemLabel(TInt aItem, TDes &aOut) const
 	{
 	if (aItem == ECfgStart)
 		{
-		aOut.Copy(iStartedOnce ? _L("Resume") : _L("Start"));
+		// Після імпорту власного диска повертатись нікуди: прохід згорнуто.
+		// "Restart game" замість "Resume" - єдина ознака, що вибір диска (чи іншого
+		// пункта зі зірочкою) уже зроблено і чекає на застосування.
+		aOut.Copy(iGameClosed ? _L("Exit")
+			: !iStartedOnce ? _L("Start")
+			: RestartNeeded() ? _L("Restart game") : _L("Resume"));
 		return;
 		}
 	aOut.Copy(TPtrC(KItemLabel[aItem]));
@@ -714,6 +891,12 @@ void CPs1Container::ItemValue(TInt aItem, TDes &aOut) const
 				}
 			else
 				aOut.Copy(_L("<none>"));
+			break;
+		case ECfgAdd:
+			aOut.Copy(_L("press OK"));
+			break;
+		case ECfgBios:
+			aOut.Copy(c.iBios.Length() ? TPtrC(c.iBios) : TPtrC(_S("default")));
 			break;
 		case ECfgCpu:
 			aOut.Copy(c.iInterp ? _L("interpreter") : _L("dynarec"));
@@ -908,10 +1091,137 @@ void CPs1Container::DrawFiles(CWindowGc &gc, const TRect &aBody) const
 		{
 		const TPtrC e = (*iBrowse)[i];
 		const TBool dir = (e.Right(1) == _L("\\"));
-		TBuf<64> name;
-		name.Copy(e.Left(name.MaxLength() - 2));
+		TBuf<66> name;
+		if (iPage == EPageImport && !dir)
+			{
+			TFileName full = iBrowsePath;
+			if (full.Length() + e.Length() < full.MaxLength())
+				full.Append(e);
+			name.Copy(PickedIndex(full) >= 0 ? _L("[x] ") : _L("[ ] "));
+			}
+		name.Append(e.Left(name.MaxLength() - name.Length()));
 		DrawRow(gc, aBody, y, lh, name, dir ? _L("dir") : _L(""), i == iBrowseSel);
 		y += lh;
+		}
+	}
+
+// Питання перед довгою дією. Малюємо тим самим списком, що й решту: окреме
+// діалогове вікно AVKON потягнуло б ресурси й власну обробку клавіш.
+// Чи є серед позначених образ гри, яка зараз іде. Порівнюємо за іменем до крапки:
+// гра відкрита як .bin, а позначити для стиснення природно .cue поруч.
+TBool CPs1Container::RunningGamePicked() const
+	{
+	if (!iStartedOnce || !iGamePath.Length())
+		return EFalse;
+	const TInt gd = iGamePath.LocateReverse('.');
+	const TPtrC gstem = (gd > 0) ? iGamePath.Left(gd) : TPtrC(iGamePath);
+	for (TInt i = 0; i < iPicked->Count(); i++)
+		{
+		const TPtrC p = (*iPicked)[i];
+		const TInt d = p.LocateReverse('.');
+		const TPtrC s = (d > 0) ? p.Left(d) : TPtrC(p);
+		if (s.CompareF(gstem) == 0)
+			return ETrue;
+		}
+	return EFalse;
+	}
+
+void CPs1Container::DrawAsk(CWindowGc &gc, const TRect &aBody) const
+	{
+	const CFont *font = iCoeEnv->NormalFont();
+	const TInt lh = font->HeightInPixels() + 3;
+	TInt y = aBody.iTl.iY + font->AscentInPixels() + lh;
+
+	const TText *o0;
+	const TText *o1;
+	if (iAsk == EAskMode)
+		{
+		o0 = _S("Compress to PBP (saves ~40%)");
+		o1 = _S("Store as is");
+		}
+	else
+		{
+		o0 = _S("Yes, delete originals");
+		o1 = _S("No, keep them");
+		}
+	DrawRow(gc, aBody, y, lh, TPtrC(o0), _L(""), iAskSel == 0);
+	y += lh;
+	DrawRow(gc, aBody, y, lh, TPtrC(o1), _L(""), iAskSel == 1);
+	y += lh * 2;
+
+	gc.SetPenColor(TRgb(0x90, 0x90, 0x98));
+	if (iAsk == EAskMode)
+		{
+		gc.DrawText(_L("Compression drops ECC and cannot"),
+			TPoint(aBody.iTl.iX + 10, y));
+		gc.DrawText(_L("be undone. The game still works."),
+			TPoint(aBody.iTl.iX + 10, y + lh));
+		y += lh * 2;
+		}
+	else
+		{
+		TBuf<48> n;
+		n.Format(_L("%d file(s) selected"), iPicked->Count());
+		gc.DrawText(n, TPoint(aBody.iTl.iX + 10, y));
+		y += lh;
+		}
+
+	// Попередження про закриття гри - на обох питаннях: рішення про диск, який
+	// зараз читає ядро, приймають тут, а не після старту.
+	if (RunningGamePicked())
+		{
+		gc.SetPenColor(TRgb(0xff, 0xdc, 0x88));
+		gc.DrawText(_L("This is the running game. It will"),
+			TPoint(aBody.iTl.iX + 10, y + lh));
+		gc.DrawText(_L("close, and the emulator must be"),
+			TPoint(aBody.iTl.iX + 10, y + lh * 2));
+		gc.DrawText(_L("restarted to play again."),
+			TPoint(aBody.iTl.iX + 10, y + lh * 3));
+		}
+	}
+
+void CPs1Container::DrawProgress(CWindowGc &gc, const TRect &aBody) const
+	{
+	const CFont *font = iCoeEnv->NormalFont();
+	const TInt lh = font->HeightInPixels() + 3;
+	TInt y = aBody.iTl.iY + font->AscentInPixels() + lh;
+
+	TConvStat st;
+	ConvStat(st);
+
+	TBuf<80> line;
+	line.Format(_L("File %d of %d"), st.iFileNo, st.iFileCount);
+	gc.SetPenColor(TRgb(0xc8, 0xc8, 0xd0));
+	gc.DrawText(line, TPoint(aBody.iTl.iX + 10, y));
+	y += lh;
+	gc.SetPenColor(KRgbWhite);
+	gc.DrawText(st.iName.Left(40), TPoint(aBody.iTl.iX + 10, y));
+	y += lh + 6;
+
+	// Смуга поступу: на конвертації диска це єдина ознака, що процес живий.
+	const TInt bw = aBody.Width() - 20;
+	const TInt bx = aBody.iTl.iX + 10;
+	gc.SetBrushStyle(CGraphicsContext::ESolidBrush);
+	gc.SetPenStyle(CGraphicsContext::ENullPen);
+	gc.SetBrushColor(TRgb(0x20, 0x24, 0x30));
+	gc.DrawRect(TRect(bx, y, bx + bw, y + lh));
+	gc.SetBrushColor(TRgb(0x20, 0x48, 0x88));
+	TInt pc = st.iPercent;
+	if (pc < 0) pc = 0;
+	if (pc > 100) pc = 100;
+	gc.DrawRect(TRect(bx, y, bx + bw * pc / 100, y + lh));
+	gc.SetPenStyle(CGraphicsContext::ESolidPen);
+	y += lh * 2 + 6;
+
+	line.Format(_L("%d%%"), pc);
+	gc.SetPenColor(TRgb(0xff, 0xdc, 0x88));
+	gc.DrawText(line, TPoint(bx, y));
+	y += lh;
+	if (st.iMsg.Length())
+		{
+		gc.SetPenColor(st.iState == EConvErr ? TRgb(0xff, 0x90, 0x90)
+		                                     : TRgb(0x90, 0xd0, 0x90));
+		gc.DrawText(st.iMsg, TPoint(bx, y));
 		}
 	}
 
@@ -923,14 +1233,32 @@ void CPs1Container::Draw(const TRect & /*aRect*/) const
 		return;
 
 	CWindowGc &gc = SystemGc();
-	if (iPage == EPageFiles)
+	if (iPage == EPageFiles || iPage == EPageImport || iPage == EPageBios)
 		{
 		TBuf<KMaxFileName> title;
-		title.Copy(_L("Select game: "));
+		title.Copy(iPage == EPageImport ? _L("Add games: ")
+			: iPage == EPageBios ? _L("Select BIOS: ")
+			: _L("Select game: "));
 		title.Append(iBrowsePath.Length() ? TPtrC(iBrowsePath) : TPtrC(_S("drives")));
 		const TRect body = DrawChrome(gc, title.Left(46),
-			_L("OK open, Left up, C cancel"));
+			iPage == EPageImport ? _L("OK mark, LSK start, Left up, C back")
+			                     : _L("OK open, Left up, C cancel"));
 		DrawFiles(gc, body);
+		}
+	else if (iPage == EPageAsk)
+		{
+		const TRect body = DrawChrome(gc,
+			iAsk == EAskMode ? _L("How to store?") : _L("Delete originals?"),
+			_L("Up/Down choose, OK confirm, C back"));
+		DrawAsk(gc, body);
+		}
+	else if (iPage == EPageProgress)
+		{
+		TConvStat st;
+		ConvStat(st);
+		const TRect body = DrawChrome(gc, _L("Importing"),
+			st.iState == EConvRun ? _L("C cancels") : _L("C closes"));
+		DrawProgress(gc, body);
 		}
 	else if (iPage == EPageKeys)
 		{
@@ -942,8 +1270,9 @@ void CPs1Container::Draw(const TRect & /*aRect*/) const
 	else
 		{
 		const TRect body = DrawChrome(gc, _L("PS1Emulator"),
-			iStartedOnce ? _L("L/R change, OK resume, * needs restart")
-			             : _L("L/R change, OK start, C exit"));
+			iGameClosed  ? _L("game closed after import, OK exits")
+			: iStartedOnce ? _L("L/R change, OK resume, * restarts game")
+			               : _L("L/R change, OK start, C exit"));
 		DrawMain(gc, body);
 		}
 	gc.DiscardFont();
@@ -955,6 +1284,7 @@ void CPs1Container::OpenMenu()
 	{
 	if (iPage != EPageNone)
 		return;
+	ps1Log("menu", "open");
 	voutSymbianSuspend(1);
 	iPage = EPageMain;
 	iConfirm = -1;
@@ -965,10 +1295,31 @@ void CPs1Container::CloseMenu()
 	{
 	SaveAll();
 	ApplyKeyMap();
+	// Інший диск (чи BIOS, гілка процесора, звук, GL, DSA) не вміє вмикатись на
+	// ходу: прохід треба згорнути й підняти наново. Робить це тік, а не ця гілка -
+	// сюди ми потрапили з обробника клавіші.
+	if (RestartNeeded())
+		iRestartReq = ETrue;
 	ps1CfgApplyLive(iCfg.iIlace, iCfg.iLight, iCfg.iBlend, iCfg.iPixSkip,
 		iCfg.iFps, iCfg.iGpuSkip, iCfg.iCycle, iCfg.iSmooth, iCfg.iFxaa, iCfg.iDirty);
 	iPage = EPageNone;
 	voutSymbianSuspend(0);
+	ps1Log("menu", "close");
+	}
+
+// Перемальовування сторінки поступу: клавіш вона не отримує, а стан міняє інший
+// потік, тож єдиний спосіб оновити її - тік застосунку.
+void CPs1Container::MenuTick()
+	{
+	if (iPage != EPageProgress)
+		return;
+	TConvStat st;
+	ConvStat(st);
+	// Кожні ~0,4 с: частіше - зайве малювання поверх роботи конвертера.
+	if (++iTickDiv < 20)
+		return;
+	iTickDiv = 0;
+	DrawNow();
 	}
 
 // Передає вибране в ядро й віддає керування емулятору.
@@ -978,12 +1329,37 @@ void CPs1Container::ApplyAndStart()
 	ApplyKeyMap();
 	TBuf8<KMaxFileName> path8;
 	path8.Copy(iGamePath);
-	ps1CfgApply((const char *)path8.PtrZ(), iCfg.iInterp, iCfg.iIlace,
+	TBuf8<KMaxFileName> bios8;
+	bios8.Copy(iCfg.iBios);
+	ps1CfgApply((const char *)path8.PtrZ(), (const char *)bios8.PtrZ(),
+		iCfg.iInterp, iCfg.iIlace,
 		iCfg.iLight, iCfg.iBlend, iCfg.iPixSkip, iCfg.iGteNf, iCfg.iSound, iCfg.iGl,
 		iCfg.iDirty, iCfg.iDsa, iCfg.iFps, iCfg.iGpuSkip, iCfg.iCycle, iCfg.iSmooth,
 		iCfg.iFxaa);
 	iStartedOnce = ETrue;
+	iRestartReq = EFalse;
+	SnapRestart();
 	iPage = EPageNone;
+	}
+
+void CPs1Container::SnapRestart()
+	{
+	iGameAtStart = iGamePath;
+	iBiosAtStart = iCfg.iBios;
+	iInterpAtStart = iCfg.iInterp;
+	iGteNfAtStart  = iCfg.iGteNf;
+	iSoundAtStart  = iCfg.iSound;
+	iGlAtStart     = iCfg.iGl;
+	iDsaAtStart    = iCfg.iDsa;
+	}
+
+TBool CPs1Container::RestartNeeded() const
+	{
+	return iGamePath.CompareF(iGameAtStart) != 0 ||
+	       iCfg.iBios.CompareF(iBiosAtStart) != 0 ||
+	       iCfg.iInterp != iInterpAtStart || iCfg.iGteNf != iGteNfAtStart ||
+	       iCfg.iSound  != iSoundAtStart  || iCfg.iGl    != iGlAtStart ||
+	       iCfg.iDsa    != iDsaAtStart;
 	}
 
 TKeyResponse CPs1Container::MainKeyL(TInt aScan)
@@ -991,7 +1367,7 @@ TKeyResponse CPs1Container::MainKeyL(TInt aScan)
 	// Вихід мусить працювати і звідси, інакше з меню до старту нема виходу взагалі.
 	if (aScan == EStdKeyDevice1 || aScan == EStdKeyBackspace || aScan == EStdKeyEscape)
 		{
-		if (iStartedOnce)
+		if (iStartedOnce && !iGameClosed)
 			CloseMenu();
 		else
 			CEikonEnv::Static()->EikAppUi()->HandleCommandL(EEikCmdExit);
@@ -1048,8 +1424,24 @@ TKeyResponse CPs1Container::MainKeyL(TInt aScan)
 					const TInt s = iGamePath.LocateReverse('\\');
 					iBrowsePath = iGamePath.Left(s + 1);
 					}
+				iScanMode = EScanGames;
 				ScanDirL();
 				iPage = EPageFiles;
+				break;
+			case ECfgAdd:
+				// Починаємо з кореня картки: те, що імпортують, щойно скинули
+				// туди з комп'ютера, а не поклали в теку емулятора.
+				iBrowsePath = _L("E:\\");
+				iScanMode = EScanImport;
+				iPicked->Reset();
+				ScanDirL();
+				iPage = EPageImport;
+				break;
+			case ECfgBios:
+				iBrowsePath = KBiosDir;
+				iScanMode = EScanBios;
+				ScanDirL();
+				iPage = EPageBios;
 				break;
 			case ECfgKeys:
 				iKeySel = 0;
@@ -1072,7 +1464,9 @@ TKeyResponse CPs1Container::MainKeyL(TInt aScan)
 				CEikonEnv::Static()->EikAppUi()->HandleCommandL(EEikCmdExit);
 				return EKeyWasConsumed;
 			default:
-				if (iStartedOnce)
+				if (iGameClosed)
+					CEikonEnv::Static()->EikAppUi()->HandleCommandL(EEikCmdExit);
+				else if (iStartedOnce)
 					CloseMenu();
 				else
 					ApplyAndStart();
@@ -1103,6 +1497,216 @@ TKeyResponse CPs1Container::FilesKeyL(TInt aScan)
 	         aScan == EStdKeyEnter || aScan == EStdKeyNkpEnter)
 		BrowseEnterL();
 	DrawNow();
+	return EKeyWasConsumed;
+	}
+
+// --- Імпорт ------------------------------------------------------------------
+
+void CPs1Container::CurrentEntry(TDes &aOut) const
+	{
+	aOut.Zero();
+	if (iBrowseSel < 0 || iBrowseSel >= iBrowse->Count())
+		return;
+	const TPtrC n = (*iBrowse)[iBrowseSel];
+	if (n.Right(1) == _L("\\"))
+		return;
+	if (iBrowsePath.Length() + n.Length() >= aOut.MaxLength())
+		return;
+	aOut = iBrowsePath;
+	aOut.Append(n);
+	}
+
+TInt CPs1Container::PickedIndex(const TDesC &aPath) const
+	{
+	for (TInt i = 0; i < iPicked->Count(); i++)
+		if ((*iPicked)[i].CompareF(aPath) == 0)
+			return i;
+	return KErrNotFound;
+	}
+
+void CPs1Container::TogglePickL()
+	{
+	TFileName full;
+	CurrentEntry(full);
+	if (!full.Length())
+		return;
+	const TInt at = PickedIndex(full);
+	if (at >= 0)
+		iPicked->Delete(at);
+	else
+		iPicked->AppendL(full);
+	}
+
+void CPs1Container::StartImportL()
+	{
+	if (!iPicked->Count())
+		return;
+	// Ядро тримає образ відкритим і читає з нього щокадру, а конвертер має його
+	// прочитати й (за згодою) видалити. Згортаємо прохід ДО старту черги.
+	if (RunningGamePicked())
+		{
+		ps1GuiCloseGame();
+		iGameClosed = ETrue;
+		}
+	const TInt r = ConvStart(*iPicked, (TConvMode)iConvMode,
+		iAskSel == 0 /*видаляти*/, KImgDir);
+	iPage = EPageProgress;
+	if (r != KErrNone)
+		ps1LogInt("import", "start failed", r);
+	}
+
+TKeyResponse CPs1Container::ImportKeyL(TInt aScan)
+	{
+	const TInt n = iBrowse->Count();
+	if (aScan == EStdKeyDevice1 || aScan == EStdKeyBackspace || aScan == EStdKeyEscape)
+		{
+		iPage = EPageMain;
+		DrawNow();
+		return EKeyWasConsumed;
+		}
+	// Ліва софт-клавіша - "почати". У грі вона робить знімок екрана, але меню
+	// клавіші забирає цілком, тож конфлікту немає.
+	if (aScan == EStdKeyDevice0)
+		{
+		if (iPicked->Count())
+			{
+			iAsk = EAskMode;
+			iAskSel = 0;
+			iPage = EPageAsk;
+			}
+		DrawNow();
+		return EKeyWasConsumed;
+		}
+	if (aScan == EStdKeyUpArrow && n)
+		iBrowseSel = (iBrowseSel + n - 1) % n;
+	else if (aScan == EStdKeyDownArrow && n)
+		iBrowseSel = (iBrowseSel + 1) % n;
+	else if (aScan == EStdKeyLeftArrow)
+		BrowseUpL();
+	else if (aScan == EStdKeyRightArrow)
+		{
+		// У теку заходимо стрілкою, а OK лишається за позначкою: інакше на
+		// файлі й на теці одна клавіша означала б різне.
+		if (n && (*iBrowse)[iBrowseSel].Right(1) == _L("\\"))
+			BrowseEnterL();
+		}
+	else if (aScan == EStdKeyDevice3 || aScan == EStdKeyEnter || aScan == EStdKeyNkpEnter)
+		{
+		if (n && (*iBrowse)[iBrowseSel].Right(1) == _L("\\"))
+			BrowseEnterL();
+		else
+			TogglePickL();
+		}
+	DrawNow();
+	return EKeyWasConsumed;
+	}
+
+TKeyResponse CPs1Container::BiosKeyL(TInt aScan)
+	{
+	const TInt n = iBrowse->Count();
+	if (aScan == EStdKeyDevice1 || aScan == EStdKeyBackspace || aScan == EStdKeyEscape)
+		{
+		iPage = EPageMain;
+		DrawNow();
+		return EKeyWasConsumed;
+		}
+	if (aScan == EStdKeyUpArrow && n)
+		iBrowseSel = (iBrowseSel + n - 1) % n;
+	else if (aScan == EStdKeyDownArrow && n)
+		iBrowseSel = (iBrowseSel + 1) % n;
+	else if (aScan == EStdKeyLeftArrow)
+		BrowseUpL();
+	else if (aScan == EStdKeyRightArrow || aScan == EStdKeyDevice3 ||
+	         aScan == EStdKeyEnter || aScan == EStdKeyNkpEnter)
+		{
+		if (n && (*iBrowse)[iBrowseSel].Right(1) == _L("\\"))
+			BrowseEnterL();
+		else
+			{
+			TFileName full;
+			CurrentEntry(full);
+			if (full.Length())
+				{
+				const TInt s = full.LocateReverse('\\');
+				const TPtrC dir = full.Left(s + 1);
+				if (!ConvIsArchiveName(full) && dir.CompareF(KBiosDir) == 0)
+					{
+					// Файл уже в теці BIOS: копіювати його в себе не можна -
+					// Replace на відкритому для читання файлі не пройде.
+					iCfg.iBios = full.Mid(s + 1);
+					}
+				else
+					{
+					RFs fs;
+					if (fs.Connect() == KErrNone)
+						{
+						TFileName name;
+						// Дістаємо на місці: BIOS - півмегабайта, окремий потік
+						// і смуга поступу тут були б самоціллю.
+						const TInt r = ConvExtractOne(fs, full, KNullDesC,
+							KBiosDir, name);
+						fs.Close();
+						if (r == KErrNone)
+							iCfg.iBios = name;
+						ps1LogInt("bios", "pick", r);
+						}
+					}
+				iPage = EPageMain;
+				}
+			}
+		}
+	DrawNow();
+	return EKeyWasConsumed;
+	}
+
+TKeyResponse CPs1Container::AskKeyL(TInt aScan)
+	{
+	if (aScan == EStdKeyDevice1 || aScan == EStdKeyBackspace || aScan == EStdKeyEscape)
+		{
+		iPage = EPageImport;
+		DrawNow();
+		return EKeyWasConsumed;
+		}
+	if (aScan == EStdKeyUpArrow || aScan == EStdKeyDownArrow)
+		iAskSel = iAskSel ? 0 : 1;
+	else if (aScan == EStdKeyDevice3 || aScan == EStdKeyEnter || aScan == EStdKeyNkpEnter)
+		{
+		if (iAsk == EAskMode)
+			{
+			iConvMode = (iAskSel == 0) ? EConvModePbp : EConvModeCopy;
+			iAsk = EAskDelete;
+			// Типово - видаляти: місця на картці рівно стільки, скільки є, і
+			// тримати два примірники одного диска сенсу немає.
+			iAskSel = 0;
+			}
+		else
+			{
+			StartImportL();
+			}
+		}
+	DrawNow();
+	return EKeyWasConsumed;
+	}
+
+TKeyResponse CPs1Container::ProgressKeyL(TInt aScan)
+	{
+	TConvStat st;
+	ConvStat(st);
+	if (aScan == EStdKeyDevice1 || aScan == EStdKeyBackspace || aScan == EStdKeyEscape)
+		{
+		if (st.iState == EConvRun)
+			ConvCancel();
+		else
+			{
+			ConvRelease();
+			iPicked->Reset();
+			// Свіжоімпортовані ігри мають з'явитись у списку одразу.
+			iScanMode = EScanGames;
+			iBrowsePath = KImgDir;
+			iPage = EPageMain;
+			}
+		DrawNow();
+		}
 	return EKeyWasConsumed;
 	}
 
@@ -1141,7 +1745,26 @@ TKeyResponse CPs1Container::KeysKeyL(TInt aScan)
 	return EKeyWasConsumed;
 	}
 
+// Leave звідси коштує ВСІХ подій вікна: CONE переозброює запит на наступну подію
+// в кінці свого RunL, і якщо керування пішло повз цей рядок, клавіші й фокус
+// більше не приходять ніколи, хоча застосунок далі рахує кадри. Саме так гра й
+// глухла після виходу з меню. Ловимо тут, а не сподіваємось, що нижче не леавить.
 TKeyResponse CPs1Container::OfferKeyEventL(const TKeyEvent &aKeyEvent, TEventCode aType)
+	{
+	TKeyResponse r = EKeyWasNotConsumed;
+	TRAPD(e, r = DispatchKeyL(aKeyEvent, aType));
+	if (e != KErrNone)
+		ps1LogFmt("key", "leave=%d sc=%d page=%d sel=%d", (int)e,
+			(int)aKeyEvent.iScanCode, (int)iPage, (int)iSel);
+	// KLeaveExit - не помилка, а спосіб, яким CEikAppUi::Exit розкручує стек. Якщо
+	// проковтнути його тут, "Exit" у меню просто нічого не робить: застосунок
+	// лишається жити, а користувач бачить завмерлий кадр і живе меню.
+	if (e == KLeaveExit)
+		User::Leave(e);
+	return r;
+	}
+
+TKeyResponse CPs1Container::DispatchKeyL(const TKeyEvent &aKeyEvent, TEventCode aType)
 	{
 	if (aType != EEventKeyDown && aType != EEventKeyUp)
 		return EKeyWasNotConsumed;
@@ -1152,8 +1775,12 @@ TKeyResponse CPs1Container::OfferKeyEventL(const TKeyEvent &aKeyEvent, TEventCod
 		if (aType != EEventKeyDown)
 			return EKeyWasConsumed;
 		const TInt sc = aKeyEvent.iScanCode;
-		if (iPage == EPageFiles) return FilesKeyL(sc);
-		if (iPage == EPageKeys)  return KeysKeyL(sc);
+		if (iPage == EPageFiles)    return FilesKeyL(sc);
+		if (iPage == EPageKeys)     return KeysKeyL(sc);
+		if (iPage == EPageImport)   return ImportKeyL(sc);
+		if (iPage == EPageBios)     return BiosKeyL(sc);
+		if (iPage == EPageAsk)      return AskKeyL(sc);
+		if (iPage == EPageProgress) return ProgressKeyL(sc);
 		return MainKeyL(sc);
 		}
 
@@ -1212,6 +1839,7 @@ public:
 	~CPs1AppUi();
 	void HandleCommandL(TInt aCommand);
 	void HandleResourceChangeL(TInt aType);
+	void HandleForegroundEventL(TBool aForeground);
 private:
 	static TInt TickCb(TAny *aSelf);
 	TInt Tick();
@@ -1287,6 +1915,10 @@ TInt CPs1AppUi::Tick()
 	// CONE обслуговував клавіші.
 	if (iContainer && iContainer->MenuActive())
 		{
+		iContainer->MenuTick();
+		// Без паузи головний потік крутив би CIdle на повну і забирав процесор
+		// у робочого потоку конвертації (а поза нею - просто грів апарат).
+		User::After(20000);
 		iInTick = EFalse;
 		return ETrue;
 		}
@@ -1304,6 +1936,22 @@ TInt CPs1AppUi::Tick()
 		if (ps1GuiSetup() != KErrNone)
 			{
 			ps1Log("gui", "emu setup failed - exiting");
+			more = EFalse;
+			}
+		}
+	// Перезапуск проходу після меню: інший диск чи інша гілка ядра. Саме тут, поза
+	// обробником клавіші - усередині є і закриття звуку, і перепідняття DSA.
+	else if (iContainer && iContainer->TakeRestart())
+		{
+		// Порядок важливий: старий прохід згортається ПЕРШИМ, бо саме він
+		// відв'язує вивід, і лише потім вікно віддається новому. Навпаки - гра
+		// рахує кадри в порожнечу, а на екрані стоїть останній кадр попередньої.
+		ps1GuiEndPass();
+		iContainer->ApplyAndStart();
+		AttachOutput();
+		if (ps1GuiStartPass() != KErrNone)
+			{
+			ps1Log("gui", "emu restart failed - exiting");
 			more = EFalse;
 			}
 		}
@@ -1328,6 +1976,14 @@ void CPs1AppUi::HandleResourceChangeL(TInt aType)
 		iContainer->SetRect(ApplicationRect());
 		AttachOutput();
 		}
+	}
+
+// Втрата фокуса пояснила б "клавіші не діють" без жодного збою в нас: DSA малює
+// кадр поверх усього, а події йдуть чужому вікну.
+void CPs1AppUi::HandleForegroundEventL(TBool aForeground)
+	{
+	CAknAppUi::HandleForegroundEventL(aForeground);
+	ps1LogInt("focus", "fore", (int)aForeground);
 	}
 
 void CPs1AppUi::HandleCommandL(TInt aCommand)
