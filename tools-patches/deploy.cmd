@@ -186,14 +186,14 @@ for /f "usebackq delims=" %%T in (`powershell -NoProfile -Command "Get-Date -For
 set RUNDIR=%PROJ%\plans\runs\%STAMP%
 
 set FOUND=0
-for %%F in ("%PHONE%\ps1_*.jsonl" "%PHONE%\ps1_vram.bin") do if exist "%%~F" set FOUND=1
+for %%F in ("%PHONE%\ps1_*.jsonl" "%PHONE%\PS1\logs\ps1_*.jsonl" "%PHONE%\ps1_vram.bin") do if exist "%%~F" set FOUND=1
 if "%FOUND%"=="0" (
   echo [deploy] nothing to collect on %PHONE% yet
   exit /b 0
 )
 
 mkdir "%RUNDIR%" 2>nul
-for %%F in ("%PHONE%\ps1_*.jsonl" "%PHONE%\ps1_vram.bin") do (
+for %%F in ("%PHONE%\ps1_*.jsonl" "%PHONE%\PS1\logs\ps1_*.jsonl" "%PHONE%\ps1_vram.bin") do (
   if exist "%%~F" (
     copy /y "%%~F" "%RUNDIR%\" >nul
     echo [deploy] collected %%~nxF  %%~zF bytes
@@ -221,6 +221,11 @@ set STAMP=
 for /f "usebackq delims=" %%T in (`powershell -NoProfile -Command "Get-Date -Format yyyy-MM-dd_HHmmss"`) do set STAMP=%%T
 set RUNDIR=%PROJ%\plans\runs\%STAMP%_wifi
 
+REM stage1 moved its log under the E:\PS1\ layout; stage0 still writes to the root.
+REM Pulling the old path silently returned a stale log instead of failing.
+set LOGDEV=E:\ps1_%TARGET%.jsonl
+if /i "%TARGET%"=="stage1" set LOGDEV=E:\PS1\logs\ps1_stage1.jsonl
+
 echo [deploy] wifi -^> %DIP%  (run args: "%RUNARGS%")
 REM The app is installed on the card, so its EXE and log live on E: from the
 REM phone's own side too. Push -> launch -> pull, all headless.
@@ -232,7 +237,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0..\..\SymbianDeployDae
   -PutFile "%RELDIR%\ps1%TARGET%.exe" -Remote "E:\sys\bin\ps1%TARGET%.exe" ^
   -HashRemote "C:\sys\hash\ps1%TARGET%.exe" ^
   -Run "E:\sys\bin\ps1%TARGET%.exe %RUNARGS%" ^
-  -GetFile "E:\ps1_%TARGET%.jsonl" -OutFile "%RUNDIR%\ps1_%TARGET%.jsonl"
+  -GetFile "%LOGDEV%" -OutFile "%RUNDIR%\ps1_%TARGET%.jsonl"
 if errorlevel 1 (echo [deploy] wifi cycle FAILED & exit /b 1)
 echo [deploy] wifi cycle done -^> %RUNDIR%
 exit /b 0
