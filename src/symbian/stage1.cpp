@@ -271,6 +271,9 @@ extern unsigned long long g_spuMixTicks;
 // образ стиснений, і кількість читань - ціна формату образу всередині "emu".
 extern unsigned long long g_cdReadTicks;
 extern unsigned int g_cdReadCount;
+// Час декодування MDEC (тики FastCounter) - ціна відео всередині "emu".
+extern unsigned long long g_mdecDecodeTicks;
+extern unsigned int g_mdecWords;
 unsigned int ndrc_symbian_fastfreq(void);
 unsigned int ndrc_symbian_fastcount(void);
 unsigned int ndrc_symbian_tcbase(void);
@@ -641,7 +644,8 @@ void ps1SpuRegisterCallback(void (*cb)(int));
 void ps1SpuRegisterScheduleCb(void (*cb)(unsigned int));
 void ps1SndConfigure(void);
 void ps1SndSelectOutput(void);
-void ps1SndStats(unsigned *feeds, unsigned *samples, int *maxAmp);
+void ps1SndStats(unsigned *feeds, unsigned *samples, int *maxAmp,
+                 unsigned *under, int *stepQ16);
 int  ps1SndOpenOutput(void);
 void ps1SndPump(void);
 void ps1SndCloseOutput(void);
@@ -899,6 +903,8 @@ static TInt passSetup(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTes
 	g_spuMixTicks = 0;
 	g_cdReadTicks = 0;
 	g_cdReadCount = 0;
+	g_mdecDecodeTicks = 0;
+	g_mdecWords = 0;
 
 	// Мінімальний еквівалент emu_core_preinit() з frontend/main.c:435.
 	memset(&Config, 0, sizeof(Config));
@@ -1442,10 +1448,12 @@ static void passTeardown()
 
 	// Звук (Фаза A): скільки семплів SPU видав і пікова амплітуда. maxAmp>0 =
 	// SPU реально генерує звук BIOS; вивід у динамік - Фаза B.
-	unsigned sndFeeds = 0, sndSamples = 0; int sndMax = 0;
-	ps1SndStats(&sndFeeds, &sndSamples, &sndMax);
-	logEvent("sndstats", NULL, "%s: feeds=%u samples=%u maxAmp=%d", mode,
-		sndFeeds, sndSamples, sndMax);
+	unsigned sndFeeds = 0, sndSamples = 0, sndUnder = 0; int sndMax = 0, sndStep = 0;
+	ps1SndStats(&sndFeeds, &sndSamples, &sndMax, &sndUnder, &sndStep);
+	// under - число розривів у динаміку, step - у скільки разів потік розтягнуто
+	// під фактичну швидкість емуляції (65536 = 1.0, менше = емуляція відстає).
+	logEvent("sndstats", NULL, "%s: feeds=%u samples=%u maxAmp=%d under=%u step=%d", mode,
+		sndFeeds, sndSamples, sndMax, sndUnder, sndStep);
 
 	// Профіль пайплайну: сумарний час на етап + частка від загального. Показує,
 	// що оптимізувати - емуляцію (drc) чи вивід (блит)/звук.
@@ -1458,17 +1466,18 @@ static void passTeardown()
 	const unsigned gpuRasterMs = (unsigned)(g_gpulibRenderTicks * 1000ULL / (freq ? freq : 1));
 	const unsigned spuMixMs = (unsigned)(g_spuMixTicks * 1000ULL / (freq ? freq : 1));
 	const unsigned cdReadMs = (unsigned)(g_cdReadTicks * 1000ULL / (freq ? freq : 1));
+	const unsigned mdecMs = (unsigned)(g_mdecDecodeTicks * 1000ULL / (freq ? freq : 1));
 	unsigned blitFillMs = 0, blitPresentMs = 0;
 	voutSymbianBlitSplit(&blitFillMs, &blitPresentMs);
 	logEvent("profile", NULL,
-		"%s: total=%ums poll=%ums(%u%%) emu=%ums(%u%%) blit=%ums(%u%%) snd=%ums(%u%%) gpuRaster=%ums(%u%% of emu) spuMix=%ums cdRead=%ums(%u reads) blitFill=%ums blitPresent=%ums frames=%u",
+		"%s: total=%ums poll=%ums(%u%%) emu=%ums(%u%%) blit=%ums(%u%%) snd=%ums(%u%%) gpuRaster=%ums(%u%% of emu) spuMix=%ums mdec=%ums(%u words) cdRead=%ums(%u reads) blitFill=%ums blitPresent=%ums frames=%u",
 		mode, (unsigned)tTot,
 		(unsigned)tPoll, (unsigned)(tPoll * 100 / den),
 		(unsigned)tEmu,  (unsigned)(tEmu * 100 / den),
 		(unsigned)tBlit, (unsigned)(tBlit * 100 / den),
 		(unsigned)tSnd,  (unsigned)(tSnd * 100 / den),
 		gpuRasterMs, (unsigned)(tEmu ? gpuRasterMs * 100 / tEmu : 0),
-		spuMixMs, cdReadMs, g_cdReadCount, blitFillMs, blitPresentMs,
+		spuMixMs, mdecMs, g_mdecWords, cdReadMs, g_cdReadCount, blitFillMs, blitPresentMs,
 		(unsigned)aProduced);
 	logEvent("dsa", NULL, "%s: active=%d gl=%d fbPlatform=%d", mode,
 		voutSymbianDsaActive(), voutSymbianGlActive(), voutSymbianFbFromPlatform());

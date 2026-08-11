@@ -33,11 +33,22 @@ void SPUregisterScheduleCb(void (*cb)(unsigned int));
 }
 
 // --- Вивід у динамік: CMdaAudioOutputStream + кільцевий буфер --------------
-// dfsound віддає 16-біт стерео PCM @44100. feed() кладе байти в кільце (той самий
-// потік, що й генерація й Pump - без блокувань). Pump() щокадру обслуговує активні
-// об'єкти (RunIfReady) і доливає наступний WriteL, коли попередній скопійовано.
-static const TInt KSndRing  = 128 * 1024;   // ~0.37с при 44100 стерео 16-біт
-static const TInt KSndChunk = 8 * 1024;     // ~46мс на один WriteL
+// dfsound віддає 16-біт стерео PCM @44100 ЕМУЛЬОВАНОГО часу, а пристрій з'їдає
+// 44100 на РЕАЛЬНУ секунду. Поки емуляція не встигає, різниця - це порожній буфер
+// і розриви, тож Feed() перераховує потік під фактичний темп (див. UpdateRate).
+// Pump() щокадру обслуговує активні об'єкти (RunIfReady) і доливає буфери, поки їх
+// у польоті менше за KSndBufs.
+static const TInt KSndRate  = 44100;
+static const TInt KSndRing  = 128 * 1024;      // 0.74с при 44100 стерео 16-біт
+static const TInt KSndChunk = 4 * 1024;        // ~23мс на один WriteL
+static const TInt KSndBufs  = 4;               // буферів у польоті: ~93мс запасу
+static const TInt KSndFill  = 3 * KSndChunk;   // цільове заповнення кільця (~70мс)
+
+extern "C" unsigned int ndrc_symbian_fastcount(void);
+extern "C" unsigned int ndrc_symbian_fastfreq(void);
+
+// Скільки разів пристрою не було чим долити, тобто скільки чутних розривів.
+static unsigned g_sndUnder;
 
 // Гучність кроками, керується з оболонки (клавіші * і #). Регулюємо гучність
 // ПОТОКУ, а не spu_config.iVolume: масштабування в мікшері dfsound однаково
@@ -55,9 +66,12 @@ public:
 	void Pump();
 	TBool WaitOpen(TInt aTimeoutMs);
 	void ApplyVolume();
+	TInt Step() const { return iStep; }
 private:
 	void ConstructL();
 	void Refill();
+	void PushFrame(TInt aL, TInt aR);
+	void UpdateRate(TInt aInFrames);
 	void MaoscOpenComplete(TInt aError);
 	void MaoscBufferCopied(TInt aError, const TDesC8 &aBuffer);
 	void MaoscPlayComplete(TInt aError);
@@ -65,10 +79,19 @@ private:
 	CMdaAudioOutputStream *iStream;
 	TBool iOpen;
 	TInt  iOpenErr;
-	TBool iWriting;
 	TUint8 *iRing;
 	TInt iCap, iHead, iTail;   // кільце: iHead - запис, iTail - читання
-	RBuf8 iSend;               // буфер, відданий WriteL (живе до MaoscBufferCopied)
+	RBuf8 iSend[KSndBufs];     // віддані WriteL (живуть до MaoscBufferCopied)
+	TInt iSendNext;            // наступний вільний буфер, по колу
+	TInt iInFlight;
+	// Перерахунок темпу. iStep - скільки вхідних семплів припадає на один вихідний
+	// у форматі 16.16; менше за 1.0 означає розтяг. iPos - дробова позиція в
+	// поточному вхідному блоці, iPrev* - останній семпл попереднього (інтерполяція
+	// має бути неперервною через межу блоків).
+	TInt iStep, iPos;
+	TInt iPrevL, iPrevR;
+	TInt iRateFrames;          // вхідних кадрів від початку вікна вимірювання
+	TUint iRateT0;
 	};
 
 CSymSnd *CSymSnd::NewL()
@@ -84,7 +107,10 @@ void CSymSnd::ConstructL()
 	{
 	iCap = KSndRing;
 	iRing = (TUint8 *)User::AllocL(iCap);
-	iSend.CreateL(KSndChunk);
+	for (TInt i = 0; i < KSndBufs; i++)
+		iSend[i].CreateL(KSndChunk);
+	iStep = 1 << 16;
+	iRateT0 = ndrc_symbian_fastcount();
 	iStream = CMdaAudioOutputStream::NewL(*this, EMdaPriorityNormal);
 	iStream->Open(NULL);   // асинхронно -> MaoscOpenComplete
 	}
@@ -92,7 +118,8 @@ void CSymSnd::ConstructL()
 CSymSnd::~CSymSnd()
 	{
 	if (iStream) { iStream->Stop(); delete iStream; }
-	iSend.Close();
+	for (TInt i = 0; i < KSndBufs; i++)
+		iSend[i].Close();
 	User::Free(iRing);
 	}
 
@@ -105,6 +132,10 @@ void CSymSnd::MaoscOpenComplete(TInt aError)
 		TMdaAudioDataSettings::ESampleRate44100Hz,
 		TMdaAudioDataSettings::EChannelsStereo));
 	iOpen = ETrue;
+	// Вікно вимірювання темпу починається тоді, коли пристрій почав споживати, а
+	// не при конструюванні: до відкриття споживача нема і вимір був би хибним.
+	iRateFrames = 0;
+	iRateT0 = ndrc_symbian_fastcount();
 	ApplyVolume();
 	Refill();
 	}
@@ -122,46 +153,115 @@ void CSymSnd::ApplyVolume()
 
 void CSymSnd::MaoscBufferCopied(TInt /*aError*/, const TDesC8 & /*aBuffer*/)
 	{
-	iWriting = EFalse;
+	if (iInFlight > 0)
+		iInFlight--;
 	Refill();
 	}
 
 void CSymSnd::MaoscPlayComplete(TInt /*aError*/) { }
 
+// Кадр - 4 байти, iCap і KSndChunk кратні 4, тож кадр ніколи не лягає через межу
+// кільця і копіювати його двома шматками не треба.
+void CSymSnd::PushFrame(TInt aL, TInt aR)
+	{
+	TInt next = iHead + 4;
+	if (next == iCap) next = 0;
+	if (next == iTail)
+		return;                     // кільце повне: надлишок відкидаємо
+	TInt16 *p = (TInt16 *)(iRing + iHead);
+	p[0] = (TInt16)aL;
+	p[1] = (TInt16)aR;
+	iHead = next;
+	}
+
+// Скільки семплів емуляція дала за реальне вікно - стільки їх і треба розтягнути
+// на те саме вікно. Основний член - прямий вимір (сходиться за одне вікно і не
+// коливається, на відміну від інтегратора по заповненню); заповнення кільця дає
+// лише слабкий трим проти повільного дрейфу.
+void CSymSnd::UpdateRate(TInt aInFrames)
+	{
+	iRateFrames += aInFrames;
+	const TUint now = ndrc_symbian_fastcount();
+	const TUint freq = ndrc_symbian_fastfreq();
+	const TUint el = now - iRateT0;
+	if (!freq || el < freq / 2)
+		return;
+	const TInt want = (TInt)((TInt64)KSndRate * el / freq);
+	if (want > 0)
+		{
+		TInt step = (TInt)(((TInt64)iRateFrames << 16) / want);
+		TInt avail = iHead - iTail;
+		if (avail < 0) avail += iCap;
+		step += (avail - KSndFill) / 64;
+		if (step < (1 << 14)) step = 1 << 14;       // 0.25
+		if (step > (2 << 16)) step = 2 << 16;
+		iStep = step;
+		}
+	iRateFrames = 0;
+	iRateT0 = now;
+	}
+
 void CSymSnd::Feed(const void *aBuf, TInt aBytes)
 	{
 	if (!iRing || aBytes <= 0)
 		return;
-	TInt freeSpace = iTail - iHead - 1;         // -1: повний != порожній
-	if (freeSpace < 0) freeSpace += iCap;
-	if (aBytes > freeSpace) aBytes = freeSpace; // переповнення -> відкидаємо надлишок
-	const TUint8 *p = (const TUint8 *)aBuf;
-	TInt first = iCap - iHead;
-	if (first > aBytes) first = aBytes;
-	Mem::Copy(iRing + iHead, p, first);
-	if (aBytes > first)
-		Mem::Copy(iRing, p + first, aBytes - first);
-	iHead = (iHead + aBytes) % iCap;
+	const TInt16 *src = (const TInt16 *)aBuf;
+	const TInt n = aBytes / 4;
+	if (n <= 0)
+		return;
+	while ((iPos >> 16) < n)
+		{
+		const TInt i = iPos >> 16;
+		// Дріб на 14 бітах: різниця семплів займає 17 біт зі знаком, і на повних
+		// 16 бітах дробу добуток вилазить за межу 32-бітного цілого.
+		const TInt f = (iPos >> 2) & 0x3FFF;
+		const TInt aL = i ? src[(i - 1) * 2]     : iPrevL;
+		const TInt aR = i ? src[(i - 1) * 2 + 1] : iPrevR;
+		PushFrame(aL + (((src[i * 2]     - aL) * f) >> 14),
+		          aR + (((src[i * 2 + 1] - aR) * f) >> 14));
+		iPos += iStep;
+		}
+	iPos -= n << 16;
+	iPrevL = src[(n - 1) * 2];
+	iPrevR = src[(n - 1) * 2 + 1];
+	UpdateRate(n);
 	}
 
+// Тримаємо в польоті KSndBufs буферів, а не один: із єдиним буфером уся глибина
+// конвеєра дорівнює його тривалості, і будь-який кадр, довший за неї, чути як
+// розрив. Слоти беруться по колу, а MaoscBufferCopied приходить у порядку віддачі,
+// тож лічильника в польоті досить, щоб не перезаписати ще не скопійований буфер.
 void CSymSnd::Refill()
 	{
-	if (!iOpen || iWriting)
+	if (!iOpen)
 		return;
-	TInt avail = iHead - iTail;
-	if (avail < 0) avail += iCap;
-	if (avail < KSndChunk)
-		return;                                 // недостатньо - чекаємо наступного Pump
-	iSend.SetLength(0);
-	TInt first = iCap - iTail;
-	if (first > KSndChunk) first = KSndChunk;
-	iSend.Append(iRing + iTail, first);
-	if (KSndChunk > first)
-		iSend.Append(iRing, KSndChunk - first);
-	iTail = (iTail + KSndChunk) % iCap;
-	iWriting = ETrue;
-	TRAPD(err, iStream->WriteL(iSend));
-	if (err != KErrNone) iWriting = EFalse;
+	while (iInFlight < KSndBufs)
+		{
+		TInt avail = iHead - iTail;
+		if (avail < 0) avail += iCap;
+		// Поки нічого не грає - не стартувати з майже порожнього кільця: воно
+		// одразу спорожніє знову. Той самий поріг служить і первинним запасом.
+		const TInt need = iInFlight ? KSndChunk : KSndFill;
+		if (avail < need)
+			{
+			if (iInFlight == 0)
+				g_sndUnder++;       // скільки разів Pump застав динамік без даних
+			return;
+			}
+		RBuf8 &b = iSend[iSendNext];
+		b.SetLength(0);
+		TInt first = iCap - iTail;
+		if (first > KSndChunk) first = KSndChunk;
+		b.Append(iRing + iTail, first);
+		if (KSndChunk > first)
+			b.Append(iRing, KSndChunk - first);
+		iTail = (iTail + KSndChunk) % iCap;
+		TRAPD(err, iStream->WriteL(b));
+		if (err != KErrNone)
+			return;
+		iSendNext = (iSendNext + 1) % KSndBufs;
+		iInFlight++;
+		}
 	}
 
 // У GUI планувальник крутить сама оболонка: CIdle віддає йому керування після
@@ -204,7 +304,7 @@ static CSymSnd *g_snd;
 static unsigned g_sndFeeds, g_sndSamples;
 static int g_sndMax;
 
-static int  symOutInit(void)   { g_sndFeeds = g_sndSamples = 0; g_sndMax = 0; return 0; }
+static int  symOutInit(void)   { g_sndFeeds = g_sndSamples = 0; g_sndMax = 0; g_sndUnder = 0; return 0; }
 static void symOutFinish(void) { }
 static int  symOutBusy(void)   { return 0; }          // 0 = порожньо: генеруй ще
 static void symOutFeed(void *buf, int bytes)
@@ -270,11 +370,14 @@ void ps1SndSelectOutput(void)
 	symOutInit();
 	}
 
-void ps1SndStats(unsigned *aFeeds, unsigned *aSamples, int *aMaxAmp)
+void ps1SndStats(unsigned *aFeeds, unsigned *aSamples, int *aMaxAmp,
+                 unsigned *aUnder, int *aStepQ16)
 	{
 	if (aFeeds)   *aFeeds = g_sndFeeds;
 	if (aSamples) *aSamples = g_sndSamples;
 	if (aMaxAmp)  *aMaxAmp = g_sndMax;
+	if (aUnder)   *aUnder = g_sndUnder;
+	if (aStepQ16) *aStepQ16 = g_snd ? g_snd->Step() : 0;
 	}
 
 // --- Керування виводом у динамік (Фаза B) ----------------------------------
