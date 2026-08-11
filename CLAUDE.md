@@ -24,7 +24,7 @@
 
 | Пристрій | Платформа | SoC / ядро | Частота | Графіка |
 |---|---|---|---|---|
-| **Nokia N95 8GB** *(еталон)* | S60v3 FP1, Symbian 9.2 | OMAP 2420, ARM1136 | 332 МГц | PowerVR MBX Lite |
+| **Nokia N95 8GB** *(еталон)* | S60v3 FP1, Symbian 9.2 | OMAP 2420, ARM1136 | 332 МГц | PowerVR MBX |
 | Nokia E90 | S60v3 FP1, Symbian 9.2 | OMAP 2420, ARM1136 | 330 МГц | PowerVR MBX |
 | Nokia C5-00.2 | S60v3 FP2 | ARMv6 | ~600 МГц | — (без 3D) |
 | Nokia 701 | Symbian Belle | BCM2763, VideoCore IV | 1000 МГц | OpenGL ES 2.0 |
