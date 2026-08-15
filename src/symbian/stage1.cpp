@@ -350,6 +350,10 @@ extern "C" void gpu_unai_set_config(int aPixelSkip, int aIlaceForce,
 	int aLighting, int aFastLighting, int aBlending);
 // Копіює конфіг у робочу структуру растеризатора вже після renderer_init.
 extern "C" void gpu_unai_apply_config(void);
+// Є лише у збірці gpu_unai з -DGPU_UNAI_PRIMSTATS; слабкий символ, щоб звичайна
+// збірка лінкувалася без нього. Порядок полів - як у gpu_unai_primstats_t.
+extern "C" int gpu_unai_get_primstats(unsigned *aOut, int aMax)
+	__attribute__((weak));
 
 // Пропуск виведення: кожен (N+1)-й кадр показуємо, решту лише рахуємо. Емуляцію
 // і растеризацію це НЕ пропускає - економить саме вивід (конвертація + вікно),
@@ -1445,6 +1449,24 @@ static void passTeardown()
 		"%s: wData=%u wDataMem=%u dmaChain=%u dmaWords=%u wStatus=%u rStatus=%u statusLast=%08x",
 		mode, g_gpulibWriteData, g_gpulibWriteDataMem, g_gpulibDmaChain,
 		g_gpulibDmaWords, g_gpulibWriteStatus, g_gpulibReadStatus, g_gpulibStatusLast);
+
+	// Що саме гру просить намалювати: пікселі й штуки по класах примітивів.
+	// Потрібно, щоб порівняти gpu_unai з апаратним растеризатором MBX, у якого
+	// ціна визначається площею, а не кількістю викликів.
+	if (gpu_unai_get_primstats)
+		{
+		unsigned v[23];
+		for (TInt i = 0; i < 23; i++) v[i] = 0;
+		gpu_unai_get_primstats(v, 23);
+		logEvent("primstats", NULL,
+			"%s: pxF=%u pxFT=%u pxG=%u pxGT=%u pxSpr=%u pxFill=%u"
+			" nF=%u nFT=%u nG=%u nGT=%u nSpr=%u nLine=%u nFill=%u"
+			" area=%u,%u,%u,%u,%u,%u blend=%u,%u,%u,%u", mode,
+			v[0], v[1], v[2], v[3], v[4], v[5],
+			v[6], v[7], v[8], v[9], v[10], v[11], v[12],
+			v[13], v[14], v[15], v[16], v[17], v[18],
+			v[19], v[20], v[21], v[22]);
+		}
 
 	// Звук (Фаза A): скільки семплів SPU видав і пікова амплітуда. maxAmp>0 =
 	// SPU реально генерує звук BIOS; вивід у динамік - Фаза B.
