@@ -359,6 +359,9 @@ extern "C" int gpu_unai_get_primstats(unsigned *aOut, int aMax)
 // не має сенсу; тому кличемо звідси.
 extern "C" void gpu_unai_primstats_frame(void)
 	__attribute__((weak));
+// Робота з VRAM повз растеризатор (gpulib): запис, читання, копіювання - у
+// штуках і пікселях. Для апаратного рендерера це точки синхронізації.
+extern "C" unsigned int gpulib_vram_stats[6];
 
 // Пропуск виведення: кожен (N+1)-й кадр показуємо, решту лише рахуємо. Емуляцію
 // і растеризацію це НЕ пропускає - економить саме вивід (конвертація + вікно),
@@ -1476,6 +1479,12 @@ static void passTeardown()
 			v[19], v[20], v[21], v[22],
 			v[23], v[24], v[25], v[26], v[27], v[28]);
 		}
+
+	logEvent("vramstats", NULL,
+		"%s: sysToVid=%u,%upx vidToSys=%u,%upx vidToVid=%u,%upx", mode,
+		gpulib_vram_stats[0], gpulib_vram_stats[1],
+		gpulib_vram_stats[2], gpulib_vram_stats[3],
+		gpulib_vram_stats[4], gpulib_vram_stats[5]);
 
 	// Звук (Фаза A): скільки семплів SPU видав і пікова амплітуда. maxAmp>0 =
 	// SPU реально генерує звук BIOS; вивід у динамік - Фаза B.
