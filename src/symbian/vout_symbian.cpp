@@ -942,6 +942,217 @@ static void glShutdown()
 		}
 	}
 
+// --- Зонд накладних GL -------------------------------------------------------
+// Гілка MBX впирається не в заповнення: гра просить 93 тис. пікселів на кадр,
+// тобто 1.21 екрана, і це для апаратного растеризатора дрібниця. Впирається
+// вона в кількість викликів - 324 примітиви на кадр із переміканням текстурної
+// сторінки між ними. Скільки коштує сам виклик малювання і сама зміна
+// прив'язки на цьому драйвері, з документації не дізнатись, тому міряємо
+// синтетично: та сама кількість примітивів, але без емуляції взагалі. Зонд
+// свідомо не є рендерером PS1 - він відповідає лише на питання, чи вміщається
+// 324 виклики в бюджет кадру.
+static const TInt KBenchTex     = 16;    // різних текстур у наборі
+static const TInt KBenchTexSz   = 128;   // сторона текстури, POT
+static const TInt KBenchMaxPrim = 648;
+static const TInt KBenchFrames  = 200;
+static const TInt KBenchWarm    = 10;    // прогрів: перший кадр драйвер довантажує
+
+struct TGlBenchCfg
+	{
+	const char *iName;
+	TInt iPrims;    // квадів на кадр
+	TInt iSide;     // сторона квада, пікселів (<=0 = уся поверхня)
+	TInt iBinds;    // прив'язок за кадр (шлях окремих викликів)
+	TInt iBlend;    // напівпрозорість (GL_ONE, GL_ONE - режим 1 PS1)
+	TInt iUploads;  // glTexImage2D на кадр: перезавантаження сторінки
+	TInt iUpSize;   // сторона тієї текстури, що перезавантажується
+	TInt iBatch;    // >0: усі приміт. подано за стільки викликів (з сортуванням)
+	TInt iShort;    // вершини GL_SHORT замість GL_FLOAT
+	};
+
+// Перший прогін (R9) дав підлогу кадру 4.07 мс і ~14 мкс на виклик малювання.
+// Друга черга уточнює те, що з тих чисел вивести не вдалося: ціну ОДНІЄЇ
+// вершини (батчі різного розміру одним викликом), ціну реального варіанта з
+// сортуванням (13 різних текстур за кадр - заміряно в R8), формат вершин і
+// залежність завантаження текстури від її розміру.
+static const TGlBenchCfg KBench[] =
+	{
+	// Підлога: скільки коштує сам кадр без жодного примітиву. Повторюємо з R9,
+	// щоб бачити розкид між прогонами.
+	{ "clear",    0,   0, 0,   0, 0, 0,   0,  0 },
+	// Один виклик, різна кількість вершин: нахил дає ціну вершини.
+	{ "batch81",  81,  8, 0,   0, 0, 0,   1,  0 },
+	{ "batch324", 324, 8, 0,   0, 0, 0,   1,  0 },
+	{ "batch648", 648, 8, 0,   0, 0, 0,   1,  0 },
+	// Реальний варіант: 324 примітиви, згруповані в 13 пакетів за текстурою.
+	{ "sort13",   324, 8, 0,   0, 0, 0,   13, 0 },
+	// Те саме з площею як у грі (324*289 = 93.6 тис. пікселів).
+	{ "sort13px", 324, 17, 0,  0, 0, 0,   13, 0 },
+	// Той самий кадр без сортування: 324 окремі виклики, 13 прив'язок.
+	{ "naive13",  324, 8, 13,  0, 0, 0,   0,  0 },
+	// Формат вершин: чи платимо ми за перетворення float у драйвері.
+	{ "sort13s",  324, 8, 0,   0, 0, 0,   13, 1 },
+	// Ціна завантаження текстури залежно від розміру: 128x128 проти 64x64.
+	{ "up1x128",  324, 8, 0,   0, 1, 128, 13, 0 },
+	{ "up1x64",   324, 8, 0,   0, 1, 64,  13, 0 },
+	{ "up4x64",   324, 8, 0,   0, 4, 64,  13, 0 },
+	};
+
+// Розкидані квади в один потік вершин. Порядок вершин - як у present-шляху
+// (TRIANGLE_STRIP), а для батч-варіанта той самий квад розкладається на два
+// трикутники, бо смужкою кілька квадів одним викликом не подати.
+static void glBenchVerts(GLfloat *aStrip, GLfloat *aStripT, GLfloat *aList,
+	GLfloat *aListT, GLshort *aListS, TInt aPrims, TInt aSide)
+	{
+	TUint32 rnd = 12345;
+	const TInt sw = g_glW > aSide ? g_glW - aSide : 1;
+	const TInt sh = g_glH > aSide ? g_glH - aSide : 1;
+	for (TInt i = 0; i < aPrims; i++)
+		{
+		rnd = rnd * 1103515245u + 12345u; const TInt px = (TInt)((rnd >> 16) % (TUint32)sw);
+		rnd = rnd * 1103515245u + 12345u; const TInt py = (TInt)((rnd >> 16) % (TUint32)sh);
+		const GLfloat x0 = (GLfloat)px, y0 = (GLfloat)py;
+		const GLfloat x1 = (GLfloat)(px + aSide), y1 = (GLfloat)(py + aSide);
+		GLfloat *v = aStrip + i * 8, *t = aStripT + i * 8;
+		v[0]=x0; v[1]=y0;  v[2]=x1; v[3]=y0;  v[4]=x0; v[5]=y1;  v[6]=x1; v[7]=y1;
+		t[0]=0;  t[1]=0;   t[2]=1;  t[3]=0;   t[4]=0;  t[5]=1;   t[6]=1;  t[7]=1;
+		GLfloat *w = aList + i * 12, *u = aListT + i * 12;
+		w[0]=x0; w[1]=y0;  w[2]=x1; w[3]=y0;  w[4]=x0; w[5]=y1;
+		w[6]=x1; w[7]=y0;  w[8]=x1; w[9]=y1;  w[10]=x0; w[11]=y1;
+		u[0]=0;  u[1]=0;   u[2]=1;  u[3]=0;   u[4]=0;  u[5]=1;
+		u[6]=1;  u[7]=0;   u[8]=1;  u[9]=1;   u[10]=0; u[11]=1;
+		GLshort *s = aListS + i * 12;
+		for (TInt k = 0; k < 12; k++)
+			s[k] = (GLshort)w[k];
+		}
+	}
+
+extern "C" int voutSymbianGlBench(int aFrames)
+	{
+	if (!g_glReady)
+		{
+		ps1LogFmt("glbench", "GL is not up - the run needs the gl flag");
+		return -1;
+		}
+	const TInt frames = aFrames > 0 ? aFrames : KBenchFrames;
+	const TInt vbytes = KBenchMaxPrim * 12 * 2 * (TInt)sizeof(GLfloat);
+	GLfloat *strip  = (GLfloat *)User::Alloc(vbytes);
+	GLfloat *stripT = (GLfloat *)User::Alloc(vbytes);
+	GLfloat *list   = (GLfloat *)User::Alloc(vbytes);
+	GLfloat *listT  = (GLfloat *)User::Alloc(vbytes);
+	GLshort *listS  = (GLshort *)User::Alloc(vbytes);
+	TUint16 *texbuf = (TUint16 *)User::Alloc(KBenchTexSz * KBenchTexSz * 2);
+	if (!strip || !stripT || !list || !listT || !listS || !texbuf)
+		{
+		User::Free(strip); User::Free(stripT); User::Free(list);
+		User::Free(listT); User::Free(listS); User::Free(texbuf);
+		ps1LogFmt("glbench", "out of memory");
+		return -2;
+		}
+
+	// Набір текстур. Вміст різний, щоб драйвер не звів їх до однієї.
+	GLuint tex[KBenchTex];
+	glGenTextures(KBenchTex, tex);
+	for (TInt k = 0; k < KBenchTex; k++)
+		{
+		for (TInt p = 0; p < KBenchTexSz * KBenchTexSz; p++)
+			texbuf[p] = (TUint16)((p * 7 + k * 1013) & 0xFFFF);
+		glBindTexture(GL_TEXTURE_2D, tex[k]);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, KBenchTexSz, KBenchTexSz, 0,
+			GL_RGB, GL_UNSIGNED_SHORT_5_6_5, texbuf);
+		}
+	ps1LogFmt("glbench", "begin: surface=%dx%d frames=%d textures=%dx%d err=%u",
+		(int)g_glW, (int)g_glH, (int)frames, (int)KBenchTex, (int)KBenchTexSz,
+		(unsigned)glGetError());
+
+	const unsigned freq = ndrc_symbian_fastfreq();
+	const TInt ncfg = (TInt)(sizeof(KBench) / sizeof(KBench[0]));
+	for (TInt c = 0; c < ncfg; c++)
+		{
+		const TGlBenchCfg &cfg = KBench[c];
+		TInt side = cfg.iSide;
+		if (side <= 0) side = g_glH < g_glW ? g_glH : g_glW;
+		glBenchVerts(strip, stripT, list, listT, listS, cfg.iPrims, side);
+		const TInt bindEvery = cfg.iBinds > 0
+			? (cfg.iPrims + cfg.iBinds - 1) / cfg.iBinds : 0;
+		// Квадів на один пакет у варіанті з сортуванням. Останній добирає решту.
+		const TInt perBatch = cfg.iBatch > 0
+			? (cfg.iPrims + cfg.iBatch - 1) / cfg.iBatch : 0;
+		if (cfg.iBlend)
+			{ glEnable(GL_BLEND); glBlendFunc(GL_ONE, GL_ONE); }
+		else
+			glDisable(GL_BLEND);
+		if (cfg.iBatch)
+			{
+			if (cfg.iShort) glVertexPointer(2, GL_SHORT, 0, listS);
+			else            glVertexPointer(2, GL_FLOAT, 0, list);
+			glTexCoordPointer(2, GL_FLOAT, 0, listT);
+			}
+		else
+			{ glVertexPointer(2, GL_FLOAT, 0, strip); glTexCoordPointer(2, GL_FLOAT, 0, stripT); }
+
+		TUint t0 = 0;
+		for (TInt f = -KBenchWarm; f < frames; f++)
+			{
+			if (f == 0) { glFinish(); t0 = User::FastCounter(); }
+			glClear(GL_COLOR_BUFFER_BIT);
+			for (TInt u = 0; u < cfg.iUploads; u++)
+				{
+				const TInt us = cfg.iUpSize > 0 ? cfg.iUpSize : KBenchTexSz;
+				glBindTexture(GL_TEXTURE_2D, tex[u % KBenchTex]);
+				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, us, us, 0,
+					GL_RGB, GL_UNSIGNED_SHORT_5_6_5, texbuf);
+				}
+			if (cfg.iBatch)
+				{
+				for (TInt b = 0; b < cfg.iBatch; b++)
+					{
+					const TInt first = b * perBatch;
+					if (first >= cfg.iPrims) break;
+					TInt cnt = perBatch;
+					if (first + cnt > cfg.iPrims) cnt = cfg.iPrims - first;
+					glBindTexture(GL_TEXTURE_2D, tex[b % KBenchTex]);
+					glDrawArrays(GL_TRIANGLES, first * 6, cnt * 6);
+					}
+				}
+			else
+				{
+				for (TInt i = 0; i < cfg.iPrims; i++)
+					{
+					if (bindEvery && (i % bindEvery) == 0)
+						glBindTexture(GL_TEXTURE_2D, tex[(i / bindEvery) % KBenchTex]);
+					glDrawArrays(GL_TRIANGLE_STRIP, i * 4, 4);
+					}
+				}
+			eglSwapBuffers(g_eglDpy, g_eglSurf);
+			}
+		glFinish();
+		const TUint dt = User::FastCounter() - t0;
+		// Мікросекунди на кадр: мілісекунди тут дали б два значущі знаки на кадр
+		// у 5 мс, а нас цікавить різниця між конфігураціями.
+		const unsigned us = (unsigned)((TUint64)dt * 1000000ULL / (freq ? freq : 1) / frames);
+		ps1LogFmt("glbench", "%s prims=%d side=%d binds=%d blend=%d up=%dx%d batch=%d"
+			" short=%d calls=%d verts=%d us=%u px=%u err=%u",
+			cfg.iName, (int)cfg.iPrims, (int)side, (int)cfg.iBinds, (int)cfg.iBlend,
+			(int)cfg.iUploads, (int)(cfg.iUpSize > 0 ? cfg.iUpSize : KBenchTexSz),
+			(int)cfg.iBatch, (int)cfg.iShort,
+			(int)(cfg.iBatch > 0 ? cfg.iBatch : cfg.iPrims),
+			(int)(cfg.iBatch > 0 ? cfg.iPrims * 6 : cfg.iPrims * 4),
+			us, (unsigned)(cfg.iPrims * side * side), (unsigned)glGetError());
+		}
+
+	glDisable(GL_BLEND);
+	glDeleteTextures(KBenchTex, tex);
+	User::Free(strip); User::Free(stripT); User::Free(list);
+	User::Free(listT); User::Free(listS); User::Free(texbuf);
+	ps1LogFmt("glbench", "done");
+	return 0;
+	}
+
 // --- Накладка з лічильником кадрів -------------------------------------------
 
 // Шрифт 5x7, лише ті знаки, що трапляються в рядку метрик. Малюємо самі, а не

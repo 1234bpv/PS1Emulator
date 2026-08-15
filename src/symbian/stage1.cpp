@@ -249,6 +249,7 @@ void voutSymbianFbPages(int *changes, int *seen, int *b0, int *b1);
 int voutSymbianHalDump(const char *path);
 int voutSymbianHalAddr(void);
 int voutSymbianRawDump(const char *path, int bytes);
+int voutSymbianGlBench(int frames);
 int voutSymbianVisTest(int raw);
 void voutSymbianSetOverlay(int on);
 void voutSymbianSetNoUpdate(int on);
@@ -353,6 +354,10 @@ extern "C" void gpu_unai_apply_config(void);
 // Є лише у збірці gpu_unai з -DGPU_UNAI_PRIMSTATS; слабкий символ, щоб звичайна
 // збірка лінкувалася без нього. Порядок полів - як у gpu_unai_primstats_t.
 extern "C" int gpu_unai_get_primstats(unsigned *aOut, int aMax)
+	__attribute__((weak));
+// Межу кадру растеризатор не бачить, а лічильник різних текстур за кадр без неї
+// не має сенсу; тому кличемо звідси.
+extern "C" void gpu_unai_primstats_frame(void)
 	__attribute__((weak));
 
 // Пропуск виведення: кожен (N+1)-й кадр показуємо, решту лише рахуємо. Емуляцію
@@ -1281,6 +1286,8 @@ static TBool passStep()
 	psxCpu->Execute(&psxRegs);
 	TUint t2 = User::NTickCount(); g_pass.tEmu += t2 - t1;
 	g_wdBeat++;
+	if (gpu_unai_primstats_frame)
+		gpu_unai_primstats_frame();
 
 	if (g_wdFired)
 		{
@@ -1455,17 +1462,19 @@ static void passTeardown()
 	// ціна визначається площею, а не кількістю викликів.
 	if (gpu_unai_get_primstats)
 		{
-		unsigned v[23];
-		for (TInt i = 0; i < 23; i++) v[i] = 0;
-		gpu_unai_get_primstats(v, 23);
+		unsigned v[29];
+		for (TInt i = 0; i < 29; i++) v[i] = 0;
+		gpu_unai_get_primstats(v, 29);
 		logEvent("primstats", NULL,
 			"%s: pxF=%u pxFT=%u pxG=%u pxGT=%u pxSpr=%u pxFill=%u"
 			" nF=%u nFT=%u nG=%u nGT=%u nSpr=%u nLine=%u nFill=%u"
-			" area=%u,%u,%u,%u,%u,%u blend=%u,%u,%u,%u", mode,
+			" area=%u,%u,%u,%u,%u,%u blend=%u,%u,%u,%u"
+			" nTex=%u texChg=%u tpChg=%u texSum=%u tpSum=%u texMax=%u", mode,
 			v[0], v[1], v[2], v[3], v[4], v[5],
 			v[6], v[7], v[8], v[9], v[10], v[11], v[12],
 			v[13], v[14], v[15], v[16], v[17], v[18],
-			v[19], v[20], v[21], v[22]);
+			v[19], v[20], v[21], v[22],
+			v[23], v[24], v[25], v[26], v[27], v[28]);
 		}
 
 	// Звук (Фаза A): скільки семплів SPU видав і пікова амплітуда. maxAmp>0 =
@@ -1654,6 +1663,9 @@ static TBool g_guiUp;
 // іншого (растеризація gpu_unai, ядро, наш вивід).
 static TBool g_guiInterp;
 
+// Кадрів на конфігурацію в зонді GL; 0 = зонд не запитано.
+static TInt g_glBench;
+
 extern "C" void ps1GuiUseInterpreter(void)
 	{
 	g_guiInterp = ETrue;
@@ -1663,6 +1675,15 @@ extern "C" int ps1GuiSetup(void)
 	{
 	g_guiMode = ETrue;
 	g_guiExit = 0;
+	// Зонд GL іде замість проходу: ядро для нього не потрібне взагалі, а вікно й
+	// контекст на цей момент уже підняті (AttachOutput кличеться перед нами).
+	if (g_glBench > 0)
+		{
+		logEvent("start", NULL, "stage1 begin (glbench), frames=%d", (int)g_glBench);
+		voutSymbianGlBench(g_glBench);
+		g_guiUp = EFalse;
+		return KErrNone;
+		}
 	g_watchdogMs = KPlayWatchdogMs;
 	ps1SndSetPumpAo(0);   // планувальник крутить CIdle між кадрами
 	voutSymbianSetPumpAo(0);
@@ -2148,6 +2169,18 @@ GLDEF_C TInt E32Main()
 		// застосунок живий, а вікно прив'язується вже всередині нього.
 		if (cl.FindF(KGlArg) != KErrNotFound)
 			voutSymbianSetGl(1);
+		// Зонд накладних GL замість гри: та сама кількість примітивів на кадр, що
+		// й у Gran Turismo, але без емуляції. GL вмикає сам - без нього міряти
+		// нічого. "glbenchN" задає число кадрів на конфігурацію.
+		_LIT(KGlBenchArg, "glbench");
+		const TInt gbp = cl.FindF(KGlBenchArg);
+		if (gbp != KErrNotFound)
+			{
+			TLex lex(cl.Mid(gbp + 7));
+			TInt n = 0;
+			g_glBench = (lex.Val(n) == KErrNone && n > 0) ? n : 200;
+			voutSymbianSetGl(1);
+			}
 		// "dsa"/"rowcopy" тут ОБОВ'ЯЗКОВО: parseCommandLine розбирає їх лише в
 		// консольній гілці, а вікно в GUI прив'язується до неї - прапорець приходив
 		// би після того, як DSA треба було підняти, і прогін мовчки йшов віконним
