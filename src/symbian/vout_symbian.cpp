@@ -968,6 +968,7 @@ struct TGlBenchCfg
 	TInt iUpSize;   // сторона тієї текстури, що перезавантажується
 	TInt iBatch;    // >0: усі приміт. подано за стільки викликів (з сортуванням)
 	TInt iShort;    // вершини GL_SHORT замість GL_FLOAT
+	TInt iPal;      // завантажувати палітровою текстурою (4 біти + CLUT)
 	};
 
 // Перший прогін (R9) дав підлогу кадру 4.07 мс і ~14 мкс на виклик малювання.
@@ -975,27 +976,26 @@ struct TGlBenchCfg
 // вершини (батчі різного розміру одним викликом), ціну реального варіанта з
 // сортуванням (13 різних текстур за кадр - заміряно в R8), формат вершин і
 // залежність завантаження текстури від її розміру.
+// Третя черга (R11) б'є в те, що після R10 лишилось єдиною серйозною перешкодою:
+// завантаження текстури йде на 22 МБ/с, і повна сторінка PS1, розгорнута в
+// RGB565, коштувала б близько 6 мс. Драйвер має GL_OES_compressed_paletted_
+// texture, а чотирибітна сторінка PS1 разом із CLUT - це рівно те, що він
+// приймає: вчетверо менше даних і жодного розпакування на процесорі. Міряємо
+// обидва способи на трьох розмірах, на одній і тій самій текстурі.
 static const TGlBenchCfg KBench[] =
 	{
-	// Підлога: скільки коштує сам кадр без жодного примітиву. Повторюємо з R9,
-	// щоб бачити розкид між прогонами.
-	{ "clear",    0,   0, 0,   0, 0, 0,   0,  0 },
-	// Один виклик, різна кількість вершин: нахил дає ціну вершини.
-	{ "batch81",  81,  8, 0,   0, 0, 0,   1,  0 },
-	{ "batch324", 324, 8, 0,   0, 0, 0,   1,  0 },
-	{ "batch648", 648, 8, 0,   0, 0, 0,   1,  0 },
-	// Реальний варіант: 324 примітиви, згруповані в 13 пакетів за текстурою.
-	{ "sort13",   324, 8, 0,   0, 0, 0,   13, 0 },
-	// Те саме з площею як у грі (324*289 = 93.6 тис. пікселів).
-	{ "sort13px", 324, 17, 0,  0, 0, 0,   13, 0 },
-	// Той самий кадр без сортування: 324 окремі виклики, 13 прив'язок.
-	{ "naive13",  324, 8, 13,  0, 0, 0,   0,  0 },
-	// Формат вершин: чи платимо ми за перетворення float у драйвері.
-	{ "sort13s",  324, 8, 0,   0, 0, 0,   13, 1 },
-	// Ціна завантаження текстури залежно від розміру: 128x128 проти 64x64.
-	{ "up1x128",  324, 8, 0,   0, 1, 128, 13, 0 },
-	{ "up1x64",   324, 8, 0,   0, 1, 64,  13, 0 },
-	{ "up4x64",   324, 8, 0,   0, 4, 64,  13, 0 },
+	// Основа для порівняння: реальний кадр без жодного завантаження.
+	{ "sort13",    324, 8, 0, 0, 0, 0,   13, 0, 0 },
+	// Розпаковані RGB565: 8, 32 і 128 КБ на кадр.
+	{ "up1x64",    324, 8, 0, 0, 1, 64,  13, 0, 0 },
+	{ "up1x128",   324, 8, 0, 0, 1, 128, 13, 0, 0 },
+	{ "up1x256",   324, 8, 0, 0, 1, 256, 13, 0, 0 },
+	// Те саме палітрою: 2, 8 і 32 КБ, бо чотири біти на тексель.
+	{ "pal1x64",   324, 8, 0, 0, 1, 64,  13, 0, 1 },
+	{ "pal1x128",  324, 8, 0, 0, 1, 128, 13, 0, 1 },
+	{ "pal1x256",  324, 8, 0, 0, 1, 256, 13, 0, 1 },
+	// Скільки сторінок за кадр ще вміщається, якщо палітра справді дешева.
+	{ "pal4x256",  324, 8, 0, 0, 4, 256, 13, 0, 1 },
 	};
 
 // Розкидані квади в один потік вершин. Порядок вершин - як у present-шляху
@@ -1041,7 +1041,8 @@ extern "C" int voutSymbianGlBench(int aFrames)
 	GLfloat *list   = (GLfloat *)User::Alloc(vbytes);
 	GLfloat *listT  = (GLfloat *)User::Alloc(vbytes);
 	GLshort *listS  = (GLshort *)User::Alloc(vbytes);
-	TUint16 *texbuf = (TUint16 *)User::Alloc(KBenchTexSz * KBenchTexSz * 2);
+	// Під найбільшу текстуру, яку міряємо: сторінка PS1 - це 256x256 текселів.
+	TUint16 *texbuf = (TUint16 *)User::Alloc(256 * 256 * 2);
 	if (!strip || !stripT || !list || !listT || !listS || !texbuf)
 		{
 		User::Free(strip); User::Free(stripT); User::Free(list);
@@ -1052,7 +1053,9 @@ extern "C" int voutSymbianGlBench(int aFrames)
 
 	// Набір текстур. Вміст різний, щоб драйвер не звів їх до однієї.
 	GLuint tex[KBenchTex];
+	GLuint upTex = 0;
 	glGenTextures(KBenchTex, tex);
+	glGenTextures(1, &upTex);
 	for (TInt k = 0; k < KBenchTex; k++)
 		{
 		for (TInt p = 0; p < KBenchTexSz * KBenchTexSz; p++)
@@ -1065,9 +1068,16 @@ extern "C" int voutSymbianGlBench(int aFrames)
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, KBenchTexSz, KBenchTexSz, 0,
 			GL_RGB, GL_UNSIGNED_SHORT_5_6_5, texbuf);
 		}
-	ps1LogFmt("glbench", "begin: surface=%dx%d frames=%d textures=%dx%d err=%u",
+	// Джерело для завантажень: заповнюємо весь буфер, бо тепер міряємо й 256x256.
+	for (TInt p = 0; p < 256 * 256; p++)
+		texbuf[p] = (TUint16)((p * 7) & 0xFFFF);
+	const char *ext = (const char *)glGetString(GL_EXTENSIONS);
+	TInt hasPal = 0;
+	for (const char *s = ext; s && *s; s++)
+		if (s[0] == 'p' && s[1] == 'a' && s[2] == 'l' && s[3] == 'e') { hasPal = 1; break; }
+	ps1LogFmt("glbench", "begin: surface=%dx%d frames=%d textures=%dx%d paletted=%d err=%u",
 		(int)g_glW, (int)g_glH, (int)frames, (int)KBenchTex, (int)KBenchTexSz,
-		(unsigned)glGetError());
+		(int)hasPal, (unsigned)glGetError());
 
 	const unsigned freq = ndrc_symbian_fastfreq();
 	const TInt ncfg = (TInt)(sizeof(KBench) / sizeof(KBench[0]));
@@ -1103,9 +1113,17 @@ extern "C" int voutSymbianGlBench(int aFrames)
 			for (TInt u = 0; u < cfg.iUploads; u++)
 				{
 				const TInt us = cfg.iUpSize > 0 ? cfg.iUpSize : KBenchTexSz;
-				glBindTexture(GL_TEXTURE_2D, tex[u % KBenchTex]);
-				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, us, us, 0,
-					GL_RGB, GL_UNSIGNED_SHORT_5_6_5, texbuf);
+				// Одна й та сама текстура на всі варіанти завантаження, щоб
+				// порівнювались саме способи, а не різні об'єкти драйвера.
+				glBindTexture(GL_TEXTURE_2D, upTex);
+				if (cfg.iPal)
+					// Палітра (16 записів по 2 байти) і за нею індекси по чотири
+					// біти - точнісінько розкладка чотирибітної сторінки PS1.
+					glCompressedTexImage2D(GL_TEXTURE_2D, 0,
+						GL_PALETTE4_RGB5_A1_OES, us, us, 0, 32 + us * us / 2, texbuf);
+				else
+					glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, us, us, 0,
+						GL_RGB, GL_UNSIGNED_SHORT_5_6_5, texbuf);
 				}
 			if (cfg.iBatch)
 				{
@@ -1136,10 +1154,10 @@ extern "C" int voutSymbianGlBench(int aFrames)
 		// у 5 мс, а нас цікавить різниця між конфігураціями.
 		const unsigned us = (unsigned)((TUint64)dt * 1000000ULL / (freq ? freq : 1) / frames);
 		ps1LogFmt("glbench", "%s prims=%d side=%d binds=%d blend=%d up=%dx%d batch=%d"
-			" short=%d calls=%d verts=%d us=%u px=%u err=%u",
+			" pal=%d calls=%d verts=%d us=%u px=%u err=%u",
 			cfg.iName, (int)cfg.iPrims, (int)side, (int)cfg.iBinds, (int)cfg.iBlend,
 			(int)cfg.iUploads, (int)(cfg.iUpSize > 0 ? cfg.iUpSize : KBenchTexSz),
-			(int)cfg.iBatch, (int)cfg.iShort,
+			(int)cfg.iBatch, (int)cfg.iPal,
 			(int)(cfg.iBatch > 0 ? cfg.iBatch : cfg.iPrims),
 			(int)(cfg.iBatch > 0 ? cfg.iPrims * 6 : cfg.iPrims * 4),
 			us, (unsigned)(cfg.iPrims * side * side), (unsigned)glGetError());
@@ -1147,6 +1165,7 @@ extern "C" int voutSymbianGlBench(int aFrames)
 
 	glDisable(GL_BLEND);
 	glDeleteTextures(KBenchTex, tex);
+	glDeleteTextures(1, &upTex);
 	User::Free(strip); User::Free(stripT); User::Free(list);
 	User::Free(listT); User::Free(listS); User::Free(texbuf);
 	ps1LogFmt("glbench", "done");
