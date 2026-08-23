@@ -257,7 +257,7 @@ void glrSetEnabled(int on);
 int  glrEnabled(void);
 void glrBeginFrame(void);
 int  glrEndFrame(void);
-void glrStats(int *verts, int *batches, int *over);
+void glrStats(int *verts, int *batches, int *over, int *hit, int *miss, int *evict);
 int voutSymbianVisTest(int raw);
 void voutSymbianSetOverlay(int on);
 void voutSymbianSetNoUpdate(int on);
@@ -1495,6 +1495,15 @@ static void passTeardown()
 			v[13], v[14], v[15], v[16], v[17], v[18],
 			v[19], v[20], v[21], v[22],
 			v[23], v[24], v[25], v[26], v[27], v[28]);
+		}
+
+	if (glrEnabled())
+		{
+		int gv = 0, gb = 0, go = 0, gh = 0, gm = 0, ge = 0;
+		glrStats(&gv, &gb, &go, &gh, &gm, &ge);
+		logEvent("glr", NULL,
+			"%s: lastVerts=%d lastBatches=%d over=%d texHit=%d texMiss=%d evict=%d",
+			mode, gv, gb, go, gh, gm, ge);
 		}
 
 	logEvent("vramstats", NULL,
