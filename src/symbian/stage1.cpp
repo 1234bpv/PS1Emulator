@@ -250,6 +250,14 @@ int voutSymbianHalDump(const char *path);
 int voutSymbianHalAddr(void);
 int voutSymbianRawDump(const char *path, int bytes);
 int voutSymbianGlBench(int frames);
+// Растеризатор на MBX (glrender.cpp).
+int  glrInit(void);
+void glrShutdown(void);
+void glrSetEnabled(int on);
+int  glrEnabled(void);
+void glrBeginFrame(void);
+int  glrEndFrame(void);
+void glrStats(int *verts, int *batches, int *over);
 int voutSymbianVisTest(int raw);
 void voutSymbianSetOverlay(int on);
 void voutSymbianSetNoUpdate(int on);
@@ -1286,6 +1294,9 @@ static TBool passStep()
 	TUint t1 = User::NTickCount(); g_pass.tPoll += t1 - t0;
 	g_stage = EStageExec;
 	psxRegs.stop = 0;
+	// Растеризатор на MBX збирає примітиви протягом усього кадру, тож межі
+	// кадру - тут, обабіч Execute.
+	glrBeginFrame();
 	psxCpu->Execute(&psxRegs);
 	TUint t2 = User::NTickCount(); g_pass.tEmu += t2 - t1;
 	g_wdBeat++;
@@ -1309,7 +1320,13 @@ static TBool passStep()
 		// потрапляє кожен (skip+1)-й. Звук пампимо завжди - інакше буфер
 		// спорожніє саме на пропущених кадрах.
 		if (!g_frameskip || (g_pass.i % (g_frameskip + 1)) == 0)
-			voutSymbianPresent();
+			{
+			// Коли працює растеризатор на MBX, кадр показує він - інакше своп
+			// зробили б двічі, і на екрані лишався б той із двох, що прийшов
+			// другим, тобто порівнювати шляхи стало б неможливо.
+			if (!glrEndFrame())
+				voutSymbianPresent();
+			}
 		TUint t3 = User::NTickCount(); g_pass.tBlit += t3 - t2;
 		g_stage = EStageSnd;
 		ps1SndPump();   // обслужити аудіо-callback'и й долити буфер
@@ -1674,6 +1691,8 @@ static TBool g_guiInterp;
 
 // Кадрів на конфігурацію в зонді GL; 0 = зонд не запитано.
 static TInt g_glBench;
+// Растеризатор на MBX замість показу з VRAM (аргумент "glrender").
+static TBool g_glRender;
 
 extern "C" void ps1GuiUseInterpreter(void)
 	{
@@ -1705,6 +1724,15 @@ extern "C" int ps1GuiSetup(void)
 	// Після passSetup: слід прив'язаний до номера кадру, а лічильник кадрів
 	// починається саме тут.
 	inputTraceOpen();
+	// Після passSetup: вікно й контекст GL уже підняті, тож растеризатор має
+	// що ініціалізувати.
+	if (g_glRender && rc == KErrNone)
+		{
+		const TInt grc = glrInit();
+		glrSetEnabled(grc == 0 ? 1 : 0);
+		logEvent("glr", grc ? "GLR_INIT_FAIL" : NULL, "init rc=%d active=%d",
+			(int)grc, (int)glrEnabled());
+		}
 	g_guiUp = (rc == KErrNone);
 	return rc;
 	}
@@ -2181,6 +2209,16 @@ GLDEF_C TInt E32Main()
 		// Зонд накладних GL замість гри: та сама кількість примітивів на кадр, що
 		// й у Gran Turismo, але без емуляції. GL вмикає сам - без нього міряти
 		// нічого. "glbenchN" задає число кадрів на конфігурацію.
+		// Растеризатор на MBX. Вмикає GL сам, бо без контексту малювати нічим.
+		// На цьому кроці він малює ПОРУЧ із gpu_unai, а не замість нього:
+		// показує GL, але VRAM лишається порахованим програмно, тож зняти
+		// прапорець і побачити ту саму сцену старим шляхом можна будь-коли.
+		_LIT(KGlrArg, "glrender");
+		if (cl.FindF(KGlrArg) != KErrNotFound)
+			{
+			g_glRender = ETrue;
+			voutSymbianSetGl(1);
+			}
 		_LIT(KGlBenchArg, "glbench");
 		const TInt gbp = cl.FindF(KGlBenchArg);
 		if (gbp != KErrNotFound)
