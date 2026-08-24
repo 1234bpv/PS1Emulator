@@ -26,6 +26,8 @@ int cdra_open(void);
 int cdra_readTrack(const unsigned char *time);
 void cdra_close(void);
 int CheckCdrom(void);
+int SaveState(const char *file);
+int LoadState(const char *file);
 }
 
 // Поза extern "C": інтерфейс імпорту - C++ (класи, посилання).
@@ -163,8 +165,10 @@ void SysCloseLibrary(void * /*lib*/)                   { }
 
 // Ядро кличе це на кожній вертикальній розгортці через EmuUpdate().
 // Інкремент stop завершує psxCpu->Execute() рівно на межі кадру.
+unsigned g_vblanks;   // зонд: чи справді кадр завершує вертикальна розгортка
 void pl_frame_limit(void)
 	{
+	g_vblanks++;
 	psxRegs.stop++;
 	}
 
@@ -393,6 +397,13 @@ static TBool g_hackNoStalls;
 // Кадр першого знімка екрана; 3300 - трасa, менші значення потрапляють у меню гри,
 // де вона працює в 640x480 і видно роботу масштабування.
 static TInt g_dumpAt = 3300;
+
+// Збереження і завантаження стану для стенду швидкодії.
+static const char KBenchSavePath[] = "E:\\PS1\\saves\\bench.sav";
+_LIT(KBenchSavePathDes, "E:\\PS1\\saves\\bench.sav");
+static TInt g_saveStateAt;
+static TInt g_loadStateAt;
+static TBool g_savedState;
 
 // Накладка з метриками. Вікно усереднення ~0,5 с: за одним кадром число стрибало
 // б так, що прочитати його з екрана неможливо.
@@ -823,6 +834,27 @@ static void parseCommandLine(TInt &aFrames, TBool &aUseBios, TBool &aGpuTest, TB
 	_LIT(KGlArg, "gl");
 	if (cmd.FindF(KGlArg) != KErrNotFound)
 		voutSymbianSetGl(1);
+
+	// Збереження і завантаження стану для стенду.
+	_LIT(KSaveStateArgC, "savestate");
+	const TInt ssp = cmd.FindF(KSaveStateArgC);
+	if (ssp != KErrNotFound)
+		{
+		TLex lex(cmd.Mid(ssp + 9));
+		TInt n = 0;
+		if (lex.Val(n) == KErrNone && n > 0)
+			g_saveStateAt = n;
+		}
+
+	_LIT(KLoadStateArgC, "loadstate");
+	const TInt lsp = cmd.FindF(KLoadStateArgC);
+	if (lsp != KErrNotFound)
+		{
+		TLex lex(cmd.Mid(lsp + 9));
+		TInt n = 0;
+		if (lex.Val(n) == KErrNone && n > 0)
+			g_loadStateAt = n;
+		}
 	}
 
 // Самоперевірка растеризації: подаємо команди GP0 напряму, без BIOS і без гри.
@@ -912,6 +944,10 @@ static TInt stackHighWater()
 
 // Виставляє оболонка на виході користувача: цикл кадрів завершується штатно.
 static volatile TInt g_guiExit;
+
+// Обидві живуть нижче, поряд зі слідом кнопок, бо працюють з його масивами.
+static void inputTraceOpen();
+static void benchLoadState(const char *aMode);
 
 static TInt passSetup(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
 	TBool aShowScreen, TBool aUseDisc)
@@ -1089,6 +1125,12 @@ static TInt passSetup(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTes
 			mode, fbOk, xpix, ypix, lineB, bpp, firstOff, winW, winH);
 		}
 
+	// Слід кнопок треба відкрити ДО завантаження стану: перемотування покажчика
+	// відтворення читає вже завантажений масив подій.
+	inputTraceOpen();
+	g_savedState = EFalse;
+	benchLoadState(mode);
+
 	// Озброїти сторож на весь прохід. Анонімний потік із малим стеком: великий
 	// EPOCSTACKSIZE апарат відхиляє (RThread::Create -> KErrTooBig, див. Етап 3).
 	g_wdRun = 1;
@@ -1115,7 +1157,7 @@ static TInt passSetup(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTes
 	// меню і першим кадром лежить ініціалізація ядра (BIOS, образ диска), і перше
 	// значення вийшло б утричі заниженим.
 	g_fpsWinTick = g_pass.tStart;
-	g_fpsWinFrame = 0;
+	g_fpsWinFrame = g_pass.i;
 	g_fpsWinShown = voutSymbianPresents();   // лічильник живе через проходи
 	return KErrNone;
 	}
@@ -1215,8 +1257,44 @@ static void inputPlayLoad()
 
 static void inputTraceOpen()
 	{
-	if (g_inputMode == EInputRecord) inputRecordOpen();
-	else if (g_inputMode == EInputPlay) inputPlayLoad();
+	if (g_inputMode == EInputRecord && !g_recOpen) inputRecordOpen();
+	else if (g_inputMode == EInputPlay && !g_playFrame) inputPlayLoad();
+	}
+
+// Старт заміру зі збереженого стану. Слід кнопок прив'язаний до номера кадру,
+// тому він дійсний лише для того темпу гостя, за якого його записано: зміна
+// cyclemul зсуває натискання, гра не проходить меню й лишається в ньому
+// (заміряно - 495 намальованих кадрів замість 2220). Стан знімає цю залежність.
+static void benchLoadState(const char *aMode)
+	{
+	if (g_loadStateAt <= 0)
+		return;
+	const int lr = LoadState(KBenchSavePath);
+	if (lr != 0)
+		{
+		logEvent("loadstate", "LOAD_FAIL", "%s: frame=%d rc=%d", aMode,
+			(int)g_loadStateAt, lr);
+		return;
+		}
+	g_pass.i = g_loadStateAt;
+	TInt rewound = 0;
+	if (g_inputMode == EInputPlay && g_playCount > 0)
+		{
+		TInt lastBefore = -1;
+		while (g_playNext < g_playCount && g_playFrame[g_playNext] < g_loadStateAt)
+			{
+			lastBefore = g_playNext;
+			g_playNext++;
+			rewound++;
+			}
+		// Кнопка, затиснута на момент збереження, інакше виявилась би відпущеною.
+		if (lastBefore >= 0)
+			in_keystate[0] = g_playPad[lastBefore];
+		}
+	logEvent("loadstate", NULL, "%s: frame=%d rc=%d rewound=%d pc=%08x cycle=%u"
+		" sr=%08x cause=%08x", aMode, (int)g_loadStateAt, lr, (int)rewound,
+		(unsigned)psxRegs.pc, (unsigned)psxRegs.cycle,
+		(unsigned)psxRegs.CP0.n.SR, (unsigned)psxRegs.CP0.n.Cause);
 	}
 
 static void inputTraceClose()
@@ -1303,7 +1381,14 @@ static TBool passStep()
 	// Растеризатор на MBX збирає примітиви протягом усього кадру, тож межі
 	// кадру - тут, обабіч Execute.
 	glrBeginFrame();
+	const TUint32 cyc0 = psxRegs.cycle;
 	psxCpu->Execute(&psxRegs);
+	// Перші кадри після завантаження стану: скільки тактів гість справді пройшов.
+	// Порожній кадр тут виглядає точно так само, як здоровий, поки не глянути на це.
+	if (g_loadStateAt > 0 && g_pass.i < g_loadStateAt + 3)
+		logEvent("loadstate", NULL, "%s: frame=%d ran=%u pc=%08x vbl=%u stop=%d", mode,
+			(int)g_pass.i, (unsigned)(psxRegs.cycle - cyc0), (unsigned)psxRegs.pc,
+			g_vblanks, (int)psxRegs.stop);
 	TUint t2 = User::NTickCount(); g_pass.tEmu += t2 - t1;
 	g_wdBeat++;
 	if (gpu_unai_primstats_frame)
@@ -1372,6 +1457,27 @@ static TBool passStep()
 		logEvent("progress", NULL, "%s: frame %d/%d ms=%u stackUnused=%d", mode,
 			g_pass.i, g_pass.frames,
 			(unsigned)(User::NTickCount() - g_pass.tStart), (int)stackHighWater());
+		}
+
+	// Збереження стану на заданому кадрі (рівно один раз за прогін).
+	if (g_saveStateAt > 0 && !g_savedState && g_pass.i == g_saveStateAt)
+		{
+		g_savedState = ETrue;
+		const int sr = SaveState(KBenchSavePath);
+		TInt saveSize = -1;
+		RFs fs;
+		if (fs.Connect() == KErrNone)
+			{
+			RFile f;
+			if (f.Open(fs, KBenchSavePathDes, EFileRead | EFileShareAny) == KErrNone)
+				{
+				f.Size(saveSize);
+				f.Close();
+				}
+			fs.Close();
+			}
+		logEvent("savestate", (sr != 0 || saveSize <= 0) ? "SAVE_FAIL" : NULL,
+			"frame=%d rc=%d size=%d", (int)g_pass.i, sr, (int)saveSize);
 		}
 
 	// Z2+Z3: скільки кадрів гра справді оновила і в якій геометрії. updates - це
@@ -2453,6 +2559,24 @@ GLDEF_C TInt E32Main()
 			TInt n = 0;
 			if (lex.Val(n) == KErrNone && n > 0)
 				g_playFrames = n;
+			}
+		_LIT(KSaveStateArg, "savestate");
+		const TInt ssv = cl.FindF(KSaveStateArg);
+		if (ssv != KErrNotFound)
+			{
+			TLex lex(cl.Mid(ssv + 9));
+			TInt n = 0;
+			if (lex.Val(n) == KErrNone && n > 0)
+				g_saveStateAt = n;
+			}
+		_LIT(KLoadStateArg, "loadstate");
+		const TInt lsp = cl.FindF(KLoadStateArg);
+		if (lsp != KErrNotFound)
+			{
+			TLex lex(cl.Mid(lsp + 9));
+			TInt n = 0;
+			if (lex.Val(n) == KErrNone && n > 0)
+				g_loadStateAt = n;
 			}
 
 		// Той самий вибір файлом-маркером, бо запуск із меню аргументів не має.
