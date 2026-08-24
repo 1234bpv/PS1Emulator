@@ -52,7 +52,11 @@ enum TGlrState
 // бо кадр із заставкою або меню може бути щільнішим.
 static const TInt KMaxPrims = 1400;
 static const TInt KMaxVerts = KMaxPrims * 6;
-static const TInt KMaxBatch = 256;
+// Пакетів на кадр. 256 було мало: у Gran Turismo кожен чотирикутник іде зі
+// своєю палітрою, тобто зі своїм пакетом, і на межі batchFor мовчки повертався,
+// а emitVertex дописував вершини в ОСТАННІЙ пакет - усе після межі малювалося
+// його текстурою. На екрані це виглядало як пів кадру, залитого травою.
+static const TInt KMaxBatch = 1024;
 
 struct TGlrBatch
 	{
@@ -97,7 +101,11 @@ static TInt      g_logged;      // скільки діагностичних к�
 //   - НЕ писати в текстуру, з якої малює поточний кадр (окремий штраф MBX);
 //   - палітровий формат драйвера не вигідний на сторінці, тож розпаковуємо самі.
 static const TInt KTexSide  = 256;       // сторінка PS1 - завжди 256x256 текселів
-static const TInt KMaxTex   = 24;        // 12,7 за кадр плюс запас на зміну сцени
+// Заміряно на апараті: за кадр гра просить понад тридцять різних пар
+// (сторінка, палітра) - у Gran Turismo кожен елемент оточення має власну
+// палітру до спільної сторінки. При 24 записах кеш відмовляв 151 раз на кадр,
+// і майже половина примітивів малювалася зовсім без текстури.
+static const TInt KMaxTex   = 64;
 
 struct TGlrTex
 	{
@@ -122,6 +130,12 @@ static const TUint16 *g_vram;     // VRAM гостя, 1024x512 півслів
 static GLfloat  *g_uv;            // текстурні координати на вершину
 static TInt      g_frame;         // лічильник кадрів для витіснення
 static TInt      g_miss, g_hit, g_evict;
+// Скільки разів текстури не знайшлося місця: усі записи вже зайняті цим самим
+// кадром. Такий примітив малюється БЕЗ текстури, і на екрані це виглядає як
+// заливка кольором вершини - тиха втрата, яку без лічильника не побачити.
+static TInt      g_nofit;
+// Скільки разів забракло пакета. Тихе обрізання тут коштувало пів кадру.
+static TInt      g_batchOver;
 
 
 // Знімок того, що показав GL. Потрібен саме тут: із вимкненим програмним
@@ -332,7 +346,10 @@ static TInt texFor(TUint32 aTba, TUint32 aCba, TInt aMode, TInt aMaskU, TInt aMa
 			    (oldest < 0 || g_tex[i].iFrame < g_tex[oldest].iFrame))
 				oldest = i;
 		if (oldest < 0)
+			{
+			g_nofit++;
 			return -1;
+			}
 		slot = oldest;
 		g_evict++;
 		}
@@ -418,7 +435,10 @@ static void batchFor(TInt aBlend, TInt aTex)
 	                 && g_batch[g_nBatch - 1].iTex == aTex)
 		return;
 	if (g_nBatch >= KMaxBatch)
+		{
+		g_batchOver++;
 		return;
+		}
 	g_batch[g_nBatch].iFirst = g_nVerts;
 	g_batch[g_nBatch].iCount = 0;
 	g_batch[g_nBatch].iBlend = aBlend;
@@ -461,6 +481,23 @@ static void emitTri(const TInt *aX, const TInt *aY, const TUint32 *aCol,
 	}
 
 // Знак координати PS1: одинадцять біт, старші - розширення знаку.
+// Зонд "texwhite": текстурований примітив малюється білим кольором вершини,
+// тобто на екран іде сама текстура без модуляції. Відділяє хибу кольору від
+// хиби розпакування чи завантаження сторінки - інакше їх не розрізнити.
+static TBool g_texWhite;
+// Бітова маска класів, які НЕ малювати: 1 - полігони, 2 - прямокутники,
+// 4 - заливка. Зонд для пошуку того, що залило кадр.
+static TInt g_skipMask;
+
+extern "C" void glrSetTexWhite(int aOn)
+	{
+	g_texWhite = aOn ? ETrue : EFalse;
+	}
+
+extern "C" void glrSetSkip(int aMask)
+	{
+	g_skipMask = aMask;
+	}
 
 // PS1 модулює як (tex*col)/128, тобто 0x80 - нейтральний колір; GL множить на
 // col/255, тож бракує рівно множника два. Задавати його через GL_RGB_SCALE не
@@ -518,6 +555,8 @@ extern "C" void glrPrim(unsigned aCmd, const unsigned *aPacket, const int *aStat
 
 	if (aCmd >= 0x20 && aCmd <= 0x3F)
 		{
+		if (g_skipMask & 1)
+			return;
 		const TBool tex = (aCmd & 4) != 0;
 		const TBool gouraud = (aCmd & 0x10) != 0;
 		const TBool quad = (aCmd & 8) != 0;
@@ -536,7 +575,7 @@ extern "C" void glrPrim(unsigned aCmd, const unsigned *aPacket, const int *aStat
 			y[i] = expandSign(c >> 16) + ofsY;
 			col[i] = gouraud ? (aPacket[i * stride] & 0xFFFFFF) : flat;
 			if (tex)
-				col[i] = modColor(col[i]);
+				col[i] = g_texWhite ? 0xFFFFFF : modColor(col[i]);
 			if (tex)
 				{
 				const TUint32 t = aPacket[2 + i * stride];
@@ -569,6 +608,8 @@ extern "C" void glrPrim(unsigned aCmd, const unsigned *aPacket, const int *aStat
 
 	if (aCmd >= 0x60 && aCmd <= 0x7F)
 		{
+		if (g_skipMask & 2)
+			return;
 		// Прямокутник. Розмір задають біти 3-4 коду: 0 - у пакеті, інакше
 		// стала сторона 1, 8 або 16.
 		const TBool tex = (aCmd & 4) != 0;
@@ -594,7 +635,7 @@ extern "C" void glrPrim(unsigned aCmd, const unsigned *aPacket, const int *aStat
 			return;
 		TUint32 c = (tex && (aCmd & 1)) ? 0x808080 : (aPacket[0] & 0xFFFFFF);
 		if (tex)
-			c = modColor(c);
+			c = g_texWhite ? 0xFFFFFF : modColor(c);
 		// У прямокутника координата текстури задана лише для лівого верхнього
 		// кута, решта - його розміром.
 		TInt u0 = 0, v0 = 0;
@@ -621,6 +662,8 @@ extern "C" void glrPrim(unsigned aCmd, const unsigned *aPacket, const int *aStat
 
 	if (aCmd == 0x02)
 		{
+		if (g_skipMask & 4)
+			return;
 		// Заливка. Вона єдина не зважає ні на зсув, ні на відсікання, і завжди
 		// непрозора - це не примітив, а запис у VRAM.
 		const TInt x0 = (TInt)(aPacket[1] & 0x3F0);
@@ -776,6 +819,24 @@ extern "C" int glrEndFrame(void)
 	glDisableClientState(GL_COLOR_ARRAY);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glEnable(GL_TEXTURE_2D);
+	// Разом зі знімком - опис усіх текстур, з яких цей кадр малював. Маючи їх
+	// і дамп VRAM того самого кадру, ту саму сторінку можна розпакувати на
+	// хості й звірити: інакше не відрізнити хибу розпакування від хиби
+	// координат чи від того, що текстура справді така.
+	if (g_shotWanted)
+		{
+		for (TInt i = 0; i < g_nTex; i++)
+			if (g_tex[i].iValid && g_tex[i].iFrame == g_frame)
+				ps1LogFmt("glrtex", "slot=%d tba=%d cba=%d mode=%d mu=%d mv=%d"
+					" x=%d y=%d w=%d h=%d",
+					(int)i, g_tex[i].iTba, g_tex[i].iCba, g_tex[i].iMode,
+					g_tex[i].iMaskU, g_tex[i].iMaskV,
+					g_tex[i].iX, g_tex[i].iY, g_tex[i].iW, g_tex[i].iH);
+		for (TInt b = 0; b < g_nBatch && b < 12; b++)
+			ps1LogFmt("glrbatch", "b=%d n=%d tex=%d blend=%d clip=%d",
+				(int)b, g_batch[b].iCount, g_batch[b].iTex,
+				g_batch[b].iBlend, g_batch[b].iClip);
+		}
 	if (g_shotWanted)
 		writeShot();
 	voutSymbianGlSwap();
@@ -785,10 +846,10 @@ extern "C" int glrEndFrame(void)
 	if (g_logged < 4 && (g_logged == 0 || g_nVerts > 300))
 		{
 		ps1LogFmt("glr", "frame%d: frame=%d,%d..%d,%d verts=%d/%d batches=%d clips=%d"
-			" tex=%d hit=%d miss=%d evict=%d over=%d vp=%dx%d err=%u",
+			" tex=%d hit=%d miss=%d evict=%d nofit=%d bover=%d over=%d vp=%dx%d err=%u",
 			(int)g_logged, g_clip[0], g_clip[1], g_clip[2], g_clip[3],
 			(int)g_clipVerts[best], (int)g_nVerts, (int)g_nBatch, (int)g_nClips,
-			(int)g_nTex, (int)g_hit, (int)g_miss, (int)g_evict,
+			(int)g_nTex, (int)g_hit, (int)g_miss, (int)g_evict, (int)g_nofit, (int)g_batchOver,
 			(int)g_over, (int)g_vpW, (int)g_vpH, (unsigned)glGetError());
 		g_logged++;
 		}
@@ -805,4 +866,5 @@ extern "C" void glrStats(int *aVerts, int *aBatches, int *aOver,
 	if (aHit)     *aHit = g_hit;
 	if (aMiss)    *aMiss = g_miss;
 	if (aEvict)   *aEvict = g_evict;
+	if (aOver)    *aOver = g_nofit + g_batchOver;   // тихі втрати обох видів
 	}

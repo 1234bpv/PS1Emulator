@@ -259,6 +259,8 @@ void glrBeginFrame(void);
 int  glrEndFrame(void);
 void glrStats(int *verts, int *batches, int *over, int *hit, int *miss, int *evict);
 void glrShot(const char *path);
+void glrSetTexWhite(int on);
+void glrSetSkip(int mask);
 // Вимикач програмного проходу gpu_unai (аргумент "swoff"). Живе у gpulib_if.cpp.
 extern int gpu_unai_sw_off;
 int voutSymbianVisTest(int raw);
@@ -1720,6 +1722,8 @@ static TBool g_guiInterp;
 static TInt g_glBench;
 // Растеризатор на MBX замість показу з VRAM (аргумент "glrender").
 static TBool g_glRender;
+static TBool g_texWhite;
+static TInt g_glrSkip;
 
 extern "C" void ps1GuiUseInterpreter(void)
 	{
@@ -1757,6 +1761,8 @@ extern "C" int ps1GuiSetup(void)
 		{
 		const TInt grc = glrInit();
 		glrSetEnabled(grc == 0 ? 1 : 0);
+		glrSetTexWhite(g_texWhite ? 1 : 0);
+		glrSetSkip(g_glrSkip);
 		logEvent("glr", grc ? "GLR_INIT_FAIL" : NULL, "init rc=%d active=%d swoff=%d",
 			(int)grc, (int)glrEnabled(), (int)gpu_unai_sw_off);
 		}
@@ -2246,6 +2252,20 @@ GLDEF_C TInt E32Main()
 			g_glRender = ETrue;
 			voutSymbianSetGl(1);
 			}
+		// "glrskipN" - зонд: не малювати клас примітивів (1 полігони, 2
+		// прямокутники, 4 заливка); складається бітами.
+		_LIT(KGlrSkipArg, "glrskip");
+		const TInt gskp = cl.FindF(KGlrSkipArg);
+		if (gskp != KErrNotFound)
+			{
+			TLex lex(cl.Mid(gskp + 7));
+			TInt n = 0;
+			g_glrSkip = (lex.Val(n) == KErrNone) ? n : 0;
+			}
+		// "texwhite" - зонд: текстури без модуляції кольором вершини.
+		_LIT(KTexWhiteArg, "texwhite");
+		if (cl.FindF(KTexWhiteArg) != KErrNotFound)
+			g_texWhite = ETrue;
 		// "swoff" знімає програмний прохід: сцену малює лише MBX. Сам собою
 		// сенсу не має - лише разом із "glrender".
 		_LIT(KSwOffArg, "swoff");
