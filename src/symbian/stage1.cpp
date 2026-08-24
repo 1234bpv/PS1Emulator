@@ -1392,6 +1392,13 @@ static TBool passStep()
 		// Адресу пишемо ДО читання: якщо вона фізична, читання вб'є потік.
 		logEvent("screen_dump", sr ? "SCR_FAIL" : NULL, "frame=%d rc=%d halAddr=0x%x",
 			g_pass.i, sr, (unsigned)voutSymbianHalAddr());
+		// І програмний VRAM тим самим кадром: це єдиний доступний еталон, з
+		// яким можна звірити картинку GL. Дамп у кінці прогону не годиться -
+		// там уже інша сцена.
+		snprintf(p, sizeof(p), "E:\\PS1\\logs\\ps1_vram%d.bin", (int)g_pass.i);
+		const int vr = voutSymbianDump(p);
+		logEvent("vram_dump", vr ? "DUMP_FAIL" : NULL, "frame=%d rc=%d",
+			g_pass.i, vr);
 		// Той самий кадр із буфера за HAL-адресою: чи доїхав він до сканованого.
 		snprintf(p, sizeof(p), "E:\\PS1\\logs\\ps1_hal%d.bin", (int)g_pass.i);
 		const int hr = voutSymbianHalDump(p);

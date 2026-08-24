@@ -101,14 +101,17 @@ static const TInt KMaxTex   = 24;        // 12,7 за кадр плюс запа
 
 struct TGlrTex
 	{
-	TUint32 iKey;        // сторінка + CLUT + розрядність
+	// Стан, який ця розпакована сторінка відтворює. Тримаємо його цілком:
+	// згортка в один ключ давала колізію 4 і 8 біт на тексель.
+	TInt    iTba, iCba, iMode, iMaskU, iMaskV;
 	GLuint  iTex;
 	TInt    iFrame;      // останній кадр, у якому з неї малювали
 	TBool   iValid;
 	// Де ця сторінка лежить у VRAM - потрібне, щоб скидати лише те, що гра
 	// справді переписала. Скидання всього кешу коштувало 4,5 мс на кадр:
-	// заміряно, бо саме так було зроблено спершу.
-	TInt    iX, iY, iW;  // у півсловах VRAM; висота сторінки завжди 256
+	// заміряно, бо саме так було зроблено спершу. Прямокутник - саме вікна,
+	// а не всіх 256x256: поза вікном сторінка не читається.
+	TInt    iX, iY, iW, iH;  // у півсловах VRAM
 	TInt    iCx, iCy, iCw;  // палітра: вона теж у VRAM і теж може змінитись
 	};
 
@@ -215,15 +218,13 @@ extern "C" int glrInit(void)
 	glDisable(GL_DITHER);
 	glShadeModel(GL_SMOOTH);
 	glClearColor(0, 0, 0, 1);
-	// Модуляція PS1 - це (tex*col)/128, тобто колір 0x80 нейтральний. У GL
-	// множення дає tex*col/255, тож бракує рівно множника два; його й задає
-	// GL_RGB_SCALE у розширеному текстурному блоці.
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
-	glTexEnvf(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
-	glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE, 2.0f);
+	// Звичайна модуляція. Множник два, якого бракує до правила PS1, вкладено
+	// в сам колір вершини (modColor), а не в GL_RGB_SCALE: це розширення
+	// текстурного блоку, і драйвер MBX його не застосовував.
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	g_ready = ETrue;
-	ps1LogFmt("glr", "init ok: viewport=%dx%d prims<=%d", g_vpW, g_vpH,
-		(int)KMaxPrims);
+	ps1LogFmt("glr", "init ok: viewport=%dx%d prims<=%d texenv_err=%u", g_vpW, g_vpH,
+		(int)KMaxPrims, (unsigned)glGetError());
 	return 0;
 	}
 
@@ -243,50 +244,51 @@ extern "C" void glrShutdown(void)
 
 // Піксель VRAM (1 біт напівпрозорості + 5 B + 5 G + 5 R) у те, що приймає GL як
 // GL_UNSIGNED_SHORT_5_5_5_1. Альфа тут означає не напівпрозорість PS1, а
-// НАЯВНІСТЬ текселя: на PS1 індекс 0 палітри (і значення 0 у 16 бітах) - це
-// діра, крізь яку видно те, що під нею.
-static inline TUint16 texelToGl(TUint16 aV, TBool aOpaque)
+// НАЯВНІСТЬ текселя. Діру задає саме ЗНАЧЕННЯ кольору 0x0000, а не індекс 0
+// палітри: gpu_inner.h перевіряє "if (!uSrc)" уже після вибірки з CLUT, тож
+// непрозорий чорний (0x8000) під індексом 0 малюється, а нульовий запис під
+// будь-яким іншим індексом - ні.
+static inline TUint16 texelToGl(TUint16 aV)
 	{
 	const TUint r = aV & 0x1F, g = (aV >> 5) & 0x1F, b = (aV >> 10) & 0x1F;
-	return (TUint16)((r << 11) | (g << 6) | (b << 1) | (aOpaque ? 1 : 0));
+	return (TUint16)((r << 11) | (g << 6) | (b << 1) | (aV ? 1 : 0));
 	}
 
 // Розпаковує сторінку 256x256 у g_decode. Ширина сторінки у VRAM залежить від
 // розрядності: 64 півслова на 4 біти, 128 на 8, 256 на 16.
-static void decodePage(TUint32 aTba, TUint32 aCba, TInt aMode)
+//
+// Маски текстурного вікна вкладаються ПРЯМО В СТОРІНКУ: тексель береться за
+// (u & maskU, v & maskV), тобто вікно розмножується на всі 256x256. Так GL із
+// GL_REPEAT дає рівно те, що gpu_unai рахує попіксельно (gpu_inner.h маскує
+// u і v на кожній вибірці), і зникає потреба маскувати координати вершин -
+// маскування самих лише кутів примітиву давало неправильну картинку скрізь, де
+// примітив ширший за вікно. Заразом це прибирає читання поза VRAM: сторінка в
+// нижній половині плюс зсув вікна давали рядок за межею 512.
+static void decodePage(TUint32 aTba, TUint32 aCba, TInt aMode, TInt aMaskU, TInt aMaskV)
 	{
 	const TUint16 *clut = g_vram + (aCba << 4);
 	TUint16 *out = g_decode;
+	// Скільки текселів у півслові: 4, 2 або 1.
+	const TInt tpw = (aMode == 32) ? 4 : (aMode == 64 ? 2 : 1);
 	for (TInt y = 0; y < KTexSide; y++)
 		{
-		const TUint16 *src = g_vram + aTba + y * 1024;
-		if (aMode == 32)              // 4 біти: чотири тексель на півслово
+		const TUint32 row = aTba + (TUint32)(y & aMaskV) * 1024;
+		for (TInt x = 0; x < KTexSide; x++)
 			{
-			for (TInt x = 0; x < KTexSide; x += 4)
-				{
-				const TUint16 w = *src++;
-				out[x + 0] = texelToGl(clut[ w        & 0xF], ( w        & 0xF) != 0);
-				out[x + 1] = texelToGl(clut[(w >>  4) & 0xF], ((w >>  4) & 0xF) != 0);
-				out[x + 2] = texelToGl(clut[(w >>  8) & 0xF], ((w >>  8) & 0xF) != 0);
-				out[x + 3] = texelToGl(clut[(w >> 12) & 0xF], ((w >> 12) & 0xF) != 0);
-				}
-			}
-		else if (aMode == 64)         // 8 біт: два тексель на півслово
-			{
-			for (TInt x = 0; x < KTexSide; x += 2)
-				{
-				const TUint16 w = *src++;
-				out[x + 0] = texelToGl(clut[ w       & 0xFF], ( w       & 0xFF) != 0);
-				out[x + 1] = texelToGl(clut[(w >> 8) & 0xFF], ((w >> 8) & 0xFF) != 0);
-				}
-			}
-		else                          // 16 біт: тексель просто лежить у VRAM
-			{
-			for (TInt x = 0; x < KTexSide; x++)
-				{
-				const TUint16 w = *src++;
-				out[x] = texelToGl(w, w != 0);
-				}
+			const TInt sx = x & aMaskU;
+			const TUint32 off = row + (TUint32)(sx / tpw);
+			// Сторінка може впритул підходити до краю VRAM; за межу не читаємо.
+			if (off >= 1024u * 512u)
+				{ out[x] = 0; continue; }
+			const TUint16 w = g_vram[off];
+			TUint16 t;
+			if (aMode == 32)
+				t = clut[(w >> ((sx & 3) << 2)) & 0xF];
+			else if (aMode == 64)
+				t = clut[(w >> ((sx & 1) << 3)) & 0xFF];
+			else
+				t = w;
+			out[x] = texelToGl(t);
 			}
 		out += KTexSide;
 		}
@@ -294,16 +296,19 @@ static void decodePage(TUint32 aTba, TUint32 aCba, TInt aMode)
 
 // Індекс потрібної текстури в кеші; за потреби розпаковує й вантажить.
 // Повертає -1, якщо взяти нізвідки (немає VRAM або кеш зайнятий цим кадром).
-static TInt texFor(TUint32 aTba, TUint32 aCba, TInt aMode)
+static TInt texFor(TUint32 aTba, TUint32 aCba, TInt aMode, TInt aMaskU, TInt aMaskV)
 	{
 	if (!g_vram || !g_decode)
 		return -1;
-	// 16 біт CLUT не читають, тож і в ключі його бути не повинно - інакше кеш
-	// роздувся б на порожньому місці.
-	const TUint32 key = (aMode == 96) ? (aTba | 0x80000000u)
-	                                  : (aTba ^ (aCba << 13) ^ ((TUint32)aMode << 27));
+	// Порівнюємо стан цілком, а не його згортку. Згортка тут була помилкою:
+	// у "aMode << 27" при aMode 32 і 64 одиниця виходила за 32 біт, тобто
+	// розрядність у ключ не потрапляла взагалі, і сторінка 4 біт підмінялася
+	// сторінкою 8 біт із тією самою адресою.
+	const TInt cba = (aMode == 96) ? 0 : (TInt)aCba;   // 16 біт палітри не читає
 	for (TInt i = 0; i < g_nTex; i++)
-		if (g_tex[i].iValid && g_tex[i].iKey == key)
+		if (g_tex[i].iValid && g_tex[i].iTba == (TInt)aTba && g_tex[i].iCba == cba &&
+		    g_tex[i].iMode == aMode && g_tex[i].iMaskU == aMaskU &&
+		    g_tex[i].iMaskV == aMaskV)
 			{
 			g_tex[i].iFrame = g_frame;
 			g_hit++;
@@ -332,7 +337,7 @@ static TInt texFor(TUint32 aTba, TUint32 aCba, TInt aMode)
 		g_evict++;
 		}
 
-	decodePage(aTba, aCba, aMode);
+	decodePage(aTba, aCba, aMode, aMaskU, aMaskV);
 	glBindTexture(GL_TEXTURE_2D, g_tex[slot].iTex);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -340,12 +345,19 @@ static TInt texFor(TUint32 aTba, TUint32 aCba, TInt aMode)
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, KTexSide, KTexSide, 0,
 		GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, g_decode);
-	g_tex[slot].iKey = key;
+	g_tex[slot].iTba = (TInt)aTba;
+	g_tex[slot].iCba = cba;
+	g_tex[slot].iMode = aMode;
+	g_tex[slot].iMaskU = aMaskU;
+	g_tex[slot].iMaskV = aMaskV;
 	g_tex[slot].iFrame = g_frame;
 	g_tex[slot].iValid = ETrue;
+	// Прямокутник, який ця сторінка справді читає: вікно, а не всі 256x256.
 	g_tex[slot].iX = (TInt)(aTba % 1024);
 	g_tex[slot].iY = (TInt)(aTba / 1024);
-	g_tex[slot].iW = (aMode == 32) ? 64 : (aMode == 64 ? 128 : 256);
+	const TInt tpw = (aMode == 32) ? 4 : (aMode == 64 ? 2 : 1);
+	g_tex[slot].iW = (aMaskU + 1 + tpw - 1) / tpw;
+	g_tex[slot].iH = aMaskV + 1;
 	const TUint32 cOff = aCba << 4;
 	g_tex[slot].iCx = (TInt)(cOff % 1024);
 	g_tex[slot].iCy = (TInt)(cOff / 1024);
@@ -372,10 +384,15 @@ extern "C" void glrInvalidateRect(int aX, int aY, int aW, int aH)
 			continue;
 		const TBool hitPage =
 			!(aX >= g_tex[i].iX + g_tex[i].iW || aX + aW <= g_tex[i].iX) &&
-			!(aY >= g_tex[i].iY + KTexSide   || aY + aH <= g_tex[i].iY);
+			!(aY >= g_tex[i].iY + g_tex[i].iH || aY + aH <= g_tex[i].iY);
+		// Палітра 8 біт - це 256 півслів, і вона може не вміститися в рядок
+		// VRAM. Коли переходить на наступний, перевірку по X опускаємо: зайве
+		// скидання коштує одне розпакування, пропущене - чужу палітру на екрані.
+		const TInt cWrap = (g_tex[i].iCx + g_tex[i].iCw > 1024) ? 1 : 0;
 		const TBool hitClut = g_tex[i].iCw > 0 &&
-			!(aX >= g_tex[i].iCx + g_tex[i].iCw || aX + aW <= g_tex[i].iCx) &&
-			!(aY >  g_tex[i].iCy                || aY + aH <= g_tex[i].iCy);
+			!(aY >= g_tex[i].iCy + 1 + cWrap || aY + aH <= g_tex[i].iCy) &&
+			(cWrap ||
+			 !(aX >= g_tex[i].iCx + g_tex[i].iCw || aX + aW <= g_tex[i].iCx));
 		if (hitPage || hitClut)
 			g_tex[i].iValid = EFalse;
 		}
@@ -444,6 +461,20 @@ static void emitTri(const TInt *aX, const TInt *aY, const TUint32 *aCol,
 	}
 
 // Знак координати PS1: одинадцять біт, старші - розширення знаку.
+
+// PS1 модулює як (tex*col)/128, тобто 0x80 - нейтральний колір; GL множить на
+// col/255, тож бракує рівно множника два. Задавати його через GL_RGB_SCALE не
+// вийшло: це розширення текстурного блоку, і драйвер MBX його мовчки не
+// застосовує - уся текстурована сцена виходила вдвічі темнішою за програмну.
+// Тому подвоюємо сам колір вершини, з насиченням, як і на PS1.
+static inline TUint32 modColor(TUint32 aC)
+	{
+	TUint r = (aC & 0xFF) << 1, g = ((aC >> 8) & 0xFF) << 1, b = ((aC >> 16) & 0xFF) << 1;
+	if (r > 255) r = 255;
+	if (g > 255) g = 255;
+	if (b > 255) b = 255;
+	return r | (g << 8) | (b << 16);
+	}
 static inline TInt expandSign(TUint32 aV)
 	{
 	return ((TInt)(aV << 21)) >> 21;
@@ -505,16 +536,20 @@ extern "C" void glrPrim(unsigned aCmd, const unsigned *aPacket, const int *aStat
 			y[i] = expandSign(c >> 16) + ofsY;
 			col[i] = gouraud ? (aPacket[i * stride] & 0xFFFFFF) : flat;
 			if (tex)
+				col[i] = modColor(col[i]);
+			if (tex)
 				{
 				const TUint32 t = aPacket[2 + i * stride];
-				u[i] = (TInt)(t & 0xFF) & aState[EStTwU];
-				v[i] = (TInt)((t >> 8) & 0xFF) & aState[EStTwV];
+				// Маски вікна вже вкладені в розпаковану сторінку, тут не чіпаємо:
+				// маскування самих лише кутів ламало все, що ширше за вікно.
+				u[i] = (TInt)(t & 0xFF);
+				v[i] = (TInt)((t >> 8) & 0xFF);
 				}
 			else
 				{ u[i] = 0; v[i] = 0; }
 			}
 		const TInt ti = tex ? texFor((TUint32)aState[EStTba], (TUint32)aState[EStCba],
-			aState[EStTextMode]) : -1;
+			aState[EStTextMode], aState[EStTwU], aState[EStTwV]) : -1;
 		batchFor(blend, ti);
 		TInt tx[3], ty[3], tu[3], tv[3]; TUint32 tc[3];
 		for (TInt k = 0; k < 3; k++)
@@ -538,8 +573,10 @@ extern "C" void glrPrim(unsigned aCmd, const unsigned *aPacket, const int *aStat
 		// стала сторона 1, 8 або 16.
 		const TBool tex = (aCmd & 4) != 0;
 		const TUint32 xy = aPacket[1];
-		const TInt x0 = expandSign(xy) + ofsX;
-		const TInt y0 = expandSign(xy >> 16) + ofsY;
+		// У прямокутника gpu_unai розширює знак ВІД СУМИ з зсувом
+		// (gpu_raster_sprite.h), а не від самої координати.
+		const TInt x0 = expandSign((xy & 0xFFFF) + (TUint32)ofsX);
+		const TInt y0 = expandSign((xy >> 16) + (TUint32)ofsY);
 		TInt w = 0, h = 0;
 		switch (aCmd & 0x18)
 			{
@@ -555,17 +592,19 @@ extern "C" void glrPrim(unsigned aCmd, const unsigned *aPacket, const int *aStat
 			}
 		if (w <= 0 || h <= 0)
 			return;
-		const TUint32 c = (tex && (aCmd & 1)) ? 0x808080 : (aPacket[0] & 0xFFFFFF);
+		TUint32 c = (tex && (aCmd & 1)) ? 0x808080 : (aPacket[0] & 0xFFFFFF);
+		if (tex)
+			c = modColor(c);
 		// У прямокутника координата текстури задана лише для лівого верхнього
 		// кута, решта - його розміром.
 		TInt u0 = 0, v0 = 0;
 		if (tex)
 			{
-			u0 = (TInt)(aPacket[2] & 0xFF) & aState[EStTwU];
-			v0 = (TInt)((aPacket[2] >> 8) & 0xFF) & aState[EStTwV];
+			u0 = (TInt)(aPacket[2] & 0xFF);
+			v0 = (TInt)((aPacket[2] >> 8) & 0xFF);
 			}
 		const TInt ti = tex ? texFor((TUint32)aState[EStTba], (TUint32)aState[EStCba],
-			aState[EStTextMode]) : -1;
+			aState[EStTextMode], aState[EStTwU], aState[EStTwV]) : -1;
 		batchFor(blend, ti);
 		TInt tx[3], ty[3], tu[3], tv[3]; TUint32 tc[3];
 		tc[0] = tc[1] = tc[2] = c;
