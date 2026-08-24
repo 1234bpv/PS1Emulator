@@ -375,6 +375,7 @@ extern "C" void gpu_unai_primstats_frame(void)
 // Робота з VRAM повз растеризатор (gpulib): запис, читання, копіювання - у
 // штуках і пікселях. Для апаратного рендерера це точки синхронізації.
 extern "C" unsigned int gpulib_vram_stats[6];
+extern "C" int g_gpuSpeedPct;
 
 // Пропуск виведення: кожен (N+1)-й кадр показуємо, решту лише рахуємо. Емуляцію
 // і растеризацію це НЕ пропускає - економить саме вивід (конвертація + вікно),
@@ -2143,6 +2144,26 @@ GLDEF_C TInt E32Main()
 	const TBool gui = (cl.Length() == 0) || (cl.FindF(KGuiArg) != KErrNotFound);
 	logEvent("boot", NULL, "stage1 starting, mode=%s args=\"%s\"",
 		gui ? "gui" : "console", (const char *)cl8.PtrZ());
+
+	_LIT(KGpuSpeedArg, "gpuspeed");
+	const TInt gspd = cl.FindF(KGpuSpeedArg);
+	if (gspd != KErrNotFound)
+		{
+		TLex lex(cl.Mid(gspd + 8));
+		TInt n = 0;
+		if (lex.Val(n) == KErrNone)
+			{
+			if (n >= 10 && n <= 1000)
+				{
+				g_gpuSpeedPct = n;
+				}
+			else
+				{
+				logEvent("config", "BAD_GPUSPEED", "gpuspeed=%d out of range [10..1000]", (int)n);
+				}
+			}
+		}
+	logEvent("gpuspeed", NULL, "g_gpuSpeedPct=%d", (int)g_gpuSpeedPct);
 
 	// Зонд імпорту: "conv img<файл>" бере E:\PS1\games\<файл> і збирає з нього
 	// .pbp поруч. Перевіряти конвертацію через меню наосліп неможливо, а тут
