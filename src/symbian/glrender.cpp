@@ -3,23 +3,23 @@
 // Навіщо: розділ 14 звіту міряє, що той самий кадр Gran Turismo коштує тут
 // 6,9 мс проти 14,4 у зв'язці "gpu_unai + блит". Числа з апарата, не з оцінок.
 //
-// Що цей файл робить і чого НЕ робить на цьому кроці. Він приймає ті самі
-// пакети команд, які розбирає gpu_unai, і складає з них трикутники для GL.
-// Текстур він поки не читає: текстурований примітив малюється своїм кольором.
-// Це навмисно - спершу має бути правильною геометрія, порядок, відсікання і
-// напівпрозорість, бо помилку в них не видно за текстурами.
-//
-// Ключове рішення про порядок: gpu_unai продовжує малювати ВСЕ у програмний
-// VRAM, як і раніше, а GL малює паралельно й лише показує. Тому VRAM лишається
-// правдивим для читань, копіювань і показу, і будь-якої миті можна вимкнути
-// прапорець і побачити ту саму сцену старим шляхом. Швидкодії це поки не дає -
-// вона з'явиться, коли програмний прохід можна буде вимкнути.
+// Він приймає ті самі пакети команд, які розбирає gpu_unai, складає з них
+// трикутники, розпаковує потрібні сторінки текстур із VRAM гостя і малює.
+// Прапорцем swoff програмний прохід можна вимкнути зовсім, і тоді ця сцена -
+// єдина; з увімкненим проходом VRAM лишається правдивим для читань і копіювань.
 //
 // Заміряні обмеження, від яких залежить будова (розділ 14):
 //   - виклик малювання коштує 9,5-14 мкс, тому примітиви групуються;
 //   - порядок подання міняти НЕ можна (перекриття на PS1 визначає саме він),
-//     тому групуються лише сусідні примітиви з однаковим станом;
+//     тому групуються лише СУСІДНІ примітиви з однаковим станом;
 //   - зміна прив'язки текстури коштує стільки ж, скільки виклик.
+//
+// Текстурний атлас 2048x2048 пробували, щоб позбутися розривів пакетів від
+// зміни сторінки, але заміри на апараті показали, що це невдале рішення:
+// прив'язана текстура 256x256 не коштує нічого, а 2048x2048 коштує 20 мс на
+// кадр, бо драйвер не тримає об'єкт на 8 мегабайт (прогін 313 с проти 178 с без
+// атласа). Тому лишається одна текстура на сторінку, а виклики малювання
+// групуються лише за сусідством.
 
 #include <e32std.h>
 #include <f32file.h>
@@ -30,6 +30,8 @@ extern "C" int  voutSymbianGlSwap(void);
 extern "C" void voutSymbianGlSize(int *aW, int *aH);
 extern "C" void voutSymbianDbgState(int *aFbDirty, int *aFbDirtyArea, int *aStatus,
 	int *aSrcX, int *aSrcY, int *aScrW, int *aScrH, int *aVoutOffset, int *aStale);
+extern "C" unsigned int ndrc_symbian_fastfreq(void);
+extern "C" unsigned int ndrc_symbian_fastcount(void);
 
 // Стан, який gpu_unai передає разом із кожним пакетом. Порядок задає
 // gpulib_if.cpp; тримати обидві сторони в одному порядку - обов'язок цього
@@ -63,8 +65,8 @@ struct TGlrBatch
 	TInt iFirst;      // перша вершина
 	TInt iCount;      // скільки вершин
 	TInt iBlend;      // -1 = непрозорий, інакше режим 0..3
-	TInt iClip;       // індекс ділянки малювання, під якою подано пакет
 	TInt iTex;        // індекс у кеші текстур, -1 = без текстури
+	TInt iClip;       // індекс ділянки малювання, під якою подано пакет
 	};
 
 // За кадр ділянка малювання буває не одна: крім заднього буфера трапляються
@@ -100,19 +102,15 @@ static TInt      g_logged;      // скільки діагностичних к�
 //     0,7 мс, тож сто дрібних шматків коштували б сімдесят мілісекунд;
 //   - НЕ писати в текстуру, з якої малює поточний кадр (окремий штраф MBX);
 //   - палітровий формат драйвера не вигідний на сторінці, тож розпаковуємо самі.
-static const TInt KTexSide  = 256;       // сторінка PS1 - завжди 256x256 текселів
-// Заміряно на апараті: за кадр гра просить понад тридцять різних пар
-// (сторінка, палітра) - у Gran Turismo кожен елемент оточення має власну
-// палітру до спільної сторінки. При 24 записах кеш відмовляв 151 раз на кадр,
-// і майже половина примітивів малювалася зовсім без текстури.
-static const TInt KMaxTex   = 64;
+static const TInt KTexSide   = 256;       // сторінка PS1 - завжди 256x256 текселів
+static const TInt KMaxTex    = 64;
 
 struct TGlrTex
 	{
 	// Стан, який ця розпакована сторінка відтворює. Тримаємо його цілком:
 	// згортка в один ключ давала колізію 4 і 8 біт на тексель.
-	TInt    iTba, iCba, iMode, iMaskU, iMaskV;
 	GLuint  iTex;
+	TInt    iTba, iCba, iMode, iMaskU, iMaskV;
 	TInt    iFrame;      // останній кадр, у якому з неї малювали
 	TBool   iValid;
 	// Де ця сторінка лежить у VRAM - потрібне, щоб скидати лише те, що гра
@@ -121,6 +119,7 @@ struct TGlrTex
 	// а не всіх 256x256: поза вікном сторінка не читається.
 	TInt    iX, iY, iW, iH;  // у півсловах VRAM
 	TInt    iCx, iCy, iCw;  // палітра: вона теж у VRAM і теж може змінитись
+	TInt    iUseU0, iUseV0, iUseU1, iUseV1;
 	};
 
 static TGlrTex   g_tex[KMaxTex];
@@ -136,6 +135,14 @@ static TInt      g_miss, g_hit, g_evict;
 static TInt      g_nofit;
 // Скільки разів забракло пакета. Тихе обрізання тут коштувало пів кадру.
 static TInt      g_batchOver;
+// Чому пакет розривався (зміна текстури, режиму змішування або перехід між буферами).
+static TInt      g_brkTex, g_brkBlend, g_brkClip, g_batchSum, g_frameSum;
+// Скільки спрайтів вимагають обгортання текстури (u0+w або v0+h за 256).
+// Від цього числа залежить, чи можливий текстурний атлас: у ньому обгортання
+// пішло б у сусідню сторінку. У полігонів питання не стоїть - там U і V байти.
+static TInt      g_spriteWrap, g_spriteAll;
+static unsigned long long g_tSetup, g_tClear, g_tDraw, g_tSwap;
+static unsigned long long g_useTexels, g_fullTexels, g_useSlots;
 
 
 // Знімок того, що показав GL. Потрібен саме тут: із вимкненим програмним
@@ -193,6 +200,7 @@ static void writeShot(void)
 	ps1LogFmt("glr", "shot: %s %dx%d rgba rc=%d err=%u",
 		g_shotPath, (int)g_vpW, (int)g_vpH, (int)rc, (unsigned)err);
 	}
+
 extern "C" int glrEnabled(void)
 	{
 	return (g_on && g_ready) ? 1 : 0;
@@ -220,6 +228,7 @@ extern "C" int glrInit(void)
 		ps1LogFmt("glr", "init failed: out of memory");
 		return -1;
 		}
+
 	voutSymbianGlSize(&g_vpW, &g_vpH);
 	if (g_vpW <= 0 || g_vpH <= 0)
 		{ g_vpW = 320; g_vpH = 240; }
@@ -237,8 +246,13 @@ extern "C" int glrInit(void)
 	// текстурного блоку, і драйвер MBX його не застосовував.
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	g_ready = ETrue;
-	ps1LogFmt("glr", "init ok: viewport=%dx%d prims<=%d texenv_err=%u", g_vpW, g_vpH,
-		(int)KMaxPrims, (unsigned)glGetError());
+	GLint maxTex = 0, maxUnits = 0;
+	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTex);
+	glGetIntegerv(GL_MAX_TEXTURE_UNITS, &maxUnits);
+	ps1LogFmt("glr", "init ok: viewport=%dx%d prims<=%d texenv_err=%u"
+		" maxTex=%d units=%d vendor=%s renderer=%s", g_vpW, g_vpH,
+		(int)KMaxPrims, (unsigned)glGetError(), (int)maxTex, (int)maxUnits,
+		(const char *)glGetString(GL_VENDOR), (const char *)glGetString(GL_RENDERER));
 	return 0;
 	}
 
@@ -431,9 +445,16 @@ extern "C" void glrInvalidate(void)
 static void batchFor(TInt aBlend, TInt aTex)
 	{
 	if (g_nBatch > 0 && g_batch[g_nBatch - 1].iBlend == aBlend
-	                 && g_batch[g_nBatch - 1].iClip == g_curClip
-	                 && g_batch[g_nBatch - 1].iTex == aTex)
+	                 && g_batch[g_nBatch - 1].iTex == aTex
+	                 && g_batch[g_nBatch - 1].iClip == g_curClip)
 		return;
+	if (g_nBatch > 0)
+		{
+		const TGlrBatch &b = g_batch[g_nBatch - 1];
+		if (b.iTex != aTex)          g_brkTex++;
+		else if (b.iBlend != aBlend) g_brkBlend++;
+		else                         g_brkClip++;
+		}
 	if (g_nBatch >= KMaxBatch)
 		{
 		g_batchOver++;
@@ -442,8 +463,8 @@ static void batchFor(TInt aBlend, TInt aTex)
 	g_batch[g_nBatch].iFirst = g_nVerts;
 	g_batch[g_nBatch].iCount = 0;
 	g_batch[g_nBatch].iBlend = aBlend;
-	g_batch[g_nBatch].iClip = g_curClip;
-	g_batch[g_nBatch].iTex = aTex;
+	g_batch[g_nBatch].iTex   = aTex;
+	g_batch[g_nBatch].iClip  = g_curClip;
 	g_nBatch++;
 	}
 
@@ -455,8 +476,6 @@ static inline void emitVertex(TInt aX, TInt aY, TUint32 aBgr, TInt aAlpha,
 	GLfloat *t = g_uv + g_nVerts * 2;
 	p[0] = (GLshort)aX;
 	p[1] = (GLshort)aY;
-	// Координати PS1 - тексель у межах сторінки 256x256, а сторінку ми саме так
-	// цілком і вантажимо, тож перерахунок - просто ділення.
 	t[0] = (GLfloat)aU * (1.0f / 256.0f);
 	t[1] = (GLfloat)aV * (1.0f / 256.0f);
 	c[0] = (GLubyte)(aBgr & 0xFF);
@@ -589,6 +608,21 @@ extern "C" void glrPrim(unsigned aCmd, const unsigned *aPacket, const int *aStat
 			}
 		const TInt ti = tex ? texFor((TUint32)aState[EStTba], (TUint32)aState[EStCba],
 			aState[EStTextMode], aState[EStTwU], aState[EStTwV]) : -1;
+		if (ti < 0)
+			{
+			for (TInt i = 0; i < nv; i++)
+				{ u[i] = 0; v[i] = 0; }
+			}
+		else if (tex)
+			{
+			for (TInt i = 0; i < nv; i++)
+				{
+				if (u[i] < g_tex[ti].iUseU0) g_tex[ti].iUseU0 = u[i];
+				if (u[i] > g_tex[ti].iUseU1) g_tex[ti].iUseU1 = u[i];
+				if (v[i] < g_tex[ti].iUseV0) g_tex[ti].iUseV0 = v[i];
+				if (v[i] > g_tex[ti].iUseV1) g_tex[ti].iUseV1 = v[i];
+				}
+			}
 		batchFor(blend, ti);
 		TInt tx[3], ty[3], tu[3], tv[3]; TUint32 tc[3];
 		for (TInt k = 0; k < 3; k++)
@@ -638,24 +672,44 @@ extern "C" void glrPrim(unsigned aCmd, const unsigned *aPacket, const int *aStat
 			c = g_texWhite ? 0xFFFFFF : modColor(c);
 		// У прямокутника координата текстури задана лише для лівого верхнього
 		// кута, решта - його розміром.
-		TInt u0 = 0, v0 = 0;
+		TInt u0 = 0, v0 = 0, uw = 0, vh = 0;
 		if (tex)
 			{
 			u0 = (TInt)(aPacket[2] & 0xFF);
 			v0 = (TInt)((aPacket[2] >> 8) & 0xFF);
+			uw = w;
+			vh = h;
+			g_spriteAll++;
+			if (u0 + w > 256 || v0 + h > 256)
+				g_spriteWrap++;
 			}
 		const TInt ti = tex ? texFor((TUint32)aState[EStTba], (TUint32)aState[EStCba],
 			aState[EStTextMode], aState[EStTwU], aState[EStTwV]) : -1;
+		if (ti < 0)
+			{
+			u0 = 0; v0 = 0; uw = 0; vh = 0;
+			}
+		else if (tex)
+			{
+			TInt u1 = u0 + w - 1;
+			TInt v1 = v0 + h - 1;
+			if (u1 > 255) u1 = 255;
+			if (v1 > 255) v1 = 255;
+			if (u0 < g_tex[ti].iUseU0) g_tex[ti].iUseU0 = u0;
+			if (u1 > g_tex[ti].iUseU1) g_tex[ti].iUseU1 = u1;
+			if (v0 < g_tex[ti].iUseV0) g_tex[ti].iUseV0 = v0;
+			if (v1 > g_tex[ti].iUseV1) g_tex[ti].iUseV1 = v1;
+			}
 		batchFor(blend, ti);
 		TInt tx[3], ty[3], tu[3], tv[3]; TUint32 tc[3];
 		tc[0] = tc[1] = tc[2] = c;
-		tx[0]=x0;   ty[0]=y0;   tu[0]=u0;   tv[0]=v0;
-		tx[1]=x0+w; ty[1]=y0;   tu[1]=u0+w; tv[1]=v0;
-		tx[2]=x0;   ty[2]=y0+h; tu[2]=u0;   tv[2]=v0+h;
+		tx[0]=x0;   ty[0]=y0;   tu[0]=u0;    tv[0]=v0;
+		tx[1]=x0+w; ty[1]=y0;   tu[1]=u0+uw; tv[1]=v0;
+		tx[2]=x0;   ty[2]=y0+h; tu[2]=u0;    tv[2]=v0+vh;
 		emitTri(tx, ty, tc, alpha, tu, tv);
-		tx[0]=x0+w; ty[0]=y0;   tu[0]=u0+w; tv[0]=v0;
-		tx[1]=x0+w; ty[1]=y0+h; tu[1]=u0+w; tv[1]=v0+h;
-		tx[2]=x0;   ty[2]=y0+h; tu[2]=u0;   tv[2]=v0+h;
+		tx[0]=x0+w; ty[0]=y0;   tu[0]=u0+uw; tv[0]=v0;
+		tx[1]=x0+w; ty[1]=y0+h; tu[1]=u0+uw; tv[1]=v0+vh;
+		tx[2]=x0;   ty[2]=y0+h; tu[2]=u0;    tv[2]=v0+vh;
 		emitTri(tx, ty, tc, alpha, tu, tv);
 		return;
 		}
@@ -698,6 +752,13 @@ extern "C" void glrBeginFrame(void)
 	g_curClip = -1;
 	g_over = 0;
 	g_frame++;
+	for (TInt i = 0; i < KMaxTex; i++)
+		{
+		g_tex[i].iUseU0 = 0x7FFFFFFF;
+		g_tex[i].iUseV0 = 0x7FFFFFFF;
+		g_tex[i].iUseU1 = -1;
+		g_tex[i].iUseV1 = -1;
+		}
 	}
 
 // Режими напівпрозорості PS1 у термінах GL. Режим 2 (B-F) відповідника не має;
@@ -759,6 +820,7 @@ extern "C" int glrEndFrame(void)
 		ps1LogFmt("glr", "viewport changed: %dx%d", (int)g_vpW, (int)g_vpH);
 		}
 
+	const unsigned int tSetup0 = ndrc_symbian_fastcount();
 	// Задній буфер PS1 лягає на все вікно. Вісь Y донизу, як у VRAM.
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -767,11 +829,9 @@ extern "C" int glrEndFrame(void)
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
-	// Стан масивів виставляємо ЩОРАЗУ, а не один раз при ініціалізації. Шлях
-	// показу у vout_symbian.cpp вмикає GL_TEXTURE_COORD_ARRAY і лишає
-	// glTexCoordPointer на масив, який живе в його стековому кадрі. Якщо цей
-	// масив лишити ввімкненим, наш виклик малювання читає з нього по координаті
-	// на кожну вершину - тобто з чужого, уже звільненого стека.
+	// Стан масивів і текстури виставляємо ЩОРАЗУ, а не один раз при ініціалізації.
+	// Шлях показу у vout_symbian.cpp вмикає GL_TEXTURE_COORD_ARRAY і лишає
+	// glTexCoordPointer на масив, який живе в його стековому кадрі.
 	glDisable(GL_TEXTURE_2D);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	glEnableClientState(GL_VERTEX_ARRAY);
@@ -779,14 +839,49 @@ extern "C" int glrEndFrame(void)
 	// Індекс 0 палітри на PS1 - діра, а не колір. У розпакованій текстурі він
 	// дістав альфу 0, тож відсікаємо його перевіркою, а не змішуванням: змішати
 	// довелося б і там, де примітив непрозорий.
-	glAlphaFunc(GL_GREATER, 0.5f);
+	//
+	// Поріг мусить лежати НИЖЧЕ за найменший коефіцієнт змішування. GL_MODULATE
+	// множить і альфу теж, а альфа вершини в нас несе сам коефіцієнт: 128 для
+	// режиму B/2+F/2 і 64 для B+F/4. При порозі 0,5 режим B+F/4 відсікався б
+	// цілком, а B/2+F/2 проходив із запасом в один крок квантування. Відсікати
+	// треба саме нуль, тому поріг близький до нуля.
+	glAlphaFunc(GL_GREATER, 0.05f);
+	const unsigned int tSetup1 = ndrc_symbian_fastcount();
+	g_tSetup += (unsigned int)(tSetup1 - tSetup0);
 
+	const unsigned int tClear0 = ndrc_symbian_fastcount();
 	glClear(GL_COLOR_BUFFER_BIT);
+	const unsigned int tClear1 = ndrc_symbian_fastcount();
+	g_tClear += (unsigned int)(tClear1 - tClear0);
+
+	const unsigned int tSetup2 = ndrc_symbian_fastcount();
 	glVertexPointer(2, GL_SHORT, 0, g_pos);
 	glColorPointer(4, GL_UNSIGNED_BYTE, 0, g_col);
 	glTexCoordPointer(2, GL_FLOAT, 0, g_uv);
+	const unsigned int tSetup3 = ndrc_symbian_fastcount();
+	g_tSetup += (unsigned int)(tSetup3 - tSetup2);
+
+	// Зонди для розподілу вартості між масивами вершин: 32 - без кольору,
+	// 64 - без текстури. Картинка при цьому неправильна, це саме зонд.
+	if (g_skipMask & 32)
+		glDisableClientState(GL_COLOR_ARRAY);
+	if (g_skipMask & 64)
+		{
+		glDisable(GL_TEXTURE_2D);
+		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+		}
+	// Зонди для розділення двох причин вартості малювання. Біт 8 лишає ту саму
+	// геометрію, але відсікає її до одного пікселя: якщо час не впав, платимо за
+	// обробку вершин, а не за заповнення. Біт 16 не малює зовсім - лишається
+	// чиста ціна обміну буферів.
+	if (g_skipMask & 8)
+		{
+		glEnable(GL_SCISSOR_TEST);
+		glScissor(0, 0, 1, 1);
+		}
+	const unsigned int tDraw0 = ndrc_symbian_fastcount();
 	TInt curTex = -2;
-	for (TInt b = 0; b < g_nBatch; b++)
+	for (TInt b = 0; (g_skipMask & 16) == 0 && b < g_nBatch; b++)
 		{
 		// Примітиви інших ділянок пропускаємо: у цій проекції вони лягли б
 		// навмання, а показати їх усе одно нема де.
@@ -812,6 +907,11 @@ extern "C" int glrEndFrame(void)
 		applyBlend(g_batch[b].iBlend);
 		glDrawArrays(GL_TRIANGLES, g_batch[b].iFirst, g_batch[b].iCount);
 		}
+	const unsigned int tDraw1 = ndrc_symbian_fastcount();
+	g_tDraw += (unsigned int)(tDraw1 - tDraw0);
+	if (g_skipMask & 8)
+		glDisable(GL_SCISSOR_TEST);
+
 	glDisable(GL_BLEND);
 	glDisable(GL_ALPHA_TEST);
 	// Повертаємо стан, якого чекає шлях показу vout, щоб перемикання прапорця
@@ -834,12 +934,29 @@ extern "C" int glrEndFrame(void)
 					g_tex[i].iX, g_tex[i].iY, g_tex[i].iW, g_tex[i].iH);
 		for (TInt b = 0; b < g_nBatch && b < 12; b++)
 			ps1LogFmt("glrbatch", "b=%d n=%d tex=%d blend=%d clip=%d",
-				(int)b, g_batch[b].iCount, g_batch[b].iTex,
+				(int)b, g_batch[b].iCount, (int)g_batch[b].iTex,
 				g_batch[b].iBlend, g_batch[b].iClip);
 		}
+	for (TInt i = 0; i < KMaxTex; i++)
+		{
+		if (g_tex[i].iUseU1 >= g_tex[i].iUseU0 && g_tex[i].iUseV1 >= g_tex[i].iUseV0)
+			{
+			const unsigned long long tw = (unsigned long long)(g_tex[i].iUseU1 - g_tex[i].iUseU0 + 1);
+			const unsigned long long th = (unsigned long long)(g_tex[i].iUseV1 - g_tex[i].iUseV0 + 1);
+			g_useTexels += tw * th;
+			g_fullTexels += 65536ULL;
+			g_useSlots++;
+			}
+		}
+	g_batchSum += g_nBatch;
+	g_frameSum++;
 	if (g_shotWanted)
 		writeShot();
+
+	const unsigned int tSwap0 = ndrc_symbian_fastcount();
 	voutSymbianGlSwap();
+	const unsigned int tSwap1 = ndrc_symbian_fastcount();
+	g_tSwap += (unsigned int)(tSwap1 - tSwap0);
 
 	// Два записи: перший кадр (чи взагалі дійшло) і перша справжня сцена (чи
 	// правильні ділянка й склад). Більше не пишемо - лог тут не поперовий.
@@ -867,4 +984,21 @@ extern "C" void glrStats(int *aVerts, int *aBatches, int *aOver,
 	if (aMiss)    *aMiss = g_miss;
 	if (aEvict)   *aEvict = g_evict;
 	if (aOver)    *aOver = g_nofit + g_batchOver;   // тихі втрати обох видів
+	ps1LogFmt("glrbrk", "batches=%d frames=%d brkTex=%d brkBlend=%d brkClip=%d"
+		" spriteWrap=%d/%d",
+		(int)g_batchSum, (int)g_frameSum, (int)g_brkTex, (int)g_brkBlend,
+		(int)g_brkClip, (int)g_spriteWrap, (int)g_spriteAll);
+	const unsigned int freq = ndrc_symbian_fastfreq();
+	const unsigned int f = freq ? freq : 1;
+	ps1LogFmt("glrtime", "setup=%ums clear=%ums draw=%ums swap=%ums frames=%d",
+		(unsigned int)(g_tSetup * 1000ULL / f),
+		(unsigned int)(g_tClear * 1000ULL / f),
+		(unsigned int)(g_tDraw * 1000ULL / f),
+		(unsigned int)(g_tSwap * 1000ULL / f),
+		(int)g_frameSum);
+	ps1LogFmt("glruv", "use=%uK full=%uK slots=%d frames=%d",
+		(unsigned int)(g_useTexels / 1024ULL),
+		(unsigned int)(g_fullTexels / 1024ULL),
+		(int)(g_useSlots / (g_frameSum ? g_frameSum : 1)),
+		(int)g_frameSum);
 	}
