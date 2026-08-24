@@ -2371,16 +2371,28 @@ void ps1GpuGetScreenInfo(int *y, int *hres)             { GPUgetScreenInfo(y, hr
 // полів - нулі. thread_rendering = 0, бо USE_ASYNC_GPU не задано.
 // cbs МУСИТЬ пережити виклик: gpulib лишає в себе вказівники на fskip_advice /
 // fskip_force / fskip_dirty усередині неї, а не копії.
+// Адаптивний пропуск: gpulib тримає ВКАЗІВНИК на fskip_advice усередині cbs,
+// тож оновлювати треба саме те поле, а не свою копію структури.
+static struct rearmed_cbs *g_cbs;
+
+void ps1GpuSetFrameskipAdvice(int aAdvice)
+	{
+	if (g_cbs)
+		g_cbs->fskip_advice = aAdvice;
+	}
+
 void ps1GpuSetCallbacks(unsigned int *frameCount, unsigned int *hcnt, int aFrameskip)
 	{
 	static struct rearmed_cbs cbs;
 	memset(&cbs, 0, sizeof(cbs));
+	g_cbs = &cbs;
 	cbs.gpu_frame_count = frameCount;
 	cbs.gpu_hcnt = hcnt;
 	cbs.thread_rendering = 0;
 	// Пропуск растеризації силами gpulib: скільки кадрів поспіль дозволено НЕ
 	// малювати. Копіюється в gpu.frameskip.set саме тут, тож значення має бути
-	// відоме до виклику.
+	// відоме до виклику. -1 - адаптивний режим: фіксованого набору немає, а
+	// рішення щокадру дає fskip_advice, який заповнює pl_frame_limit.
 	cbs.frameskip = aFrameskip;
 	GPUrearmedCallbacks(&cbs);
 	}

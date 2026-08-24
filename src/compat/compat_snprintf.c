@@ -1,19 +1,19 @@
-// snprintf/vsnprintf для Symbian: ESTLIB їх не має (це C99, а ESTLIB з епохи C89),
-// і в жодній бібліотеці SDK вони не експортуються - перевірено по всіх .dso.
-// libpcsxcore використовує їх активно, тож без цього не лінкується ані ядро, ані оболонка.
+// snprintf/vsnprintf for Symbian: ESTLIB lacks them (this is C99, while ESTLIB is from the C89 era),
+// and they are not exported by any SDK library - checked across all .dso files.
+// libpcsxcore uses them actively, so without this neither the core nor the shell will link.
 //
-// Реалізовано саме обмежене форматування, а не vsprintf у великий буфер:
-// останнє мовчки переповнює стек на першому ж довгому рядку.
-// Підтримано специфікатори, що трапляються в кодовій базі:
-// %s %c %d %i %u %x %X %p %% з прапорцями -, 0, шириною, точністю та довжиною l/ll/z.
+// Bounded formatting is implemented directly rather than calling vsprintf into a large buffer:
+// the latter silently overflows the stack on the very first long string.
+// Supported format specifiers encountered in the codebase:
+// %s %c %d %i %u %x %X %p %% with flags -, 0, width, precision, and lengths l/ll/z.
 
 #include <stdarg.h>
 #include <stddef.h>
 
 struct sink {
 	char *buf;
-	size_t cap;   // ємність разом із завершальним нулем; 0 - лише рахувати
-	size_t len;   // скільки символів вивела б повна форма (семантика C99)
+	size_t cap;   // capacity including null terminator; 0 - count only
+	size_t len;   // how many characters full formatting would emit (C99 semantics)
 };
 
 static void emit(struct sink *s, char c)
@@ -29,7 +29,7 @@ static void emit_pad(struct sink *s, char c, int n)
 		emit(s, c);
 }
 
-// Виводить готове тіло числа/рядка з урахуванням ширини та вирівнювання.
+// Emits the formatted body of a number/string respecting width and alignment.
 static void emit_field(struct sink *s, const char *body, int bodylen,
                        const char *prefix, int prefixlen,
                        int width, int leftalign, int zeropad)
@@ -62,7 +62,7 @@ static int utoa_rev(unsigned long long v, unsigned base, int upper, char *out)
 		out[n++] = digits[v % base];
 		v /= base;
 	}
-	// Перевертаємо на місці.
+	// Reverse in place.
 	{
 		int i;
 		for (i = 0; i < n / 2; i++) {
@@ -198,7 +198,7 @@ int vsnprintf(char *buf, size_t size, const char *fmt, va_list ap)
 			break;
 
 		default:
-			// Невідомий специфікатор виводимо дослівно, щоб не втратити текст.
+			// Output unknown specifiers verbatim to avoid losing text.
 			emit(&s, '%');
 			emit(&s, conv);
 			break;
@@ -221,8 +221,8 @@ int snprintf(char *buf, size_t size, const char *fmt, ...)
 	return n;
 }
 
-// fseeko/ftello - POSIX-варіанти для великих файлів; ESTLIB їх не має.
-// Там off_t визначено як long (sys/types.h:55), тож це прямі відповідники.
+// fseeko/ftello - POSIX variants for large files; ESTLIB lacks them.
+// There off_t is defined as long (sys/types.h:55), so these are direct equivalents.
 
 #include <stdio.h>
 #include <sys/types.h>

@@ -1,17 +1,17 @@
-// Етап 0: перевірка виконуваної пам'яті на фізичному апараті.
+// Stage 0: executable memory probe on physical hardware.
 //
-// Питання, на які має відповісти один запуск:
-//   1. Чи дає RChunk::CreateLocalCode пам'ять, у яку можна і писати, і яку можна
-//      виконувати, БЕЗ перемикання прав доступу (тобто чи можна лишити
-//      NO_WRITE_EXEC невизначеним, як у new_dynarec.c:664).
-//   2. Чи потрібні для цього capabilities (складається з CAPABILITY None).
-//   3. Чи справді IMB_Range обов'язковий - тобто чи видно застарілий I-cache без нього.
-//   4. Чи можна дорощувати закомічену пам'ять через Adjust (динарек росте по ходу).
-//   5. Скільки коштує IMB_Range - потрібно для оцінки накладних витрат динареку.
-//   6. Чи виділяються 16 МБ кешу трансляцій (TARGET_SIZE_2=24) на апараті з 128 МБ ОЗП.
+// Questions a single run must answer:
+//   1. Does RChunk::CreateLocalCode provide memory that can be both written and
+//      executed WITHOUT permission switching (i.e. can NO_WRITE_EXEC remain
+//      undefined, as in new_dynarec.c:664).
+//   2. Are capabilities required for this (built with CAPABILITY None).
+//   3. Is IMB_Range truly mandatory - i.e. is stale I-cache visible without it.
+//   4. Can committed memory be grown via Adjust (dynarec grows dynamically).
+//   5. How much does IMB_Range cost - needed to estimate dynarec overhead.
+//   6. Can 16 MB of translation cache (TARGET_SIZE_2=24) be allocated on hardware with 128 MB RAM.
 //
-// Лог скидається на диск після кожної події: якщо процес запанікує на виконанні
-// згенерованого коду, з файлу буде видно, на якому саме кроці.
+// Log is flushed to disk after every event: if the process panics executing
+// generated code, the file will show the exact step.
 
 #include <e32base.h>
 #include <e32std.h>
@@ -19,16 +19,16 @@
 #include <e32cons.h>
 #include <f32file.h>
 
-// Кеш трансляцій ari64: TARGET_SIZE_2=24 в assem_arm.h:40.
+// ari64 translation cache: TARGET_SIZE_2=24 in assem_arm.h:40.
 static const TInt KCacheSize    = 16 * 1024 * 1024;
 static const TInt KInitialCommit = 4096;
 static const TInt KGrowCommit    = 1024 * 1024;
-// Зсув для перевірки дорощеної пам'яті: свідомо за межами першого коміту.
+// Offset to test grown memory: deliberately beyond the initial commit.
 static const TInt KFarOffset     = 512 * 1024;
 static const TInt KImbIterations = 1000;
 
-// E: перший: на N95 8GB це масова пам'ять, і лише її видно по USB.
-// C:\Data - запасний варіант для апаратів без масової пам'яті.
+// E: first: on N95 8GB this is mass memory, and the only one visible over USB.
+// C:\Data is fallback for devices without mass memory.
 _LIT(KLogPathE, "E:\\ps1_stage0.jsonl");
 _LIT(KLogPathC, "C:\\Data\\ps1_stage0.jsonl");
 _LIT(KLogDirC,  "C:\\Data\\");
@@ -43,10 +43,10 @@ typedef TInt (*TProbeFn)();
 static RFs  g_fs;
 static RFile g_log;
 static TBool g_logOpen;
-// На апараті RDebug нікуди не пише без відлагоджувача, а файл треба ще діставати.
-// Консоль - єдиний канал, який видно одразу на екрані телефона. Створюється
-// ПІСЛЯ вимірів: у EKA2L1 віконний сервер на ній падає, і зонд не має від цього
-// втрачати результат. Рядки до того накопичуються тут.
+// On hardware RDebug writes nowhere without a debugger, and the file must be retrieved.
+// The console is the only channel visible immediately on the phone screen. Created
+// AFTER measurements: in EKA2L1 window server crashes on it, and the probe must not
+// lose results because of that. Lines accumulate here until then.
 static TBuf<4096> g_screen;
 static TUint g_startTick;
 static TInt  g_eventId;
@@ -70,10 +70,10 @@ static void logEvent(const TDesC8 &aType, const TDesC8 &aError, const TDesC8 &aM
     if (g_logOpen)
         {
         g_log.Write(line);
-        // Скидання після кожної події: паніка на виконанні коду не має з'їсти лог.
+        // Flush after every event: panic executing code must not eat the log.
         g_log.Flush();
         }
-    // На екрані потрібне читабельне, а не JSON: подія, помилка, суть.
+    // The screen needs human-readable output, not JSON: event, error, essence.
     TBuf<256> screen;
     screen.Copy(aType);
     if (aError.Length())
@@ -100,7 +100,7 @@ static void logOk(const TDesC8 &aType, const TDesC8 &aMsg)
     logEvent(aType, KNullDesC8, aMsg);
     }
 
-// Записує "mov r0,#imm; bx lr" за вказаною адресою.
+// Writes "mov r0,#imm; bx lr" at the specified address.
 static void emitStub(TUint8 *aAt, TUint32 aMovInstr)
     {
     TUint32 *p = reinterpret_cast<TUint32*>(aAt);
@@ -110,7 +110,7 @@ static void emitStub(TUint8 *aAt, TUint32 aMovInstr)
 
 static TInt callStub(TUint8 *aAt)
     {
-    // Через ціле: ISO C++ забороняє пряме приведення object -> function pointer.
+    // Via integer: ISO C++ forbids direct cast object -> function pointer.
     TProbeFn fn = reinterpret_cast<TProbeFn>(reinterpret_cast<TUint32>(aAt));
     return fn();
     }
@@ -120,13 +120,13 @@ static void runProbe()
     RChunk chunk;
     TBuf8<256> msg;
 
-    // --- 1. Виділення ---
+    // --- 1. Allocation ---
     TInt err = chunk.CreateLocalCode(KInitialCommit, KCacheSize);
     msg.Format(_L8("CreateLocalCode(commit=%d,max=%d) err=%d"),
                KInitialCommit, KCacheSize, err);
     if (err != KErrNone)
         {
-        // KErrPermissionDenied тут означав би, що потрібна capability.
+        // KErrPermissionDenied here would indicate a capability is required.
         logEvent(_L8("chunk_create"), _L8("MEM_ALLOC_FAIL"), msg);
         return;
         }
@@ -138,15 +138,15 @@ static void runProbe()
                reinterpret_cast<TUint32>(base), chunk.Size(), chunk.MaxSize());
     logOk(_L8("chunk_info"), msg);
 
-    // --- 2. Запис коду в свіжовиділену пам'ять ---
+    // --- 2. Write code into freshly allocated memory ---
     emitStub(base, KMovR0_42);
     logOk(_L8("write"), _L8("stub v1 (return 42) written at base"));
 
     User::IMB_Range(base, base + 8);
     logOk(_L8("imb"), _L8("IMB_Range over 8 bytes"));
 
-    // --- 3. Виконання. Якщо пам'ять не виконувана, тут буде KERN-EXEC 3
-    //     і останнім рядком логу лишиться попередній запис. ---
+    // --- 3. Execution. If memory is non-executable, KERN-EXEC 3 will happen
+    //     and the last log line will remain the previous write. ---
     TInt r = callStub(base);
     msg.Format(_L8("returned %d, expected 42"), r);
     if (r != 42)
@@ -154,16 +154,16 @@ static void runProbe()
     else
         logOk(_L8("exec"), msg);
 
-    // --- 4. Перезапис уже виконаного коду БЕЗ IMB_Range.
-    //     Це не тест на успіх: результат 42 означає застарілий I-cache і
-    //     доводить, що IMB_Range обов'язковий. Результат 43 означає лише, що
-    //     на цьому апараті рядок не встиг закешуватись - не доказ протилежного. ---
+    // --- 4. Overwrite previously executed code WITHOUT IMB_Range.
+    //     This is not a pass/fail test: result 42 indicates stale I-cache and
+    //     proves IMB_Range is mandatory. Result 43 only means the line was not
+    //     cached yet on this hardware - not proof to the contrary. ---
     emitStub(base, KMovR0_43);
     r = callStub(base);
     msg.Format(_L8("returned %d (42=stale icache, 43=coherent)"), r);
     logOk(_L8("exec_no_imb"), msg);
 
-    // --- 5. Той самий перезапис з IMB_Range: тут 43 обов'язковий. ---
+    // --- 5. Same overwrite with IMB_Range: here 43 is mandatory. ---
     User::IMB_Range(base, base + 8);
     r = callStub(base);
     msg.Format(_L8("returned %d, expected 43"), r);
@@ -172,7 +172,7 @@ static void runProbe()
     else
         logOk(_L8("exec_after_imb"), msg);
 
-    // --- 6. Вартість IMB_Range на 4 КБ ---
+    // --- 6. Cost of IMB_Range over 4 KB ---
     const TUint t0 = User::NTickCount();
     for (TInt i = 0; i < KImbIterations; i++)
         User::IMB_Range(base, base + 4096);
@@ -180,7 +180,7 @@ static void runProbe()
     msg.Format(_L8("%d iterations over 4096 bytes took %u ms"), KImbIterations, dt);
     logOk(_L8("imb_cost"), msg);
 
-    // --- 7. Дорощування: динарек комітить пам'ять по ходу генерації ---
+    // --- 7. Growing: dynarec commits memory dynamically as code is generated ---
     err = chunk.Adjust(KGrowCommit);
     msg.Format(_L8("Adjust(%d) err=%d size=%d"), KGrowCommit, err, chunk.Size());
     if (err != KErrNone)
@@ -201,8 +201,8 @@ static void runProbe()
             logOk(_L8("exec_grown"), msg);
         }
 
-    // --- 8. Чи комітяться всі 16 МБ. Невдача тут не блокує порт - вона означає,
-    //     що TARGET_SIZE_2 треба зменшувати (P2). ---
+    // --- 8. Check if full 16 MB commits. Failure here does not block the port - it means
+    //     TARGET_SIZE_2 must be reduced (P2). ---
     err = chunk.Adjust(KCacheSize);
     msg.Format(_L8("Adjust(%d) err=%d size=%d"), KCacheSize, err, chunk.Size());
     if (err != KErrNone)
@@ -249,7 +249,7 @@ static void mainL()
     if (g_logOpen) g_log.Close();
     g_fs.Close();
 
-    // Виміри вже завершені й записані; далі лише показ.
+    // Measurements are complete and recorded; display only from here on.
     _LIT(KTitle, "PS1 stage0");
     CConsoleBase *console = NULL;
     TRAPD(err, console = Console::NewL(KTitle, TSize(KConsFullScreen, KConsFullScreen)));

@@ -1,12 +1,12 @@
-// Том RAR: розбір заголовків RAR4 і RAR5, читання елементів, збережених БЕЗ
-// стиснення.
+// RAR volume: RAR4 and RAR5 header parsing, reading entries stored WITHOUT
+// compression.
 //
-// Стиснені елементи свідомо не підтримані. Єдина реалізація розпакування RAR -
-// unRAR від RARLAB, а її ліцензія забороняє використовувати код для створення
-// сумісного архіватора; це додаткове обмеження несумісне з GPL-2.0, під якою
-// лежить libpcsxcore, з яким цей застосунок злінковано. Тобто зібрати таку
-// збірку можна, а розповсюджувати - вже ні. Для стиснених архівів застосунок
-// каже перепакувати їх у .7z, який підтримано повністю.
+// Compressed entries are deliberately not supported. The only RAR decompression implementation
+// is unRAR by RARLAB, whose license forbids using the code to create a compatible
+// archiver; this restriction is incompatible with GPL-2.0, under which
+// libpcsxcore (linked with this application) is licensed. Thus, building such a binary
+// is possible, but distributing it is not. For compressed archives, the application
+// prompts repacking into .7z, which is fully supported.
 
 #include <e32base.h>
 #include <f32file.h>
@@ -17,7 +17,7 @@
 
 struct TRarEnt
 	{
-	TInt iPos;      // зміщення даних у файлі
+	TInt iPos;      // data offset in file
 	TInt iSize;
 	TBool iStored;
 	};
@@ -67,7 +67,7 @@ TInt CRarSrc::Read(TUint8 *aBuf, TInt aLen)
 	return p.Length();
 	}
 
-// --- Розбір ------------------------------------------------------------------
+// --- Parsing -----------------------------------------------------------------
 
 static TUint32 rd32(const TUint8 *p)
 	{
@@ -79,7 +79,7 @@ static TUint16 rd16(const TUint8 *p)
 	return (TUint16)((TUint16)p[0] | ((TUint16)p[1] << 8));
 	}
 
-// Змінна довжина RAR5: по 7 бітів, старший біт - ознака продовження.
+// RAR5 variable-length integer: 7 bits per byte, MSB is continuation flag.
 static TInt vint(const TUint8 *aBuf, TInt aLen, TInt &aPos, TUint32 &aOut)
 	{
 	aOut = 0;
@@ -159,7 +159,7 @@ TInt CRarVol::Scan4L(RFile &aFile, TInt aPos, TInt aSize)
 			dsize = (TInt)rd32(d);
 			}
 
-		if (type == 0x74)               // заголовок файлу
+		if (type == 0x74)               // file header
 			{
 			TUint8 *fh = (TUint8 *)User::Alloc(hsize);
 			if (!fh)
@@ -173,14 +173,14 @@ TInt CRarVol::Scan4L(RFile &aFile, TInt aPos, TInt aSize)
 				const TInt method   = fh[25];
 				const TInt nameLen  = rd16(fh + 26);
 				TInt off = 32;
-				if (flags & 0x100)      // 64-бітні розміри
+				if (flags & 0x100)      // 64-bit sizes
 					off += 8;
 				if (off + nameLen <= hsize && nameLen > 0)
 					{
 					TFileName name;
-					// Ім'я в RAR4 - однобайтове, якщо не задано прапорець UNICODE;
-					// у юнікодному варіанті перед ним лежить те саме ASCII-ім'я
-					// до нульового байта, і його досить.
+					// RAR4 filename is single-byte unless the UNICODE flag is set;
+					// in the unicode variant, the same ASCII name precedes it up
+					// to the null byte, which is sufficient.
 					TPtrC8 raw(fh + off, Min(nameLen, name.MaxLength()));
 					const TInt z = raw.Locate('\0');
 					name.Copy((z >= 0) ? raw.Left(z) : raw);
@@ -188,8 +188,8 @@ TInt CRarVol::Scan4L(RFile &aFile, TInt aPos, TInt aSize)
 					e.iPos = aPos + hsize;
 					e.iSize = unpSize;
 					e.iStored = (method == 0x30) && (packSize == unpSize);
-					// Каталог у RAR4 - це значення 0xE0 у полі розміру словника
-					// (біти 5-7 прапорців), а не окремий тип блока.
+					// Directory in RAR4 is value 0xE0 in the dictionary size field
+					// (flags bits 5-7), not a distinct block type.
 					if ((flags & 0xE0) != 0xE0)
 						AddL(name, e);
 					}
@@ -215,7 +215,7 @@ TInt CRarVol::Scan5L(RFile &aFile, TInt aPos, TInt aSize)
 		if (aFile.Read(aPos, p, want) != KErrNone || p.Length() < 8)
 			break;
 
-		TInt q = 4;                     // CRC32 заголовка
+		TInt q = 4;                     // header CRC32
 		TUint32 hsize = 0, type = 0, flags = 0, extra = 0, dsize = 0;
 		if (vint(hdr, p.Length(), q, hsize) != KErrNone)
 			break;
@@ -228,7 +228,7 @@ TInt CRarVol::Scan5L(RFile &aFile, TInt aPos, TInt aSize)
 		if ((flags & 2) && vint(hdr, p.Length(), q, dsize) != KErrNone)
 			break;
 
-		if (type == 2)                  // файл
+		if (type == 2)                  // file
 			{
 			TUint32 fflags = 0, unpSize = 0, attr = 0, cinfo = 0, host = 0, nlen = 0;
 			TInt r = vint(hdr, p.Length(), q, fflags);
@@ -242,16 +242,16 @@ TInt CRarVol::Scan5L(RFile &aFile, TInt aPos, TInt aSize)
 			if (r == KErrNone && nlen > 0 && q + (TInt)nlen <= p.Length())
 				{
 				TFileName name;
-				// Імена в RAR5 - UTF-8; для латиниці збігається з ASCII, а
-				// кирилиця в іменах образів нам однаково не потрібна.
+				// Filenames in RAR5 are UTF-8; ASCII identical for Latin, and
+				// Cyrillic in disc image names is not needed anyway.
 				name.Copy(TPtrC8(hdr + q, Min((TInt)nlen,
 					name.MaxLength())));
 				TRarEnt e;
 				e.iPos = aPos + hstart + (TInt)hsize;
 				e.iSize = (TInt)unpSize;
-				// Біти 7-9 - метод; 0 означає "без стиснення".
+				// Bits 7-9 are method; 0 means "uncompressed".
 				e.iStored = (((cinfo >> 7) & 7) == 0);
-				if (!(fflags & 1))       // не каталог
+				if (!(fflags & 1))       // not a directory
 					AddL(name, e);
 				}
 			}

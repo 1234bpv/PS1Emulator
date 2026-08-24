@@ -1,20 +1,20 @@
-// Звук для Symbian: glue між ядром і dfsound (портабельна гілка SPU).
+// Audio for Symbian: glue between core and dfsound (portable SPU branch).
 //
-// Окремий файл навмисно: libpcsxcore/plugins.h оголошує SPUinit, SPUopen тощо як
-// ТИПИ (typedef), а в dfsound це функції з тими самими іменами. Транслювати обидва
-// в одному файлі не можна (конфлікт typedef/функція), тож тут plugins.h НЕ
-// включаємо, а назовні віддаємо обгортки з унікальними іменами ps1Spu*.
+// Separate file intentionally: libpcsxcore/plugins.h declares SPUinit, SPUopen, etc. as
+// TYPES (typedefs), while in dfsound they are functions with the same names. Compiling both
+// in the same translation unit is impossible (typedef/function conflict), so plugins.h is NOT
+// included here, and unique ps1Spu* wrapper functions are exposed externally.
 //
-// Фаза B: out-драйвер віддає PCM у динамік через CMdaAudioOutputStream. API
-// асинхронний (потребує CActiveScheduler); наш цикл кадрів синхронний, тож
-// обслуговуємо активні об'єкти неблокуюче через CActiveScheduler::RunIfReady.
+// Phase B: out-driver outputs PCM to speaker via CMdaAudioOutputStream. API
+// is asynchronous (requires CActiveScheduler); frame loop is synchronous, so
+// active objects are serviced non-blocking via CActiveScheduler::RunIfReady.
 
 #include <e32base.h>
 #include <mda/common/audio.h>
 #include <mdaaudiooutputstream.h>
 
 extern "C" {
-// Справжні експорти dfsound (spu.c/registers.c/dma.c).
+// Genuine dfsound exports (spu.c/registers.c/dma.c).
 long SPUinit(void);
 long SPUshutdown(void);
 long SPUopen(void);
@@ -32,29 +32,29 @@ void SPUregisterScheduleCb(void (*cb)(unsigned int));
 #include "../../pcsx_rearmed/plugins/dfsound/out.h"          // out_driver, out_current
 }
 
-// --- Вивід у динамік: CMdaAudioOutputStream + кільцевий буфер --------------
-// dfsound віддає 16-біт стерео PCM @44100 ЕМУЛЬОВАНОГО часу, а пристрій з'їдає
-// 44100 на РЕАЛЬНУ секунду. Поки емуляція не встигає, різниця - це порожній буфер
-// і розриви, тож Feed() перераховує потік під фактичний темп (див. UpdateRate).
-// Pump() щокадру обслуговує активні об'єкти (RunIfReady) і доливає буфери, поки їх
-// у польоті менше за KSndBufs.
+// --- Speaker output: CMdaAudioOutputStream + ring buffer --------------------
+// dfsound outputs 16-bit stereo PCM @44100 EMULATED time, while the hardware consumes
+// 44100 per REAL second. When emulation falls behind, the difference causes buffer underruns
+// and gaps, so Feed() resamples the stream to the actual pace (see UpdateRate).
+// Pump() services active objects (RunIfReady) every frame and refills buffers while
+// in-flight count is below KSndBufs.
 static const TInt KSndRate  = 44100;
-static const TInt KSndRing  = 128 * 1024;      // 0.74с при 44100 стерео 16-біт
-static const TInt KSndChunk = 4 * 1024;        // ~23мс на один WriteL
-static const TInt KSndBufs  = 4;               // буферів у польоті: ~93мс запасу
-static const TInt KSndFill  = 3 * KSndChunk;   // цільове заповнення кільця (~70мс)
+static const TInt KSndRing  = 128 * 1024;      // 0.74s at 44100 stereo 16-bit
+static const TInt KSndChunk = 4 * 1024;        // ~23ms per WriteL
+static const TInt KSndBufs  = 4;               // in-flight buffers: ~93ms headroom
+static const TInt KSndFill  = 3 * KSndChunk;   // target ring fill level (~70ms)
 
 extern "C" unsigned int ndrc_symbian_fastcount(void);
 extern "C" unsigned int ndrc_symbian_fastfreq(void);
 
-// Скільки разів пристрою не було чим долити, тобто скільки чутних розривів.
+// Number of times the device had no data to refill, i.e. audible underruns.
 static unsigned g_sndUnder;
 
-// Гучність кроками, керується з оболонки (клавіші * і #). Регулюємо гучність
-// ПОТОКУ, а не spu_config.iVolume: масштабування в мікшері dfsound однаково
-// коштує CPU і псує динамічний діапазон, а тут це робить аудіопідсистема.
+// Stepped volume controlled from shell (* and # keys). We regulate STREAM
+// volume rather than spu_config.iVolume: scaling in dfsound mixer costs
+// CPU and impairs dynamic range, whereas here the audio subsystem handles it.
 static const TInt KVolSteps   = 10;
-static const TInt KVolDefault = 2;          // на повній динамік апарата перевантажується
+static const TInt KVolDefault = 2;          // at full volume the device speaker overloads
 static TInt g_volStep = KVolDefault;
 
 class CSymSnd : public CBase, public MMdaAudioOutputStreamCallback
@@ -80,17 +80,17 @@ private:
 	TBool iOpen;
 	TInt  iOpenErr;
 	TUint8 *iRing;
-	TInt iCap, iHead, iTail;   // кільце: iHead - запис, iTail - читання
-	RBuf8 iSend[KSndBufs];     // віддані WriteL (живуть до MaoscBufferCopied)
-	TInt iSendNext;            // наступний вільний буфер, по колу
+	TInt iCap, iHead, iTail;   // ring: iHead - write, iTail - read
+	RBuf8 iSend[KSndBufs];     // submitted to WriteL (live until MaoscBufferCopied)
+	TInt iSendNext;            // next free buffer in circular rotation
 	TInt iInFlight;
-	// Перерахунок темпу. iStep - скільки вхідних семплів припадає на один вихідний
-	// у форматі 16.16; менше за 1.0 означає розтяг. iPos - дробова позиція в
-	// поточному вхідному блоці, iPrev* - останній семпл попереднього (інтерполяція
-	// має бути неперервною через межу блоків).
+	// Rate resampling. iStep - input samples per single output sample
+	// in 16.16 format; less than 1.0 indicates stretching. iPos - fractional position
+	// in current input block, iPrev* - last sample of previous block (interpolation
+	// must be continuous across block boundaries).
 	TInt iStep, iPos;
 	TInt iPrevL, iPrevR;
-	TInt iRateFrames;          // вхідних кадрів від початку вікна вимірювання
+	TInt iRateFrames;          // input frames since start of measurement window
 	TUint iRateT0;
 	};
 
@@ -112,7 +112,7 @@ void CSymSnd::ConstructL()
 	iStep = 1 << 16;
 	iRateT0 = ndrc_symbian_fastcount();
 	iStream = CMdaAudioOutputStream::NewL(*this, EMdaPriorityNormal);
-	iStream->Open(NULL);   // асинхронно -> MaoscOpenComplete
+	iStream->Open(NULL);   // asynchronous -> MaoscOpenComplete
 	}
 
 CSymSnd::~CSymSnd()
@@ -132,8 +132,8 @@ void CSymSnd::MaoscOpenComplete(TInt aError)
 		TMdaAudioDataSettings::ESampleRate44100Hz,
 		TMdaAudioDataSettings::EChannelsStereo));
 	iOpen = ETrue;
-	// Вікно вимірювання темпу починається тоді, коли пристрій почав споживати, а
-	// не при конструюванні: до відкриття споживача нема і вимір був би хибним.
+	// The rate measurement window starts when device begins consuming data, not
+	// at construction: before opening there is no consumer and measurement would be bogus.
 	iRateFrames = 0;
 	iRateT0 = ndrc_symbian_fastcount();
 	ApplyVolume();
@@ -160,24 +160,24 @@ void CSymSnd::MaoscBufferCopied(TInt /*aError*/, const TDesC8 & /*aBuffer*/)
 
 void CSymSnd::MaoscPlayComplete(TInt /*aError*/) { }
 
-// Кадр - 4 байти, iCap і KSndChunk кратні 4, тож кадр ніколи не лягає через межу
-// кільця і копіювати його двома шматками не треба.
+// Frame is 4 bytes, iCap and KSndChunk are multiples of 4, so frames never cross the ring
+// boundary and split-copying is not required.
 void CSymSnd::PushFrame(TInt aL, TInt aR)
 	{
 	TInt next = iHead + 4;
 	if (next == iCap) next = 0;
 	if (next == iTail)
-		return;                     // кільце повне: надлишок відкидаємо
+		return;                     // ring is full: discard excess
 	TInt16 *p = (TInt16 *)(iRing + iHead);
 	p[0] = (TInt16)aL;
 	p[1] = (TInt16)aR;
 	iHead = next;
 	}
 
-// Скільки семплів емуляція дала за реальне вікно - стільки їх і треба розтягнути
-// на те саме вікно. Основний член - прямий вимір (сходиться за одне вікно і не
-// коливається, на відміну від інтегратора по заповненню); заповнення кільця дає
-// лише слабкий трим проти повільного дрейфу.
+// However many samples emulation provided during real time window - that many must be stretched
+// over that same window. Primary term is direct measurement (converges in one window without
+// oscillating, unlike a fill-based integrator); ring fill level only provides
+// weak trim against slow drift.
 void CSymSnd::UpdateRate(TInt aInFrames)
 	{
 	iRateFrames += aInFrames;
@@ -212,8 +212,8 @@ void CSymSnd::Feed(const void *aBuf, TInt aBytes)
 	while ((iPos >> 16) < n)
 		{
 		const TInt i = iPos >> 16;
-		// Дріб на 14 бітах: різниця семплів займає 17 біт зі знаком, і на повних
-		// 16 бітах дробу добуток вилазить за межу 32-бітного цілого.
+		// 14-bit fraction: sample difference takes 17 signed bits, and with a full
+		// 16-bit fraction the product overflows 32-bit signed integer.
 		const TInt f = (iPos >> 2) & 0x3FFF;
 		const TInt aL = i ? src[(i - 1) * 2]     : iPrevL;
 		const TInt aR = i ? src[(i - 1) * 2 + 1] : iPrevR;
@@ -227,10 +227,10 @@ void CSymSnd::Feed(const void *aBuf, TInt aBytes)
 	UpdateRate(n);
 	}
 
-// Тримаємо в польоті KSndBufs буферів, а не один: із єдиним буфером уся глибина
-// конвеєра дорівнює його тривалості, і будь-який кадр, довший за неї, чути як
-// розрив. Слоти беруться по колу, а MaoscBufferCopied приходить у порядку віддачі,
-// тож лічильника в польоті досить, щоб не перезаписати ще не скопійований буфер.
+// Keep KSndBufs buffers in-flight rather than just one: with a single buffer the entire pipeline
+// depth equals its duration, and any frame taking longer results in an audible
+// gap. Slots rotate circularly and MaoscBufferCopied arrives in submission order,
+// so an in-flight counter suffices to avoid overwriting uncopied buffers.
 void CSymSnd::Refill()
 	{
 	if (!iOpen)
@@ -239,13 +239,13 @@ void CSymSnd::Refill()
 		{
 		TInt avail = iHead - iTail;
 		if (avail < 0) avail += iCap;
-		// Поки нічого не грає - не стартувати з майже порожнього кільця: воно
-		// одразу спорожніє знову. Той самий поріг служить і первинним запасом.
+		// While nothing is playing - avoid starting from an almost empty ring: it will
+		// immediately drain again. The same threshold also serves as initial buffer.
 		const TInt need = iInFlight ? KSndChunk : KSndFill;
 		if (avail < need)
 			{
 			if (iInFlight == 0)
-				g_sndUnder++;       // скільки разів Pump застав динамік без даних
+				g_sndUnder++;       // how many times Pump found speaker without data
 			return;
 			}
 		RBuf8 &b = iSend[iSendNext];
@@ -264,11 +264,11 @@ void CSymSnd::Refill()
 		}
 	}
 
-// У GUI планувальник крутить сама оболонка: CIdle віддає йому керування після
-// КОЖНОГО кадру, тож активні об'єкти й так обслуговуються. Вкладений RunIfReady
-// там лише поглиблював би стек рівно в найглибшій точці - усередині кроку
-// емуляції - і давав би реентрантність. У консольній гілці планувальника не
-// крутить ніхто, тому там він лишається.
+// In GUI the scheduler is driven by the shell itself: CIdle yields control to it after
+// EVERY frame, so active objects are already serviced. Nested RunIfReady
+// there would only deepen the stack at its deepest point - inside the emulation
+// step - and introduce reentrancy. In the console branch nobody drives the scheduler,
+// so it is retained there.
 static TBool g_pumpAo = ETrue;
 
 void CSymSnd::Pump()
@@ -300,13 +300,13 @@ TBool CSymSnd::WaitOpen(TInt aTimeoutMs)
 
 static CSymSnd *g_snd;
 
-// --- Out-драйвер dfsound: приймає 16-біт стерео PCM ------------------------
+// --- dfsound out-driver: accepts 16-bit stereo PCM -------------------------
 static unsigned g_sndFeeds, g_sndSamples;
 static int g_sndMax;
 
 static int  symOutInit(void)   { g_sndFeeds = g_sndSamples = 0; g_sndMax = 0; g_sndUnder = 0; return 0; }
 static void symOutFinish(void) { }
-static int  symOutBusy(void)   { return 0; }          // 0 = порожньо: генеруй ще
+static int  symOutBusy(void)   { return 0; }          // 0 = empty: generate more
 static void symOutFeed(void *buf, int bytes)
 	{
 	g_sndFeeds++;
@@ -324,7 +324,7 @@ static void symOutFeed(void *buf, int bytes)
 	}
 static struct out_driver g_symOut = { "symbian", symOutInit, symOutFinish, symOutBusy, symOutFeed };
 
-// --- Обгортки для оболонки (унікальні імена, без конфлікту з typedef) -------
+// --- Shell wrappers (unique names, avoiding typedef conflicts) -------------
 extern "C" {
 
 long ps1SpuInit(void)      { return SPUinit(); }
@@ -336,9 +336,9 @@ void ps1SpuWriteRegister(unsigned long r, unsigned short v, unsigned int c) { SP
 unsigned short ps1SpuReadRegister(unsigned long r, unsigned int c)          { return SPUreadRegister(r, c); }
 void ps1SpuWriteDMAMem(unsigned short *m, int s, unsigned int c) { SPUwriteDMAMem(m, s, c); }
 void ps1SpuReadDMAMem(unsigned short *m, int s, unsigned int c)  { SPUreadDMAMem(m, s, c); }
-// Мікшування SPU - частина "emu", і досі вона була невіддільна від CPU. Хук той
-// самий, що для растеризації: без нього не сказати, чи звук узагалі помітний у
-// кадрі. Аргумент "nosnd" лише не відкриває динамік, мікшер працює далі.
+// SPU mixing is part of "emu", and previously inseparable from CPU. The hook matches
+// the one used for rasterization: without it one cannot tell if audio is noticeable in
+// frame time. The "nosnd" argument merely suppresses opening the speaker; mixer continues running.
 extern "C" unsigned int ndrc_symbian_fastcount(void);
 unsigned long long g_spuMixTicks;
 
@@ -351,8 +351,8 @@ void ps1SpuAsync(unsigned int a, unsigned int b)
 void ps1SpuRegisterCallback(void (*cb)(int))                    { SPUregisterCallback(cb); }
 void ps1SpuRegisterScheduleCb(void (*cb)(unsigned int))         { SPUregisterScheduleCb(cb); }
 
-// Конфіг dfsound до ps1SpuInit (SPUinit читає iVolume). Без потоку - генеруємо
-// синхронно в циклі кадрів; реверб/інтерполяція вимкнені (зайвий CPU на ARM11).
+// dfsound config before ps1SpuInit (SPUinit reads iVolume). Threadless - generated
+// synchronously in frame loop; reverb/interpolation disabled (excess CPU on ARM11).
 void ps1SndConfigure(void)
 	{
 	spu_config.iVolume = 1024;
@@ -363,7 +363,7 @@ void ps1SndConfigure(void)
 	spu_config.iTempo = 0;
 	}
 
-// ps1SpuOpen викликає SetupSound (out_current = none); перенаправляємо на наш драйвер.
+// ps1SpuOpen calls SetupSound (out_current = none); redirect to our driver.
 void ps1SndSelectOutput(void)
 	{
 	out_current = &g_symOut;
@@ -380,11 +380,11 @@ void ps1SndStats(unsigned *aFeeds, unsigned *aSamples, int *aMaxAmp,
 	if (aStepQ16) *aStepQ16 = g_snd ? g_snd->Step() : 0;
 	}
 
-// --- Керування виводом у динамік (Фаза B) ----------------------------------
+// --- Speaker output control (Phase B) --------------------------------------
 static CActiveScheduler *g_sndSched;
 
-// Відкрити аудіопристрій. Потребує CActiveScheduler на потоці (ставимо свій, якщо
-// його ще нема); відкриття асинхронне, тож чекаємо MaoscOpenComplete до 2с.
+// Open audio device. Requires CActiveScheduler on the thread (install our own if
+// not yet present); open is async, so wait for MaoscOpenComplete up to 2s.
 int ps1SndOpenOutput(void)
 	{
 	if (g_snd)
@@ -401,11 +401,11 @@ int ps1SndOpenOutput(void)
 	if (err != KErrNone || !s)
 		return err ? err : -1;
 	g_snd = s;
-	return g_snd->WaitOpen(2000) ? 0 : -2;   // -2: відкрилось не вчасно (звук може підхопитись пізніше)
+	return g_snd->WaitOpen(2000) ? 0 : -2;   // -2: did not open in time (audio may catch up later)
 	}
 
-// Гучність на крок вгору/вниз. Повертає новий рівень (0..KVolSteps). Працює й до
-// відкриття потоку - рівень запам'ятовується й застосується в MaoscOpenComplete.
+// Volume step up/down. Returns new level (0..KVolSteps). Works before opening
+// the stream too - level is remembered and applied in MaoscOpenComplete.
 int ps1SndVolumeStep(int aDelta)
 	{
 	g_volStep += aDelta;
@@ -426,7 +426,7 @@ void ps1SndSetPumpAo(int aOn)
 	g_pumpAo = aOn ? ETrue : EFalse;
 	}
 
-// Обслужити активні об'єкти й долити наступний буфер. Викликати щокадру.
+// Service active objects and refill next buffer. Call every frame.
 void ps1SndPump(void)
 	{
 	if (g_snd)

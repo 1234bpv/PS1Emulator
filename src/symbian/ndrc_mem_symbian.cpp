@@ -1,15 +1,15 @@
-// Платформна заміна mmap(PROT_EXEC|PROT_WRITE) і __clear_cache для динареку ari64.
-// new_dynarec.c - код на C, а RChunk і User::IMB_Range доступні лише з C++,
-// тому вони живуть тут за C-зв'язуванням.
+// Platform replacement of mmap(PROT_EXEC|PROT_WRITE) and __clear_cache for ari64 dynarec.
+// new_dynarec.c is C code, whereas RChunk and User::IMB_Range are only accessible from C++,
+// so they live here under C linkage.
 //
-// Модель пам'яті свідомо проста: чанк комітиться повністю одразу, як це робить
-// mmap в upstream. Дорощування через Adjust дало б менший слід у пам'яті, але
-// динарек не повідомляє, скільки кешу він уже зайняв, тож ловити межу довелося б
-// обробником виключень. Перевіряти це має сенс лише після замірів на апараті.
+// The memory model is deliberately simple: the chunk is committed in full immediately,
+// matching upstream mmap behavior. Growing it via Adjust would reduce the memory footprint, but
+// the dynarec does not report how much cache it has used, so catching the boundary would require
+// an exception handler. Investigating this makes sense only after hardware measurements.
 //
-// NO_WRITE_EXEC НЕ визначаємо: CreateLocalCode дає пам'ять, у яку можна і писати,
-// і яку можна виконувати, без перемикання прав. Це припущення перевіряє Етап 0
-// (src/symbian/stage0_probe.cpp) - до його прогону на апараті воно недоведене.
+// NO_WRITE_EXEC is NOT defined: CreateLocalCode provides memory that can be both written
+// and executed without permissions switching. This assumption is checked by Stage 0
+// (src/symbian/stage0_probe.cpp) - prior to running on hardware it is unverified.
 
 #include <e32std.h>
 #include <hal.h>
@@ -37,7 +37,7 @@ extern "C" void ndrc_symbian_free(void *base)
     g_ndrcOpen = EFalse;
     }
 
-// База кешу трансляцій - щоб діагностика могла сказати, чи PC у згенерованому коді.
+// Translation cache base - allowing diagnostics to determine if PC is in generated code.
 extern "C" unsigned int ndrc_symbian_tcbase(void)
     {
     return g_ndrcOpen ? (unsigned int)g_ndrcChunk.Base() : 0;
@@ -48,7 +48,7 @@ extern "C" void ndrc_symbian_imb(void *start, void *end)
     User::IMB_Range(start, end);
     }
 
-// ESTLIB оголошує _SC_PAGESIZE, але sysconf не постачає.
+// ESTLIB declares _SC_PAGESIZE, but does not provide sysconf.
 extern "C" int ndrc_symbian_pgsize(void)
     {
     TInt size = 0;
@@ -57,8 +57,8 @@ extern "C" int ndrc_symbian_pgsize(void)
     return size;
     }
 
-// Високороздільний лічильник для профілювання (розділити CPU/GPU в "emu").
-// User::FastCounter доступний лише з C++; віддаємо його C-коду ядра/gpulib.
+// High-resolution counter for profiling (separating CPU/GPU in "emu").
+// User::FastCounter is accessible only from C++; exposed here to core/gpulib C code.
 extern "C" unsigned int ndrc_symbian_fastcount(void)
     {
     return User::FastCounter();

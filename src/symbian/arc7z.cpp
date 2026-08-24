@@ -1,10 +1,10 @@
-// Том 7z для імпорту. Розпаковує потоково власним циклом, а не SzArEx_Extract:
-// той віддає цілу теку архіву одним буфером у пам'яті, а тека тут - це образ
-// диска на 700 МБ.
+// 7z volume for import. Extracts as a stream via custom loop instead of SzArEx_Extract:
+// the latter delivers an entire archive folder in a single memory buffer, where a folder
+// here is a 700 MB disc image.
 //
-// Підтримується тека з одного кодера: LZMA, LZMA2 або без стиснення. Ланцюги з
-// фільтрами (BCJ, BCJ2, дельта) відхиляються - на образах диска їх не буває, а
-// потокова версія кожного з них коштувала б більше, ніж дає.
+// Single-coder folders are supported: LZMA, LZMA2, or uncompressed. Filter chains
+// (BCJ, BCJ2, delta) are rejected - disc images do not use them, and
+// a streaming version of each would cost more than it yields.
 
 #include <e32base.h>
 #include <f32file.h>
@@ -25,16 +25,16 @@ extern "C"
 #define K_LZMA2 0x21
 #define K_LZMA  0x30101
 
-// Словник LZMA виділяється цілком і одразу. 64 МБ - стеля самого 7-Zip (режим
-// "ультра"), тож більшого в архіві не буває; якщо стільки вільної пам'яті на
-// апараті немає, User::Alloc відмовить сам, і це чесніше за KERN-EXEC.
+// LZMA dictionary is allocated entirely and immediately. 64 MB is 7-Zip's own ceiling ("ultra"
+// mode), so archives do not exceed this; if that much free RAM is unavailable
+// on hardware, User::Alloc will fail gracefully, which is preferable to KERN-EXEC.
 const TInt KMaxDict = 64 * 1024 * 1024;
 
 static void *szAlloc(ISzAllocPtr, size_t aSize) { return User::Alloc((TInt)aSize); }
 static void szFree(ISzAllocPtr, void *aPtr) { User::Free(aPtr); }
 static const ISzAlloc g_szAlloc = { szAlloc, szFree };
 
-// --- Потік читання архіву для розбору заголовка ------------------------------
+// --- Archive read stream for header parsing ----------------------------------
 
 struct TSzStream
 	{
@@ -76,7 +76,7 @@ static SRes szSeek(ISeekInStreamPtr pp, Int64 *aPos, ESzSeek aOrigin)
 	return SZ_OK;
 	}
 
-// --- Розпакувальник одного елемента ------------------------------------------
+// --- Single-entry decompressor -----------------------------------------------
 
 class C7zSrc : public CBase, public MConvSrc
 	{
@@ -159,7 +159,7 @@ TInt C7zSrc::New(RFs &aFs, const TDesC &aPath, TInt aPackPos, TInt aPackSize,
 			delete self;
 			return KErrCorrupt;
 			}
-		// Байт властивостей LZMA2 кодує словник як 2|3 << (n/2 + 11).
+		// LZMA2 properties byte encodes dictionary as 2|3 << (n/2 + 11).
 		const TInt n = aProps[0] & 0x3f;
 		const TInt dict = (n > 40) ? 0x7fffffff
 			: (n == 40) ? 0xffffffff
@@ -186,7 +186,7 @@ TInt C7zSrc::New(RFs &aFs, const TDesC &aPath, TInt aPackPos, TInt aPackSize,
 		return KErrNotSupported;
 		}
 
-	// Файли всередині теки лежать упритул: до потрібного доводиться дочитатись.
+	// Files within a folder are packed back-to-back: must read forward to reach target.
 	if (aSkip > 0)
 		{
 		const TInt sr = self->Skip(aSkip);
@@ -210,7 +210,7 @@ C7zSrc::~C7zSrc()
 	iFile.Close();
 	}
 
-// Наповнює вхідний буфер із запакованого потоку.
+// Fills input buffer from packed stream.
 TInt C7zSrc::Pull(TUint8 *, TInt)
 	{
 	if (iInPos < iInFill)
@@ -307,13 +307,13 @@ TInt C7zSrc::Skip(TInt aBytes)
 	return r;
 	}
 
-// --- Том ---------------------------------------------------------------------
+// --- Volume ------------------------------------------------------------------
 
 struct T7zEnt
 	{
 	TInt iPackPos, iPackSize;
 	TInt iMethod, iPropsOffs, iPropsSize;
-	TInt iSkip;        // байтів від початку теки до цього файлу
+	TInt iSkip;        // bytes from start of folder to this file
 	TInt iSize;
 	};
 
@@ -332,7 +332,7 @@ private:
 	TFileName iPath;
 	CDesCArray *iNames;
 	RArray<T7zEnt> iEnts;
-	TUint8 *iProps;    // копія CodersData: db звільняється одразу після розбору
+	TUint8 *iProps;    // copy of CodersData: db is freed immediately after parsing
 	TInt iPropsLen;
 	};
 
@@ -388,7 +388,7 @@ TInt C7zVol::ScanL(RFs &aFs, const TDesC &aPath)
 		return (res == SZ_ERROR_MEM) ? KErrNoMemory : KErrCorrupt;
 		}
 
-	// Опис кодерів переживає db: після Free покажчики в ньому стають чужими.
+	// Coder descriptors must outlive db: after Free its pointers become dangling.
 	iPropsLen = (TInt)db.db.FoCodersOffsets[db.db.NumFolders];
 	iProps = (TUint8 *)User::Alloc(iPropsLen ? iPropsLen : 1);
 	if (iProps)
@@ -409,7 +409,7 @@ TInt C7zVol::ScanL(RFs &aFs, const TDesC &aPath)
 		if (SzGetNextFolderItem(&folder, &sd) != SZ_OK)
 			continue;
 		if (folder.NumCoders != 1 || folder.NumPackStreams != 1)
-			continue;                     // ланцюг фільтрів - не наш випадок
+			continue;                     // filter chain - not our case
 
 		T7zEnt e;
 		e.iMethod = (TInt)folder.Coders[0].MethodID;
@@ -418,8 +418,8 @@ TInt C7zVol::ScanL(RFs &aFs, const TDesC &aPath)
 		e.iPropsOffs = (TInt)folder.Coders[0].PropsOffset;
 		e.iPropsSize = folder.Coders[0].PropsSize;
 
-		// SzArEx_GetFolderStreamPos лише оголошено в 7z.h, а тіла в SDK немає -
-		// рахуємо самі: початок даних плюс позиція запакованого потоку.
+		// SzArEx_GetFolderStreamPos is only declared in 7z.h with no body in SDK -
+		// compute manually: start of data plus packed stream position.
 		const TUint32 pk = db.db.FoStartPackStreamIndex[fo];
 		e.iPackPos  = (TInt)(db.dataPos + db.db.PackPositions[pk]);
 		e.iPackSize = (TInt)(db.db.PackPositions[pk + 1] - db.db.PackPositions[pk]);
@@ -434,7 +434,7 @@ TInt C7zVol::ScanL(RFs &aFs, const TDesC &aPath)
 		const size_t len = SzArEx_GetFileNameUtf16(&db, i, w);
 		if (len > 1 && len < 512)
 			{
-			// UTF-16 SDK збігається з TText на Symbian.
+			// SDK UTF-16 matches Symbian TText.
 			name.Copy(TPtrC((const TText *)w, (TInt)len - 1).Left(name.MaxLength()));
 			TInt s = name.LocateReverse('/');
 			if (s < 0) s = name.LocateReverse('\\');

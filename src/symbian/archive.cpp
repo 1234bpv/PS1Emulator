@@ -1,7 +1,7 @@
-// Читання архівів як тому для імпорту: zip (DEFLATE через ту саму zlib, що й
-// образи), 7z (LZMA SDK) і rar. Розпаковується потоково - образ на 700 МБ у
-// пам'ять апарата не поміщається, а тимчасовий файл вимагав би вільного місця
-// під розпакований образ ПЛЮС стиснений результат.
+// Reading archives as a volume for import: zip (DEFLATE via the same zlib as
+// disc images), 7z (LZMA SDK), and rar. Extracted as a stream - a 700 MB image
+// does not fit in device RAM, while a temporary file would require free space
+// for the uncompressed image PLUS the compressed result.
 
 #include <e32base.h>
 #include <f32file.h>
@@ -11,7 +11,7 @@
 #include "imgconv.h"
 #include "zlib.h"
 
-// --- Спільне: файл із випадковим доступом ------------------------------------
+// --- Common: random-access file ----------------------------------------------
 
 class TArcFile
 	{
@@ -59,7 +59,7 @@ struct TZipEnt
 	TInt iMethod;
 	TInt iComp;
 	TInt iSize;
-	TInt iLocal;      // зміщення локального заголовка
+	TInt iLocal;      // local header offset
 	};
 
 class CZipSrc : public CBase, public MConvSrc
@@ -73,7 +73,7 @@ public:
 private:
 	TArcFile iF;
 	TZipEnt iEnt;
-	TInt iPos;        // прочитано стисненого
+	TInt iPos;        // compressed bytes read
 	z_stream iZ;
 	TBool iZOk;
 	TUint8 *iBuf;
@@ -100,8 +100,8 @@ TInt CZipSrc::New(RFs &aFs, const TDesC &aPath, const TZipEnt &aEnt, MConvSrc *&
 		return r;
 		}
 
-	// Локальний заголовок повторює довжини імені й додаткового поля, і саме вони
-	// задають, де насправді починаються дані: у центральному каталозі вони інші.
+	// The local header repeats filename and extra field lengths, and they
+	// determine where data actually starts: in the central directory they differ.
 	TUint8 lh[30];
 	if (self->iF.ReadAt(aEnt.iLocal, lh, sizeof(lh)) != (TInt)sizeof(lh) ||
 	    rd32(lh) != 0x04034b50)
@@ -194,7 +194,7 @@ TInt CZipSrc::Skip(TInt aBytes)
 		iPos += aBytes;
 		return KErrNone;
 		}
-	// Стиснений потік назад не мотається: пропуск - це читання з викиданням.
+	// Compressed stream cannot rewind: skipping is read-and-discard.
 	TUint8 *tmp = (TUint8 *)User::Alloc(KZipBuf);
 	if (!tmp)
 		return KErrNoMemory;
@@ -251,8 +251,8 @@ TInt CZipVol::ScanL(RFs &aFs, const TDesC &aPath)
 	if (r != KErrNone)
 		return r;
 
-	// Кінцевий запис каталогу лежить у хвості й має змінну довжину коментаря,
-	// тож його шукають скануванням назад.
+	// End of central directory record is located in the tail with variable comment length,
+	// so it is found by scanning backwards.
 	const TInt KTail = 66 * 1024;
 	const TInt tail = Min(KTail, f.Size());
 	TUint8 *buf = (TUint8 *)User::Alloc(tail);
@@ -313,8 +313,8 @@ TInt CZipVol::ScanL(RFs &aFs, const TDesC &aPath)
 		TFileName name;
 		TPtrC8 raw(cd + p + 46, Min(nlen, name.MaxLength()));
 		name.Copy(raw);
-		// Тек усередині архіву не розгортаємо: беремо базове ім'я, бо .cue
-		// посилається на сусідні файли теж без шляху.
+		// Directories inside archive are not expanded: take basename because .cue
+		// references neighboring files without path as well.
 		TInt s = name.LocateReverse('/');
 		if (s < 0) s = name.LocateReverse('\\');
 		if (s >= 0)
@@ -373,7 +373,7 @@ TInt CZipVol::Size(const TDesC &aName, TInt &aOut)
 	return KErrNone;
 	}
 
-// --- Вибір формату -----------------------------------------------------------
+// --- Format selection --------------------------------------------------------
 
 static TBool endsWith(const TDesC &aName, const TDesC &aExt)
 	{

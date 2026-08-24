@@ -1,7 +1,7 @@
-// Імпорт ігор: розбір .cue, збирання образу в PBP (ECC обнулено) або перенесення
-// як є. Геометрія доріжок навмисно повторює parsecue() з libpcsxcore/cdriso.c -
-// TOC у PBP має давати рівно ту саму таблицю ti[], інакше гра з CD-аудіо після
-// конвертації шукала б доріжки не там.
+// Game import: .cue parsing, disc image building into PBP (ECC zeroed), or copying
+// as is. Track geometry deliberately mirrors parsecue() in libpcsxcore/cdriso.c -
+// TOC in PBP must produce the exact same ti[] table, otherwise CD-DA audio games
+// after conversion would look for tracks in the wrong places.
 
 #include <e32base.h>
 #include <e32math.h>
@@ -17,15 +17,15 @@ extern "C" void ps1Log(const char *aType, const char *aMsg);
 extern "C" void ps1LogInt(const char *aType, const char *aMsg, int aVal);
 
 const TInt KSector   = 2352;
-const TInt KPbpBlk   = 16;                    // секторів у блоці PBP (block_shift=4)
+const TInt KPbpBlk   = 16;                    // sectors per PBP block (block_shift=4)
 const TInt KBlkBytes = KSector * KPbpBlk;     // 37632
 const TInt KPsar     = 0x28;
 const TInt KDataOffs = KPsar + 0x100000;
 const TInt KMaxTrk   = 100;
-// (0x100000-0x4000)/32 елементів індексу - стеля, зашита у формат, не наша.
+// (0x100000-0x4000)/32 index entries - format hard ceiling, not ours.
 const TInt KMaxIndex = (0x100000 - 0x4000) / 32;
 
-// --- Том: тека на диску -----------------------------------------------------
+// --- Volume: directory on disk ----------------------------------------------
 
 class CFileSrc : public CBase, public MConvSrc
 	{
@@ -137,7 +137,7 @@ TInt CDirVol::Size(const TDesC &aName, TInt &aOut)
 	return r;
 	}
 
-// --- Розпізнавання імен -----------------------------------------------------
+// --- Name recognition -------------------------------------------------------
 
 static TBool extIs(const TDesC &aName, const TDesC &aExt)
 	{
@@ -161,7 +161,7 @@ static TBool isRawImageName(const TDesC &aName)
 	       extIs(aName, _L(".iso"));
 	}
 
-// Створює том. Архів обслуговує archive.cpp, звичайний файл - тека поруч із ним.
+// Creates volume. Archives are handled by archive.cpp, regular files by their parent directory.
 TInt ConvOpenVol(RFs &aFs, const TDesC &aPath, MConvVol *&aOut)
 	{
 	if (ConvIsArchiveName(aPath))
@@ -169,17 +169,17 @@ TInt ConvOpenVol(RFs &aFs, const TDesC &aPath, MConvVol *&aOut)
 	return CDirVol::New(aFs, aPath, aOut);
 	}
 
-// --- Розбір .cue ------------------------------------------------------------
+// --- .cue parsing -----------------------------------------------------------
 
 struct TTrk
 	{
-	TInt iType;        // 0 - дані, 1 - аудіо
-	TInt iIdx0, iIdx1; // сектори всередині файлу доріжки, -1 якщо немає
+	TInt iType;        // 0 - data, 1 - audio
+	TInt iIdx0, iIdx1; // sectors within track file, -1 if absent
 	TInt iPregap, iPostgap;
 	TInt iSecSize;
-	TInt iFile;        // індекс імені у списку файлів
+	TInt iFile;        // filename index in file list
 	TBool iFirstInFile;
-	TInt iStart;       // абсолютний сектор (MSF), як ti[].start
+	TInt iStart;       // absolute sector (MSF), like ti[].start
 	TInt iLen;
 	};
 
@@ -192,7 +192,7 @@ struct TCue
 
 static TInt msf2sec(TInt m, TInt s, TInt f) { return (m * 60 + s) * 75 + f; }
 
-// "mm:ss:ff" -> сектори. Повертає -1, якщо це не час.
+// "mm:ss:ff" -> sectors. Returns -1 if not a timestamp.
 static TInt parseMsf(const TDesC8 &aTok)
 	{
 	if (aTok.Length() < 8 || aTok[2] != ':' || aTok[5] != ':')
@@ -214,7 +214,7 @@ static void nextTok(const TDesC8 &aLine, TInt &aPos, TPtrC8 &aOut)
 	aOut.Set(aLine.Mid(st, aPos - st));
 	}
 
-// Ім'я у лапках після FILE; без лапок - до кінця слова.
+// Quoted name after FILE; without quotes - up to word boundary.
 static void quoted(const TDesC8 &aLine, TDes &aOut)
 	{
 	aOut.Zero();
@@ -236,10 +236,10 @@ static void quoted(const TDesC8 &aLine, TDes &aOut)
 static TInt parseCue(const TDesC8 &aTxt, TCue &aCue)
 	{
 	aCue.iCount = 0;
-	// Нульовий елемент - не доріжка, а джерело postgap для першої: completeCue
-	// читає iTrk[i-1] і на i==1 потрапляє сюди. Без цього рядка в пролог першої
-	// доріжки йшло сміття з невиділеної пам'яті, iStart ставав величезним, і
-	// конвертер починав добивати образ тишею, поки не скінчиться картка.
+	// Element 0 is not a track, but a postgap source for track 1: completeCue
+	// reads iTrk[i-1] and on i==1 hits this. Without this line, uninitialized garbage
+	// went into the first track's pregap, iStart became huge, and
+	// converter filled the image with silence until storage ran out.
 	memset(&aCue.iTrk[0], 0, sizeof(aCue.iTrk[0]));
 	TBool pendingFile = EFalse;
 	TInt pos = 0;
@@ -268,8 +268,8 @@ static TInt parseCue(const TDesC8 &aTxt, TCue &aCue)
 			quoted(line, name);
 			if (!name.Length())
 				continue;
-			// Шлях усередині .cue ігноруємо: файли доріжок лежать поруч із ним,
-			// а абсолютний шлях із чужої машини на апараті все одно не існує.
+			// Ignore paths inside .cue: track files reside alongside it,
+			// and absolute paths from foreign machines do not exist on device anyway.
 			TInt s = name.LocateReverse('\\');
 			if (s < 0) s = name.LocateReverse('/');
 			if (s >= 0)
@@ -292,8 +292,8 @@ static TInt parseCue(const TDesC8 &aTxt, TCue &aCue)
 			t.iFirstInFile = pendingFile;
 			t.iStart = t.iLen = 0;
 			pendingFile = EFalse;
-			nextTok(line, lp, tok);          // номер
-			nextTok(line, lp, tok);          // режим
+			nextTok(line, lp, tok);          // number
+			nextTok(line, lp, tok);          // mode
 			TBuf8<24> mode;
 			mode.Copy(tok.Left(24));
 			mode.UpperCase();
@@ -338,9 +338,9 @@ static TInt parseCue(const TDesC8 &aTxt, TCue &aCue)
 	return aCue.iCount ? KErrNone : KErrCorrupt;
 	}
 
-// Добудова таблиці: та сама арифметика, що в parsecue (cdriso.c:530). Свій
-// варіант тут не годиться - PBP має відтворювати рівно ті адреси, які ядро
-// порахувало б із вихідного .cue, інакше аудіодоріжки поїдуть.
+// Table completion: exact same arithmetic as parsecue (cdriso.c:530). Custom
+// variants are not suitable here - PBP must reproduce the exact addresses core
+// would compute from source .cue, otherwise audio tracks shift.
 static TInt completeCue(TCue &aCue, MConvVol &aVol)
 	{
 	for (TInt i = 1; i <= aCue.iCount; i++)
@@ -359,9 +359,9 @@ static TInt completeCue(TCue &aCue, MConvVol &aVol)
 		TInt pregap = t.iPregap + aCue.iTrk[i - 1].iPostgap;
 		if (t.iFirstInFile && t.iIdx0 >= 0)
 			pregap += t.iIdx1 - t.iIdx0;
-		// Проміжок, якого немає у файлах, доводиться дописувати тишею, тож
-		// безглузде значення тут коштує місця на картці. Справжні прологи -
-		// секунди; півтори хвилини вже означають, що .cue розібрано хибно.
+		// Gaps missing from files must be padded with silence, so
+		// nonsensical values here waste storage. Real pre-gaps are
+		// seconds; a minute and a half already means .cue parsed incorrectly.
 		if (pregap < 0 || pregap > 75 * 90)
 			return KErrCorrupt;
 		toc += pregap;
@@ -385,10 +385,10 @@ static TInt completeCue(TCue &aCue, MConvVol &aVol)
 	return KErrNone;
 	}
 
-// --- Обнулення ECC ----------------------------------------------------------
+// --- Zeroing ECC ------------------------------------------------------------
 
-// ECC читає лише апаратура приводу, тож емулятор його не помічає, а рівний нуль
-// DEFLATE стискає майже задарма (заміряно: 65,4% -> 58,5%). Незворотно.
+// ECC is only read by drive hardware, so the emulator ignores it, while all zeros
+// are compressed by DEFLATE almost for free (measured: 65.4% -> 58.5%). Irreversible.
 static TInt zeroEcc(TUint8 *aBlk, TInt aBytes)
 	{
 	TInt n = 0;
@@ -403,8 +403,8 @@ static TInt zeroEcc(TUint8 *aBlk, TInt aBytes)
 		if (!sync)
 			continue;
 		const TInt mode = s[15];
-		// MODE2/FORM2 (біт 0x20 у підзаголовку) ECC не має взагалі, а його дані
-		// тягнуться до 2347 - зачистка там знищила б звук і відео.
+		// MODE2/FORM2 (bit 0x20 in subheader) lacks ECC entirely, and its data
+		// extends to 2347 - clearing there would destroy audio and video.
 		if (mode == 2 && (s[18] & 0x20))
 			continue;
 		if (mode != 1 && mode != 2)
@@ -415,10 +415,10 @@ static TInt zeroEcc(TUint8 *aBlk, TInt aBytes)
 	return n;
 	}
 
-// --- Лог робочого потоку -----------------------------------------------------
+// --- Worker thread log -------------------------------------------------------
 
-// Власний файл і власна RFs: описувачі файлів у Symbian через потоки не
-// переносяться, а FILE* із ESTLIB головного потоку тут узагалі непридатний.
+// Dedicated file and RFs: file handles in Symbian cannot be transferred across
+// threads, and main thread's ESTLIB FILE* is completely unusable here.
 static RFs *g_logFs;
 static RFile g_logFile;
 static TBool g_logOk;
@@ -443,8 +443,8 @@ static void convLog(const char *aTag, TInt aVal)
 	g_logFile.Flush();
 	}
 
-// Той самий лог із інших файлів імпорту (arc7z): без нього відмова в пам'яті
-// всередині розпакувальника не відрізняється від будь-якої іншої -4.
+// Same log from other import files (arc7z): without it memory allocation failure
+// inside the decompressor is indistinguishable from any other -4.
 void ConvLogVal(const char *aTag, TInt aVal)
 	{
 	convLog(aTag, aVal);
@@ -457,7 +457,7 @@ static void convLogClose()
 	g_logOk = EFalse;
 	}
 
-// --- Стан роботи ------------------------------------------------------------
+// --- Progress state ---------------------------------------------------------
 
 static RCriticalSection g_lock;
 static TBool g_lockOk;
@@ -494,7 +494,7 @@ void ConvStat(TConvStat &aOut)
 
 void ConvCancel() { g_cancel = 1; }
 
-// --- Запис PBP --------------------------------------------------------------
+// --- PBP writing ------------------------------------------------------------
 
 static void put32(TUint8 *p, TUint32 v)
 	{
@@ -513,7 +513,7 @@ static void msfBcd(TInt aSec, TUint8 *aOut)
 	aOut[2] = (TUint8)(((f / 10) << 4) | (f % 10));
 	}
 
-// zlib у робочому потоці бере пам'ять напряму в ядра: ESTLIB тут не ініціалізована.
+// zlib in worker thread allocates directly from kernel: ESTLIB is uninitialized here.
 static voidpf zAlloc(voidpf, uInt aItems, uInt aSize)
 	{
 	return (voidpf)User::Alloc((TInt)(aItems * aSize));
@@ -523,11 +523,11 @@ static void zFree(voidpf, voidpf aPtr) { User::Free(aPtr); }
 struct TPbpWriter
 	{
 	RFile iOut;
-	TUint32 *iIndex;      // пари (offset, size)
+	TUint32 *iIndex;      // pairs of (offset, size)
 	TInt iBlocks;
-	TInt iOff;            // зміщення від cdimg_base
+	TInt iOff;            // offset from cdimg_base
 	TUint8 *iBlk;
-	TInt iFill;           // байтів у iBlk
+	TInt iFill;           // bytes in iBlk
 	z_stream iZ;
 	TUint8 *iComp;
 	TInt iSectors;
@@ -583,7 +583,7 @@ static TInt pbpAdd(TPbpWriter &w, const TUint8 *aData, TInt aLen)
 	return KErrNone;
 	}
 
-// Тиша в проміжку між доріжками: сектори, яких у вихідних файлах немає (PREGAP).
+// Silence in inter-track gaps: sectors missing from source files (PREGAP).
 static TInt pbpAddZeros(TPbpWriter &w, TInt aSectors)
 	{
 	TUint8 *z = (TUint8 *)User::Alloc(KSector);
@@ -621,14 +621,14 @@ static TInt pbpFinish(TPbpWriter &w, const TCue &aCue, TInt aTotalSectors)
 	r = w.iOut.Write(_L8("PSISOIMG0000"));
 	if (r != KErrNone) return r;
 
-	// TOC: елемент 10 байтів (усі поля char, без вирівнювання). Перші три
-	// службові: пропуск, кількість доріжок, довжина диска.
+	// TOC: entry is 10 bytes (all char fields, packed). First three are
+	// header entries: dummy, track count, lead-out cd length.
 	const TInt nent = 3 + aCue.iCount;
 	TUint8 *toc = (TUint8 *)User::Alloc(nent * 10);
 	if (!toc)
 		return KErrNoMemory;
 	memset(toc, 0, nent * 10);
-	// Читач бере обидва поля через btoi(), тобто чекає BCD.
+	// Reader fetches both fields via btoi(), expecting BCD.
 	toc[10 + 7] = (TUint8)(((aCue.iCount / 10) << 4) | (aCue.iCount % 10));
 	msfBcd(aTotalSectors, toc + 20 + 7);                  // cd_length
 	for (TInt i = 1; i <= aCue.iCount; i++)
@@ -636,8 +636,8 @@ static TInt pbpFinish(TPbpWriter &w, const TCue &aCue, TInt aTotalSectors)
 		TUint8 *e = toc + (2 + i) * 10;
 		e[0] = (TUint8)(aCue.iTrk[i].iType == 1 ? 1 : 2);
 		e[2] = (TUint8)(((i / 10) << 4) | (i % 10));
-		msfBcd(aCue.iTrk[i].iStart - 2 * 75, e + 3);      // index0: місце в образі
-		msfBcd(aCue.iTrk[i].iStart, e + 7);               // index1: адреса на диску
+		msfBcd(aCue.iTrk[i].iStart - 2 * 75, e + 3);      // index0: position in image
+		msfBcd(aCue.iTrk[i].iStart, e + 7);               // index1: address on disc
 		}
 	pos = KPsar + 0x800;
 	r = w.iOut.Seek(ESeekStart, pos);
@@ -647,7 +647,7 @@ static TInt pbpFinish(TPbpWriter &w, const TCue &aCue, TInt aTotalSectors)
 	if (r != KErrNone)
 		return r;
 
-	// Індекс блоків: 32 байти на запис, завершувач із size==0 несе кінець даних.
+	// Block index: 32 bytes per entry, terminator with size==0 marks end of data.
 	pos = KPsar + 0x4000;
 	r = w.iOut.Seek(ESeekStart, pos);
 	if (r != KErrNone)
@@ -667,9 +667,9 @@ static TInt pbpFinish(TPbpWriter &w, const TCue &aCue, TInt aTotalSectors)
 	return w.iOut.Write(TPtrC8(ent, sizeof(ent)));
 	}
 
-// --- Одна конвертація -------------------------------------------------------
+// --- Single conversion ------------------------------------------------------
 
-// Ім'я призначення: базове ім'я джерела + .pbp у теці ігор.
+// Destination name: source base name + .pbp in games directory.
 static void dstName(const TDesC &aSrcName, const TDesC &aDir, const TDesC &aExt,
                     TDes &aOut)
 	{
@@ -681,8 +681,8 @@ static void dstName(const TDesC &aSrcName, const TDesC &aDir, const TDesC &aExt,
 	const TInt d = n.LocateReverse('.');
 	if (d > 0)
 		n.SetLength(d);
-	// Обрізаємо лише під довжину шляху, а не під кругле число: 40 символів різало
-	// назви посеред слова ("...of the Night (USA" без дужки), хоча місця вистачало.
+	// Truncate only to fit path limit, not an arbitrary number: 40 chars cut
+	// titles mid-word ("...of the Night (USA" missing parenthesis) even with ample room.
 	const TInt room = aOut.MaxLength() - aDir.Length() - aExt.Length();
 	if (room > 0 && n.Length() > room)
 		n.SetLength(room);
@@ -691,8 +691,8 @@ static void dstName(const TDesC &aSrcName, const TDesC &aDir, const TDesC &aExt,
 	aOut.Append(aExt);
 	}
 
-// Вибирає в томі те, що варто конвертувати: .cue має перевагу над .bin, бо
-// несе розкладку доріжок; інакше перший образ.
+// Selects appropriate entry to convert: .cue takes precedence over .bin
+// as it carries track layout; otherwise first disc image.
 static TInt pickEntry(MConvVol &aVol, TDes &aOut)
 	{
 	const MDesCArray &e = aVol.Entries();
@@ -708,7 +708,7 @@ static TInt pickEntry(MConvVol &aVol, TDes &aOut)
 	return KErrNotFound;
 	}
 
-// Копіювання елемента (стиснути не вийшло або користувач так попросив).
+// Copy entry (compression failed or requested by user).
 static TInt copyEntry(RFs &aFs, MConvVol &aVol, const TDesC &aName,
                       const TDesC &aDstPath, TInt aTotal)
 	{
@@ -748,9 +748,9 @@ static TInt copyEntry(RFs &aFs, MConvVol &aVol, const TDesC &aName,
 	return r;
 	}
 
-// Збирає образ у PBP. Джерело читається послідовно по доріжках; проміжки, яких
-// у файлах немає, добиваються тишею, щоб місце сектора в образі дорівнювало
-// його адресі на диску мінус 150 - лише так TOC лишається несуперечливим.
+// Builds disc image into PBP. Source is read sequentially by track; missing gaps
+// are padded with silence so a sector's position in image equals
+// its disc address minus 150 - this is required for a consistent TOC.
 static TInt convertToPbp(RFs &aFs, MConvVol &aVol, const TDesC &aDstPath, TCue &aCue)
 	{
 	TPbpWriter w;
@@ -758,12 +758,12 @@ static TInt convertToPbp(RFs &aFs, MConvVol &aVol, const TDesC &aDstPath, TCue &
 	TInt r = w.iOut.Replace(aFs, aDstPath, EFileWrite | EFileShareExclusive);
 	if (r != KErrNone)
 		return r;
-	// Дані починаються рівно на psar+0x100000; зміщення в індексі рахуються від
-	// цієї точки, тож iOff лишається нулем.
+	// Data starts exactly at psar+0x100000; index offsets are relative to
+	// this point, so iOff remains zero.
 	//
-	// SetSize перед Seek обов'язковий: Seek обрізає позицію до наявного розміру
-	// файлу, тож у щойно створеному файлі перехід на 0x100028 мовчки лишав би
-	// позицію на нулі, і заголовок згодом затирав би початок даних.
+	// SetSize before Seek is mandatory: Seek clamps position to existing file
+	// size, so in a newly created file seeking to 0x100028 would silently stay
+	// at zero, causing headers to overwrite the start of data later.
 	TInt startPos = KDataOffs;
 	r = w.iOut.SetSize(KDataOffs);
 	if (r == KErrNone)
@@ -786,8 +786,8 @@ static TInt convertToPbp(RFs &aFs, MConvVol &aVol, const TDesC &aDstPath, TCue &
 		w.iZ.zalloc = zAlloc;
 		w.iZ.zfree = zFree;
 		w.iZ.opaque = NULL;
-		// -15: сирий DEFLATE без заголовка zlib - рівно те, що чекає
-		// uncompress2_pcsx() (inflateInit2(&z, -15) у cdriso.c).
+		// -15: raw DEFLATE without zlib header - exactly what
+		// uncompress2_pcsx() expects (inflateInit2(&z, -15) in cdriso.c).
 		if (deflateInit2(&w.iZ, 6, Z_DEFLATED, -15, 8, Z_DEFAULT_STRATEGY) != Z_OK)
 			r = KErrNoMemory;
 		}
@@ -798,8 +798,8 @@ static TInt convertToPbp(RFs &aFs, MConvVol &aVol, const TDesC &aDstPath, TCue &
 
 	TInt curFile = -1;
 	MConvSrc *src = NULL;
-	TInt srcPos = 0;         // позиція в поточному файлі, сектори
-	TInt written = 0;        // секторів в образі
+	TInt srcPos = 0;         // position in current file, sectors
+	TInt written = 0;        // sectors written to image
 
 	for (TInt i = 1; i <= aCue.iCount && r == KErrNone; i++)
 		{
@@ -864,7 +864,7 @@ static TInt convertToPbp(RFs &aFs, MConvVol &aVol, const TDesC &aDstPath, TCue &
 	return r;
 	}
 
-// Готує TCue: із .cue поруч або синтетичну однодоріжкову для голого образу.
+// Prepares TCue: from neighboring .cue or synthetic single-track for raw image.
 static TInt buildCue(MConvVol &aVol, const TDesC &aEntry, TCue &aCue)
 	{
 	aCue.iCount = 0;
@@ -895,9 +895,9 @@ static TInt buildCue(MConvVol &aVol, const TDesC &aEntry, TCue &aCue)
 		return completeCue(aCue, aVol);
 		}
 
-	// Поруч може лежати .cue із тим самим іменем - саме так ядро й шукає його
-	// (parsecue замінює розширення). Без цієї перевірки гра з CD-аудіо, вибрана
-	// за .bin, втратила б усі доріжки, крім першої.
+	// A neighboring .cue with matching stem may exist - this is how core searches
+	// (parsecue replaces extension). Without this check, a CD-DA game selected
+	// via .bin would lose all tracks except track 1.
 	TFileName sibling = aEntry;
 	const TInt dot = sibling.LocateReverse('.');
 	if (dot > 0)
@@ -909,7 +909,7 @@ static TInt buildCue(MConvVol &aVol, const TDesC &aEntry, TCue &aCue)
 			return buildCue(aVol, sibling, aCue);
 		}
 
-	// Голий образ: одна доріжка даних від нульового сектора.
+	// Raw image: single data track starting at sector 0.
 	TInt fsz = 0;
 	TInt r = aVol.Size(aEntry, fsz);
 	if (r != KErrNone)
@@ -933,8 +933,8 @@ static TInt buildCue(MConvVol &aVol, const TDesC &aEntry, TCue &aCue)
 	return KErrNone;
 	}
 
-// Видаляє джерело після вдалого імпорту: архів цілком або .cue разом із усіма
-// файлами доріжок, на які він посилається.
+// Deletes source after successful import: whole archive or .cue together with all
+// referenced track files.
 static void deleteSource(RFs &aFs, const TDesC &aPath, const TCue &aCue)
 	{
 	if (ConvIsArchiveName(aPath))
@@ -954,8 +954,8 @@ static void deleteSource(RFs &aFs, const TDesC &aPath, const TCue &aCue)
 			}
 		}
 	aFs.Delete(aPath);
-	// Користувач міг позначити .bin, а розкладку ми взяли із сусіднього .cue -
-	// лишити його самого означало б лишити биту вказівку на видалений файл.
+	// User may have selected .bin while layout came from neighboring .cue -
+	// leaving .cue alone would leave a broken reference to the deleted file.
 	TFileName cue = aPath;
 	const TInt dot = cue.LocateReverse('.');
 	if (dot > 0)
@@ -988,8 +988,8 @@ static TInt convertOne(RFs &aFs, const TDesC &aPath, TConvMode aMode,
 		return r;
 		}
 
-	// TCue - це масив на сто доріжок; на 16-кілобайтному стеку робочого потоку
-	// йому не місце.
+	// TCue is a 100-track array; it does not belong on the worker thread's
+	// 16 KB stack.
 	TCue *cue = (TCue *)User::Alloc(sizeof(TCue));
 	if (!cue)
 		{
@@ -1024,12 +1024,12 @@ static TInt convertOne(RFs &aFs, const TDesC &aPath, TConvMode aMode,
 		else if (r == KErrCorrupt)
 			aMsg.Copy(_L("bad cue or image"));
 		else if (r == KErrNoMemory || r == KErrTooBig)
-			// Майже завжди це словник LZMA: він виділяється цілком, до першого байта.
+			// Almost always LZMA dictionary: allocated in full before the first byte.
 			aMsg.Copy(_L("archive needs too much RAM"));
 		else if (r == KErrNotSupported)
 			{
-			// 2048-байтові сектори чи нестандартний .cue: PBP такого не виражає,
-			// тож кладемо як є - гра лишається робочою, місця не заощаджуємо.
+			// 2048-byte sectors or non-standard .cue: PBP cannot represent this,
+			// so store as is - game remains playable without saving space.
 			aMsg.Copy(_L("stored as is"));
 			dstName(entry, aDstDir, entry.Right(4), dst);
 			TInt sz = 0;
@@ -1039,8 +1039,8 @@ static TInt convertOne(RFs &aFs, const TDesC &aPath, TConvMode aMode,
 		}
 	else
 		{
-		// Із .cue переносимо і його самого, і всі файли доріжок: без будь-якого
-		// з них розкладка губиться, а гра перестає читатись.
+		// For .cue, transfer both the cue file and all track files: missing any
+		// of them loses track layout and prevents game from loading.
 		r = buildCue(*vol, entry, *cue);
 		if (r == KErrNone || r == KErrNotSupported)
 			{
@@ -1074,8 +1074,8 @@ static TInt convertOne(RFs &aFs, const TDesC &aPath, TConvMode aMode,
 	return r;
 	}
 
-// Чи є в списку запис про той самий диск: той самий каталог і те саме ім'я до
-// крапки. Індекс збігу або -1.
+// Checks if list contains an entry for the same disc: same directory and stem.
+// Returns matching index or -1.
 static TInt sameDiscIndex(const MDesCArray &aList, const TDesC &aPath)
 	{
 	const TInt dot = aPath.LocateReverse('.');
@@ -1091,7 +1091,7 @@ static TInt sameDiscIndex(const MDesCArray &aList, const TDesC &aPath)
 	return -1;
 	}
 
-// --- Робочий потік ----------------------------------------------------------
+// --- Worker thread ----------------------------------------------------------
 
 static TInt workerMain(TAny *)
 	{
@@ -1111,8 +1111,8 @@ static TInt workerMain(TAny *)
 	convLogOpen(fs);
 	const TInt n = g_job.iFiles->MdcaCount();
 	convLog("worker start", n);
-	// Словник LZMA виділяється цілком; скільки лишилось у системі - головне число,
-	// коли розпакувальник відмовляє в пам'яті.
+	// LZMA dictionary is allocated in full; remaining system RAM is the primary metric
+	// when decompressor fails with out-of-memory.
 	TInt ramFree = 0;
 	HAL::Get(HALData::EMemoryRAMFree, ramFree);
 	convLog("ram free", ramFree);
@@ -1135,8 +1135,8 @@ static TInt workerMain(TAny *)
 		TBuf<64> msg;
 		const TInt rc = convertOne(fs, path, g_job.iMode, g_job.iDelete,
 			g_job.iDst, msg);
-		// Джерела не стало - його забрало попереднє завдання черги (доріжка з
-		// .cue, який уже оброблено разом із видаленням). Це не помилка.
+		// Source vanished - consumed by a previous queue task (track file from
+		// .cue already processed with deletion enabled). This is not an error.
 		if (i > 0 && (rc == KErrNotFound || rc == KErrPathNotFound))
 			{
 			convLog("skip gone", i);
@@ -1144,9 +1144,9 @@ static TInt workerMain(TAny *)
 			}
 		if (rc != KErrNone && rc != KErrCancel)
 			{
-			// Черга йде далі: один архів, якому не вистачило пам'яті чи який побитий,
-			// не привід кидати решту десяток. Причину показуємо одразу, підсумок -
-			// у кінці.
+			// Queue continues: a single archive that ran out of memory or was corrupted
+			// is no reason to abandon dozens of remaining files. Show cause immediately, summary
+			// at the end.
 			if (!msg.Length())
 				msg.Copy(_L("failed"));
 			msg.AppendFormat(_L(" (%d)"), rc);
@@ -1188,10 +1188,10 @@ TInt ConvStart(const MDesCArray &aFiles, TConvMode aMode, TBool aDeleteSrc,
 	CDesCArray *copy = new CDesCArrayFlat(4);
 	if (!copy)
 		return KErrNoMemory;
-	// Позначити .cue І його .bin - природний вибір користувача, але це той самий
-	// диск: обидва завдання дали б один файл призначення, а після першого джерела
-	// вже немає. Лишаємо один запис на диск, віддаючи перевагу .cue - у ньому
-	// розкладка доріжок.
+	// Selecting .cue AND its .bin is a natural user action, but represents the same
+	// disc: both jobs would produce the same output file, and after the first the source
+	// is gone. Retain one entry per disc, favoring .cue for its
+	// track layout.
 	TRAPD(err, {
 		for (TInt i = 0; i < aFiles.MdcaCount(); i++)
 			{
@@ -1226,13 +1226,13 @@ TInt ConvStart(const MDesCArray &aFiles, TConvMode aMode, TBool aDeleteSrc,
 	g_stat.iMsg.Zero();
 	g_stat.iName.Zero();
 
-	// Власна купа: deflate тримає ~256 КБ, індекс блоків - ще 256 КБ, і брати їх
-	// із купи головного потоку означало б конкурувати з динареком.
-	// Стеля купи - це лише резервування адрес, сторінки беруться в міру потреби,
-	// тож вона рахована під словник LZMA (KMaxDict у arc7z). Із 8 МБ будь-який
-	// звичайний 7z (словник 16-64 МБ) відмовляв ще на відкритті з -4.
-	// Ім'я з лічильником: щойно вбитий потік звільняє своє не миттєво, і другий
-	// запуск підряд інакше падав би з KErrAlreadyExists.
+	// Dedicated heap: deflate keeps ~256 KB, block index another 256 KB; taking them
+	// from the main thread heap would compete with dynarec.
+	// Heap ceiling is address space reservation only, pages are committed on demand,
+	// sized for LZMA dictionary (KMaxDict in arc7z). With 8 MB any typical
+	// 7z (16-64 MB dictionary) failed during open with -4.
+	// Counted thread name: a terminated thread cleans up asynchronously, so a quick
+	// subsequent launch would otherwise fail with KErrAlreadyExists.
 	static TInt seq = 0;
 	TName tn;
 	tn.Format(_L("ps1conv%d"), ++seq);
@@ -1245,7 +1245,7 @@ TInt ConvStart(const MDesCArray &aFiles, TConvMode aMode, TBool aDeleteSrc,
 		return r;
 		}
 	g_workerOk = ETrue;
-	// Нижче головного: меню має лишатись чуйним, поки диск перетискається.
+	// Below main: menu must remain responsive while disc is being compressed.
 	g_worker.SetPriority(EPriorityLess);
 	g_worker.Resume();
 	return KErrNone;
@@ -1260,7 +1260,7 @@ void ConvRelease()
 		}
 	}
 
-// --- Витяг одного файлу (BIOS) ----------------------------------------------
+// --- Single file extraction (BIOS) ------------------------------------------
 
 TInt ConvExtractOne(RFs &aFs, const TDesC &aPath, const TDesC &aMember,
                     const TDesC &aDstDir, TDes &aOutName)
@@ -1279,8 +1279,8 @@ TInt ConvExtractOne(RFs &aFs, const TDesC &aPath, const TDesC &aMember,
 			delete vol;
 			return KErrNotFound;
 			}
-		// В архіві з дампами BIOS зазвичай лежить і readme; беремо перший, що
-		// схожий на дамп, і лише як запасний варіант - перший-ліпший.
+		// BIOS dump archives usually include a readme; pick the first entry that
+		// looks like a dump, falling back to the first entry if none match.
 		name = e.MdcaPoint(0);
 		for (TInt i = 0; i < e.MdcaCount(); i++)
 			if (extIs(e.MdcaPoint(i), _L(".bin")) || extIs(e.MdcaPoint(i), _L(".rom")))

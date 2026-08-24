@@ -903,7 +903,9 @@ void CPs1Container::ItemValue(TInt aItem, TDes &aOut) const
 			break;
 		// Пропуск САМОЇ растеризації: кожен (N+1)-й кадр малюємо, решту ні.
 		case ECfgGpuSkip:
-			if (c.iGpuSkip)
+			if (c.iGpuSkip < 0)
+				aOut.Copy(_L("auto"));
+			else if (c.iGpuSkip)
 				aOut.Format(_L("%d frames"), c.iGpuSkip + 1);
 			else
 				aOut.Copy(_L("frame"));
@@ -1391,9 +1393,11 @@ TKeyResponse CPs1Container::MainKeyL(TInt aScan)
 		TInt &v = iCfg.Value(iSel);
 		if (iSel == ECfgGpuSkip)
 			{
+			// -1 - адаптивний режим gpulib: він сам вирішує щокадру, і саме він
+			// узгоджує пропуск із моментом, коли гра гортає буфер.
 			v += d;
-			if (v < 0) v = 3;
-			if (v > 3) v = 0;
+			if (v < -1) v = 3;
+			if (v > 3) v = -1;
 			}
 		else if (iSel == ECfgFxaa)
 			{

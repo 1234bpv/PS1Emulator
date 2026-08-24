@@ -21,10 +21,10 @@
     _UNICODE 1
 */
 
-/* Symbian/GCCE 3.4.3: CpuArch.h не впізнає цю ціль і зупиняє збірку помилкою
-   про порядок байтів. Задати це прапорцями .mmp не можна - на #error спотикається
-   ще сканер залежностей (makdeps), а до нього OPTION GCCE не доходить.
-   Ціль тут одна: ARMv6 little-endian, 32 біти, один потік. */
+/* Symbian/GCCE 3.4.3: CpuArch.h does not recognize this target and halts compilation with an error
+   about byte order. Setting this via .mmp flags is impossible - the dependency scanner
+   (makdeps) trips on #error before OPTION GCCE is even processed.
+   The target here is singular: ARMv6 little-endian, 32-bit, single-threaded. */
 #ifndef MY_CPU_LE
 #define MY_CPU_LE
 #endif
@@ -34,8 +34,8 @@
 #ifndef Z7_ST
 #define Z7_ST
 #endif
-/* 7zCrc.c бере NULL, не підключивши нічого, що його оголошує, а stddef.h у
-   бібліотеці C цього SDK його не має. */
+/* 7zCrc.c uses NULL without including anything that declares it, and stddef.h in
+   the C library of this SDK lacks it. */
 #ifndef NULL
 #define NULL 0
 #endif

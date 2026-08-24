@@ -1,5 +1,5 @@
-// Оголошення функцій, яких немає в ESTLIB. Реалізація - compat_snprintf.c.
-// Включати ПІСЛЯ <stdio.h>.
+// Declarations of functions absent in ESTLIB. Implementation is in compat_snprintf.c.
+// Include AFTER <stdio.h>.
 
 #ifndef PS1EMU_COMPAT_STDIO_H
 #define PS1EMU_COMPAT_STDIO_H

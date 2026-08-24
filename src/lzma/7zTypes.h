@@ -218,9 +218,9 @@ typedef size_t SIZE_T;
 
 #if defined(__SYMBIAN32__)
 
-/* SDK силоміць підключає GCCE.h, а він уже оголосив Int64 (і Uint64 з малою "i",
-   яка нам не підходить). Повторний typedef у C89 - помилка, тож переоголошуємо
-   лише беззнаковий. */
+/* The SDK forcibly includes GCCE.h, which already declared Int64 (and Uint64 with a lowercase "i",
+   which does not suit us). A duplicate typedef in C89 is an error, so we redeclare
+   only the unsigned one. */
 typedef unsigned long long UInt64;
 
 #elif defined(Z7_DECL_Int64_AS_long)

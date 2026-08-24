@@ -31,7 +31,7 @@ del /q "%TMPDIR%\*.o" 2>nul
 set INC=-I"%PROJ%\src\compat" -I"%FORK%" -I"%FORK%\include" -I"%FORK%\libpcsxcore" -I"%FORK%\plugins\gpulib" -I"%FORK%\plugins\gpu_unai" -I"%SDKINC%" -I"%SDKINC%\libc"
 REM gcce.h is the prelude abld force-includes; without it the Symbian libc
 REM headers do not even parse (IMPORT_C is undefined).
-set FLAGS=-c -O2 -march=armv6 -mtune=arm1136j-s -fno-exceptions -fno-rtti -fpermissive -fshort-wchar -include "%SDKINC%\gcce\gcce.h" -D__SYMBIAN32__ -D__EPOC32__ -D__GCCE__ -D__EABI__ -D__MARM__ -D__MARM_ARMV5__ -D__SERIES60_3X__ -D__SERIES60_31__ -DREARMED -DUSE_GPULIB=1 -D__SIZEOF_POINTER__=4 -DP_HAVE_MMAP=0 -DGPU_UNAI_NO_OLD -DGPU_UNAI_USE_YDIV_TABLE
+set FLAGS=-c -O2 -march=armv6 -mtune=arm1136j-s -fno-exceptions -fno-rtti -fpermissive -fshort-wchar -include "%SDKINC%\gcce\gcce.h" -D__SYMBIAN32__ -D__EPOC32__ -D__GCCE__ -D__EABI__ -D__MARM__ -D__MARM_ARMV5__ -D__SERIES60_3X__ -D__SERIES60_31__ -DREARMED -DUSE_GPULIB=1 -D__SIZEOF_POINTER__=4 -DP_HAVE_MMAP=0 -DNDEBUG -DGPU_UNAI_NO_OLD -DGPU_UNAI_USE_YDIV_TABLE
 
 REM "gpu463-regen.cmd primstats" adds primitive/pixel counters (primstats event in
 REM the log). They cost one add per span, so the build used for rasteriser timing

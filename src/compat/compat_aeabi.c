@@ -1,10 +1,10 @@
-// Ділення для об'єктів, зібраних GCCE 4.6.3.
+// Division for objects built with GCCE 4.6.3.
 //
-// Symbian експортує з drtaeabi лише __aeabi_idivmod/__aeabi_uidivmod - саме їх
-// кличе GCC 3.4.3, і саме тому решта проекту лінкується без нарікань. GCC 4.6.3
-// для звичайного ділення кличе __aeabi_idiv/__aeabi_uidiv, яких у системі немає
-// взагалі. Перехідник віддає ту саму роботу *divmod: за AAPCS частка вже в r0,
-// тож зайвої роботи тут не робиться.
+// Symbian exports only __aeabi_idivmod/__aeabi_uidivmod from drtaeabi - these
+// are what GCC 3.4.3 calls, which is why the rest of the project links without issues. GCC 4.6.3
+// calls __aeabi_idiv/__aeabi_uidiv for standard division, which do not exist in the system
+// at all. The wrapper delegates the same work to *divmod: per AAPCS the quotient is already in r0,
+// so no extra work is done here.
 
 extern int __aeabi_idivmod(int aNum, int aDen);
 extern unsigned int __aeabi_uidivmod(unsigned int aNum, unsigned int aDen);

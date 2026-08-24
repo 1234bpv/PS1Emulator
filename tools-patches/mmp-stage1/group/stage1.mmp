@@ -32,7 +32,7 @@ EPOCHEAPSIZE    0x100000 0x2800000
 // REComSession::DestroyedImplementation. Саме тому SDK його й вимикає.
 // Z7_ST: у LZMA SDK 24.x однопотоковий режим зветься так, а не _7ZIP_ST.
 // Другого рядка OPTION GCCE тут бути не може - він замінює цей, а не додає.
-OPTION GCCE     -march=armv6 -D__SIZEOF_POINTER__=4 -DP_HAVE_MMAP=0 \
+OPTION GCCE     -march=armv6 -mtune=arm1136j-s -fomit-frame-pointer -D__SIZEOF_POINTER__=4 -DP_HAVE_MMAP=0 \
                 -D__ORDER_LITTLE_ENDIAN__=1234 -D__ORDER_BIG_ENDIAN__=4321 \
                 -D__ORDER_PDP_ENDIAN__=3412 -D__BYTE_ORDER__=1234 -DZ7_ST=1 \
                 -DMY_CPU_LE=1 -DMY_CPU_32BIT=1

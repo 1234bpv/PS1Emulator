@@ -11,7 +11,7 @@ TARGETTYPE      lib
 // невизначений макрос дорівнює 0, тож `__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__`
 // стає `0 == 0` і ядро збиралося по BIG-ENDIAN гілці: psxmem.h:30 (доступ до
 // пам'яті), r3000a.h:82 (розкладка регістрів), cdrom.c:1350. Значення — як у GCC 4.6+.
-OPTION GCCE     -march=armv6 -D__SIZEOF_POINTER__=4 -DP_HAVE_MMAP=0 \
+OPTION GCCE     -march=armv6 -mtune=arm1136j-s -fomit-frame-pointer -D__SIZEOF_POINTER__=4 -DP_HAVE_MMAP=0 \
                 -D__ORDER_LITTLE_ENDIAN__=1234 -D__ORDER_BIG_ENDIAN__=4321 \
                 -D__ORDER_PDP_ENDIAN__=3412 -D__BYTE_ORDER__=1234
 

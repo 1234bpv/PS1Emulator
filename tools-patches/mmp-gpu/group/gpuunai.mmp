@@ -16,7 +16,7 @@ TARGET          gpuunai.lib
 TARGETTYPE      lib
 
 // Ті самі прапорці, що й у ядра (P7, P8, P13 - див. pcsxcore.mmp).
-OPTION GCCE     -march=armv6 -D__SIZEOF_POINTER__=4 -DP_HAVE_MMAP=0 \
+OPTION GCCE     -march=armv6 -mtune=arm1136j-s -fomit-frame-pointer -D__SIZEOF_POINTER__=4 -DP_HAVE_MMAP=0 \
                 -D__ORDER_LITTLE_ENDIAN__=1234 -D__ORDER_BIG_ENDIAN__=4321 \
                 -D__ORDER_PDP_ENDIAN__=3412 -D__BYTE_ORDER__=1234
 

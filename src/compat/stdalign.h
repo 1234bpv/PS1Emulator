@@ -1,6 +1,6 @@
-// stdalign.h для CSL Arm Toolchain (GCC 3.4.3) під Symbian.
-// Заголовок з C11; GCC 3.4.3 його не має. Вживається лише в
-// libpcsxcore/cdrom.c та cdrom-async.c у формі alignas(N) на масивах.
+// stdalign.h for CSL Arm Toolchain (GCC 3.4.3) on Symbian.
+// C11 header; GCC 3.4.3 lacks it. Used only in
+// libpcsxcore/cdrom.c and cdrom-async.c in the form alignas(N) on arrays.
 
 #ifndef PS1EMU_COMPAT_STDALIGN_H
 #define PS1EMU_COMPAT_STDALIGN_H

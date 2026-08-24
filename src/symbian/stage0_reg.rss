@@ -1,4 +1,4 @@
-// Реєстрація застосунку: без неї EXE лежить у \sys\bin і його нічим запустити з меню.
+// Application registration: without it the EXE resides in \sys\bin with no way to launch it from the menu.
 
 #include <appinfo.rh>
 

@@ -60,6 +60,13 @@ static const TInt KMaxVerts = KMaxPrims * 6;
 // його текстурою. На екрані це виглядало як пів кадру, залитого травою.
 static const TInt KMaxBatch = 1024;
 
+struct TGlrVert
+	{
+	GLshort x, y;
+	GLshort u, v;
+	GLubyte r, g, b, a;
+	};
+
 struct TGlrBatch
 	{
 	TInt iFirst;      // перша вершина
@@ -78,8 +85,7 @@ static const TInt KMaxClips = 8;
 
 static TBool     g_on;            // рендерер увімкнено прапорцем
 static TBool     g_ready;         // ініціалізовано і є контекст
-static GLshort  *g_pos;           // x,y на вершину
-static GLubyte  *g_col;           // r,g,b,a на вершину
+static TGlrVert *g_v;             // interleaved vertex array (12 bytes per vertex)
 static TInt      g_nVerts;
 static TGlrBatch g_batch[KMaxBatch];
 static TInt      g_nBatch;
@@ -126,7 +132,6 @@ static TGlrTex   g_tex[KMaxTex];
 static TInt      g_nTex;
 static TUint16  *g_decode;        // буфер розпакування сторінки
 static const TUint16 *g_vram;     // VRAM гостя, 1024x512 півслів
-static GLfloat  *g_uv;            // текстурні координати на вершину
 static TInt      g_frame;         // лічильник кадрів для витіснення
 static TInt      g_miss, g_hit, g_evict;
 // Скільки разів текстури не знайшлося місця: усі записи вже зайняті цим самим
@@ -215,15 +220,11 @@ extern "C" int glrInit(void)
 	{
 	if (g_ready)
 		return 0;
-	g_pos = (GLshort *)User::Alloc(KMaxVerts * 2 * sizeof(GLshort));
-	g_col = (GLubyte *)User::Alloc(KMaxVerts * 4);
-	g_uv  = (GLfloat *)User::Alloc(KMaxVerts * 2 * sizeof(GLfloat));
+	g_v = (TGlrVert *)User::Alloc(KMaxVerts * sizeof(TGlrVert));
 	g_decode = (TUint16 *)User::Alloc(KTexSide * KTexSide * 2);
-	if (!g_pos || !g_col || !g_uv || !g_decode)
+	if (!g_v || !g_decode)
 		{
-		User::Free(g_pos); g_pos = NULL;
-		User::Free(g_col); g_col = NULL;
-		User::Free(g_uv);  g_uv = NULL;
+		User::Free(g_v); g_v = NULL;
 		User::Free(g_decode); g_decode = NULL;
 		ps1LogFmt("glr", "init failed: out of memory");
 		return -1;
@@ -261,9 +262,7 @@ extern "C" void glrShutdown(void)
 	for (TInt i = 0; i < g_nTex; i++)
 		glDeleteTextures(1, &g_tex[i].iTex);
 	g_nTex = 0;
-	User::Free(g_pos); g_pos = NULL;
-	User::Free(g_col); g_col = NULL;
-	User::Free(g_uv);  g_uv = NULL;
+	User::Free(g_v); g_v = NULL;
 	User::Free(g_decode); g_decode = NULL;
 	g_ready = EFalse;
 	}
@@ -471,17 +470,15 @@ static void batchFor(TInt aBlend, TInt aTex)
 static inline void emitVertex(TInt aX, TInt aY, TUint32 aBgr, TInt aAlpha,
 	TInt aU, TInt aV)
 	{
-	GLshort *p = g_pos + g_nVerts * 2;
-	GLubyte *c = g_col + g_nVerts * 4;
-	GLfloat *t = g_uv + g_nVerts * 2;
-	p[0] = (GLshort)aX;
-	p[1] = (GLshort)aY;
-	t[0] = (GLfloat)aU * (1.0f / 256.0f);
-	t[1] = (GLfloat)aV * (1.0f / 256.0f);
-	c[0] = (GLubyte)(aBgr & 0xFF);
-	c[1] = (GLubyte)((aBgr >> 8) & 0xFF);
-	c[2] = (GLubyte)((aBgr >> 16) & 0xFF);
-	c[3] = (GLubyte)aAlpha;
+	TGlrVert *v = g_v + g_nVerts;
+	v->x = (GLshort)aX;
+	v->y = (GLshort)aY;
+	v->u = (GLshort)aU;
+	v->v = (GLshort)aV;
+	v->r = (GLubyte)(aBgr & 0xFF);
+	v->g = (GLubyte)((aBgr >> 8) & 0xFF);
+	v->b = (GLubyte)((aBgr >> 16) & 0xFF);
+	v->a = (GLubyte)aAlpha;
 	g_nVerts++;
 	g_batch[g_nBatch - 1].iCount++;
 	if (g_curClip >= 0)
@@ -833,9 +830,9 @@ extern "C" int glrEndFrame(void)
 	// Шлях показу у vout_symbian.cpp вмикає GL_TEXTURE_COORD_ARRAY і лишає
 	// glTexCoordPointer на масив, який живе в його стековому кадрі.
 	glDisable(GL_TEXTURE_2D);
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_COLOR_ARRAY);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	// Індекс 0 палітри на PS1 - діра, а не колір. У розпакованій текстурі він
 	// дістав альфу 0, тож відсікаємо його перевіркою, а не змішуванням: змішати
 	// довелося б і там, де примітив непрозорий.
@@ -855,9 +852,16 @@ extern "C" int glrEndFrame(void)
 	g_tClear += (unsigned int)(tClear1 - tClear0);
 
 	const unsigned int tSetup2 = ndrc_symbian_fastcount();
-	glVertexPointer(2, GL_SHORT, 0, g_pos);
-	glColorPointer(4, GL_UNSIGNED_BYTE, 0, g_col);
-	glTexCoordPointer(2, GL_FLOAT, 0, g_uv);
+	// Texture coords are raw PS1 texels; the divide by 256 is done by the texture
+	// matrix. It must be set here and cleared below: the full-screen present path
+	// in vout_symbian.cpp shares this context and passes normalised coords.
+	glMatrixMode(GL_TEXTURE);
+	glLoadIdentity();
+	glScalef(1.0f / 256.0f, 1.0f / 256.0f, 1.0f);
+	glMatrixMode(GL_MODELVIEW);
+	glVertexPointer(2, GL_SHORT, sizeof(TGlrVert), &g_v[0].x);
+	glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(TGlrVert), &g_v[0].r);
+	glTexCoordPointer(2, GL_SHORT, sizeof(TGlrVert), &g_v[0].u);
 	const unsigned int tSetup3 = ndrc_symbian_fastcount();
 	g_tSetup += (unsigned int)(tSetup3 - tSetup2);
 
@@ -881,6 +885,7 @@ extern "C" int glrEndFrame(void)
 		}
 	const unsigned int tDraw0 = ndrc_symbian_fastcount();
 	TInt curTex = -2;
+	TInt curBlend = -2;
 	for (TInt b = 0; (g_skipMask & 16) == 0 && b < g_nBatch; b++)
 		{
 		// Примітиви інших ділянок пропускаємо: у цій проекції вони лягли б
@@ -890,25 +895,30 @@ extern "C" int glrEndFrame(void)
 		if (g_batch[b].iTex != curTex)
 			{
 			curTex = g_batch[b].iTex;
-			if (curTex >= 0)
+			if (curTex >= 0 && !(g_skipMask & 64))
 				{
 				glEnable(GL_TEXTURE_2D);
 				glEnable(GL_ALPHA_TEST);
-				glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 				glBindTexture(GL_TEXTURE_2D, g_tex[curTex].iTex);
 				}
 			else
 				{
 				glDisable(GL_TEXTURE_2D);
 				glDisable(GL_ALPHA_TEST);
-				glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 				}
 			}
-		applyBlend(g_batch[b].iBlend);
+		if (g_batch[b].iBlend != curBlend)
+			{
+			curBlend = g_batch[b].iBlend;
+			applyBlend(curBlend);
+			}
 		glDrawArrays(GL_TRIANGLES, g_batch[b].iFirst, g_batch[b].iCount);
 		}
 	const unsigned int tDraw1 = ndrc_symbian_fastcount();
 	g_tDraw += (unsigned int)(tDraw1 - tDraw0);
+	glMatrixMode(GL_TEXTURE);
+	glLoadIdentity();
+	glMatrixMode(GL_MODELVIEW);
 	if (g_skipMask & 8)
 		glDisable(GL_SCISSOR_TEST);
 

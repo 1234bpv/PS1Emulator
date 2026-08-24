@@ -1,7 +1,7 @@
-// stdint.h для CSL Arm Toolchain (GCC 3.4.3) під Symbian.
-// Ані ESTLIB (epoc32\include\libc), ані GCC 3.4.3 його не постачають:
-// stdint.h з'явився в C99, а серед freestanding-заголовків GCC — лише з 4.x.
-// Розкладка типів для 32-бітного ARM (ILP32).
+// stdint.h for CSL Arm Toolchain (GCC 3.4.3) on Symbian.
+// Neither ESTLIB (epoc32\include\libc) nor GCC 3.4.3 provide it:
+// stdint.h appeared in C99, and among GCC freestanding headers - only starting from 4.x.
+// Type layout for 32-bit ARM (ILP32).
 
 #ifndef PS1EMU_COMPAT_STDINT_H
 #define PS1EMU_COMPAT_STDINT_H
@@ -21,8 +21,8 @@ typedef unsigned int       uintptr_t;
 typedef long long          intmax_t;
 typedef unsigned long long uintmax_t;
 
-// Родини least/fast: gpu_unai використовує uint_fast16_t у растеризаторах.
-// На ARM 32-розрядне слово швидше за 8/16-розрядні, тож fast8/fast16 - це int.
+// least/fast families: gpu_unai uses uint_fast16_t in rasterizers.
+// On ARM, a 32-bit word is faster than 8/16-bit ones, so fast8/fast16 is int.
 typedef signed char        int_least8_t;
 typedef unsigned char      uint_least8_t;
 typedef short              int_least16_t;

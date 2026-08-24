@@ -2,7 +2,7 @@
 #ifndef PS1EMU_COMPAT_STRINGS_H
 #define PS1EMU_COMPAT_STRINGS_H
 
-/* Позиція наймолодшого встановленого біта, рахуючи з 1; 0 для нуля. */
+/* Position of the least significant bit set, 1-based; 0 for zero. */
 static __inline__ int ffs(int v)
 {
 	int i;

@@ -166,10 +166,59 @@ void SysCloseLibrary(void * /*lib*/)                   { }
 // Ядро кличе це на кожній вертикальній розгортці через EmuUpdate().
 // Інкремент stop завершує psxCpu->Execute() рівно на межі кадру.
 unsigned g_vblanks;   // зонд: чи справді кадр завершує вертикальна розгортка
+
+// Адаптивний пропуск кадрів. gpulib уміє пропускати рівно стільки, скільки треба,
+// щоб устигати за реальним часом, але саму оцінку відставання мусить дати
+// оболонка: в апстрімі це frontend/plugin_lib.c, теку якого ми не беремо.
+// Виграш проти фіксованого пропуску не в кількості пропущених кадрів, а в тому,
+// ЯКІ саме пропускаються: рішення ухвалюється в момент, коли гра гортає буфер, а
+// не за парністю нашого лічильника (заміряно: фіксований пропуск утрачає показані
+// кадри надлінійно, розділ 12.6 звіту).
+extern "C" void ps1GpuSetFrameskipAdvice(int aAdvice);
+static TInt  g_fsFps;        // 0 - режим вимкнено
+static TUint g_fsStart;      // мітка часу, від якої рахуємо очікуваний кадр
+static TUint g_fsFrames;     // розгорток від тієї мітки
+static TInt  g_fsAdvice;
+static TInt  g_fsAdvised;    // зонд: скільки разів радили пропустити
+
+// Очікуваний час рахуємо від нерухомої мітки, а не накопиченням інтервалу:
+// 1000/60 у цілих числах дало б 3% дрейфу за хвилину.
+void fsAdaptiveStart(TInt aFps)
+	{
+	g_fsFps = aFps;
+	g_fsStart = User::NTickCount();
+	g_fsFrames = 0;
+	g_fsAdvice = 0;
+	g_fsAdvised = 0;
+	}
+
 void pl_frame_limit(void)
 	{
 	g_vblanks++;
 	psxRegs.stop++;
+	if (g_fsFps <= 0)
+		return;
+	const TUint now = User::NTickCount();
+	g_fsFrames++;
+	const TInt interval = 1000 / g_fsFps;
+	const TInt diff = (TInt)(g_fsStart + (g_fsFrames * 1000u) / (TUint)g_fsFps - now);
+	// Пауза, довге читання диска чи перший кадр після завантаження: накопичене
+	// відставання тут не є ознакою браку швидкодії, і без скидання воно дало б
+	// серію хибних пропусків.
+	if (diff < -3 * interval || diff > 3 * interval)
+		{
+		g_fsStart = now;
+		g_fsFrames = 0;
+		}
+	// Між -interval і 0 порада не міняється: без цього гістерезису вона
+	// перемикалася б щокадру й пропуск ішов би через раз незалежно від потреби.
+	if (diff < -interval)
+		g_fsAdvice = 1;
+	else if (diff >= 0)
+		g_fsAdvice = 0;
+	if (g_fsAdvice)
+		g_fsAdvised++;
+	ps1GpuSetFrameskipAdvice(g_fsAdvice);
 	}
 
 unsigned short in_keystate[8];
@@ -689,9 +738,15 @@ void ps1SndCloseOutput(void);
 void ps1SndSetPumpAo(int aOn);
 }
 
-// XA/CD-аудіо та freeze для звуку BIOS не потрібні - лишаємо заглушками.
+// SPU freeze передаємо в dfsound, щоб SaveState/LoadState не отримували нульовий розмір і NULL.
+extern "C" long DoFreeze(int, SPUFreeze_t *, unsigned short **, void *, unsigned int);
+
+// XA/CD-аудіо не потрібні - лишаємо заглушками.
 static void CALLBACK spuPlayADPCMchannel(xa_decode_t *, unsigned int, int)    { }
-static long CALLBACK spuFreeze(int, SPUFreeze_t *, unsigned short **, void *, unsigned int) { return 0; }
+static long CALLBACK spuFreeze(int aMode, SPUFreeze_t *aHdr, unsigned short **aRam, void *aP2, unsigned int aCycles)
+	{
+	return DoFreeze(aMode, aHdr, aRam, aP2, aCycles);
+	}
 static int  CALLBACK spuPlayCDDAchannel(short *, int, unsigned int, int)      { return 0; }
 static void CALLBACK spuSetCDvol(unsigned char, unsigned char, unsigned char, unsigned char, unsigned int) { }
 
@@ -794,6 +849,7 @@ static void *symbianSaveOpen(const char *name, const char *mode)
 		return NULL;
 		}
 
+	logEvent("save", NULL, "open ok mode=%s path=%s", mode, name);
 	return (void *)f;
 	}
 
@@ -802,21 +858,48 @@ static int symbianSaveRead(void *file, void *buf, u32 len)
 	TSaveFile *f = (TSaveFile *)file;
 	if (!f || f->iWriting || !buf)
 		{
+		logEvent("save", "SAVE_READ_FAIL", "invalid read args file=%p writing=%d buf=%p len=%u",
+			f, f ? (int)f->iWriting : 0, buf, (unsigned)len);
 		return -1;
 		}
 	if (len == 0)
 		{
 		return 0;
 		}
-
-	TPtr8 des((TUint8 *)buf, (TInt)len);
-	const TInt err = f->iFile.Read(des, (TInt)len);
-	if (err != KErrNone)
+	// Захист від від'ємних/надвеликих значень u32
+	if ((TInt)len <= 0 || len > 0x10000000)
 		{
-		logEvent("save", "SAVE_READ_FAIL", "read failed err=%d len=%u", err, (unsigned)len);
+		logEvent("save", "SAVE_READ_FAIL", "bad read length len=%u", (unsigned)len);
 		return -1;
 		}
-	return des.Length();
+
+	TInt curPos = 0;
+	f->iFile.Seek(ESeekCurrent, curPos);
+	logEvent("save", NULL, "read pos=%d len=%u", curPos, (unsigned)len);
+
+	TUint8 *dst = (TUint8 *)buf;
+	TInt totalRead = 0;
+	TInt remaining = (TInt)len;
+
+	while (remaining > 0)
+		{
+		const TInt chunk = (remaining > KSaveBufferSize) ? KSaveBufferSize : remaining;
+		TPtr8 des(dst + totalRead, 0, chunk);
+		const TInt err = f->iFile.Read(des, chunk);
+		if (err != KErrNone)
+			{
+			logEvent("save", "SAVE_READ_FAIL", "read failed err=%d pos=%d totalRead=%d want=%u",
+				err, curPos + totalRead, totalRead, (unsigned)len);
+			return -1;
+			}
+		if (des.Length() == 0)
+			{
+			break;
+			}
+		totalRead += des.Length();
+		remaining -= des.Length();
+		}
+	return totalRead;
 	}
 
 static int symbianSaveWrite(void *file, const void *buf, u32 len)
@@ -824,12 +907,24 @@ static int symbianSaveWrite(void *file, const void *buf, u32 len)
 	TSaveFile *f = (TSaveFile *)file;
 	if (!f || !f->iWriting || !buf)
 		{
+		logEvent("save", "SAVE_WRITE_FAIL", "invalid write args file=%p writing=%d buf=%p len=%u",
+			f, f ? (int)f->iWriting : 0, buf, (unsigned)len);
 		return -1;
 		}
 	if (len == 0)
 		{
 		return 0;
 		}
+	// Захист від від'ємних/надвеликих значень u32
+	if ((TInt)len <= 0 || len > 0x10000000)
+		{
+		logEvent("save", "SAVE_WRITE_FAIL", "bad write length len=%u", (unsigned)len);
+		return -1;
+		}
+
+	TInt curPos = 0;
+	f->iFile.Seek(ESeekCurrent, curPos);
+	logEvent("save", NULL, "write pos=%d len=%u bufPos=%d", curPos, (unsigned)len, f->iBufPos);
 
 	const TUint8 *src = (const TUint8 *)buf;
 	u32 remaining = len;
@@ -893,6 +988,9 @@ static long symbianSaveSeek(void *file, long offs, int whence)
 		return -1;
 		}
 
+	logEvent("save", NULL, "seek offs=%ld whence=%d curPos=%d size=%d",
+		offs, whence, curPos, fileSize);
+
 	TInt targetPos = 0;
 	if (whence == SEEK_SET)
 		{
@@ -912,11 +1010,32 @@ static long symbianSaveSeek(void *file, long offs, int whence)
 		return -1;
 		}
 
-	if (targetPos < 0 || targetPos > fileSize)
+	if (targetPos < 0)
 		{
-		logEvent("save", "SAVE_SEEK_FAIL", "seek out of bounds target=%d size=%d cur=%d offs=%ld whence=%d",
+		logEvent("save", "SAVE_SEEK_FAIL", "seek negative target=%d size=%d cur=%d offs=%ld whence=%d",
 			targetPos, fileSize, curPos, offs, whence);
 		return -1;
+		}
+
+	if (targetPos > fileSize)
+		{
+		if (f->iWriting)
+			{
+			// При записі розширюємо файл, бо RFile::Seek обрізає позицію до Size
+			err = f->iFile.SetSize(targetPos);
+			if (err != KErrNone)
+				{
+				logEvent("save", "SAVE_SEEK_FAIL", "SetSize failed err=%d target=%d", err, targetPos);
+				return -1;
+				}
+			fileSize = targetPos;
+			}
+		else
+			{
+			logEvent("save", "SAVE_SEEK_FAIL", "seek past EOF target=%d size=%d cur=%d offs=%ld whence=%d",
+				targetPos, fileSize, curPos, offs, whence);
+			return -1;
+			}
 		}
 
 	TInt newPos = targetPos;
@@ -937,6 +1056,8 @@ static void symbianSaveClose(void *file)
 		{
 		return;
 		}
+
+	logEvent("save", NULL, "close writing=%d bufPos=%d", (int)f->iWriting, f->iBufPos);
 
 	if (f->iWriting)
 		{
@@ -988,12 +1109,7 @@ static void bindStubPlugins()
 	SPU_playCDDAchannel  = spuPlayCDDAchannel;
 	SPU_setCDvol         = spuSetCDvol;
 
-	// Власний шлях запису стану поки ВИМКНЕНО: з ним збереження валить процес
-	// (KERN-EXEC), і місце падіння ще не знайдене. Кожна з п'яти функцій нижче
-	// окремо виглядає правильною, тож шукати треба у взаємодії з ядром - там,
-	// де воно перемотує файл, щоб дописати розмір ділянки. Поки не знайдено,
-	// стан пишеться старим шляхом через zlib, який дає обрізаний файл; тому
-	// завантаження стану теж не працює, і замір з нього неможливий.
+	// Власний шлях запису стану поверх RFile (без стиснення).
 	if (g_saveFuncsOverride)
 		{
 		SaveFuncs.open  = symbianSaveOpen;
@@ -1374,6 +1490,10 @@ static TInt passSetup(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTes
 	logEvent("reset", (aUseBios && Config.HLE) ? "BIOS_NOT_LOADED" : NULL,
 		"%s: EmuReset ok, hle=%d type=%s", mode,
 		(int)Config.HLE, Config.PsxType ? "PAL" : "NTSC");
+
+	// Тип відомий лише після EmuReset, а від нього залежить номінальна тривалість
+	// кадру, з якою адаптивний пропуск порівнює реальну.
+	fsAdaptiveStart(g_gpuFrameskip == -1 ? (Config.PsxType ? 50 : 60) : 0);
 
 	if (aGpuTest)
 		{
@@ -1868,9 +1988,10 @@ static void passTeardown()
 
 	flushCoreRepeat();
 	logEvent("pass", stalled ? "STALLED" : (aProduced ? NULL : "NO_FRAMES"),
-		"%s: frames=%u ms=%u pc=%08x cycle=%u", mode,
+		"%s: frames=%u ms=%u pc=%08x cycle=%u vblanks=%u fsAdvised=%d", mode,
 		(unsigned)aProduced, (unsigned)aTicks,
-		(unsigned)psxRegs.pc, (unsigned)psxRegs.cycle);
+		(unsigned)psxRegs.pc, (unsigned)psxRegs.cycle,
+		g_vblanks, (int)g_fsAdvised);
 
 	// Скільки GPU-команд BIOS реально надіслав: локалізує чорний екран - доставка
 	// команд (усе 0) проти растеризації (ненульові, а VRAM порожній).
@@ -2292,7 +2413,7 @@ extern "C" void ps1CfgApply(const char *aDisc, const char *aBios, int aInterp,
 	voutSymbianSetDsa(aDsa);
 	g_fpsOverlay = aFps ? ETrue : EFalse;
 	voutSymbianSetOverlay(aFps);
-	g_gpuFrameskip = aGpuSkip > 0 ? aGpuSkip : 0;
+	g_gpuFrameskip = (aGpuSkip > 0 || aGpuSkip == -1) ? aGpuSkip : 0;
 	if (aCycle > 0)
 		g_cycleMul = aCycle;
 	voutSymbianSetSmooth(aSmooth);
@@ -2331,11 +2452,12 @@ extern "C" void ps1CfgApplyLive(int aIlace, int aLight, int aBlend, int aPixSkip
 
 	if (aGpuSkip != g_gpuFrameskip)
 		{
-		g_gpuFrameskip = aGpuSkip > 0 ? aGpuSkip : 0;
+		g_gpuFrameskip = (aGpuSkip > 0 || aGpuSkip == -1) ? aGpuSkip : 0;
 		// Єдиний шлях до gpu.frameskip.set - повторні колбеки, а вони знову
 		// перезаписують конфіг растеризатора (див. коментар у coreInitOnce).
 		ps1GpuSetCallbacks(&frame_counter, &g_gpuHcnt, g_gpuFrameskip);
 		gpu_unai_apply_config();
+		fsAdaptiveStart(g_gpuFrameskip == -1 ? (Config.PsxType ? 50 : 60) : 0);
 		}
 
 	if (aCycle > 0 && aCycle != g_cycleMul)
@@ -2822,7 +2944,7 @@ GLDEF_C TInt E32Main()
 			{
 			TLex lex(cl.Mid(gsp + 7));
 			TInt n = 0;
-			g_gpuFrameskip = (lex.Val(n) == KErrNone && n > 0) ? n : 1;
+			g_gpuFrameskip = (lex.Val(n) == KErrNone && (n > 0 || n == -1)) ? n : 1;
 			}
 		_LIT(KCycleMulArg, "cyclemul");
 		const TInt cp = cl.FindF(KCycleMulArg);
@@ -2851,6 +2973,12 @@ GLDEF_C TInt E32Main()
 			if (lex.Val(n) == KErrNone && n > 0)
 				g_saveStateAt = n;
 			}
+		// Тут ОБОВ'ЯЗКОВО: parseCommandLine розбирає це лише в консольній гілці,
+		// а прогони стенду йдуть у GUI, тож прапорець туди не доходив і замір
+		// мовчки міряв старий шлях через zlib.
+		_LIT(KSaveFuncsArgG, "savefuncs");
+		if (cl.FindF(KSaveFuncsArgG) != KErrNotFound)
+			g_saveFuncsOverride = ETrue;
 		_LIT(KLoadStateArg, "loadstate");
 		const TInt lsp = cl.FindF(KLoadStateArg);
 		if (lsp != KErrNotFound)
