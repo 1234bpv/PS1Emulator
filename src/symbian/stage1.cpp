@@ -695,6 +695,265 @@ static long CALLBACK spuFreeze(int, SPUFreeze_t *, unsigned short **, void *, un
 static int  CALLBACK spuPlayCDDAchannel(short *, int, unsigned int, int)      { return 0; }
 static void CALLBACK spuSetCDvol(unsigned char, unsigned char, unsigned char, unsigned char, unsigned int) { }
 
+// --- Збереження і завантаження стану через нативні RFile (без стиснення) ---
+
+// Прапорець вмикається аргументом "savefuncs" - див. коментар біля підміни.
+static TBool g_saveFuncsOverride;
+static const TInt KSaveBufferSize = 64 * 1024;
+
+struct TSaveFile
+	{
+	RFs    iFs;
+	RFile  iFile;
+	TBool  iWriting;
+	TInt   iBufPos;
+	TUint8 iBuffer[KSaveBufferSize];
+	};
+
+static TInt saveFlushBuffer(TSaveFile *aFile)
+	{
+	if (!aFile || !aFile->iWriting)
+		{
+		return KErrNone;
+		}
+
+	if (aFile->iBufPos > 0)
+		{
+		TPtrC8 des(aFile->iBuffer, aFile->iBufPos);
+		const TInt err = aFile->iFile.Write(des);
+		if (err != KErrNone)
+			{
+			logEvent("save", "SAVE_WRITE_FAIL", "flush failed err=%d bytes=%d", err, aFile->iBufPos);
+			return err;
+			}
+		aFile->iBufPos = 0;
+		}
+	return KErrNone;
+	}
+
+extern "C" {
+
+static void *symbianSaveOpen(const char *name, const char *mode)
+	{
+	if (!name || !mode)
+		{
+		return NULL;
+		}
+
+	const TBool isWrite = (mode[0] == 'w');
+	const TBool isRead  = (mode[0] == 'r');
+	if (!isWrite && !isRead)
+		{
+		return NULL;
+		}
+
+	TSaveFile *f = new TSaveFile;
+	if (!f)
+		{
+		logEvent("save", "SAVE_NOMEM", "alloc TSaveFile failed path=%s", name);
+		return NULL;
+		}
+
+	f->iWriting = isWrite;
+	f->iBufPos  = 0;
+
+	TInt err = f->iFs.Connect();
+	if (err != KErrNone)
+		{
+		logEvent("save", "SAVE_FS_FAIL", "RFs connect failed err=%d path=%s", err, name);
+		delete f;
+		return NULL;
+		}
+
+	const TInt nameLen = (TInt)strlen(name);
+	TPtrC8 name8((const TUint8 *)name, nameLen);
+	TFileName fileName;
+	if (nameLen > fileName.MaxLength())
+		{
+		fileName.Copy(name8.Left(fileName.MaxLength()));
+		}
+	else
+		{
+		fileName.Copy(name8);
+		}
+
+	if (isWrite)
+		{
+		err = f->iFile.Replace(f->iFs, fileName, EFileWrite | EFileShareAny);
+		}
+	else
+		{
+		err = f->iFile.Open(f->iFs, fileName, EFileRead | EFileShareAny);
+		}
+
+	if (err != KErrNone)
+		{
+		logEvent("save", "SAVE_OPEN_FAIL", "open failed mode=%s path=%s err=%d", mode, name, err);
+		f->iFs.Close();
+		delete f;
+		return NULL;
+		}
+
+	return (void *)f;
+	}
+
+static int symbianSaveRead(void *file, void *buf, u32 len)
+	{
+	TSaveFile *f = (TSaveFile *)file;
+	if (!f || f->iWriting || !buf)
+		{
+		return -1;
+		}
+	if (len == 0)
+		{
+		return 0;
+		}
+
+	TPtr8 des((TUint8 *)buf, (TInt)len);
+	const TInt err = f->iFile.Read(des, (TInt)len);
+	if (err != KErrNone)
+		{
+		logEvent("save", "SAVE_READ_FAIL", "read failed err=%d len=%u", err, (unsigned)len);
+		return -1;
+		}
+	return des.Length();
+	}
+
+static int symbianSaveWrite(void *file, const void *buf, u32 len)
+	{
+	TSaveFile *f = (TSaveFile *)file;
+	if (!f || !f->iWriting || !buf)
+		{
+		return -1;
+		}
+	if (len == 0)
+		{
+		return 0;
+		}
+
+	const TUint8 *src = (const TUint8 *)buf;
+	u32 remaining = len;
+
+	while (remaining > 0)
+		{
+		const TInt avail = KSaveBufferSize - f->iBufPos;
+		if ((u32)avail > remaining)
+			{
+			memcpy(f->iBuffer + f->iBufPos, src, remaining);
+			f->iBufPos += (TInt)remaining;
+			remaining = 0;
+			}
+		else
+			{
+			memcpy(f->iBuffer + f->iBufPos, src, avail);
+			f->iBufPos += avail;
+			src += avail;
+			remaining -= avail;
+			const TInt err = saveFlushBuffer(f);
+			if (err != KErrNone)
+				{
+				return -1;
+				}
+			}
+		}
+
+	return (int)len;
+	}
+
+static long symbianSaveSeek(void *file, long offs, int whence)
+	{
+	TSaveFile *f = (TSaveFile *)file;
+	if (!f)
+		{
+		return -1;
+		}
+
+	if (f->iWriting)
+		{
+		const TInt err = saveFlushBuffer(f);
+		if (err != KErrNone)
+			{
+			return -1;
+			}
+		}
+
+	TInt fileSize = 0;
+	TInt err = f->iFile.Size(fileSize);
+	if (err != KErrNone)
+		{
+		logEvent("save", "SAVE_SEEK_FAIL", "file size failed err=%d", err);
+		return -1;
+		}
+
+	TInt curPos = 0;
+	err = f->iFile.Seek(ESeekCurrent, curPos);
+	if (err != KErrNone)
+		{
+		logEvent("save", "SAVE_SEEK_FAIL", "get pos failed err=%d", err);
+		return -1;
+		}
+
+	TInt targetPos = 0;
+	if (whence == SEEK_SET)
+		{
+		targetPos = (TInt)offs;
+		}
+	else if (whence == SEEK_CUR)
+		{
+		targetPos = curPos + (TInt)offs;
+		}
+	else if (whence == SEEK_END)
+		{
+		targetPos = fileSize + (TInt)offs;
+		}
+	else
+		{
+		logEvent("save", "SAVE_SEEK_FAIL", "unknown whence=%d", whence);
+		return -1;
+		}
+
+	if (targetPos < 0 || targetPos > fileSize)
+		{
+		logEvent("save", "SAVE_SEEK_FAIL", "seek out of bounds target=%d size=%d cur=%d offs=%ld whence=%d",
+			targetPos, fileSize, curPos, offs, whence);
+		return -1;
+		}
+
+	TInt newPos = targetPos;
+	err = f->iFile.Seek(ESeekStart, newPos);
+	if (err != KErrNone || newPos != targetPos)
+		{
+		logEvent("save", "SAVE_SEEK_FAIL", "seek failed err=%d newPos=%d target=%d", err, newPos, targetPos);
+		return -1;
+		}
+
+	return (long)newPos;
+	}
+
+static void symbianSaveClose(void *file)
+	{
+	TSaveFile *f = (TSaveFile *)file;
+	if (!f)
+		{
+		return;
+		}
+
+	if (f->iWriting)
+		{
+		const TInt err = saveFlushBuffer(f);
+		if (err != KErrNone)
+			{
+			logEvent("save", "SAVE_FLUSH_FAIL", "close flush failed err=%d", err);
+			}
+		}
+
+	f->iFile.Close();
+	f->iFs.Close();
+	delete f;
+	}
+
+} // extern "C"
+
 static void bindStubPlugins()
 	{
 	GPU_init          = ps1GpuInit;
@@ -728,6 +987,21 @@ static void bindStubPlugins()
 	SPU_freeze           = spuFreeze;
 	SPU_playCDDAchannel  = spuPlayCDDAchannel;
 	SPU_setCDvol         = spuSetCDvol;
+
+	// Власний шлях запису стану поки ВИМКНЕНО: з ним збереження валить процес
+	// (KERN-EXEC), і місце падіння ще не знайдене. Кожна з п'яти функцій нижче
+	// окремо виглядає правильною, тож шукати треба у взаємодії з ядром - там,
+	// де воно перемотує файл, щоб дописати розмір ділянки. Поки не знайдено,
+	// стан пишеться старим шляхом через zlib, який дає обрізаний файл; тому
+	// завантаження стану теж не працює, і замір з нього неможливий.
+	if (g_saveFuncsOverride)
+		{
+		SaveFuncs.open  = symbianSaveOpen;
+		SaveFuncs.read  = symbianSaveRead;
+		SaveFuncs.write = symbianSaveWrite;
+		SaveFuncs.seek  = symbianSaveSeek;
+		SaveFuncs.close = symbianSaveClose;
+		}
 	}
 
 // --- Точка входу ------------------------------------------------------------
@@ -845,6 +1119,10 @@ static void parseCommandLine(TInt &aFrames, TBool &aUseBios, TBool &aGpuTest, TB
 		if (lex.Val(n) == KErrNone && n > 0)
 			g_saveStateAt = n;
 		}
+
+	_LIT(KSaveFuncsArg, "savefuncs");
+	if (cmd.FindF(KSaveFuncsArg) != KErrNotFound)
+		g_saveFuncsOverride = ETrue;
 
 	_LIT(KLoadStateArgC, "loadstate");
 	const TInt lsp = cmd.FindF(KLoadStateArgC);
@@ -1292,9 +1570,9 @@ static void benchLoadState(const char *aMode)
 			in_keystate[0] = g_playPad[lastBefore];
 		}
 	logEvent("loadstate", NULL, "%s: frame=%d rc=%d rewound=%d pc=%08x cycle=%u"
-		" sr=%08x cause=%08x", aMode, (int)g_loadStateAt, lr, (int)rewound,
+		" hsync=%u base=%u start=%u", aMode, (int)g_loadStateAt, lr, (int)rewound,
 		(unsigned)psxRegs.pc, (unsigned)psxRegs.cycle,
-		(unsigned)psxRegs.CP0.n.SR, (unsigned)psxRegs.CP0.n.Cause);
+		hSyncCount, (unsigned)rcnts[3].cycle, (unsigned)rcnts[3].cycleStart);
 	}
 
 static void inputTraceClose()
@@ -1386,9 +1664,11 @@ static TBool passStep()
 	// Перші кадри після завантаження стану: скільки тактів гість справді пройшов.
 	// Порожній кадр тут виглядає точно так само, як здоровий, поки не глянути на це.
 	if (g_loadStateAt > 0 && g_pass.i < g_loadStateAt + 3)
-		logEvent("loadstate", NULL, "%s: frame=%d ran=%u pc=%08x vbl=%u stop=%d", mode,
+		logEvent("loadstate", NULL, "%s: frame=%d ran=%u pc=%08x vbl=%u hsync=%u"
+			" base=%u start=%u cyc=%u", mode,
 			(int)g_pass.i, (unsigned)(psxRegs.cycle - cyc0), (unsigned)psxRegs.pc,
-			g_vblanks, (int)psxRegs.stop);
+			g_vblanks, hSyncCount, (unsigned)rcnts[3].cycle,
+			(unsigned)rcnts[3].cycleStart, (unsigned)psxRegs.cycle);
 	TUint t2 = User::NTickCount(); g_pass.tEmu += t2 - t1;
 	g_wdBeat++;
 	if (gpu_unai_primstats_frame)
@@ -1477,7 +1757,9 @@ static TBool passStep()
 			fs.Close();
 			}
 		logEvent("savestate", (sr != 0 || saveSize <= 0) ? "SAVE_FAIL" : NULL,
-			"frame=%d rc=%d size=%d", (int)g_pass.i, sr, (int)saveSize);
+			"frame=%d rc=%d size=%d cycle=%u hsync=%u base=%u start=%u",
+			(int)g_pass.i, sr, (int)saveSize, (unsigned)psxRegs.cycle,
+			hSyncCount, (unsigned)rcnts[3].cycle, (unsigned)rcnts[3].cycleStart);
 		}
 
 	// Z2+Z3: скільки кадрів гра справді оновила і в якій геометрії. updates - це
