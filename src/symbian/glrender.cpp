@@ -22,11 +22,14 @@
 //   - зміна прив'язки текстури коштує стільки ж, скільки виклик.
 
 #include <e32std.h>
+#include <f32file.h>
 #include <GLES/gl.h>
 
 extern "C" void ps1LogFmt(const char *aType, const char *aFmt, ...);
 extern "C" int  voutSymbianGlSwap(void);
 extern "C" void voutSymbianGlSize(int *aW, int *aH);
+extern "C" void voutSymbianDbgState(int *aFbDirty, int *aFbDirtyArea, int *aStatus,
+	int *aSrcX, int *aSrcY, int *aScrW, int *aScrH, int *aVoutOffset, int *aStale);
 
 // Стан, який gpu_unai передає разом із кожним пакетом. Порядок задає
 // gpulib_if.cpp; тримати обидві сторони в одному порядку - обов'язок цього
@@ -65,7 +68,7 @@ struct TGlrBatch
 // під якою намальовано найбільше вершин, а не за першою і не за найбільшою за
 // площею - обидва ті правила вже дали хибну картинку. Примітиви решти ділянок
 // не малюємо взагалі: у чужій проекції вони лягли б навмання.
-static const TInt KMaxClips = 4;
+static const TInt KMaxClips = 8;
 
 static TBool     g_on;            // рендерер увімкнено прапорцем
 static TBool     g_ready;         // ініціалізовано і є контекст
@@ -76,6 +79,7 @@ static TGlrBatch g_batch[KMaxBatch];
 static TInt      g_nBatch;
 static TInt      g_clip[4];       // ділянка малювання, за якою будуємо проекцію
 static TInt      g_clips[KMaxClips][4];
+static TInt      g_ofs[KMaxClips][2];   // зсув малювання групи: він і задає буфер
 static TInt      g_clipVerts[KMaxClips];
 static TInt      g_nClips;
 static TInt      g_curClip;       // ділянка поточного примітиву, -1 = не влізла
@@ -116,6 +120,62 @@ static GLfloat  *g_uv;            // текстурні координати н�
 static TInt      g_frame;         // лічильник кадрів для витіснення
 static TInt      g_miss, g_hit, g_evict;
 
+
+// Знімок того, що показав GL. Потрібен саме тут: із вимкненим програмним
+// проходом VRAM більше не містить сцени, тож старий шлях знімка (дамп екрана
+// через DSA) під GL нічого не бачить, а звірити картинку якось треба.
+static char  g_shotPath[64];
+static TBool g_shotWanted;
+
+extern "C" void glrShot(const char *aPath)
+	{
+	if (!aPath)
+		return;
+	TInt n = 0;
+	while (aPath[n] && n < (TInt)sizeof(g_shotPath) - 1)
+		{
+		g_shotPath[n] = aPath[n];
+		n++;
+		}
+	g_shotPath[n] = 0;
+	g_shotWanted = ETrue;
+	}
+
+// Читання відбувається ДО обміну буферів: після нього вміст заднього буфера
+// не визначений.
+static void writeShot(void)
+	{
+	g_shotWanted = EFalse;
+	const TInt bytes = g_vpW * g_vpH * 4;
+	TUint8 *buf = (TUint8 *)User::Alloc(bytes);
+	if (!buf)
+		{
+		ps1LogFmt("glr", "shot: alloc %d failed", bytes);
+		return;
+		}
+	glReadPixels(0, 0, g_vpW, g_vpH, GL_RGBA, GL_UNSIGNED_BYTE, buf);
+	const GLenum err = glGetError();
+	RFs fs;
+	TInt rc = fs.Connect();
+	if (rc == KErrNone)
+		{
+		TPtrC8 p8((const TUint8 *)g_shotPath);
+		TBuf<64> path;
+		path.Copy(p8);
+		RFile f;
+		rc = f.Replace(fs, path, EFileWrite);
+		if (rc == KErrNone)
+			{
+			TPtrC8 data(buf, bytes);
+			rc = f.Write(data);
+			f.Close();
+			}
+		fs.Close();
+		}
+	User::Free(buf);
+	ps1LogFmt("glr", "shot: %s %dx%d rgba rc=%d err=%u",
+		g_shotPath, (int)g_vpW, (int)g_vpH, (int)rc, (unsigned)err);
+	}
 extern "C" int glrEnabled(void)
 	{
 	return (g_on && g_ready) ? 1 : 0;
@@ -397,12 +457,14 @@ extern "C" void glrPrim(unsigned aCmd, const unsigned *aPacket, const int *aStat
 	{
 	if (!g_on || !g_ready)
 		return;
-	// До якої ділянки малювання належить цей примітив. Вибір переможця -
-	// наприкінці кадру, за кількістю вершин.
+	// До якого заднього буфера належить цей примітив. Ділянки самої мало:
+	// Gran Turismo тримає обидва буфери під однією ділянкою 0,0..640,480 і
+	// розрізняє їх лише зсувом малювання, тож групуємо за парою.
 	g_curClip = -1;
 	for (TInt i = 0; i < g_nClips; i++)
 		if (g_clips[i][0] == aState[EStClipX0] && g_clips[i][1] == aState[EStClipY0] &&
-		    g_clips[i][2] == aState[EStClipX1] && g_clips[i][3] == aState[EStClipY1])
+		    g_clips[i][2] == aState[EStClipX1] && g_clips[i][3] == aState[EStClipY1] &&
+		    g_ofs[i][0] == aState[EStOfsX] && g_ofs[i][1] == aState[EStOfsY])
 			{ g_curClip = i; break; }
 	if (g_curClip < 0 && g_nClips < KMaxClips)
 		{
@@ -411,6 +473,8 @@ extern "C" void glrPrim(unsigned aCmd, const unsigned *aPacket, const int *aStat
 		g_clips[g_curClip][1] = aState[EStClipY0];
 		g_clips[g_curClip][2] = aState[EStClipX1];
 		g_clips[g_curClip][3] = aState[EStClipY1];
+		g_ofs[g_curClip][0] = aState[EStOfsX];
+		g_ofs[g_curClip][1] = aState[EStOfsY];
 		g_clipVerts[g_curClip] = 0;
 		}
 
@@ -583,22 +647,41 @@ extern "C" int glrEndFrame(void)
 	// Порожній кадр просто лишає на екрані попередній.
 	if (g_nBatch == 0 || g_nClips == 0)
 		return 1;
-
-	// Ділянка, під якою намальовано найбільше вершин, і є задній буфер.
+	// Задній буфер - група з найбільшою кількістю вершин.
 	TInt best = 0;
 	for (TInt i = 1; i < g_nClips; i++)
 		if (g_clipVerts[i] > g_clipVerts[best])
 			best = i;
-	g_clip[0] = g_clips[best][0]; g_clip[1] = g_clips[best][1];
-	g_clip[2] = g_clips[best][2]; g_clip[3] = g_clips[best][3];
-	if (g_clip[2] <= g_clip[0] || g_clip[3] <= g_clip[1])
-		return 1;
+	// Рамка кадру - НЕ ділянка малювання. Gran Turismo тримає ділянку
+	// 0,0..640,480 на обидва буфери 320x240, тож проекція за нею клала сцену в
+	// чверть екрана, а другий буфер - у сусідню чверть. Правильна рамка - зсув
+	// малювання цієї групи (початок буфера) плюс розмір того, що GPU показує.
+	TInt dw = 0, dh = 0;
+	voutSymbianDbgState(NULL, NULL, NULL, NULL, NULL, &dw, &dh, NULL, NULL);
+	if (dw <= 0 || dh <= 0)
+		{ dw = 320; dh = 240; }
+	g_clip[0] = g_ofs[best][0];
+	g_clip[1] = g_ofs[best][1];
+	g_clip[2] = g_clip[0] + dw;
+	g_clip[3] = g_clip[1] + dh;
 
-	// Ділянка малювання PS1 лягає на все вікно. Вісь Y донизу, як у VRAM.
+	// Вікно на цьому апараті обертається саме собою, а поле зору ми виставили
+	// один раз при ініціалізації. Після повороту воно лишалося від старого
+	// розміру - саме той збій, що вже траплявся в Hexen 2.
+	TInt vw = 0, vh = 0;
+	voutSymbianGlSize(&vw, &vh);
+	if (vw > 0 && vh > 0 && (vw != g_vpW || vh != g_vpH))
+		{
+		g_vpW = vw; g_vpH = vh;
+		glViewport(0, 0, g_vpW, g_vpH);
+		ps1LogFmt("glr", "viewport changed: %dx%d", (int)g_vpW, (int)g_vpH);
+		}
+
+	// Задній буфер PS1 лягає на все вікно. Вісь Y донизу, як у VRAM.
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	glOrthof((GLfloat)g_clip[0], (GLfloat)(g_clip[2] + 1),
-	         (GLfloat)(g_clip[3] + 1), (GLfloat)g_clip[1], -1, 1);
+	glOrthof((GLfloat)g_clip[0], (GLfloat)g_clip[2],
+	         (GLfloat)g_clip[3], (GLfloat)g_clip[1], -1, 1);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
@@ -654,18 +737,20 @@ extern "C" int glrEndFrame(void)
 	glDisableClientState(GL_COLOR_ARRAY);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glEnable(GL_TEXTURE_2D);
+	if (g_shotWanted)
+		writeShot();
 	voutSymbianGlSwap();
 
 	// Два записи: перший кадр (чи взагалі дійшло) і перша справжня сцена (чи
 	// правильні ділянка й склад). Більше не пишемо - лог тут не поперовий.
-	if (g_logged < 2 && (g_logged == 0 || g_nVerts > 300))
+	if (g_logged < 4 && (g_logged == 0 || g_nVerts > 300))
 		{
-		ps1LogFmt("glr", "frame%d: clip=%d,%d..%d,%d verts=%d/%d batches=%d clips=%d"
-			" tex=%d hit=%d miss=%d evict=%d over=%d err=%u",
+		ps1LogFmt("glr", "frame%d: frame=%d,%d..%d,%d verts=%d/%d batches=%d clips=%d"
+			" tex=%d hit=%d miss=%d evict=%d over=%d vp=%dx%d err=%u",
 			(int)g_logged, g_clip[0], g_clip[1], g_clip[2], g_clip[3],
 			(int)g_clipVerts[best], (int)g_nVerts, (int)g_nBatch, (int)g_nClips,
 			(int)g_nTex, (int)g_hit, (int)g_miss, (int)g_evict,
-			(int)g_over, (unsigned)glGetError());
+			(int)g_over, (int)g_vpW, (int)g_vpH, (unsigned)glGetError());
 		g_logged++;
 		}
 	return 1;

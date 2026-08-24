@@ -258,6 +258,9 @@ int  glrEnabled(void);
 void glrBeginFrame(void);
 int  glrEndFrame(void);
 void glrStats(int *verts, int *batches, int *over, int *hit, int *miss, int *evict);
+void glrShot(const char *path);
+// Вимикач програмного проходу gpu_unai (аргумент "swoff"). Живе у gpulib_if.cpp.
+extern int gpu_unai_sw_off;
 int voutSymbianVisTest(int raw);
 void voutSymbianSetOverlay(int on);
 void voutSymbianSetNoUpdate(int on);
@@ -1378,6 +1381,14 @@ static TBool passStep()
 		char p[32];
 		snprintf(p, sizeof(p), "E:\\PS1\\logs\\ps1_scr%d.bin", (int)g_pass.i);
 		const int sr = voutSymbianScreenDump(p);
+		// Під GL дамп екрана порожній: показує не DSA, а GL. Знімок беремо
+		// з самого GL, наступним кадром - readPixels можливий лише до обміну.
+		if (glrEnabled())
+			{
+			char gp[40];
+			snprintf(gp, sizeof(gp), "E:\\PS1\\logs\\ps1_gl%d.bin", (int)g_pass.i);
+			glrShot(gp);
+			}
 		// Адресу пишемо ДО читання: якщо вона фізична, читання вб'є потік.
 		logEvent("screen_dump", sr ? "SCR_FAIL" : NULL, "frame=%d rc=%d halAddr=0x%x",
 			g_pass.i, sr, (unsigned)voutSymbianHalAddr());
@@ -1739,8 +1750,8 @@ extern "C" int ps1GuiSetup(void)
 		{
 		const TInt grc = glrInit();
 		glrSetEnabled(grc == 0 ? 1 : 0);
-		logEvent("glr", grc ? "GLR_INIT_FAIL" : NULL, "init rc=%d active=%d",
-			(int)grc, (int)glrEnabled());
+		logEvent("glr", grc ? "GLR_INIT_FAIL" : NULL, "init rc=%d active=%d swoff=%d",
+			(int)grc, (int)glrEnabled(), (int)gpu_unai_sw_off);
 		}
 	g_guiUp = (rc == KErrNone);
 	return rc;
@@ -2228,6 +2239,11 @@ GLDEF_C TInt E32Main()
 			g_glRender = ETrue;
 			voutSymbianSetGl(1);
 			}
+		// "swoff" знімає програмний прохід: сцену малює лише MBX. Сам собою
+		// сенсу не має - лише разом із "glrender".
+		_LIT(KSwOffArg, "swoff");
+		if (cl.FindF(KSwOffArg) != KErrNotFound)
+			gpu_unai_sw_off = 1;
 		_LIT(KGlBenchArg, "glbench");
 		const TInt gbp = cl.FindF(KGlBenchArg);
 		if (gbp != KErrNotFound)
