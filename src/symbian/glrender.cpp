@@ -131,6 +131,11 @@ struct TGlrTex
 static TGlrTex   g_tex[KMaxTex];
 static TInt      g_nTex;
 static TInt      g_lastTex = -1;  // last texFor hit; adjacent primitives repeat it
+// Probe only: one extra texture of a chosen side, bound before every real bind.
+// Comparing runs at different sides prices a bind by texture SIZE, which decides
+// whether an atlas smaller than the failed 2048 one is worth building.
+static TInt      g_dummySide;
+static GLuint    g_dummyTex;
 static TUint16  *g_decode;        // page unpack buffer
 static const TUint16 *g_vram;     // guest VRAM, 1024x512 halfwords
 static TInt      g_frame;         // frame counter for eviction
@@ -410,6 +415,35 @@ static TInt texFor(TUint32 aTba, TUint32 aCba, TInt aMode, TInt aMaskU, TInt aMa
 	g_miss++;
 	g_lastTex = slot;
 	return slot;
+	}
+
+static void ensureDummyTex(void)
+	{
+	if (g_dummySide <= 0 || g_dummyTex)
+		return;
+	if (g_dummySide > 0)
+		{
+		const TInt px = g_dummySide * g_dummySide;
+		TUint16 *z = (TUint16 *)User::AllocZ(px * 2);
+		if (z)
+			{
+			glGenTextures(1, &g_dummyTex);
+			glBindTexture(GL_TEXTURE_2D, g_dummyTex);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, g_dummySide, g_dummySide, 0,
+				GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, z);
+			User::Free(z);
+			ps1LogFmt("glr", "dummy tex side=%d id=%u err=0x%x",
+				(int)g_dummySide, (unsigned)g_dummyTex, (unsigned)glGetError());
+			}
+		}
+	g_dummySide = g_dummyTex ? g_dummySide : 0;
+	}
+
+extern "C" void glrSetDummyTex(int aSide)
+	{
+	g_dummySide = aSide;
 	}
 
 // gpu_unai hands over guest VRAM once, from renderer_init.
@@ -900,6 +934,7 @@ extern "C" int glrEndFrame(void)
 		glScissor(0, 0, 1, 1);
 		}
 	const unsigned int tDraw0 = ndrc_symbian_fastcount();
+	ensureDummyTex();
 	TInt curTex = -2;
 	TInt curBlend = -2;
 	for (TInt b = 0; (g_skipMask & 16) == 0 && b < g_nBatch; b++)
@@ -915,6 +950,8 @@ extern "C" int glrEndFrame(void)
 				{
 				glEnable(GL_TEXTURE_2D);
 				glEnable(GL_ALPHA_TEST);
+				if (g_dummyTex)
+					glBindTexture(GL_TEXTURE_2D, g_dummyTex);
 				glBindTexture(GL_TEXTURE_2D, g_tex[curTex].iTex);
 				}
 			else

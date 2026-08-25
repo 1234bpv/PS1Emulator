@@ -314,6 +314,7 @@ void glrStats(int *verts, int *batches, int *over, int *hit, int *miss, int *evi
 void glrShot(const char *path);
 void glrSetTexWhite(int on);
 void glrSetSkip(int mask);
+void glrSetDummyTex(int aSide);
 // Switch for gpu_unai software pass ("swoff" argument). Lives in gpulib_if.cpp.
 extern int gpu_unai_sw_off;
 // Dynarec block pre-compile on state load: crashes on this device, off by default.
@@ -2238,6 +2239,7 @@ static TInt g_glBench;
 static TBool g_glRender;
 static TBool g_texWhite;
 static TInt g_glrSkip;
+static TInt g_dummyTexSide;   // probe: bind cost against texture size
 
 extern "C" void ps1GuiUseInterpreter(void)
 	{
@@ -2277,6 +2279,7 @@ extern "C" int ps1GuiSetup(void)
 		glrSetEnabled(grc == 0 ? 1 : 0);
 		glrSetTexWhite(g_texWhite ? 1 : 0);
 		glrSetSkip(g_glrSkip);
+		glrSetDummyTex(g_dummyTexSide);
 		logEvent("glr", grc ? "GLR_INIT_FAIL" : NULL, "init rc=%d active=%d swoff=%d",
 			(int)grc, (int)glrEnabled(), (int)gpu_unai_sw_off);
 		}
@@ -2796,6 +2799,14 @@ GLDEF_C TInt E32Main()
 			}
 		// "glrskipN" - probe: skip primitive class (1 polygons, 2
 		// rectangles, 4 fill); bitmask combined.
+		_LIT(KDummyTexArg, "dummytex");
+		const TInt dtp = cl.FindF(KDummyTexArg);
+		if (dtp != KErrNotFound)
+			{
+			TLex lex(cl.Mid(dtp + 8));
+			TInt n = 0;
+			g_dummyTexSide = (lex.Val(n) == KErrNone) ? n : 0;
+			}
 		_LIT(KGlrSkipArg, "glrskip");
 		const TInt gskp = cl.FindF(KGlrSkipArg);
 		if (gskp != KErrNotFound)
