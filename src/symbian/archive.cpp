@@ -310,6 +310,10 @@ TInt CZipVol::ScanL(RFs &aFs, const TDesC &aPath)
 		e.iComp   = (TInt)rd32(cd + p + 20);
 		e.iSize   = (TInt)rd32(cd + p + 24);
 		e.iLocal  = (TInt)rd32(cd + p + 42);
+		// A corrupt directory can claim a name longer than what is left of the
+		// buffer; reading it would run past the allocation.
+		if (nlen < 0 || elen < 0 || clen < 0 || p + 46 + nlen + elen + clen > cdSize)
+			break;
 		TFileName name;
 		TPtrC8 raw(cd + p + 46, Min(nlen, name.MaxLength()));
 		name.Copy(raw);

@@ -688,11 +688,17 @@ static void dstName(const TDesC &aSrcName, const TDesC &aDir, const TDesC &aExt,
 	// Truncate only to fit path limit, not an arbitrary number: 40 chars cut
 	// titles mid-word ("...of the Night (USA" missing parenthesis) even with ample room.
 	const TInt room = aOut.MaxLength() - aDir.Length() - aExt.Length();
-	if (room > 0 && n.Length() > room)
+	// room can go negative on a deep destination directory, and then the name
+	// was appended unclipped and panicked the descriptor.
+	if (room <= 0)
+		n.Zero();
+	else if (n.Length() > room)
 		n.SetLength(room);
-	aOut = aDir;
-	aOut.Append(n);
-	aOut.Append(aExt);
+	aOut = aDir.Left(aOut.MaxLength());
+	if (aOut.Length() + n.Length() <= aOut.MaxLength())
+		aOut.Append(n);
+	if (aOut.Length() + aExt.Length() <= aOut.MaxLength())
+		aOut.Append(aExt);
 	}
 
 // Selects appropriate entry to convert: .cue takes precedence over .bin
