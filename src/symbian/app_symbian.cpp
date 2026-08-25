@@ -47,10 +47,11 @@ void ps1ScreenShot(void);
 void ps1CfgApply(const char *aDisc, const char *aBios, int aInterp, int aIlace,
 	int aLight, int aBlend, int aPixSkip, int aGteNf, int aSound, int aGl,
 	int aDirty, int aDsa, int aFps, int aGpuSkip, int aCycle, int aSmooth,
-	int aFxaa);
+	int aFxaa, int aSwDraw);
 // Підмножина, яку можна перемкнути прямо в грі (меню з паузи).
 void ps1CfgApplyLive(int aIlace, int aLight, int aBlend, int aPixSkip,
-	int aFps, int aGpuSkip, int aCycle, int aSmooth, int aFxaa, int aDirty);
+	int aFps, int aGpuSkip, int aCycle, int aSmooth, int aFxaa, int aDirty,
+	int aSwDraw);
 void voutSymbianSetKeyMap(const int *aScan, const int *aAlt, int aCount,
 	unsigned int aToggle);
 int  voutSymbianPadButtons(void);
@@ -81,7 +82,7 @@ enum TCfgItem
 	// ECfgGpuSkip. Лишився як зонд командного рядка "showskip".
 	ECfgStart = 0, ECfgGame, ECfgAdd, ECfgBios, ECfgProfile,
 	ECfgLight, ECfgBlend, ECfgIlace, ECfgPixSkip, ECfgSmooth, ECfgFxaa,
-	ECfgDirty, ECfgDsa, ECfgGl,
+	ECfgDirty, ECfgDsa, ECfgGl, ECfgSwDraw,
 	ECfgCpu, ECfgGteNf, ECfgGpuSkip, ECfgCycle, ECfgFps,
 	ECfgSound,
 	ECfgKeys,
@@ -101,7 +102,7 @@ static const unsigned char KItemSection[ECfgCount] =
 	{
 	ESecGame, ESecGame, ESecGame, ESecGame, ESecGame,
 	ESecVideo, ESecVideo, ESecVideo, ESecVideo, ESecVideo, ESecVideo,
-	ESecVideo, ESecVideo, ESecVideo,
+	ESecVideo, ESecVideo, ESecVideo, ESecVideo,
 	ESecSpeed, ESecSpeed, ESecSpeed, ESecSpeed, ESecSpeed,
 	ESecSound,
 	ESecInput,
@@ -112,10 +113,10 @@ static const TText *const KItemLabel[ECfgCount] =
 	{
 	_S("Start"), _S("Game"), _S("Add games..."), _S("BIOS"),
 	_S("Per-game profile"),
-	_S("Lighting"), _S("Transparency"), _S("Skip lines"), _S("Pixel skip"),
-	_S("Smooth scale"), _S("Edge smooth"), _S("Skip repeats"), _S("Direct draw"),
-	_S("GL output"),
-	_S("CPU"), _S("GTE no flags"), _S("Draw every"), _S("PS1 cycles"),
+	_S("3D lighting"), _S("Transparency"), _S("Interlace hack"), _S("Pixel skip"),
+	_S("Smooth scale"), _S("Edge smooth"), _S("Skip same frames"), _S("Direct draw"),
+	_S("GL output"), _S("Software draw"),
+	_S("CPU"), _S("GTE fast mode"), _S("Frameskip"), _S("PS1 CPU speed"),
 	_S("FPS meter"),
 	_S("Sound"),
 	_S("Controls..."),
@@ -129,7 +130,7 @@ static const char *const KCfgKey[ECfgCount] =
 	{
 	NULL, NULL, NULL, NULL, "profile",
 	"light", "blend", "ilace", "pixskip", "smooth", "fxaa",
-	"dirty", "dsa", "gl",
+	"dirty", "dsa", "gl", "swdraw",
 	"cpu", "gtenf", "gpuskip", "cycle", "fps",
 	"sound",
 	NULL,
@@ -175,7 +176,7 @@ public:
 	void SetDefaults();
 	TInt &Value(TInt aItem);
 	TInt iInterp, iIlace, iLight, iBlend, iPixSkip, iGteNf, iSound, iGl;
-	TInt iDirty, iDsa, iFps, iGpuSkip, iCycle, iSmooth, iFxaa, iProfile;
+	TInt iDirty, iDsa, iFps, iGpuSkip, iCycle, iSmooth, iFxaa, iProfile, iSwDraw;
 	TInt iKeyScan[KPadMax], iKeyAlt[KPadMax], iKeyHold[KPadMax];
 	// Ім'я дампу BIOS у E:\PS1\bios (без шляху). Порожнє - типовий scph7502.bin.
 	// Лежить у профілі гри, тож ігри, випущені лише в одному регіоні, дістають
@@ -186,7 +187,7 @@ public:
 
 void TPs1Cfg::SetDefaults()
 	{
-	iInterp = iIlace = iPixSkip = iGteNf = iGl = iFps = 0;
+	iInterp = iIlace = iPixSkip = iGteNf = iGl = iFps = iSwDraw = 0;
 	iGpuSkip = 0;
 	iDummy = 0;
 	iCycle = KCycleDefault;
@@ -230,6 +231,7 @@ TInt &TPs1Cfg::Value(TInt aItem)
 		case ECfgGteNf:   return iGteNf;
 		case ECfgSound:   return iSound;
 		case ECfgGl:      return iGl;
+		case ECfgSwDraw:  return iSwDraw;
 		case ECfgDirty:   return iDirty;
 		case ECfgDsa:     return iDsa;
 		case ECfgFps:     return iFps;
@@ -905,10 +907,10 @@ void CPs1Container::ItemValue(TInt aItem, TDes &aOut) const
 		case ECfgGpuSkip:
 			if (c.iGpuSkip < 0)
 				aOut.Copy(_L("auto"));
-			else if (c.iGpuSkip)
-				aOut.Format(_L("%d frames"), c.iGpuSkip + 1);
+			else if (c.iGpuSkip > 0)
+				aOut.Format(_L("%d"), c.iGpuSkip);
 			else
-				aOut.Copy(_L("frame"));
+				aOut.Copy(_L("off"));
 			break;
 		// Згладжування країв у 3D. Більше число - сильніше; всередині це нижчий
 		// поріг контрасту, тобто фільтр бере дедалі слабші межі.
@@ -1273,8 +1275,8 @@ void CPs1Container::Draw(const TRect & /*aRect*/) const
 		{
 		const TRect body = DrawChrome(gc, _L("PS1Emulator"),
 			iGameClosed  ? _L("game closed after import, OK exits")
-			: iStartedOnce ? _L("L/R change, OK resume, * restarts game")
-			               : _L("L/R change, OK start, C exit"));
+			: iStartedOnce ? _L("L/R change, OK resume, C back")
+			               : _L("L/R change, OK start, C exit  * = needs restart"));
 		DrawMain(gc, body);
 		}
 	gc.DiscardFont();
@@ -1303,7 +1305,8 @@ void CPs1Container::CloseMenu()
 	if (RestartNeeded())
 		iRestartReq = ETrue;
 	ps1CfgApplyLive(iCfg.iIlace, iCfg.iLight, iCfg.iBlend, iCfg.iPixSkip,
-		iCfg.iFps, iCfg.iGpuSkip, iCfg.iCycle, iCfg.iSmooth, iCfg.iFxaa, iCfg.iDirty);
+		iCfg.iFps, iCfg.iGpuSkip, iCfg.iCycle, iCfg.iSmooth, iCfg.iFxaa, iCfg.iDirty,
+		iCfg.iSwDraw);
 	iPage = EPageNone;
 	voutSymbianSuspend(0);
 	ps1Log("menu", "close");
@@ -1337,7 +1340,7 @@ void CPs1Container::ApplyAndStart()
 		iCfg.iInterp, iCfg.iIlace,
 		iCfg.iLight, iCfg.iBlend, iCfg.iPixSkip, iCfg.iGteNf, iCfg.iSound, iCfg.iGl,
 		iCfg.iDirty, iCfg.iDsa, iCfg.iFps, iCfg.iGpuSkip, iCfg.iCycle, iCfg.iSmooth,
-		iCfg.iFxaa);
+		iCfg.iFxaa, iCfg.iSwDraw);
 	iStartedOnce = ETrue;
 	iRestartReq = EFalse;
 	SnapRestart();

@@ -316,6 +316,10 @@ void glrSetTexWhite(int on);
 void glrSetSkip(int mask);
 // Вимикач програмного проходу gpu_unai (аргумент "swoff"). Живе у gpulib_if.cpp.
 extern int gpu_unai_sw_off;
+// Dynarec block pre-compile on state load: crashes on this device, off by default.
+extern "C" int ndrc_skip_load_blocks;
+// Set when "swoff" CLI arg is used; menu must not override it.
+static int g_swoffCli;
 int voutSymbianVisTest(int raw);
 void voutSymbianSetOverlay(int on);
 void voutSymbianSetNoUpdate(int on);
@@ -2380,7 +2384,7 @@ static void applyFxaaLevel(TInt aLevel)
 extern "C" void ps1CfgApply(const char *aDisc, const char *aBios, int aInterp,
 	int aIlace, int aLight, int aBlend, int aPixSkip, int aGteNf,
 	int aSound, int aGl, int aDirty, int aDsa, int aFps, int aGpuSkip, int aCycle,
-	int aSmooth, int aFxaa)
+	int aSmooth, int aFxaa, int aSwDraw)
 	{
 	g_discPath[0] = 0;
 	if (aDisc && aDisc[0])
@@ -2418,14 +2422,17 @@ extern "C" void ps1CfgApply(const char *aDisc, const char *aBios, int aInterp,
 		g_cycleMul = aCycle;
 	voutSymbianSetSmooth(aSmooth);
 	applyFxaaLevel(aFxaa);
+	if (!g_swoffCli)
+		gpu_unai_sw_off = (aGl && !aSwDraw) ? 1 : 0;
 	logEvent("cfg_bios", NULL, "bios=%s", g_biosFile[0] ? g_biosFile : KBiosFile);
 	logEvent("cfg", NULL, "disc=%s interp=%d ilace=%d light=%d blend=%d "
 		"pixskip=%d gtenf=%d snd=%d gl=%d dirty=%d dsa=%d fps=%d gpuskip=%d cyclemul=%d "
-		"smooth=%d fxaa=%d",
+		"smooth=%d fxaa=%d swdraw=%d swoff=%d",
 		g_discPath[0] ? g_discPath : KDiscImg, (int)aInterp,
 		(int)aIlace, (int)aLight, (int)aBlend, (int)aPixSkip, (int)aGteNf,
 		(int)aSound, (int)aGl, (int)aDirty, (int)aDsa, (int)aFps, (int)aGpuSkip,
-		(int)aCycle, (int)aSmooth, (int)aFxaa);
+		(int)aCycle, (int)aSmooth, (int)aFxaa, (int)aSwDraw,
+		(int)gpu_unai_sw_off);
 	}
 
 // Те саме, але з меню, відкритого вже в грі. Сюди потрапляє лише те, що можна
@@ -2433,7 +2440,8 @@ extern "C" void ps1CfgApply(const char *aDisc, const char *aBios, int aInterp,
 // потребують повторної ініціалізації й лишаються за ps1CfgApply. Викликати можна
 // тільки з паузи (тік CIdle не в кадрі): нижче є скидання кеша трансляцій.
 extern "C" void ps1CfgApplyLive(int aIlace, int aLight, int aBlend, int aPixSkip,
-	int aFps, int aGpuSkip, int aCycle, int aSmooth, int aFxaa, int aDirty)
+	int aFps, int aGpuSkip, int aCycle, int aSmooth, int aFxaa, int aDirty,
+	int aSwDraw)
 	{
 	g_hackIlace     = aIlace;
 	g_gpuLighting   = aLight;
@@ -2449,6 +2457,8 @@ extern "C" void ps1CfgApplyLive(int aIlace, int aLight, int aBlend, int aPixSkip
 	voutSymbianSetSmooth(aSmooth);
 	applyFxaaLevel(aFxaa);
 	voutSymbianSetDirtyOnly(aDirty);
+	if (!g_swoffCli)
+		gpu_unai_sw_off = (voutSymbianGlActive() && !aSwDraw) ? 1 : 0;
 
 	if (aGpuSkip != g_gpuFrameskip)
 		{
@@ -2471,9 +2481,10 @@ extern "C" void ps1CfgApplyLive(int aIlace, int aLight, int aBlend, int aPixSkip
 		}
 
 	logEvent("cfg_live", NULL, "ilace=%d light=%d blend=%d pixskip=%d fps=%d "
-		"gpuskip=%d cyclemul=%d smooth=%d fxaa=%d dirty=%d",
+		"gpuskip=%d cyclemul=%d smooth=%d fxaa=%d dirty=%d swdraw=%d swoff=%d",
 		(int)aIlace, (int)aLight, (int)aBlend, (int)aPixSkip, (int)aFps,
-		(int)aGpuSkip, (int)aCycle, (int)aSmooth, (int)aFxaa, (int)aDirty);
+		(int)aGpuSkip, (int)aCycle, (int)aSmooth, (int)aFxaa, (int)aDirty,
+		(int)aSwDraw, (int)gpu_unai_sw_off);
 	}
 
 extern "C" void ps1LogFmt(const char *aType, const char *aFmt, ...)
@@ -2801,7 +2812,7 @@ GLDEF_C TInt E32Main()
 		// сенсу не має - лише разом із "glrender".
 		_LIT(KSwOffArg, "swoff");
 		if (cl.FindF(KSwOffArg) != KErrNotFound)
-			gpu_unai_sw_off = 1;
+			{ gpu_unai_sw_off = 1; g_swoffCli = 1; }
 		_LIT(KGlBenchArg, "glbench");
 		const TInt gbp = cl.FindF(KGlBenchArg);
 		if (gbp != KErrNotFound)
@@ -2979,6 +2990,9 @@ GLDEF_C TInt E32Main()
 		_LIT(KSaveFuncsArgG, "savefuncs");
 		if (cl.FindF(KSaveFuncsArgG) != KErrNotFound)
 			g_saveFuncsOverride = ETrue;
+		_LIT(KBlkLoadArg, "blkload");
+		if (cl.FindF(KBlkLoadArg) != KErrNotFound)
+			ndrc_skip_load_blocks = 0;
 		_LIT(KLoadStateArg, "loadstate");
 		const TInt lsp = cl.FindF(KLoadStateArg);
 		if (lsp != KErrNotFound)
