@@ -225,7 +225,8 @@ unsigned short in_keystate[8];
 
 // Tilt reaches the pad here rather than through in_keystate: it drives the stick,
 // which the key path knows nothing about.
-int voutSymbianTiltAnalog(unsigned char *aX, unsigned char *aY);
+int voutSymbianTiltAnalog(unsigned char *aLX, unsigned char *aLY,
+	unsigned char *aRX, unsigned char *aRY);
 unsigned short voutSymbianTiltPadBits(void);
 
 // in_keystate[0] holds pressed buttons active-high (DKEY_* bits), populated
@@ -234,8 +235,8 @@ void PAD1_readPort(struct PadDataS *pad, int *is_multitap)
 	{
 	if (pad)
 		{
-		unsigned char ax = 127, ay = 127;
-		const int tilt = voutSymbianTiltAnalog(&ax, &ay);
+		unsigned char lx = 127, ly = 127, rx = 127, ry = 127;
+		const int tilt = voutSymbianTiltAnalog(&lx, &ly, &rx, &ry);
 		// The core keeps DualShock state - analog and config mode - inside this
 		// struct between polls, so wiping it here would undo the mode every frame.
 		if (tilt)
@@ -251,10 +252,10 @@ void PAD1_readPort(struct PadDataS *pad, int *is_multitap)
 		// The digital bits fire only at full stick, so a game that ignores the
 		// stick still answers a hard tilt, and one that reads it sees nothing new.
 		pad->buttonStatus = (unsigned short)~(in_keystate[0] | voutSymbianTiltPadBits());
-		pad->leftJoyX = ax;
-		pad->leftJoyY = ay;
-		pad->rightJoyX = 127;
-		pad->rightJoyY = 127;
+		pad->leftJoyX = lx;
+		pad->leftJoyY = ly;
+		pad->rightJoyX = rx;
+		pad->rightJoyY = ry;
 		}
 	if (is_multitap) *is_multitap = 0;
 	}
@@ -1814,7 +1815,7 @@ static TBool passStep()
 		int tx = 0, ty = 0, tzx = 0, tzy = 0, tp = 0;
 		const int tn = voutSymbianTiltStats(&tx, &ty, &tzx, &tzy, &tp);
 		unsigned char sx = 127, sy = 127;
-		voutSymbianTiltAnalog(&sx, &sy);
+		voutSymbianTiltAnalog(&sx, &sy, NULL, NULL);
 		logEvent("tilttrace", NULL, "f=%d n=%d x=%d y=%d dx=%d dy=%d sx=%d sy=%d pad=%04x",
 			(int)g_pass.i, tn, tx, ty, tx - tzx, ty - tzy, (int)sx, (int)sy, (unsigned)tp);
 		}

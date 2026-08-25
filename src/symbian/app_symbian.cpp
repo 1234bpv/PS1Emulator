@@ -56,6 +56,7 @@ void ps1CfgApplyLive(int aIlace, int aLight, int aBlend, int aPixSkip,
 	int aFps, int aGpuSkip, int aCycle, int aSmooth, int aFxaa, int aDirty,
 	int aSwDraw);
 extern "C" void voutSymbianSetTilt(int aOn);
+extern "C" void voutSymbianSetTiltMap(int aSide, int aPitch, int aDead, int aSensPct);
 extern "C" int voutSymbianTiltActive(void);
 extern "C" int ps1TiltCli(void);
 void voutSymbianSetKeyMap(const int *aScan, const int *aAlt, int aCount,
@@ -91,7 +92,7 @@ enum TCfgItem
 	ECfgDirty, ECfgDsa, ECfgGl, ECfgSwDraw,
 	ECfgCpu, ECfgGteNf, ECfgGpuSkip, ECfgCycle, ECfgFps,
 	ECfgSound,
-	ECfgTilt, ECfgKeys,
+	ECfgTilt, ECfgTiltSide, ECfgTiltPitch, ECfgTiltDead, ECfgTiltSens, ECfgKeys,
 	ECfgLang,
 	ECfgReset, ECfgExit,
 	ECfgCount
@@ -112,7 +113,7 @@ static const unsigned char KItemSection[ECfgCount] =
 	ESecVideo, ESecVideo, ESecVideo, ESecVideo,
 	ESecSpeed, ESecSpeed, ESecSpeed, ESecSpeed, ESecSpeed,
 	ESecSound,
-	ESecInput, ESecInput,
+	ESecInput, ESecInput, ESecInput, ESecInput, ESecInput, ESecInput,
 	ESecSystem, ESecSystem, ESecSystem
 	};
 
@@ -127,6 +128,7 @@ static const TStrId KItemLabelStrId[ECfgCount] =
 	EStrItemFps,
 	EStrItemSound,
 	EStrItemTilt,
+	EStrItemTiltSide, EStrItemTiltPitch, EStrItemTiltDead, EStrItemTiltSens,
 	EStrItemKeys,
 	EStrItemLang,
 	EStrItemReset, EStrItemExit
@@ -142,7 +144,7 @@ static const char *const KCfgKey[ECfgCount] =
 	"dirty", "dsa", "gl", "swdraw",
 	"cpu", "gtenf", "gpuskip", "cycle", "fps",
 	"sound",
-	"tilt", NULL,
+	"tilt", "tiltside", "tiltpitch", "tiltdead", "tiltsens", NULL,
 	"lang",
 	NULL, NULL
 	};
@@ -189,7 +191,7 @@ public:
 	TInt iInterp, iIlace, iLight, iBlend, iPixSkip, iGteNf, iSound, iGl;
 	TInt iDirty, iDsa, iFps, iGpuSkip, iCycle, iSmooth, iFxaa, iProfile, iSwDraw;
 	TInt iLang;
-	TInt iTilt;
+	TInt iTilt, iTiltSide, iTiltPitch, iTiltDead, iTiltSens;
 	TInt iKeyScan[KPadMax], iKeyAlt[KPadMax], iKeyHold[KPadMax];
 	// BIOS dump name in E:\PS1\bios (without path). Empty means default scph7502.bin.
 	// Stored in the game profile, so games released in only one region get their
@@ -208,6 +210,12 @@ void TPs1Cfg::SetDefaults()
 	// the decimation eats thin font strokes, and that is an artifact, not a speedup.
 	// Tilt is off until asked for: it costs a sensor session and only one phone has one.
 	iTilt = 0;
+	// Sideways to the left stick X, forward-back to its Y: the binding measured on
+	// the phone, where the stick follows the tilt as a marble on the screen would.
+	iTiltSide = 1;
+	iTiltPitch = 3;
+	iTiltDead = 10;
+	iTiltSens = 100;
 	iSmooth = 1;
 	// Edge anti-aliasing is OFF by default: measured -17% frames on trace, and on a
 	// 320x240 screen the benefit is not visible in every game. Enable deliberately.
@@ -258,7 +266,11 @@ TInt &TPs1Cfg::Value(TInt aItem)
 		case ECfgFxaa:    return iFxaa;
 		case ECfgProfile: return iProfile;
 		case ECfgLang:    return iLang;
-		case ECfgTilt:    return iTilt;
+		case ECfgTilt:      return iTilt;
+		case ECfgTiltSide:  return iTiltSide;
+		case ECfgTiltPitch: return iTiltPitch;
+		case ECfgTiltDead:  return iTiltDead;
+		case ECfgTiltSens:  return iTiltSens;
 		default:          return iDummy;
 		}
 	}
@@ -467,6 +479,7 @@ void CPs1Container::ConstructL(const TRect &aRect)
 		iCfg.iTilt = 1;
 	ApplyKeyMap();
 	voutSymbianSetTilt(iCfg.iTilt);
+	voutSymbianSetTiltMap(iCfg.iTiltSide, iCfg.iTiltPitch, iCfg.iTiltDead, iCfg.iTiltSens);
 	if (iCfg.iTilt && !voutSymbianTiltActive()) iCfg.iTilt = 0;
 	ps1LogInt("tilt", "active", voutSymbianTiltActive());
 
@@ -507,6 +520,10 @@ TBool CPs1Container::ItemVisible(TInt aItem) const
 	// The switch only has an effect alongside GL; without it the software path always runs.
 	if (aItem == ECfgSwDraw)
 		return iCfg.iGl;
+	// Tuning rows for a sensor that is switched off would be four dead lines.
+	if (aItem == ECfgTiltSide || aItem == ECfgTiltPitch ||
+	    aItem == ECfgTiltDead || aItem == ECfgTiltSens)
+		return iCfg.iTilt;
 	return ETrue;
 	}
 
@@ -1095,6 +1112,31 @@ void CPs1Container::ItemValue(TInt aItem, TDes &aOut) const
 				aOut.Format(_L("%d%%"), pct);
 			}
 			break;
+		case ECfgTiltSide:
+		case ECfgTiltPitch:
+			{
+			// Stick and axis in three characters, with a leading minus for the reversed
+			// direction: no wording to translate and none to misread.
+			const TInt m = (aItem == ECfgTiltSide) ? c.iTiltSide : c.iTiltPitch;
+			if (m <= 0)
+				aOut.Copy(Tr(EStrValOff));
+			else
+				{
+				const TInt t = (m - 1) / 2;
+				aOut.Zero();
+				if ((m - 1) & 1) aOut.Append(TChar(0x2D));
+				aOut.Append(TChar((t < 2) ? 0x4C : 0x52));
+				aOut.Append(TChar((t & 1) ? 0x59 : 0x58));
+				}
+			}
+			break;
+		case ECfgTiltDead:
+			aOut.Format(_L("%d"), c.iTiltDead);
+			break;
+		case ECfgTiltSens:
+			aOut.Format(_L("%d%%"), c.iTiltSens);
+			break;
+
 		case ECfgKeys:
 			aOut.Copy(Tr(EStrValPressOk));
 			break;
@@ -1526,6 +1568,7 @@ void CPs1Container::DoCloseMenu(TBool aWithRestart)
 	SaveAll();
 	ApplyKeyMap();
 	voutSymbianSetTilt(iCfg.iTilt);
+	voutSymbianSetTiltMap(iCfg.iTiltSide, iCfg.iTiltPitch, iCfg.iTiltDead, iCfg.iTiltSens);
 	// No sensor means the switch would sit on "on" and do nothing.
 	if (iCfg.iTilt && !voutSymbianTiltActive()) iCfg.iTilt = 0;
 	// A different disc (or BIOS, CPU branch, sound, GL, DSA) cannot be switched on the
@@ -1580,6 +1623,7 @@ void CPs1Container::ApplyAndStart()
 	SaveAll();
 	ApplyKeyMap();
 	voutSymbianSetTilt(iCfg.iTilt);
+	voutSymbianSetTiltMap(iCfg.iTiltSide, iCfg.iTiltPitch, iCfg.iTiltDead, iCfg.iTiltSens);
 	// No sensor means the switch would sit on "on" and do nothing.
 	if (iCfg.iTilt && !voutSymbianTiltActive()) iCfg.iTilt = 0;
 	TBuf8<KMaxFileName> path8;
@@ -1691,6 +1735,23 @@ TKeyResponse CPs1Container::MainKeyL(TInt aScan)
 				if (v < KCycleMin) v = KCycleMax;
 				if (v > KCycleMax) v = KCycleMin;
 				}
+			else if (iSel == ECfgTiltSide || iSel == ECfgTiltPitch)
+				{
+				v = (v + d + 9) % 9;
+				}
+			else if (iSel == ECfgTiltDead)
+				{
+				v += d * 2;
+				if (v < 0) v = 40;
+				if (v > 40) v = 0;
+				}
+			else if (iSel == ECfgTiltSens)
+				{
+				v += d * 10;
+				if (v < 40) v = 300;
+				if (v > 300) v = 40;
+				}
+
 			else if (iSel == ECfgLang)
 				{
 				const TInt count = I18nLanguageCount();

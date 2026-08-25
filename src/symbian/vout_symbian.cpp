@@ -266,20 +266,18 @@ static unsigned short g_tiltPad;
 static TInt  g_tiltReads;
 static TInt  g_tiltLastX;
 static TInt  g_tiltLastY;
-// The digital bits are a fallback for a game that never leaves digital mode, so
-// they fire only where the stick is already at full deflection.
-const TInt KTiltOn  = 140;
-const TInt KTiltOff = 110;
-const TInt KTiltPitchOn  = 200;
-const TInt KTiltPitchOff = 160;
-// Analog: the point of tilt is a proportional turn, so the dead zone is only what
-// a hand cannot hold still, and full deflection sits at a comfortable wrist angle.
-const TInt KTiltDead      = 10;
-const TInt KTiltSpan      = 140;
-const TInt KTiltPitchDead = 40;
-const TInt KTiltPitchSpan = 200;
-static unsigned char g_tiltAX = 127;
-static unsigned char g_tiltAY = 127;
+// Where each sensor axis goes, as one number per axis so the menu can cycle target
+// and direction in a single row: 0 off, then LX, -LX, LY, -LY, RX, -RX, RY, -RY.
+// Sensor Y runs across the screen and drives the left stick sideways by default.
+static TInt g_tiltMapSide  = 1;
+static TInt g_tiltMapPitch = 3;
+// The dead zone is only what a hand cannot hold still; the span is where the stick
+// reaches full deflection, about eighteen degrees at the default sensitivity.
+static TInt g_tiltDead = 10;
+const TInt KTiltSpanBase = 93;
+static TInt g_tiltSpan = KTiltSpanBase;
+static unsigned char g_tiltStick[4] = { 127, 127, 127, 127 };
+
 static unsigned short tiltPad(void);
 
 // Direct write to LCD buffer (HAL): scale frame directly to screen, merging fill
@@ -2032,10 +2030,18 @@ static unsigned char tiltStick(TInt aVal, TInt aDead, TInt aSpan)
 	return (unsigned char)(127 - (v * 127) / span);
 	}
 
+// A sensor axis after its mapping: zero when the axis is switched off, negated when
+// the row asks for the reversed direction.
+static TInt tiltDelta(TInt aMap, TInt aDelta)
+	{
+	if (aMap <= 0)
+		return 0;
+	return ((aMap - 1) & 1) ? -aDelta : aDelta;
+	}
+
 // Measured on the N95 held for play: tilting the phone left drives Y positive and
-// tipping its far edge down drives X positive, so the pad follows the tilt the way
-// a marble on the screen would. The pitch axis wanders about a hundred units while
-// the phone is merely held, hence its own, larger threshold.
+// tipping its far edge down drives X positive, so by default the stick follows the
+// tilt the way a marble on the screen would.
 static unsigned short tiltPad(void)
 	{
 	if (!g_tilt)
@@ -2048,24 +2054,47 @@ static unsigned short tiltPad(void)
 	g_tiltLastY = y;
 	if (!g_tiltZeroed)
 		{ g_tiltZeroX = x; g_tiltZeroY = y; g_tiltZeroed = ETrue; }
-	tiltAxis(y - g_tiltZeroY, KTiltOn, KTiltOff,
+	const TInt dSide  = tiltDelta(g_tiltMapSide,  y - g_tiltZeroY);
+	const TInt dPitch = tiltDelta(g_tiltMapPitch, x - g_tiltZeroX);
+	g_tiltStick[0] = g_tiltStick[1] = g_tiltStick[2] = g_tiltStick[3] = 127;
+	if (g_tiltMapSide > 0)
+		g_tiltStick[(g_tiltMapSide - 1) / 2] = tiltStick(dSide, g_tiltDead, g_tiltSpan);
+	if (g_tiltMapPitch > 0)
+		g_tiltStick[(g_tiltMapPitch - 1) / 2] = tiltStick(dPitch, g_tiltDead, g_tiltSpan);
+	// The digital bits are a fallback for a game that never leaves digital mode, so
+	// they fire only where the stick is already at full deflection.
+	tiltAxis(dSide, g_tiltSpan, g_tiltSpan * 4 / 5,
 		(unsigned short)(1 << DKEY_RIGHT), (unsigned short)(1 << DKEY_LEFT));
-	tiltAxis(x - g_tiltZeroX, KTiltPitchOn, KTiltPitchOff,
+	tiltAxis(dPitch, g_tiltSpan, g_tiltSpan * 4 / 5,
 		(unsigned short)(1 << DKEY_DOWN), (unsigned short)(1 << DKEY_UP));
-	g_tiltAX = tiltStick(y - g_tiltZeroY, KTiltDead, KTiltSpan);
-	g_tiltAY = tiltStick(x - g_tiltZeroX, KTiltPitchDead, KTiltPitchSpan);
 	return g_tiltPad;
 	}
 
-// The stick the tilt drives, and the pad bits it would press if the game never
-// leaves digital mode. Both come from the sample taken in the frame poll.
-extern "C" int voutSymbianTiltAnalog(unsigned char *aX, unsigned char *aY)
+// Both sticks the tilt drives, and the pad bits it would press if the game never
+// leaves digital mode. All of it comes from the sample taken in the frame poll.
+extern "C" int voutSymbianTiltAnalog(unsigned char *aLX, unsigned char *aLY,
+	unsigned char *aRX, unsigned char *aRY)
 	{
 	if (!g_tilt || !g_tiltZeroed)
 		return 0;
-	if (aX) *aX = g_tiltAX;
-	if (aY) *aY = g_tiltAY;
+	if (aLX) *aLX = g_tiltStick[0];
+	if (aLY) *aLY = g_tiltStick[1];
+	if (aRX) *aRX = g_tiltStick[2];
+	if (aRY) *aRY = g_tiltStick[3];
 	return 1;
+	}
+
+// Menu settings for tilt. Sensitivity is a percentage of the default, so a bigger
+// number means a smaller angle for full deflection.
+extern "C" void voutSymbianSetTiltMap(int aSide, int aPitch, int aDead, int aSensPct)
+	{
+	g_tiltMapSide  = (aSide  >= 0 && aSide  < 9) ? aSide  : 1;
+	g_tiltMapPitch = (aPitch >= 0 && aPitch < 9) ? aPitch : 3;
+	g_tiltDead = (aDead >= 0 && aDead <= 80) ? aDead : 10;
+	const TInt pct = (aSensPct >= 25 && aSensPct <= 400) ? aSensPct : 100;
+	g_tiltSpan = KTiltSpanBase * 100 / pct;
+	if (g_tiltSpan <= g_tiltDead)
+		g_tiltSpan = g_tiltDead + 1;
 	}
 
 extern "C" unsigned short voutSymbianTiltPadBits(void)

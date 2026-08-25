@@ -51,7 +51,7 @@ All listed features are implemented and verified in the codebase:
   - Complete 14-button digital PlayStation controller mapping.
   - In-app key remapping interface with secondary key assignment.
   - Key toggle/hold mode for sustaining button states (e.g., vehicle acceleration).
-  - Optional tilt control on phones with an accelerometer (Nokia N95); the position the phone is held in when it is switched on becomes the neutral one.
+  - Optional tilt control on phones with an accelerometer (Nokia N95): the tilt drives an analogue stick, with an adjustable dead zone, sensitivity, axis assignment and inversion. The position the phone is held in when it is switched on becomes the neutral one.
 - **Native User Interface**:
   - Full-screen AVKON interface with custom rendering.
   - Built-in file browser with game auto-detection.
@@ -146,7 +146,10 @@ Settings are divided into logical sections within the menu. Items marked with `*
 - **`Sound` \*** (`on` / `off`): Enables or disables SPU sound emulation and audio output.
 
 ### CONTROLS Section
-- **`Tilt control`** (`on` / `off`): Steers the D-pad from the accelerometer. It reverts to `off` on a phone that has no sensor, so the switch never sits on `on` doing nothing.
+- **`Tilt control`** (`on` / `off`): Steers from the accelerometer. While it is on the controller reports itself as a DualShock and the tilt moves an analogue stick, which is what makes a partial turn possible at all. It reverts to `off` on a phone that has no sensor, so the switch never sits on `on` doing nothing. Four rows below it appear only while it is on:
+- **`Tilt: sideways`** and **`Tilt: forward-back`**: where each axis of the sensor goes. `LX` and `LY` are the left stick, `RX` and `RY` the right one, a leading minus reverses the direction, and `off` unbinds the axis. The defaults, `LX` and `LY`, make the stick follow the tilt the way a marble on the screen would.
+- **`Tilt dead zone`** (`0` to `40`): how far the phone may stray from the neutral position before the stick moves at all. The default is `10`, about two degrees.
+- **`Tilt sensitivity`** (`40%` to `300%`): a larger number needs a smaller angle for full deflection. The default, `100%`, reaches the stops at about eighteen degrees.
 - **`Controls...`**: Opens the button mapping menu to configure scan codes and hold/toggle flags for all 14 controller buttons.
 
 ### SYSTEM Section
