@@ -45,7 +45,7 @@ All listed features are implemented and verified in the codebase:
   - Adaptive frameskip advice mechanism synchronized with guest framebuffer swapping.
   - Configurable fixed frameskip levels.
   - Adjustable guest CPU cycle multiplier.
-- **State Management**: Save state and load state support (`SaveState` / `LoadState`).
+- **State Management**: Five save-state slots per game, written to and read from `E:\PS1\saves\`.
 - **Localised Interface**: Fifteen interface languages, chosen in the menu or taken from the phone own language setting.
 - **Input & Controls**:
   - Complete 14-button digital PlayStation controller mapping.
@@ -114,6 +114,7 @@ Settings are divided into logical sections within the menu. Items marked with `*
 ### GAME Section
 - **`Start` / `Resume` / `Restart game`**: Begins emulation, resumes the active game from pause, or restarts the session when restart-only settings have been altered.
 - **`Game` \***: Opens the file browser to select a disc image (`.bin`, `.img`, `.iso`, `.pbp`, `.cbn`, `.cbin`).
+- **`Save state`** / **`Load state`** (slots `1`-`5`): Saves or restores the whole machine state to `E:\PS1\saves\`, under a name derived from the disc image and the slot number. Both items appear only while a game is running; left and right pick the slot.
 - **`Add games...`**: Launches the batch import and extraction utility to scan storage drives for disc images and archives (`.zip`, `.7z`, `.rar`, `.cue`) and convert them to compressed `.pbp` format.
 - **`BIOS` \***: Selects a custom PlayStation BIOS ROM dump from `E:\PS1\bios\` or extracts one from an archive (default: `scph7502.bin`).
 - **`Per-game profile`** (`on` / `off`): Enables storing and loading independent configuration settings and keymaps for each game under `E:\PS1\cfg\`.
