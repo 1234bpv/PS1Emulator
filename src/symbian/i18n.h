@@ -123,6 +123,7 @@ enum TStrId
 	EStrAskRestartNo,
 	EStrAskRestartWarn1,
 	EStrAskRestartWarn2,
+	EStrBiosErr,
 	EStrCount
 	};
 

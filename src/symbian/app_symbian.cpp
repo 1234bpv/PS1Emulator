@@ -491,6 +491,9 @@ TBool CPs1Container::ItemVisible(TInt aItem) const
 	{
 	if (aItem == ECfgSaveState || aItem == ECfgLoadState)
 		return iStartedOnce && !iGameClosed;
+	// The switch only has an effect alongside GL; without it the software path always runs.
+	if (aItem == ECfgSwDraw)
+		return iCfg.iGl;
 	return ETrue;
 	}
 
@@ -1014,7 +1017,21 @@ void CPs1Container::ItemValue(TInt aItem, TDes &aOut) const
 			break;
 		case ECfgSaveState:
 		case ECfgLoadState:
+			{
 			aOut.Format(Tr(EStrValSlotFmt), iStateSlot);
+			// A symbol rather than a word: the marker needs no translation.
+			TFileName p;
+			StatePath(p, iStateSlot);
+			RFs fs;
+			TBool have = EFalse;
+			if (fs.Connect() == KErrNone)
+				{
+				TEntry e;
+				have = (fs.Entry(p, e) == KErrNone);
+				fs.Close();
+				}
+			aOut.Append(have ? _L(" [*]") : _L(" [ ]"));
+			}
 			break;
 		case ECfgAdd:
 			aOut.Copy(Tr(EStrValPressOk));
@@ -1116,13 +1133,19 @@ void CPs1Container::DrawRow(CWindowGc &gc, const TRect &aBody, TInt aY, TInt aLh
 			aY - asc - 1 + aLh));
 		gc.SetPenStyle(CGraphicsContext::ESolidPen);
 		}
+	const TInt rw = aRight.Length() ? font->TextWidthInPixels(aRight) : 0;
+	// Translated labels are longer than the English ones and would print under the value.
+	TInt avail = aBody.Width() - 20 - (rw ? rw + 8 : 0);
+	if (avail < 0) avail = 0;
+	TPtrC left(aLeft);
+	if (font->TextWidthInPixels(left) > avail)
+		left.Set(left.Left(font->TextCount(left, avail)));
 	gc.SetPenColor(aSel ? KRgbWhite : TRgb(0xc8, 0xc8, 0xd0));
-	gc.DrawText(aLeft, TPoint(aBody.iTl.iX + 10, aY));
-	if (aRight.Length())
+	gc.DrawText(left, TPoint(aBody.iTl.iX + 10, aY));
+	if (rw)
 		{
 		gc.SetPenColor(aSel ? TRgb(0xff, 0xdc, 0x88) : TRgb(0x8c, 0xb0, 0xd8));
-		const TInt w = font->TextWidthInPixels(aRight);
-		gc.DrawText(aRight, TPoint(aBody.iBr.iX - 10 - w, aY));
+		gc.DrawText(aRight, TPoint(aBody.iBr.iX - 10 - rw, aY));
 		}
 	}
 
@@ -1930,6 +1953,8 @@ TKeyResponse CPs1Container::BiosKeyL(TInt aScan)
 						fs.Close();
 						if (r == KErrNone)
 							iCfg.iBios = name;
+						else
+							iStatusMsg.Copy(Tr(EStrBiosErr));
 						ps1LogInt("bios", "pick", r);
 						}
 					}
@@ -2004,6 +2029,7 @@ TKeyResponse CPs1Container::ProgressKeyL(TInt aScan)
 			// Freshly imported games should appear in the list immediately.
 			iScanMode = EScanGames;
 			iBrowsePath = KImgDir;
+			if (!iGamePath.Length()) AutoPickGameL();
 			iPage = EPageMain;
 			}
 		DrawNow();
