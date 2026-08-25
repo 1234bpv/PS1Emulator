@@ -106,7 +106,10 @@ All listed features are implemented and verified in the codebase:
 - **Side Volume Keys** or **Key `#` (Volume Up)** / **Key `*` (Volume Down)**: Adjust audio output volume.
 
 ### Controls Configuration
-The `Controls...` menu allows assigning custom scan codes to each button and toggling the hold/toggle mode per button.
+The `Controls...` menu allows assigning custom scan codes to each button and toggling the hold/toggle mode per button. Select a button and press OK to bind a key, or Left/Right to switch that button into hold mode, marked `hold` in the row. In hold mode one press latches the button down and the next press releases it, which is what keeps Cross held through a race without holding the key.
+
+### Starting a Game
+Only the `Start` item launches the game (it reads `Resume` once a game is running). OK on any other row opens the game manager, so a stray press cannot restart a race.
 
 ## 6. Settings
 
@@ -136,7 +139,7 @@ Settings are divided into logical sections within the menu. Items marked with `*
 - **`CPU` \*** (`dynarec` / `interpreter`): Selects the CPU execution engine (Ari64 dynamic recompiler or interpreter).
 - **`GTE fast mode` \*** (`on` / `off`): Skips GTE flag calculation in the dynamic recompiler. It changes the geometry the GTE produces, so it alters the picture and is not always faster: measured on Gran Turismo it costs about 6 percent, because the rasteriser then receives more work.
 - **`Frameskip`** (`off`, `auto`, `1`–`3`): GPU rendering frameskip. In `auto` mode, the emulator dynamically drops frames based on timing advice.
-- **`PS1 CPU speed`** (`100`–`300`, default `175`): Guest CPU cycle multiplier - how many cycles one guest instruction is charged, so lower values make the emulated CPU effectively faster. Measured on Gran Turismo, a 25 percent overclock costs 2.5 percent of wall time and buys under 1 percent more drawn geometry, so treat it as a per-game remedy rather than a general speed-up.
+- **`PS1 CPU speed`** (`58%` to `175%`, default `100%`): Speed of the emulated PlayStation processor, shown as a percentage where a larger number is faster. Internally it is the cycle multiplier - how many cycles one guest instruction is charged - which is why the steps are uneven. Measured on Gran Turismo, a 25 percent overclock costs 2.5 percent of wall time and buys under 1 percent more drawn geometry, so treat it as a per-game remedy rather than a general speed-up.
 - **`FPS meter`** (`on` / `off`): Displays real-time frames per second and frame calculation time on screen.
 
 ### SOUND Section

@@ -1085,10 +1085,15 @@ void CPs1Container::ItemValue(TInt aItem, TDes &aOut) const
 				aOut.Copy(Tr(EStrValOff));
 			break;
 		case ECfgCycle:
+			{
+			// Shown as speed rather than as the cycle multiplier it is, so that a
+			// larger number means a faster PS1 processor.
+			const TInt pct = (KCycleDefault * 100 + c.iCycle / 2) / c.iCycle;
 			if (c.iCycle == KCycleDefault)
-				aOut.Format(Tr(EStrValCycleDefFmt), c.iCycle);
+				aOut.Format(Tr(EStrValCycleDefFmt), pct);
 			else
-				aOut.Format(_L("%d"), c.iCycle);
+				aOut.Format(_L("%d%%"), pct);
+			}
 			break;
 		case ECfgKeys:
 			aOut.Copy(Tr(EStrValPressOk));
@@ -1681,7 +1686,8 @@ TKeyResponse CPs1Container::MainKeyL(TInt aScan)
 				}
 			else if (iSel == ECfgCycle)
 				{
-				v += d * KCycleStep;
+				// The shown number is speed, so right must lower the multiplier.
+				v -= d * KCycleStep;
 				if (v < KCycleMin) v = KCycleMax;
 				if (v > KCycleMax) v = KCycleMin;
 				}
@@ -1782,29 +1788,19 @@ TKeyResponse CPs1Container::MainKeyL(TInt aScan)
 				CEikonEnv::Static()->EikAppUi()->HandleCommandL(EEikCmdExit);
 				return EKeyWasConsumed;
 			default:
-				if (iGameClosed)
-					CEikonEnv::Static()->EikAppUi()->HandleCommandL(EEikCmdExit);
-				else if (!iGamePath.Length() && !iStartedOnce)
+				// A value row does not start the game: that belongs to Start alone,
+				// and OK landing on a hidden action cost a restart more than once.
+				if (iGamePath.Length())
 					{
-					iBrowsePath = KImgDir;
-					iScanMode = EScanGames;
-					ScanDirL();
-					iPage = EPageFiles;
-					}
-				else if (iStartedOnce)
-					{
-					if (RestartNeeded())
-						{
-						iAsk = EAskRestart;
-						iAskSel = 0;
-						iPage = EPageAsk;
-						}
-					else
-						DoCloseMenu(EFalse);
+					const TInt s = iGamePath.LocateReverse('\\');
+					iBrowsePath = iGamePath.Left(s + 1);
 					}
 				else
-					ApplyAndStart();
-				return EKeyWasConsumed;
+					iBrowsePath = KImgDir;
+				iScanMode = EScanGames;
+				ScanDirL();
+				iPage = EPageFiles;
+				break;
 			}
 		DrawNow();
 		return EKeyWasConsumed;
