@@ -914,9 +914,17 @@ void CPs1Container::SaveCfg(const TDesC &aPath, TBool aWithGame) const
 		return;
 	// The profiles directory may not exist yet; we ignore the "already exists" error.
 	fs.MkDirAll(aPath);
+	// Written aside and renamed over the target: a card that fills up mid-write
+	// would otherwise leave the settings file truncated.
+	TFileName tmp(aPath);
+	if (tmp.Length() + 4 <= tmp.MaxLength())
+		tmp.Append(_L(".new"));
+	else
+		tmp.Copy(aPath);
 	RFile f;
-	if (f.Replace(fs, aPath, EFileWrite | EFileShareAny) == KErrNone)
+	if (f.Replace(fs, tmp, EFileWrite | EFileShareAny) == KErrNone)
 		{
+		TInt werr = KErrNone;
 		TPs1Cfg &c = const_cast<TPs1Cfg &>(iCfg);
 		TBuf8<KMaxFileName + 16> line;
 		if (aWithGame && iGamePath.Length())
@@ -924,7 +932,7 @@ void CPs1Container::SaveCfg(const TDesC &aPath, TBool aWithGame) const
 			TBuf8<KMaxFileName> g;
 			g.Copy(iGamePath);
 			line.Format(_L8("game=%S\n"), &g);
-			f.Write(line);
+			if (werr == KErrNone) werr = f.Write(line);
 			}
 		// BIOS is written to both files: in the profile it is per-game, in the
 		// global file it is the default for games that have no profile yet.
@@ -933,21 +941,25 @@ void CPs1Container::SaveCfg(const TDesC &aPath, TBool aWithGame) const
 			TBuf8<KMaxFileName> b;
 			b.Copy(iCfg.iBios);
 			line.Format(_L8("bios=%S\n"), &b);
-			f.Write(line);
+			if (werr == KErrNone) werr = f.Write(line);
 			}
 		for (TInt i = 0; i < ECfgCount; i++)
 			if (KCfgKey[i])
 				{
 				line.Format(_L8("%s=%d\n"), KCfgKey[i], c.Value(i));
-				f.Write(line);
+				if (werr == KErrNone) werr = f.Write(line);
 				}
 		for (TInt b = 0; b < iPadCount; b++)
 			{
 			line.Format(_L8("btn%d=%d %d %d\n"), b, iCfg.iKeyScan[b],
 				iCfg.iKeyAlt[b], iCfg.iKeyHold[b]);
-			f.Write(line);
+			if (werr == KErrNone) werr = f.Write(line);
 			}
 		f.Close();
+		if (werr == KErrNone && tmp != aPath)
+			fs.Replace(tmp, aPath);
+		else if (werr != KErrNone)
+			fs.Delete(tmp);
 		}
 	fs.Close();
 	}

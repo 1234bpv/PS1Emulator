@@ -1507,7 +1507,8 @@ static void blitCurrent()
 				}
 			else if (hAvg || vAvg)
 				{
-				const TUint16 *s2 = vAvg ? srow + 1024 : srow;
+				// The averaged pair must stay inside the display area, as in the fxaa branch.
+				const TUint16 *s2 = (vAvg && ssy + 1 < sh) ? srow + 1024 : srow;
 				if (pixB == 4)
 					{
 					TUint32 *d32 = (TUint32 *)drow;

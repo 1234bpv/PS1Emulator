@@ -299,7 +299,11 @@ static inline TUint16 texelToGl(TUint16 aV)
 // reads past VRAM: a page in the lower half plus a window offset produced a row past 512.
 static void decodePage(TUint32 aTba, TUint32 aCba, TInt aMode, TInt aMaskU, TInt aMaskV)
 	{
-	const TUint16 *clut = g_vram + (aCba << 4);
+	// A CLUT address from the GPU can point past VRAM; the palette read would run off the buffer.
+	static const TUint16 KNoClut[256] = { 0 };
+	const TUint32 cbase = (TUint32)aCba << 4;
+	const TUint32 pal = (aMode == 32) ? 16u : ((aMode == 64) ? 256u : 0u);
+	const TUint16 *clut = (cbase + pal <= 1024u * 512u) ? (g_vram + cbase) : KNoClut;
 	TUint16 *out = g_decode;
 	// How many texels per halfword: 4, 2 or 1.
 	const TInt tpw = (aMode == 32) ? 4 : (aMode == 64 ? 2 : 1);
