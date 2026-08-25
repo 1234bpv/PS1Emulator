@@ -1,64 +1,64 @@
-# tools-patches — інфраструктура збірки
+# tools-patches — Build Infrastructure
 
-Без цього збірку **неможливо відтворити** на іншій машині. Docs і configs проєкту локальні (CLAUDE.md §8), тож найкритичніше зібрано тут.
+Without this, the build is **impossible to reproduce** on another machine. Project docs and configs are local (CLAUDE.md §8), so the most critical items are collected here.
 
-## Вміст
+## Contents
 
-| Файл | Призначення |
+| File | Purpose |
 |---|---|
-| `symbian-env.cmd` | середовище складання: `EPOCROOT`, `PATH`, диск D: |
-| `deploy.cmd` | збірка → підпис → копіювання на апарат → забір логів (одна команда) |
-| `cl_bpabi.pm.patch` | правка SDK: vista-патч без хардкоду шляху до CSL |
-| `makdeps.pm.patch` | правка SDK: препроцесор для сканування залежностей |
-| `mmp-core/` | `bld.inf` + `pcsxcore.mmp` для ядра (Етап 1) |
-| `mmp-gpu/` | `gpuunai.mmp` — gpulib + gpu_unai без асемблера (Етап 2) |
-| `mmp-stage0/` | `stage0.mmp` — зонд виконуваної пам'яті (Етап 0) |
-| `mmp-stage1/` | `stage1.mmp` — оболонка, що лінкує ядро і GPU |
+| `symbian-env.cmd` | build environment: `EPOCROOT`, `PATH`, drive D: |
+| `deploy.cmd` | build → sign → copy to device → collect logs (single command) |
+| `cl_bpabi.pm.patch` | SDK fix: vista patch without hardcoded path to CSL |
+| `makdeps.pm.patch` | SDK fix: preprocessor for dependency scanning |
+| `mmp-core/` | `bld.inf` + `pcsxcore.mmp` for the core (Stage 1) |
+| `mmp-gpu/` | `gpuunai.mmp` — gpulib + gpu_unai without assembler (Stage 2) |
+| `mmp-stage0/` | `stage0.mmp` — executable memory probe (Stage 0) |
+| `mmp-stage1/` | `stage1.mmp` — wrapper linking the core and GPU |
 
-Демон розгортання разом із PC-клієнтом `deploy_net.ps1` живе окремим проєктом на
-рівень вище — `..\..\SymbianDeployDaemon` — бо потрібен будь-якому застосунку під
-Symbian, не лише цьому. Звідти його й збирати; `deploy.cmd ... wifi` кличе клієнта
-за цим шляхом.
+The deployment daemon together with the PC client `deploy_net.ps1` lives as a separate project one
+level up — `..\..\SymbianDeployDaemon` — because it is needed by any application for
+Symbian, not just this one. Build it from there; `deploy.cmd ... wifi` invokes the client
+at this path.
 
-## Передумови
+## Prerequisites
 
-1. **S60 3rd Edition FP1 SDK** у `D:\VsCodeProjects\SymbianProjects\S60_3rd_FP1`
-2. **CSL Arm Toolchain** (GCC 3.4.3, бандл SDK) у `D:\VsCodeProjects\SymbianProjects\toolchain\CSL_Arm_Toolchain`
-3. **Strawberry Perl 5.20.x portable** у `D:\VsCodeProjects\SymbianProjects\toolchain\perl`
-   Версія критична: `E32Plat.pm:289,387` вживають `defined(%hash)`, що **фатально з Perl 5.22**. Msys-perl із Git Bash не підходить принципово.
-4. Форк ядра — `github.com/1234bpv/pcsx_rearmed-symbian`, гілка `symbian`
+1. **S60 3rd Edition FP1 SDK** at `D:\VsCodeProjects\SymbianProjects\S60_3rd_FP1`
+2. **CSL Arm Toolchain** (GCC 3.4.3, SDK bundle) at `D:\VsCodeProjects\SymbianProjects\toolchain\CSL_Arm_Toolchain`
+3. **Strawberry Perl 5.20.x portable** at `D:\VsCodeProjects\SymbianProjects\toolchain\perl`
+   Version is critical: `E32Plat.pm:289,387` use `defined(%hash)`, which is **fatal with Perl 5.22**. Msys-perl from Git Bash is fundamentally unsuitable.
+4. Core fork — `github.com/1234bpv/pcsx_rearmed-symbian`, branch `symbian`
 
-## Застосування патчів SDK
+## Applying SDK Patches
 
 ```cmd
 cd D:\VsCodeProjects\SymbianProjects\S60_3rd_FP1\Epoc32\tools
 copy cl_bpabi.pm cl_bpabi.pm.orig
 copy makdeps.pm  makdeps.pm.orig
-patch -u cl_bpabi.pm < <шлях>\cl_bpabi.pm.patch
-patch -u makdeps.pm  < <шлях>\makdeps.pm.patch
+patch -u cl_bpabi.pm < <path>\cl_bpabi.pm.patch
+patch -u makdeps.pm  < <path>\makdeps.pm.patch
 ```
 
-Патчі побудовані як `diff -u <файл>.orig <файл>`, тож накладаються на **штатні** файли SDK.
+Patches are constructed as `diff -u <file>.orig <file>`, so they are applied to the **stock** SDK files.
 
-### Навіщо кожен
+### Why Each is Needed
 
-**`cl_bpabi.pm`** — застосовано офіційний vista-патч, але з виправленнями. У постачанні патч містить хардкод `C:\Program Files\CSL Arm Toolchain\` у трьох функціях (`GCCInstallPath`, `GCCLibPath`, `GCCRuntimePath`); він спрацьовує, якщо шлях встановлення не містить літерально `CSL Arm Toolchain` (у нас — `CSL_Arm_Toolchain`, з підкресленнями), і збірка ламається. Хардкод прибрано — шлях визначається з самого компілятора. Додатково узгоджено рядки 207-209 із рядком 240: перші очікували корінь, другий — `...\bin`.
+**`cl_bpabi.pm`** — official vista patch is applied, but with fixes. As shipped, the patch contains a hardcoded `C:\Program Files\CSL Arm Toolchain\` in three functions (`GCCInstallPath`, `GCCLibPath`, `GCCRuntimePath`); it triggers if the installation path does not literally contain `CSL Arm Toolchain` (in our case — `CSL_Arm_Toolchain`, with underscores), and the build breaks. The hardcoded path has been removed — the path is determined from the compiler itself. Additionally, lines 207-209 were aligned with line 240: the former expected the root, the latter — `...\bin`.
 
-**`makdeps.pm`** — дві зміни. (1) Сканування залежностей виконує cpp від CSL 3.4.3: штатний `Epoc32\gcc\bin\cpp.exe` — cygwin-збірка 2003 р., яка падає на варіативних макросах C99 (`libpcsxcore/system.h:51`). (2) Розекранування `\\` у виводі `-M` цього cpp.
+**`makdeps.pm`** — two changes. (1) Dependency scanning is performed by cpp from CSL 3.4.3: stock `Epoc32\gcc\bin\cpp.exe` is a cygwin build from 2003 that crashes on C99 variadic macros (`libpcsxcore/system.h:51`). (2) Unescaping `\\` in the `-M` output of this cpp.
 
-`Preprocessor.pm` навмисно **не** чіпається: `prepfile.pm`/`epocrc.pl` викликають cpp із прапорцем `-+`, якого CSL-cpp не приймає.
+`Preprocessor.pm` is deliberately **not** touched: `prepfile.pm`/`epocrc.pl` invoke cpp with the `-+` flag, which CSL-cpp does not accept.
 
-## Генерований `revision.h`
+## Generated `revision.h`
 
-`libpcsxcore/misc.c:38` включає `"revision.h"`, який upstream генерує Makefile-ом і **ігнорує в git** (`.gitignore:15`). У свіжому клоні його немає → `misc.c:691: parse error before "REV"`. Створити вручну:
+`libpcsxcore/misc.c:38` includes `"revision.h"`, which upstream generates via Makefile and **ignores in git** (`.gitignore:15`). In a fresh clone it is missing → `misc.c:691: parse error before "REV"`. Create it manually:
 
 ```cmd
-cd <форк>
+cd <fork>
 git describe --always > tmp && set /p R=<tmp && echo #define REV "%R%" > include\revision.h && del tmp
 ```
-або просто записати рядок на кшталт `#define REV "f8c6f9c"`.
+or simply write a line like `#define REV "f8c6f9c"`.
 
-## Збірка ядра
+## Building the Core
 
 ```cmd
 call symbian-env.cmd
@@ -66,22 +66,22 @@ cd <...>\configs\core\group
 bldmake bldfiles
 call .\ABLD.BAT build gcce urel
 ```
-Очікуваний результат — `Epoc32\release\armv5\urel\pcsxcore.lib` (~685 КБ, 42 об'єктні файли).
+Expected result — `Epoc32\release\armv5\urel\pcsxcore.lib` (~685 KB, 42 object files).
 
-`abld` викликати саме як `call .\ABLD.BAT` — просто `abld` cmd не знаходить.
+Invoke `abld` specifically as `call .\ABLD.BAT` — cmd cannot find plain `abld`.
 
-## Після зміни ядра EXE обов'язково перезбирати з `reallyclean`
+## After Modifying the Core, Always Rebuild EXE with `reallyclean`
 
-`abld` відстежує лише власні вихідні файли цілі. Зміна `pcsxcore.lib` чи `gpuunai.lib` перелінкування **не викликає**: `abld build` для `stage1` мовчки нічого не робить, і EXE лишається зі старою бібліотекою всередині.
+`abld` tracks only the target's own source files. Modifying `pcsxcore.lib` or `gpuunai.lib` **does not trigger** relinking: `abld build` for `stage1` silently does nothing, and the EXE remains with the old library inside.
 
 ```cmd
 cd <...>\configs\core\group  & call .\ABLD.BAT build gcce urel
 cd <...>\configs\stage1\group & call .\ABLD.BAT reallyclean gcce urel & bldmake bldfiles & call .\ABLD.BAT build gcce urel
 ```
 
-Перевірка одна: **час зміни `ps1stage1.exe` мусить бути пізнішим за час `pcsxcore.lib`.** Інакше на пристрій поїде збірка без ваших правок, і налагодження піде хибним шляхом — виправлення виглядатиме так, ніби воно не подіяло.
+There is one check: **the modification time of `ps1stage1.exe` must be later than that of `pcsxcore.lib`.** Otherwise, a build without your changes will be deployed to the device, and debugging will go down the wrong path — the fix will look as if it had no effect.
 
-## Пакування SIS для фізичного апарата
+## Packaging SIS for a Physical Device
 
 ```cmd
 call symbian-env.cmd
@@ -93,86 +93,86 @@ signsis -s ps1stage0.sis ps1stage0_sha1.sis sha1.cer sha1.key
 signsis -o ps1stage0_sha1.sis
 ```
 
-**Сертифікат мусить бути RSA + SHA-1, і робить його openssl, не `makekeys`.** Це перевірено на Nokia N95 8GB (S60v3 FP1, Symbian 9.2, ПЗ v20.0.016 і v35.0.001): SHA-1 встановлюється, SHA-256 дає **«файл пошкоджено»**.
+**The certificate must be RSA + SHA-1, and openssl generates it, not `makekeys`.** This was verified on Nokia N95 8GB (S60v3 FP1, Symbian 9.2, firmware v20.0.016 and v35.0.001): SHA-1 installs, SHA-256 results in **"file corrupted"**.
 
-Symbian 9.2 — 2006 рік, його SWInstall не знає `sha256WithRSAEncryption`. Сертифікат не розбирається взагалі, тож інсталятор не доходить навіть до перевірки строку дії й повідомляє про пошкодження файлу. Помилка вказує на вміст пакета, хоча несправний лише сертифікат — на цю хибну підказку легко втратити багато часу.
+Symbian 9.2 is from 2006, its SWInstall does not know `sha256WithRSAEncryption`. The certificate is not parsed at all, so the installer does not even reach the validity date check and reports file corruption. The error points to the package contents even though only the certificate is broken — it is easy to waste a lot of time on this misleading hint.
 
-Діагностична ознака, що відрізняє два випадки:
-- **«файл пошкоджено»** — сертифікат не розібрано (SHA-256, або DSA від `makekeys`);
-- **«прострочений сертифікат»** — сертифікат розібрано, апарат дійшов до дати. Так поводиться оригінальний PIPS 1.7, підписаний Nokia через Symbian CA до 05.08.2020.
+Diagnostic rule distinguishing the two cases:
+- **"file corrupted"** — certificate was not parsed (SHA-256, or DSA from `makekeys`);
+- **"expired certificate"** — certificate was parsed, device reached the expiration date. This is how original PIPS 1.7 behaves, signed by Nokia via Symbian CA until 2020-08-05.
 
-Еталон для звірки — сертифікат Ensymble (`ensymble/utils/defaultcert.py`, zlib+base64): RSA-1024, `sha1WithRSAEncryption`, 2006-2036. Підписаний ним пакет ставиться, тож при сумнівах ним перевіряють, чи справа в сертифікаті, чи в самому SIS.
+Reference standard for verification — Ensymble certificate (`ensymble/utils/defaultcert.py`, zlib+base64): RSA-1024, `sha1WithRSAEncryption`, 2006-2036. A package signed with it installs, so when in doubt, it is used to check whether the issue is with the certificate or the SIS itself.
 
-`makekeys` із цього SDK не годиться принципово: він робить лише DSA (RSA задати нічим), а на DSA покладатися не варто. Приклад у його ж довідці радить 2048 біт — він розрахований на новішу версію з RSA.
+`makekeys` from this SDK is fundamentally unsuitable: it only produces DSA (no way to specify RSA), and DSA should not be relied upon. The example in its own help suggests 2048 bits — it was designed for a newer version with RSA.
 
-**`-s` обов'язковий.** Без нього `signsis` мовчки не підписує і код повернення нульовий — виглядає як успіх. Перевірка одна: `signsis -o` має надрукувати `Issued by`/`Issued to`; порожній вивід означає непідписаний файл.
+**`-s` is required.** Without it, `signsis` silently does not sign and the return code is zero — appearing as success. There is one check: `signsis -o` must print `Issued by`/`Issued to`; empty output means an unsigned file.
 
-**`.pkg` мусить мати закінчення рядків CRLF і бути в ASCII.** З LF `makesis` мовчки не бачить блок постачальника і падає з `No vendor names found` — повідомлення вказує не на ту причину. Редактори, що зберігають у LF, ламають збірку непомітно.
+**`.pkg` must have CRLF line endings and be in ASCII.** With LF, `makesis` silently fails to see the vendor block and crashes with `No vendor names found` — the message points to the wrong cause. Editors saving in LF break the build invisibly.
 
-Ключ і сертифікат (`*.key`, `*.cer`) у git не потрапляють — генеруються локально командою вище. Самопідпис достатній, бо UID у діапазоні `0xE0000000-0xEFFFFFFF` (розробницький) і `CAPABILITY None`.
+The key and certificate (`*.key`, `*.cer`) are not tracked in git — they are generated locally using the command above. Self-signing is sufficient because the UID is in the range `0xE0000000-0xEFFFFFFF` (development) and `CAPABILITY None`.
 
-## Розгортання на апарат: `deploy.cmd`
+## Deploying to Device: `deploy.cmd`
 
-Автоматизує весь цикл, щоб не повторювати вручну кроки, кожен з яких має тихий збій:
+Automates the entire cycle to avoid manually repeating steps, each of which has a silent failure mode:
 
 ```cmd
-deploy.cmd stage1        REM core+gpu+stage1 -> reallyclean -> signsis -> SIS на телефон
-deploy.cmd stage0        REM stage0 -> signsis -> SIS на телефон
-deploy.cmd stage1 fast   REM лише EXE + перерахунок \sys\hash (без переінсталяції SIS)
-deploy.cmd collect       REM забрати ps1_*.jsonl + ps1_vram.bin у plans\runs\<час>\
+deploy.cmd stage1        REM core+gpu+stage1 -> reallyclean -> signsis -> SIS to phone
+deploy.cmd stage0        REM stage0 -> signsis -> SIS to phone
+deploy.cmd stage1 fast   REM EXE only + recalculate \sys\hash (without SIS reinstallation)
+deploy.cmd collect       REM retrieve ps1_*.jsonl + ps1_vram.bin into plans\runs\<timestamp>\
 ```
 
-Телефон під'єднувати в режимі **Mass storage** — карта монтується як знімний диск і
-знаходиться автоматично за наявністю `card_content.cid` у корені.
+Connect the phone in **Mass storage** mode — the memory card mounts as a removable drive and
+is detected automatically by the presence of `card_content.cid` in the root.
 
-Скрипт існує заради трьох пасток, кожна коштувала сесії:
-1. `abld` не перелінковує EXE, коли змінилась лише `.lib` → для stage1 робиться `reallyclean`.
-2. `signsis` без `-s` повертає 0 і пише **непідписаний** файл → перевірка через `signsis -o`
-   (issuer має бути присутній).
-3. Стара збірка на апараті робить правильне виправлення «недієвим» → EXE звіряється за
-   часом зі `pcsxcore.lib`/`gpuunai.lib`, і stale-збірка зупиняє розгортання.
+The script exists because of three traps, each having cost an entire session:
+1. `abld` does not relink the EXE when only `.lib` changed → `reallyclean` is performed for stage1.
+2. `signsis` without `-s` returns 0 and writes an **unsigned** file → verified via `signsis -o`
+   (issuer must be present).
+3. An old build on the device makes a correct fix look "ineffective" → EXE timestamp is compared
+   against `pcsxcore.lib`/`gpuunai.lib`, and a stale build halts deployment.
 
-Ключ підпису — `configs\sign\sha1.{key,cer}` (той самий RSA/SHA-1; не комітиться, при
-відсутності генерується автоматично тим самим рецептом, що вище).
+Signing key — `configs\sign\sha1.{key,cer}` (the same RSA/SHA-1; not committed, if
+missing it is generated automatically using the same recipe as above).
 
-**Режим `fast` деприковано.** Задум був переписувати exe в `\sys\bin` через накопичувач, але
-S60v3 звіряє exe знімного носія з хешем на **системному диску `C:\sys\hash\<ім'я>`**, а C: у
-режимі накопичувача з ПК недосяжний (видно лише картку E:). Без оновлення цього хеша
-завантажувач відмовляє з `-46`. In-place заміну надійно робить лише демон по WiFi (`wifi`),
-бо він працює на телефоні й дістається C:. `deploy.cmd ... fast` тепер лише виводить це
-пояснення й відсилає до `wifi`.
+**`fast` mode is deprecated.** The idea was to overwrite the exe in `\sys\bin` via mass storage, but
+S60v3 verifies the removable media exe against the hash on the **system drive `C:\sys\hash\<name>`**, and C:
+is unreachable from PC in mass storage mode (only card E: is visible). Without updating this hash,
+the loader rejects with `-46`. In-place replacement is reliably done only by the daemon over WiFi (`wifi`),
+because it runs on the phone and has access to C:. `deploy.cmd ... fast` now only displays this
+explanation and redirects to `wifi`.
 
-## WiFi-розгортання через демон
+## WiFi Deployment via Daemon
 
-`ps1daemon.exe` (проєкт `..\..\SymbianDeployDaemon`) — резидентний застосунок на телефоні,
-що приймає файли й запускає програми по TCP. Закриває повний цикл
-**без дотику до екрана**: саме натискання перед прогоном псувало заміри (той самий код давав
-9 326 і 22 314 мс залежно від фону).
+`ps1daemon.exe` (project `..\..\SymbianDeployDaemon`) is a resident application on the phone
+that receives files and launches programs over TCP. It covers the full cycle
+**without touching the screen**: the keypress itself before a run corrupted measurements (the same code yielded
+9,326 and 22,314 ms depending on the background).
 
-Порядок один раз:
-1. `..\..\SymbianDeployDaemon\tools\build.cmd` — зібрати й підписати `ps1daemon_sha1.sis`;
-   покласти його на картку (перше встановлення робиться з апарата — див. README демона).
-2. Встановити його на телефоні, запустити `PS1 Deploy Daemon`. При старті він може раз
-   спитати точку доступу — вибрати домашній WiFi. На екрані з'явиться IP і порт (2323);
-   той самий IP пишеться в `E:\daemon_ip.txt`.
+One-time setup:
+1. `..\..\SymbianDeployDaemon\tools\build.cmd` — build and sign `ps1daemon_sha1.sis`;
+   place it on the card (first installation is done from the device — see daemon README).
+2. Install it on the phone, launch `PS1 Deploy Daemon`. On startup it may ask once
+   for an access point — select home WiFi. The IP and port (2323) will appear on the screen;
+   the same IP is written to `E:\daemon_ip.txt`.
 
-Далі кожна ітерація без кабельних режимів:
+Then every iteration without cable modes:
 ```cmd
-deploy.cmd stage1 wifi 192.168.x.y     REM зібрати -> PUT exe (+хеш на C:) -> RUN -> GET лог
+deploy.cmd stage1 wifi 192.168.x.y     REM build -> PUT exe (+hash on C:) -> RUN -> GET log
 ```
-IP можна не вказувати, якщо він закешований (`deploy.cmd collect` копіює `daemon_ip.txt` з
-картки в `tools-patches\.daemon_ip`). Четвертий аргумент — рядок аргументів застосунку;
-**за замовчуванням порожній**, і тоді stage1 робить повний бенчмарк (обидва режими +
-`compare`). Аргумент на кшталт `drc` дав би один прохід. Лог лягає в `plans\runs\<час>_wifi\`.
+The IP can be omitted if cached (`deploy.cmd collect` copies `daemon_ip.txt` from
+the card to `tools-patches\.daemon_ip`). The fourth argument is the application argument string;
+**empty by default**, in which case stage1 performs a full benchmark (both modes +
+`compare`). An argument like `drc` would run a single pass. The log is saved to `plans\runs\<timestamp>_wifi\`.
 
-Хеш знімного носія клієнт заливає в `C:\sys\hash\ps1stage1.exe` (не на картку) — там його
-шукає завантажувач. Перевірено на живому WiFi: без нього `RUN` дає `-46`.
+The client uploads the removable media hash to `C:\sys\hash\ps1stage1.exe` (not on the card) — that is where
+the loader looks for it. Verified on live WiFi: without it, `RUN` results in `-46`.
 
-Протокол (ASCII-рядок + сирі байти): `PUT <шлях> <розмір>`, `GET <шлях>`,
-`RUN <exe> <аргументи>` (демон чекає завершення й віддає код виходу — тобто радіо під час
-обчислення простоює), `STOP`/`BYE`. Реалізація клієнта —
+Protocol (ASCII string + raw bytes): `PUT <path> <size>`, `GET <path>`,
+`RUN <exe> <arguments>` (daemon waits for completion and returns the exit code — meaning the radio stays idle
+during computation), `STOP`/`BYE`. Client implementation —
 `..\..\SymbianDeployDaemon\tools\deploy_net.ps1`.
 
-Демон слухає, ПК під'єднується — тож брандмауер ПК не заважає. `CAPABILITY NetworkServices
-ReadUserData` (самопідписний набір). Запис у `\sys\bin` при `wifi`/`fast` спирається на
-Open4All (хак), який знімає захист `\sys`.
+Daemon listens, PC connects — so the PC firewall does not interfere. `CAPABILITY NetworkServices
+ReadUserData` (self-signed set). Writing to `\sys\bin` with `wifi`/`fast` relies on
+Open4All (hack), which removes `\sys` protection.

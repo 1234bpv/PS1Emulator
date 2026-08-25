@@ -32,7 +32,7 @@ function Get-Texel { param([int]$Index)
 
 $rows = [regex]::Matches($log, 'slot=(\d+) tba=(\d+) cba=(-?\d+) mode=(\d+) mu=(\d+) mv=(\d+)')
 if ($rows.Count -eq 0) { throw "no glrtex lines in $RunDir" }
-Write-Host "[tex] $($rows.Count) сторінок"
+Write-Host "[tex] $($rows.Count) pages"
 
 foreach ($m in $rows) {
   $slot = [int]$m.Groups[1].Value
@@ -63,6 +63,6 @@ foreach ($m in $rows) {
   $bmp.Save((Join-Path $RunDir "tex$slot.png"), [System.Drawing.Imaging.ImageFormat]::Png)
   $bmp.Dispose()
   $bpp = if ($mode -eq 32) { 4 } elseif ($mode -eq 64) { 8 } else { 16 }
-  "{0,2}  {1,2}bpp tba={2,6} cba={3,5} mask={4},{5}   середнє {6,4:N0}/{7,4:N0}/{8,4:N0}" -f `
+  "{0,2}  {1,2}bpp tba={2,6} cba={3,5} mask={4},{5}   average {6,4:N0}/{7,4:N0}/{8,4:N0}" -f `
     $slot, $bpp, $tba, $cba, $mu, $mv, ($sum[0] / 65536), ($sum[1] / 65536), ($sum[2] / 65536)
 }

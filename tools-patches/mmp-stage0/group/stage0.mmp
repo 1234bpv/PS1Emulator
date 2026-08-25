@@ -1,4 +1,4 @@
-// Етап 0: зонд виконуваної пам'яті. Самодостатній, ядра емулятора не лінкує.
+// Stage 0: executable memory probe. Self-contained, does not link emulator core.
 
 TARGET          ps1stage0.exe
 TARGETTYPE      exe
@@ -6,8 +6,8 @@ UID             0 0xE0001003
 SECUREID        0xE0001003
 VENDORID        0
 
-// Свідомо None: одне з питань зонда - чи потрібна capability для
-// RChunk::CreateLocalCode. Якщо потрібна, буде KErrPermissionDenied (-46).
+// Deliberately None: one question of the probe is whether a capability is needed for
+// RChunk::CreateLocalCode. If needed, KErrPermissionDenied (-46) will result.
 CAPABILITY      None
 
 EPOCSTACKSIZE   0x5000
@@ -15,7 +15,7 @@ EPOCSTACKSIZE   0x5000
 SOURCEPATH      ..\..\..\src\symbian
 SOURCE          stage0_probe.cpp
 
-// Шлях відносний до SOURCEPATH вище, не до .mmp.
+// Path is relative to SOURCEPATH above, not to .mmp.
 START RESOURCE  stage0_reg.rss
 TARGETPATH      \private\10003a3f\import\apps
 END

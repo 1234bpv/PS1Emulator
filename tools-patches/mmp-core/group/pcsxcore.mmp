@@ -1,33 +1,33 @@
-// libpcsxcore для Symbian — ядро PlayStation з динареком ari64 (Етап 3).
-// Статична бібліотека: перевіряє компільованість ядра окремо від оболонки.
-// Проблемні точки — docs/architecture/data-spec.md
+// libpcsxcore for Symbian - PlayStation core with ari64 dynarec (Stage 3).
+// Static library: verifies core compilability separately from the shell.
+// Problem areas - docs/architecture/data-spec.md
 
 TARGET          pcsxcore.lib
 TARGETTYPE      lib
 
-// P8: SDK не має ARMv6-платформи GCCE, ціль задається прапорцем.
-// P7: __SIZEOF_POINTER__ з'явився у GCC 4.3; бандлений CSL 3.4.3 його не має.
-// Порядок байтів. GCC 3.4.3 не визначає __BYTE_ORDER__ (з'явився у 4.6), а в #if
-// невизначений макрос дорівнює 0, тож `__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__`
-// стає `0 == 0` і ядро збиралося по BIG-ENDIAN гілці: psxmem.h:30 (доступ до
-// пам'яті), r3000a.h:82 (розкладка регістрів), cdrom.c:1350. Значення — як у GCC 4.6+.
+// P8: SDK lacks an ARMv6 GCCE platform, target is specified by flag.
+// P7: __SIZEOF_POINTER__ appeared in GCC 4.3; bundled CSL 3.4.3 lacks it.
+// Byte order. GCC 3.4.3 does not define __BYTE_ORDER__ (appeared in 4.6), and in #if
+// an undefined macro equals 0, so `__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__`
+// becomes `0 == 0` and the core was built on the BIG-ENDIAN branch: psxmem.h:30 (memory
+// access), r3000a.h:82 (register layout), cdrom.c:1350. Values are as in GCC 4.6+.
 OPTION GCCE     -march=armv6 -mtune=arm1136j-s -fomit-frame-pointer -D__SIZEOF_POINTER__=4 -DP_HAVE_MMAP=0 \
                 -D__ORDER_LITTLE_ENDIAN__=1234 -D__ORDER_BIG_ENDIAN__=4321 \
                 -D__ORDER_PDP_ENDIAN__=3412 -D__BYTE_ORDER__=1234
 
-// Динарек ari64 увімкнено (Етап 3). Upstream ставить DRC_DISABLE лише за
-// відсутності DYNAREC=ari64; з ari64 натомість потрібен BASE_ADDR_DYNAMIC=1,
-// бо кеш трансляцій виділяється в рантаймі (RChunk), а не резервується в .bss.
+// ari64 dynarec enabled (Stage 3). Upstream sets DRC_DISABLE only in
+// the absence of DYNAREC=ari64; with ari64 BASE_ADDR_DYNAMIC=1 is needed instead,
+// because the translation cache is allocated at runtime (RChunk), not reserved in .bss.
 MACRO           BASE_ADDR_DYNAMIC=1
-// NDRC_CONSERVATIVE_INV (скидання ВСІХ сторінок замість діапазону) перевірено на
-// апараті: падіння лишається, а рекомпіляцій стає на порядок більше - саме він
-// розтягував завантаження траси на секунди суцільної перекомпіляції. Знято.
+// NDRC_CONSERVATIVE_INV (flushing ALL pages instead of a range) tested on
+// hardware: crash remains, while recompilations increase by an order of magnitude - this was
+// what stretched track loading into seconds of continuous recompilation. Removed.
 
-// Лише для прогонів у EKA2L1: асемблерний get_reg вживає uadd8/sel, яких
-// Dynarmic не реалізує, і потік гине на "Undefined instruction" одразу після
-// EmuReset. З цим макросом береться C-версія і решта динареку перевіряється.
-// A/B на залізі зроблено: із C-версією падіння відтворюється так само, тож для
-// апарата лишаємо асемблерну.
+// Only for runs in EKA2L1: assembler get_reg uses uadd8/sel, which
+// Dynarmic does not implement, and the thread dies on "Undefined instruction" right after
+// EmuReset. With this macro the C version is used and the rest of the dynarec is tested.
+// A/B on hardware completed: with the C version the crash reproduces identically, so for
+// hardware we keep the assembly version.
 // MACRO           NDRC_NO_ARMV6_GET_REG
 
 SOURCEPATH      ..\..\..\pcsx_rearmed\libpcsxcore
@@ -59,28 +59,28 @@ SOURCE          gte.c
 SOURCE          gte_nf.c
 SOURCE          gte_divider.c
 
-// -march=armv6 вмикає HAVE_ARMV5 в arm_features.h, тож gte.c:551 бере
-// асемблерну версію (gteMAC123f_arm). Upstream Makefile робить те саме для ARCH=arm.
+// -march=armv6 enables HAVE_ARMV5 in arm_features.h, so gte.c:551 takes
+// the assembly version (gteMAC123f_arm). Upstream Makefile does the same for ARCH=arm.
 //
-// Файли беруться ПОПЕРЕДНЬО ОБРОБЛЕНІ (..\asm), бо збірна система Symbian передає
-// асемблер компіляторові з розширенням .s (у нижньому регістрі), а за ним GCC
-// препроцесор НЕ запускає — на відміну від .S. Без цього макроси з arm_features.h
-// не розгортаються: "bad instruction `function(gteRTPS_sf1lm0_arm):'".
-// Регенерація — див. ..\asm\regen.cmd.
+// Files are taken PREPROCESSED (..\asm), because Symbian build system passes
+// assembly to the compiler with .s extension (lowercase), and for it GCC
+// does NOT run the preprocessor - unlike .S. Without this, macros from arm_features.h
+// do not expand: "bad instruction `function(gteRTPS_sf1lm0_arm):'".
+// Regeneration - see ..\asm\regen.cmd.
 SOURCEPATH      ..\asm
 SOURCE          gte_arm.s
 SOURCE          gte_nf_arm.s
-// Етап 3: та сама причина попередньої обробки, що й для gte_arm.
+// Stage 3: same reason for preprocessing as for gte_arm.
 SOURCE          linkage_arm.s
 
-// Склад динареку — за Makefile upstream, гілка DYNAREC=ari64.
+// Dynarec composition - per upstream Makefile, branch DYNAREC=ari64.
 SOURCEPATH      ..\..\..\pcsx_rearmed\libpcsxcore\new_dynarec
 SOURCE          emu_if.c
 SOURCE          new_dynarec.c
 SOURCE          pcsxmem.c
 
-// zlib вендорений у репозиторії (deps/libchdr/deps/zlib-1.3.1).
-// PIPS/Open C у цьому SDK НЕ встановлено, тож збираємо свій.
+// zlib is vendored in the repository (deps/libchdr/deps/zlib-1.3.1).
+// PIPS/Open C is NOT installed in this SDK, so we build our own.
 SOURCEPATH      ..\..\..\pcsx_rearmed\deps\libchdr\deps\zlib-1.3.1
 SOURCE          adler32.c
 SOURCE          compress.c
@@ -98,15 +98,15 @@ SOURCE          trees.c
 SOURCE          uncompr.c
 SOURCE          zutil.c
 
-// Compat-заголовки: CSL 3.4.3 та ESTLIB не мають stdint.h (C99) і stdalign.h (C11).
+// Compat headers: CSL 3.4.3 and ESTLIB lack stdint.h (C99) and stdalign.h (C11).
 USERINCLUDE     ..\..\..\src\compat
 
 USERINCLUDE     ..\..\..\pcsx_rearmed
 USERINCLUDE     ..\..\..\pcsx_rearmed\include
 USERINCLUDE     ..\..\..\pcsx_rearmed\libpcsxcore
-// Явно, хоч new_dynarec.c включає "assem_arm.h" зі свого ж каталогу: сканер
-// залежностей SDK шукає лише за USERINCLUDE, не знаходить, і через -MG
-// продовжує з невизначеним HOST_IMM8 - аж до `#error not handled` на :3650.
+// Explicitly, although new_dynarec.c includes "assem_arm.h" from its own directory: the SDK
+// dependency scanner searches only via USERINCLUDE, fails to find it, and via -MG
+// proceeds with undefined HOST_IMM8 - up to `#error not handled` at :3650.
 USERINCLUDE     ..\..\..\pcsx_rearmed\libpcsxcore\new_dynarec
 USERINCLUDE     ..\..\..\pcsx_rearmed\deps\libchdr\deps\zlib-1.3.1
 

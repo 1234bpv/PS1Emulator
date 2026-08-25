@@ -1,28 +1,28 @@
-// gpu_unai + gpulib для Symbian - Етап 2: растеризація без виведення на екран.
+// gpu_unai + gpulib for Symbian - Stage 2: rasterisation without display output.
 //
-// УВАГА: цей .mmp більше НЕ будує бібліотеку в типовому шляху. gpuunai.lib
-// збирає tools-patches\gpu463-regen.cmd компілятором GCCE 4.6.3 - на замірі
-// 9000 кадрів це растеризатор -8.3%, кадр цілком -3.0%, лічильники малювання
-// збігаються один в один. Файл лишається як запис складу і макросів; якщо
-// зібрати його через abld, він перезапише бібліотеку версією від CSL 3.4.3.
+// WARNING: this .mmp no longer builds the library in the default path. gpuunai.lib
+// is built by tools-patches\gpu463-regen.cmd with GCCE 4.6.3 compiler - in a benchmark
+// of 9000 frames this gives rasteriser -8.3%, whole frame -3.0%, drawing counters
+// match one to one. The file remains as a record of composition and macros; if
+// built via abld, it will overwrite the library with the CSL 3.4.3 version.
 //
-// P16: асемблер gpu_arm.S не збирається GAS-ом з CSL 3.4.3 (не підставляє
-// параметри макроса всередині .if - падає на кожному виклику макроса). Обійдено:
-// файл збирається новішим асемблером GCCE 4.6.3 і подається в лінк окремою
-// бібліотекою gpuasm.lib (tools-patches\gpuasm-regen.cmd), решта - як була.
-// Профіль гоночної фази показав, що саме ці цикли й домінують.
+// P16: assembler gpu_arm.S is not built by GAS from CSL 3.4.3 (does not substitute
+// macro parameters inside .if - fails on every macro call). Bypassed:
+// the file is built with the newer GCCE 4.6.3 assembler and supplied to link as a separate
+// library gpuasm.lib (tools-patches\gpuasm-regen.cmd), the rest as before.
+// Profile of the racing phase showed that these loops dominate.
 
 TARGET          gpuunai.lib
 TARGETTYPE      lib
 
-// Ті самі прапорці, що й у ядра (P7, P8, P13 - див. pcsxcore.mmp).
+// The same flags as in the core (P7, P8, P13 - see pcsxcore.mmp).
 OPTION GCCE     -march=armv6 -mtune=arm1136j-s -fomit-frame-pointer -D__SIZEOF_POINTER__=4 -DP_HAVE_MMAP=0 \
                 -D__ORDER_LITTLE_ENDIAN__=1234 -D__ORDER_BIG_ENDIAN__=4321 \
                 -D__ORDER_PDP_ENDIAN__=3412 -D__BYTE_ORDER__=1234
 
 MACRO           REARMED
 MACRO           USE_GPULIB=1
-// GPU_UNAI_ARM_ASM вмикається в gpu_unai.h сам, якщо не заборонити явно.
+// GPU_UNAI_ARM_ASM is enabled in gpu_unai.h automatically unless explicitly disabled.
 
 SOURCEPATH      ..\..\..\pcsx_rearmed\plugins\gpulib
 SOURCE          gpu.c
@@ -31,8 +31,8 @@ SOURCE          prim.c
 SOURCEPATH      ..\..\..\pcsx_rearmed\plugins\gpu_unai
 SOURCE          gpulib_if.cpp
 
-// Старий растеризатор: gpulib_if.cpp перемикається на нього через
-// IS_OLD_RENDERER(), тож без цього файла не лінкується.
+// Old rasteriser: gpulib_if.cpp switches to it via
+// IS_OLD_RENDERER(), so without this file it does not link.
 SOURCEPATH      ..\..\..\pcsx_rearmed\plugins\gpu_unai\old
 SOURCE          if.cpp
 

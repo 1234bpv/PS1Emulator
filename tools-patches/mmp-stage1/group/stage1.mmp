@@ -1,108 +1,108 @@
-// Етап 1: EXE, що лінкує pcsxcore.lib і рахує кадри без виведення.
+// Stage 1: EXE that links pcsxcore.lib and counts frames without display.
 
 TARGET          ps1stage1.exe
 TARGETTYPE      exe
-// UID2 нуль, як у демона: застосунком EXE робить файл реєстрації, а не UID2.
-// 0x100039CE тут лише додавав ризику - демон із UID2=0 і в меню видно, і пакет
-// його встановлюється, а наш із 0x100039CE - ні.
+// UID2 is zero, like in the daemon: the registration file makes the EXE an app, not UID2.
+// 0x100039CE only added risk here - the daemon with UID2=0 is visible in the menu and its
+// package installs, while ours with 0x100039CE does not.
 UID             0 0xE0001002
 SECUREID        0xE0001002
 VENDORID        0
 
-// Файлові операції для JSONL-логу; більше нічого не потрібно.
+// File operations for the JSONL log; nothing else is needed.
 CAPABILITY      None
 
-// Штатний стек. Рекомпіляторові його вистачає лише тому, що struct
-// compile_state (64 КБ на MAXBLOCK-масивах) винесено зі стеку у форку.
-// Збільшувати не варіант: апарат відмовляє і процесу з завеликим
-// EPOCSTACKSIZE (мовчки, ще до E32Main), і потоку - RThread::Create
-// повертає KErrTooBig на 512 КБ. У EKA2L1 обидві величини проходили.
+// Standard stack. It is sufficient for the recompiler only because struct
+// compile_state (64 KB for MAXBLOCK arrays) was moved off the stack in the fork.
+// Increasing is not an option: the device rejects both a process with an overly large
+// EPOCSTACKSIZE (silently, before E32Main) and a thread - RThread::Create
+// returns KErrTooBig at 512 KB. In EKA2L1 both values passed.
 EPOCSTACKSIZE   0x14000
-// Гість PS1: 2 МБ ОЗП + 512 КБ BIOS + 1 МБ VRAM + структури ядра.
-// Верхня межа - 40 МБ: метадані динареку (блоки, списки переходів, хеш-таблиці)
-// ростуть із кожним новим блоком, і 16 МБ вичерпувалися саме на завантаженні
-// траси. Це стеля зростання, не резервування - вільну пам'ять вона не займає.
+// PS1 guest: 2 MB RAM + 512 KB BIOS + 1 MB VRAM + core structures.
+// Upper bound - 40 MB: dynarec metadata (blocks, jump lists, hash tables)
+// grow with each new block, and 16 MB was exhausted during track
+// loading. This is a growth ceiling, not reservation - it takes no free memory.
 EPOCHEAPSIZE    0x100000 0x2800000
 
-// Ті самі прапорці, що й у ядра. P13: без ORDER-макросів CSL 3.4.3 бере
-// big-endian гілку; заголовки ядра тут теж їх читають.
-// -funit-at-a-time тут НЕ вмикати (лише в pcsxcore/gpuunai): з ним GCC 3.4.3
-// випускає позаконтурні копії inline-віртуальних методів із заголовків MMF
-// (MDataSource/MDataSink), і лінк падає на TMMFMessage::Complete та
-// REComSession::DestroyedImplementation. Саме тому SDK його й вимикає.
-// Z7_ST: у LZMA SDK 24.x однопотоковий режим зветься так, а не _7ZIP_ST.
-// Другого рядка OPTION GCCE тут бути не може - він замінює цей, а не додає.
+// The same flags as in the core. P13: without ORDER macros CSL 3.4.3 takes
+// the big-endian branch; core headers here read them as well.
+// Do NOT enable -funit-at-a-time here (only in pcsxcore/gpuunai): with it GCC 3.4.3
+// emits out-of-line copies of inline virtual methods from MMF headers
+// (MDataSource/MDataSink), and linking fails on TMMFMessage::Complete and
+// REComSession::DestroyedImplementation. That is why the SDK disables it.
+// Z7_ST: in LZMA SDK 24.x single-threaded mode is named this, not _7ZIP_ST.
+// A second OPTION GCCE line cannot be here - it replaces this one rather than appending.
 OPTION GCCE     -march=armv6 -mtune=arm1136j-s -fomit-frame-pointer -D__SIZEOF_POINTER__=4 -DP_HAVE_MMAP=0 \
                 -D__ORDER_LITTLE_ENDIAN__=1234 -D__ORDER_BIG_ENDIAN__=4321 \
                 -D__ORDER_PDP_ENDIAN__=3412 -D__BYTE_ORDER__=1234 -DZ7_ST=1 \
                 -DMY_CPU_LE=1 -DMY_CPU_32BIT=1
 
-// Мусить збігатися з pcsxcore.mmp: заголовки динареку читають цей макрос.
+// Must match pcsxcore.mmp: dynarec headers read this macro.
 MACRO           BASE_ADDR_DYNAMIC=1
 
 SOURCEPATH      ..\..\..\src\symbian
 SOURCE          stage1.cpp
 SOURCE          vout_symbian.cpp
-// Растеризатор PS1 на MBX через GL ES 1.1 (розділ 14 звіту).
+// PS1 rasteriser on MBX via GL ES 1.1 (report section 14).
 SOURCE          glrender.cpp
-// Оболонка AVKON: вікно під CCoeEnv (потрібне EGL), вихід, орієнтація.
+// AVKON shell: window under CCoeEnv (needed by EGL), exit, orientation.
 SOURCE          app_symbian.cpp
 SOURCE          i18n.cpp
-// Glue звуку: обгортки ps1Spu* над dfsound + out-драйвер (окремо від plugins.h).
+// Sound glue: ps1Spu* wrappers over dfsound + out-driver (separate from plugins.h).
 SOURCE          snd_symbian.cpp
-// Платформна заміна mmap(PROT_EXEC)/__clear_cache для динареку.
+// Platform replacement of mmap(PROT_EXEC)/__clear_cache for the dynarec.
 SOURCE          ndrc_mem_symbian.cpp
-// Імпорт ігор: .cue -> PBP з обнуленим ECC, розпакування архівів.
+// Game import: .cue -> PBP with zeroed ECC, archive extraction.
 SOURCE          imgconv.cpp
 SOURCE          archive.cpp
 SOURCE          arc7z.cpp
 SOURCE          arcrar.cpp
 
-// LZMA SDK (public domain) - розбір заголовка .7z і потокове розпакування.
+// LZMA SDK (public domain) - .7z header parsing and streaming decompression.
 SOURCEPATH      ..\..\..\src\lzma
-// 7zDec.c потрібен не заради розпакування даних (їх ми женемо потоково самі), а
-// тому, що заголовок .7z сам стиснений, і 7zArcIn.c розгортає його через
-// SzAr_DecodeFolder. Фільтри - звідти ж, для заголовків із ланцюгом кодерів.
+// 7zDec.c is needed not for data decompression (we stream it ourselves), but
+// because the .7z header itself is compressed, and 7zArcIn.c decodes it via
+// SzAr_DecodeFolder. Filters are from there too, for headers with a coder chain.
 SOURCE          7zArcIn.c 7zBuf.c 7zCrc.c 7zCrcOpt.c 7zDec.c 7zStream.c
 SOURCE          CpuArch.c LzmaDec.c Lzma2Dec.c
 SOURCE          Bcj2.c Bra.c Bra86.c BraIA64.c Delta.c
 
 SOURCEPATH      ..\..\..\src\symbian
 
-// Звук: dfsound (портабельна гілка). spu.c втягує reverb/adsr/xa через #include.
-// NEON off (потребує ARMv7+__ARM_NEON__), ssat під HAVE_ARMV6 - безпечно для ARM11.
+// Sound: dfsound (portable branch). spu.c pulls reverb/adsr/xa via #include.
+// NEON off (requires ARMv7+__ARM_NEON__), ssat under HAVE_ARMV6 - safe for ARM11.
 SOURCEPATH      ..\..\..\pcsx_rearmed\plugins\dfsound
 SOURCE          spu.c registers.c dma.c freeze.c out.c nullsnd.c
 
-// mix_chan/mix_chan_rvb: HAVE_ARMV5 (від -march=armv6) вмикає asm-версії в spu.c.
-// Попередньо оброблено (..\asm), як gte_arm - abld не запускає cpp на .s. Regen: ..\asm\regen.cmd
+// mix_chan/mix_chan_rvb: HAVE_ARMV5 (from -march=armv6) enables asm versions in spu.c.
+// Preprocessed (..\asm), like gte_arm - abld does not run cpp on .s. Regen: ..\asm\regen.cmd
 SOURCEPATH      ..\asm
 SOURCE          arm_utils.s
 
 SOURCEPATH      ..\..\..\src\symbian
-// Ресурс застосунку. Ім'я мусить збігатися з app_file у stage1_reg.rss -
-// фреймворк шукає рівно \resource\apps\<app_file>.rsc.
+// Application resource. Name must match app_file in stage1_reg.rss -
+// the framework searches for exactly \resource\apps\<app_file>.rsc.
 START RESOURCE  stage1.rss
 TARGET          ps1stage1
 TARGETPATH      \resource\apps
 END
 
-// Реєстрація. apparc вимагає імені рівно <app_file>_reg.rsc, інакше запис
-// не підхоплюється. Шлях відносний до SOURCEPATH вище, не до .mmp.
+// Registration. apparc requires the name to be exactly <app_file>_reg.rsc, otherwise
+// the entry is not picked up. Path is relative to SOURCEPATH above, not to .mmp.
 START RESOURCE  ps1stage1_reg.rss
 TARGETPATH      \private\10003a3f\import\apps
 END
 
-// ESTLIB не має snprintf/vsnprintf (C99); у SDK їх немає в жодній .dso.
+// ESTLIB lacks snprintf/vsnprintf (C99); in the SDK they are not in any .dso.
 SOURCEPATH      ..\..\..\src\compat
 SOURCE          compat_snprintf.c
-// __aeabi_idiv/__aeabi_uidiv: потрібні об'єктам від GCCE 4.6.3, система їх не
-// експортує (лише *divmod, які кличе 3.4.3). Див. компенсацію у файлі.
+// __aeabi_idiv/__aeabi_uidiv: needed by objects from GCCE 4.6.3, the system does not
+// export them (only *divmod, which 3.4.3 calls). See compensation in the file.
 SOURCE          compat_aeabi.c
 
 USERINCLUDE     ..\..\..\src\compat
 USERINCLUDE     ..\..\..\src\lzma
-// zlib: DEFLATE при збиранні .pbp і INFLATE при читанні .zip.
+// zlib: DEFLATE when building .pbp and INFLATE when reading .zip.
 USERINCLUDE     ..\..\..\pcsx_rearmed\deps\libchdr\deps\zlib-1.3.1
 USERINCLUDE     ..\..\..\pcsx_rearmed
 USERINCLUDE     ..\..\..\pcsx_rearmed\include
@@ -115,23 +115,23 @@ SYSTEMINCLUDE   \epoc32\include
 SYSTEMINCLUDE   \epoc32\include\libc
 
 STATICLIBRARY   gpuunai.lib
-// Рукописні ARM-цикли растеризатора. Зібрані окремо новішим асемблером -
-// див. коментар у gpuunai.mmp і tools-patches\gpuasm-regen.cmd.
+// Hand-written ARM rasteriser loops. Built separately with a newer assembler -
+// see comment in gpuunai.mmp and tools-patches\gpuasm-regen.cmd.
 STATICLIBRARY   gpuasm.lib
 STATICLIBRARY   pcsxcore.lib
 LIBRARY         euser.lib
 LIBRARY         hal.lib
 LIBRARY         estlib.lib
-// Виведення кадру на екран (Етап 2): window server + FBS bitmap.
+// Frame display on screen (Stage 2): window server + FBS bitmap.
 LIBRARY         ws32.lib
 LIBRARY         fbscli.lib
-// Звук: потоковий вивід PCM у динамік (CMdaAudioOutputStream).
+// Sound: PCM audio streaming to speaker (CMdaAudioOutputStream).
 LIBRARY         mediaclientaudiostream.lib
-// DSA: CFbsBitGc/CFbsScreenDevice (прямий вивід у буфер екрана).
+// DSA: CFbsBitGc/CFbsScreenDevice (direct output to screen buffer).
 LIBRARY         bitgdi.lib
-// GL ES вивід (MBX): EGL + OpenGL ES 1.1.
+// GL ES output (MBX): EGL + OpenGL ES 1.1.
 LIBRARY         libgles_cm.lib
-// Оболонка AVKON: CApaApplication, CCoeEnv/CCoeControl, EikStart/CEikonEnv,
+// AVKON shell: CApaApplication, CCoeEnv/CCoeControl, EikStart/CEikonEnv,
 // CAknAppUi, CEikStatusPane/CEikButtonGroupContainer.
 LIBRARY         apparc.lib
 LIBRARY         cone.lib
@@ -140,7 +140,7 @@ LIBRARY         eikcoctl.lib
 LIBRARY         avkon.lib
 LIBRARY         efsrv.lib
 LIBRARY         apgrfx.lib
-// Меню налаштувань: CDesCArrayFlat (список образів) і метрики CFont.
+// Settings menu: CDesCArrayFlat (image list) and CFont metrics.
 LIBRARY         estor.lib
 LIBRARY         bafl.lib
 LIBRARY         gdi.lib

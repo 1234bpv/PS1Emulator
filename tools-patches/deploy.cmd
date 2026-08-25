@@ -226,9 +226,9 @@ REM Pulling the old path silently returned a stale log instead of failing.
 set LOGDEV=E:\ps1_%TARGET%.jsonl
 if /i "%TARGET%"=="stage1" set LOGDEV=E:\PS1\logs\ps1_stage1.jsonl
 
-REM Стандартні 180 с deploy_net.ps1 коротші за саму трасу: 6100 кадрів по 27 мс
-REM це 170 с плюс завантаження BIOS, і сокет рвався РІВНО на межі корисного
-REM прогону - апарат при цьому дораховував до кінця, а лог лишався на карті.
+REM Default 180 s of deploy_net.ps1 is shorter than the run: 6100 frames at 27 ms
+REM is 170 s plus BIOS load, and the socket dropped RIGHT at the threshold of a useful
+REM run - the device finished computing to the end, while the log remained on the card.
 if not defined RUNTMO set RUNTMO=900
 echo [deploy] wifi -^> %DIP%  (run args: "%RUNARGS%")
 REM The app is installed on the card, so its EXE and log live on E: from the

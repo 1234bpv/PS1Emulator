@@ -1,6 +1,6 @@
-// Етап 1: завантажити libpcsxcore з інтерпретатором і обчислити кадри.
-// Без виведення на екран, без звуку, без диска (HLE BIOS).
-// Контракт фронтенду та механізм кадру - docs/architecture/data-spec.md.
+// Stage 1: load libpcsxcore with interpreter and compute frames.
+// No on-screen display, no sound, no disc (HLE BIOS).
+// Frontend contract and frame mechanism - docs/architecture/data-spec.md.
 
 #include <e32base.h>
 #include <e32std.h>
@@ -19,8 +19,8 @@ extern "C" {
 #include "psxcounters.h"
 #include "new_dynarec/new_dynarec.h"     // ndrc_g.hacks
 #include "sio.h"                         // LoadMcds
-// Привід CD: cdra_init/cdra_open (cdrom-async.c) і CheckCdrom (misc.c) не в наших
-// заголовках. cdra_open робить ISOopen(GetIsoFile) - саме воно відкриває образ.
+// CD drive: cdra_init/cdra_open (cdrom-async.c) and CheckCdrom (misc.c) are not in our
+// headers. cdra_open calls ISOopen(GetIsoFile) - this is what opens the image.
 int cdra_init(void);
 int cdra_open(void);
 int cdra_readTrack(const unsigned char *time);
@@ -30,31 +30,31 @@ int SaveState(const char *file);
 int LoadState(const char *file);
 }
 
-// Поза extern "C": інтерфейс імпорту - C++ (класи, посилання).
+// Outside extern "C": import interface is C++ (classes, references).
 #include "imgconv.h"
 
-// Скільки кадрів рахувати. Перевизначається першим аргументом командного рядка:
-// EKA2L1 передає його через --run "<exe>" "<args>". Лог потрапляє на хост лише
-// коли процес завершився штатно, тож можливість швидко зменшити прогін критична.
+// How many frames to compute. Overridden by the first command-line argument:
+// EKA2L1 passes it via --run "<exe>" "<args>". Log reaches host only
+// when the process exits normally, so ability to quickly shorten a run is critical.
 static const int KDefaultFrames = 600;
-// Запуск з меню апарата: 300 кадрів = 5 секунд ігрового часу на кожен режим ЦП.
+// Launch from device menu: 300 frames = 5 seconds of game time per CPU mode.
 static const int KDeviceFrames = 300;
-// Крок маркерів прогресу в циклі кадрів.
+// Progress marker step in the frame loop.
 static const int KProgressEvery = 50;
 
-// Ядро складає шлях як "%s/%s" (psxmem.c:312) - пряма скісна в тексті навмисна,
-// це перевірка, чи ESTLIB приймає її замість зворотної.
+// Core builds path as "%s/%s" (psxmem.c:312) - forward slash in text is intentional,
+// this tests whether ESTLIB accepts it instead of backslash.
 static const char KBiosDir[]  = "E:\\PS1\\bios";
 static const char KBiosFile[] = "scph7502.bin";
-// Диск гри на картці: вказуємо на .bin (образ даних). cdriso сам знаходить .cue
-// заміною розширення (cdriso.c:359 parsecue) для розкладки доріжок.
+// Game disc on card: point to .bin (data image). cdriso finds .cue itself
+// by replacing extension (cdriso.c:359 parsecue) for track layout.
 static const char KDiscImg[]  = "E:\\PS1\\games\\gt.bin";
 
 static FILE *g_log;
 static TUint g_startTick;
 static int g_eventId;
 
-// Лог у форматі JSONL: один об'єкт на подію (CLAUDE.md, розділ 7).
+// Log in JSONL format: one object per event (CLAUDE.md, section 7).
 static void logEvent(const char *type, const char *errType, const char *fmt, ...)
 	{
 	char msg[512];
@@ -67,7 +67,7 @@ static void logEvent(const char *type, const char *errType, const char *fmt, ...
 		va_end(ap);
 		}
 
-	// Повідомлення ядра містять лапки і переводи рядка - екрануємо, щоб JSON лишався валідним.
+	// Core messages contain quotes and newlines - escape them so JSON remains valid.
 	char esc[1024];
 	unsigned d = 0;
 	for (unsigned s = 0; msg[s] && d < sizeof(esc) - 7; s++)
@@ -85,8 +85,8 @@ static void logEvent(const char *type, const char *errType, const char *fmt, ...
 	const TUint elapsed = User::NTickCount() - g_startTick;
 	const int id = g_eventId++;
 
-	// Дублюємо в канал налагодження: EKA2L1 віддає файл на хост лише при закритті,
-	// тож обірваний прогін інакше не лишає жодного сліду.
+	// Duplicate to debug channel: EKA2L1 sends file to host only on close,
+	// so an aborted run would otherwise leave no trace.
 	RDebug::Printf("[ps1] %d %ums %s %s %s", id, (unsigned)elapsed, type,
 		errType ? errType : "-", esc);
 
@@ -100,18 +100,18 @@ static void logEvent(const char *type, const char *errType, const char *fmt, ...
 	fflush(g_log);
 	}
 
-// --- Контракт, який libpcsxcore очікує від фронтенду -----------------------
-// Перелік визначено з самої бібліотеки (nm: невизначені мінус визначені).
+// --- Contract that libpcsxcore expects from frontend -----------------------
+// List is determined from the library itself (nm: undefined minus defined).
 
-// Згортання повторів замість обмеження кількості. Ліміт різав за порядком
-// надходження: 2000 однакових "game crash @f0001234" від інтерпретатора з'їдали
-// квоту, і на прогін динареку не лишалось жодного повідомлення ядра - зокрема
-// його власної самоперевірки. До того ж кожен запис коштує fflush на флеш, тож
-// потік повторів спотворював і вимір часу.
+// Collapsing repeats instead of capping count. Limit cut by arrival order:
+// 2000 identical "game crash @f0001234" from interpreter consumed
+// the quota, leaving zero core messages for dynarec run - including
+// its own self-test. Moreover, each write costs fflush to flash, so
+// repeated flood also skewed timing measurements.
 static char g_lastCore[512];
 static int g_coreRepeat;
 
-// Викликати перед подіями, які мають лягти в лог у правильному порядку.
+// Call before events that must appear in log in correct order.
 static void flushCoreRepeat()
 	{
 	if (!g_coreRepeat)
@@ -157,32 +157,32 @@ void SysMessage(const char *fmt, ...)
 	logCore("core_msg", buf);
 	}
 
-// Плагіни вбудовані, динамічного завантаження під Symbian немає.
+// Plugins are built-in, there is no dynamic loading on Symbian.
 void *SysLoadLibrary(const char * /*lib*/)            { return NULL; }
 void *SysLoadSym(void * /*lib*/, const char * /*sym*/) { return NULL; }
 const char *SysLibError()                              { return NULL; }
 void SysCloseLibrary(void * /*lib*/)                   { }
 
-// Ядро кличе це на кожній вертикальній розгортці через EmuUpdate().
-// Інкремент stop завершує psxCpu->Execute() рівно на межі кадру.
-unsigned g_vblanks;   // зонд: чи справді кадр завершує вертикальна розгортка
+// Core calls this on every vertical blank via EmuUpdate().
+// Incrementing stop terminates psxCpu->Execute() right at frame boundary.
+unsigned g_vblanks;   // probe: whether vertical blank actually completes the frame
 
-// Адаптивний пропуск кадрів. gpulib уміє пропускати рівно стільки, скільки треба,
-// щоб устигати за реальним часом, але саму оцінку відставання мусить дати
-// оболонка: в апстрімі це frontend/plugin_lib.c, теку якого ми не беремо.
-// Виграш проти фіксованого пропуску не в кількості пропущених кадрів, а в тому,
-// ЯКІ саме пропускаються: рішення ухвалюється в момент, коли гра гортає буфер, а
-// не за парністю нашого лічильника (заміряно: фіксований пропуск утрачає показані
-// кадри надлінійно, розділ 12.6 звіту).
+// Adaptive frameskip. gpulib can skip exactly as many as needed to keep up
+// with real time, but the lag estimate itself must be provided by
+// the shell: upstream does this in frontend/plugin_lib.c, whose directory we omit.
+// Benefit over fixed frameskip is not in number of skipped frames, but in
+// WHICH ones are skipped: decision is made when game flips buffer,
+// not by parity of our counter (measured: fixed frameskip loses presented
+// frames superlinearly, section 12.6 of report).
 extern "C" void ps1GpuSetFrameskipAdvice(int aAdvice);
-static TInt  g_fsFps;        // 0 - режим вимкнено
-static TUint g_fsStart;      // мітка часу, від якої рахуємо очікуваний кадр
-static TUint g_fsFrames;     // розгорток від тієї мітки
+static TInt  g_fsFps;        // 0 - mode disabled
+static TUint g_fsStart;      // timestamp from which expected frame is computed
+static TUint g_fsFrames;     // vblanks since that timestamp
 static TInt  g_fsAdvice;
-static TInt  g_fsAdvised;    // зонд: скільки разів радили пропустити
+static TInt  g_fsAdvised;    // probe: how many times skip was advised
 
-// Очікуваний час рахуємо від нерухомої мітки, а не накопиченням інтервалу:
-// 1000/60 у цілих числах дало б 3% дрейфу за хвилину.
+// Expected time is computed from fixed timestamp, not by accumulating interval:
+// 1000/60 in integers would give 3% drift per minute.
 void fsAdaptiveStart(TInt aFps)
 	{
 	g_fsFps = aFps;
@@ -202,16 +202,16 @@ void pl_frame_limit(void)
 	g_fsFrames++;
 	const TInt interval = 1000 / g_fsFps;
 	const TInt diff = (TInt)(g_fsStart + (g_fsFrames * 1000u) / (TUint)g_fsFps - now);
-	// Пауза, довге читання диска чи перший кадр після завантаження: накопичене
-	// відставання тут не є ознакою браку швидкодії, і без скидання воно дало б
-	// серію хибних пропусків.
+	// Pause, long disc read or first frame after load: accumulated
+	// lag here is not a sign of poor performance, and without reset it would cause
+	// a burst of false skips.
 	if (diff < -3 * interval || diff > 3 * interval)
 		{
 		g_fsStart = now;
 		g_fsFrames = 0;
 		}
-	// Між -interval і 0 порада не міняється: без цього гістерезису вона
-	// перемикалася б щокадру й пропуск ішов би через раз незалежно від потреби.
+	// Between -interval and 0 advice does not change: without this hysteresis it
+	// would toggle every frame and skipping would occur every other frame regardless of need.
 	if (diff < -interval)
 		g_fsAdvice = 1;
 	else if (diff >= 0)
@@ -223,8 +223,8 @@ void pl_frame_limit(void)
 
 unsigned short in_keystate[8];
 
-// in_keystate[0] тримає натиснуті кнопки active-high (біти DKEY_*), заповнюється
-// щокадру з клавіш апарата (voutSymbianPollPad). PS1 очікує active-low, звідси ~.
+// in_keystate[0] holds pressed buttons active-high (DKEY_* bits), populated
+// every frame from device keys (voutSymbianPollPad). PS1 expects active-low, hence ~.
 void PAD1_readPort(struct PadDataS *pad, int *is_multitap)
 	{
 	if (pad)
@@ -238,7 +238,7 @@ void PAD1_readPort(struct PadDataS *pad, int *is_multitap)
 
 void PAD2_readPort(struct PadDataS *pad, int *is_multitap)
 	{
-	if (pad) memset(pad, 0, sizeof(*pad));   // порт 2 порожній
+	if (pad) memset(pad, 0, sizeof(*pad));   // port 2 is empty
 	if (is_multitap) *is_multitap = 0;
 	}
 
@@ -247,13 +247,13 @@ void plat_trigger_vibrate(int /*pad*/, int /*low*/, int /*high*/) { }
 
 } // extern "C"
 
-// --- Плагіни ----------------------------------------------------------------
-// LoadPlugins() вантажить .so через SysLoadLibrary, чого під Symbian немає,
-// тож вказівники виставляються напряму. GPU - справжній gpu_unai через gpulib
-// (Етап 2). Звук поки заглушений, це Етап 4.
+// --- Plugins ----------------------------------------------------------------
+// LoadPlugins() loads .so via SysLoadLibrary, which does not exist on Symbian,
+// so pointers are assigned directly. GPU is real gpu_unai via gpulib
+// (Stage 2). Sound is muted for now, that is Stage 4.
 
-// Обгортки з src/symbian/vout_symbian.cpp: імена gpulib збігаються з ТИПАМИ
-// в plugins.h, тож напряму їх сюди не оголосити.
+// Wrappers from src/symbian/vout_symbian.cpp: gpulib names clash with TYPES
+// in plugins.h, so they cannot be declared here directly.
 extern "C" {
 long ps1GpuInit(void);
 long ps1GpuShutdown(void);
@@ -303,7 +303,7 @@ int voutSymbianHalDump(const char *path);
 int voutSymbianHalAddr(void);
 int voutSymbianRawDump(const char *path, int bytes);
 int voutSymbianGlBench(int frames);
-// Растеризатор на MBX (glrender.cpp).
+// MBX rasterizer (glrender.cpp).
 int  glrInit(void);
 void glrShutdown(void);
 void glrSetEnabled(int on);
@@ -314,7 +314,7 @@ void glrStats(int *verts, int *batches, int *over, int *hit, int *miss, int *evi
 void glrShot(const char *path);
 void glrSetTexWhite(int on);
 void glrSetSkip(int mask);
-// Вимикач програмного проходу gpu_unai (аргумент "swoff"). Живе у gpulib_if.cpp.
+// Switch for gpu_unai software pass ("swoff" argument). Lives in gpulib_if.cpp.
 extern int gpu_unai_sw_off;
 // Dynarec block pre-compile on state load: crashes on this device, off by default.
 extern "C" int ndrc_skip_load_blocks;
@@ -329,20 +329,20 @@ void voutSymbianSetStats(int fpsX10, int msX10);
 void voutSymbianSetPumpAo(int on);
 static TBool g_fbVis;
 
-// Лічильники безпосередньо в gpulib: усі шляхи ядра (interp/drc) сходяться туди,
-// тож це достовірний сигнал, чи BIOS реально шле команди малювання.
+// Counters directly in gpulib: all core paths (interp/drc) converge there,
+// so this is a reliable signal of whether BIOS actually sends draw commands.
 extern unsigned int g_gpulibWriteData, g_gpulibWriteDataMem, g_gpulibDmaChain;
 extern unsigned int g_gpulibDmaWords, g_gpulibWriteStatus, g_gpulibReadStatus;
 extern unsigned int g_gpulibStatusLast;
-// Час растеризації gpu_unai (тики FastCounter) - розділяє CPU vs GPU в "emu".
+// gpu_unai rasterization time (FastCounter ticks) - separates CPU vs GPU in "emu".
 extern unsigned long long g_gpulibRenderTicks;
-// Час мікшування SPU (тики FastCounter) - відділяє звук від CPU всередині "emu".
+// SPU mixing time (FastCounter ticks) - separates sound from CPU inside "emu".
 extern unsigned long long g_spuMixTicks;
-// Час читання сектора з образу (тики FastCounter) разом з розпакуванням, якщо
-// образ стиснений, і кількість читань - ціна формату образу всередині "emu".
+// Sector read time from image (FastCounter ticks) including decompression if
+// image is compressed, and read count - cost of image format inside "emu".
 extern unsigned long long g_cdReadTicks;
 extern unsigned int g_cdReadCount;
-// Час декодування MDEC (тики FastCounter) - ціна відео всередині "emu".
+// MDEC decoding time (FastCounter ticks) - cost of video inside "emu".
 extern unsigned long long g_mdecDecodeTicks;
 extern unsigned int g_mdecWords;
 unsigned int ndrc_symbian_fastfreq(void);
@@ -350,12 +350,12 @@ unsigned int ndrc_symbian_fastcount(void);
 unsigned int ndrc_symbian_tcbase(void);
 }
 
-// Скільки тримати кадр на екрані, щоб людина встигла глянути (запуск headless
-// по WiFi: дивимось на сам апарат під час прогону).
+// How long to hold frame on screen so human can look (headless launch
+// over WiFi: watching device itself during run).
 static const int KScreenHoldMs = 5000;
 
-// Стан проходу й стадія кадру оголошені тут, а не біля самого циклу: їх читає
-// сторожовий потік (чорна скринька нижче), який визначений раніше за цикл.
+// Pass state and frame stage are declared here, not near the loop itself: they are read
+// by watchdog thread (black box below), which is defined before the loop.
 enum TFrameStage { EStageIdle = 0, EStagePoll, EStageExec, EStageBlit, EStageSnd };
 static volatile TInt g_stage;
 
@@ -373,43 +373,43 @@ static struct
 	u32 produced;
 	} g_pass;
 
-// Захист від зависання. Цикл кадрів покладається на те, що psxCpu->Execute()
-// повертається на межі кадру (pl_frame_limit виставляє psxRegs.stop на VBlank).
-// Реальний BIOS може крутитися в ранній ініціалізації ДО першого VBlank - тоді
-// Execute не повертається ніколи, а демон розгортання блокований у RUN без
-// таймауту, тобто телефон знімається лише ребутом. Сторожовий потік через
-// KWatchdogMs виставляє psxRegs.stop (інтерпретатор перевіряє його щоінструкції,
-// while(!regs->stop)), і прохід завершується з частковим результатом у лозі.
+// Hang protection. Frame loop relies on psxCpu->Execute()
+// returning at frame boundary (pl_frame_limit sets psxRegs.stop on VBlank).
+// Real BIOS may spin in early initialization BEFORE first VBlank - then
+// Execute never returns, and deployment daemon is blocked in RUN without
+// timeout, so phone can only be recovered via reboot. Watchdog thread sets
+// psxRegs.stop after KWatchdogMs (interpreter checks it every instruction,
+// while(!regs->stop)), and pass completes with partial result in log.
 static const TInt KWatchdogMs = 60000;
 
-// Меню-запуск (alpha 1.0) грає гру, тож потрібні великий бюджет кадрів і довший
-// сторож, щоб не обірвати сесію. Прохід усе одно самозавершується (не лишаємо
-// вічний консольний процес, який важко зняти).
+// Menu launch (alpha 1.0) plays the game, so large frame budget and longer
+// watchdog are needed to avoid cutting session short. Pass still self-terminates
+// (avoids leaving eternal console process that is hard to kill).
 static const TInt KPlayFrames = 200000;
-static const TInt KPlayWatchdogMs = 1200000;    // 20 хв
-static TInt g_watchdogMs = KWatchdogMs;         // бенчмарк за замовчуванням
+static const TInt KPlayWatchdogMs = 1200000;    // 20 min
+static TInt g_watchdogMs = KWatchdogMs;         // benchmark by default
 
-// Стеля тривалості сеансу, мс. Нуль - без обмеження (звичайна гра з меню).
-// Аргумент "limit<N>" ставить її для прогонів через демон.
+// Session duration ceiling, ms. Zero - no limit (normal play from menu).
+// "limit<N>" argument sets it for runs via daemon.
 static TInt g_playLimitMs;
 
-// Скільки кадрів прорахувати. Аргумент "frames<N>". Для замірів це надійніше за
-// обмеження часом: за фіксований час швидша збірка встигає далі по грі й малює
-// ІНШІ сцени, тож порівнювати нема чого. Однакова кількість кадрів із однаковим
-// слідом вводу дає однакову роботу, і різниця в часі - це справді різниця коду.
+// How many frames to compute. "frames<N>" argument. For measurements this is more reliable
+// than time limit: in fixed time faster build advances further in game and renders
+// DIFFERENT scenes, so comparison is invalid. Identical frame count with identical
+// input trace produces identical work, and timing difference reflects real code difference.
 static TInt g_playFrames;
 
-// Аргумент "nosnd": прогін без звуку в динаміку.
+// "nosnd" argument: run without speaker sound.
 static TBool g_noSound;
 
-// Прискорювачі й якість растеризації. Усі за замовчуванням вимкнені, крім тих,
-// де вимкнення саме по собі є втратою (див. light/blend нижче).
-//   pixskip  - не малювати невидимі пікселі у високих горизонтальних режимах
-//   ilace<N> - пропускати рядки (1 = кожен другий)
-//   gtenf    - не рахувати прапорці GTE в динареку
-//   light/blend - модуляція текстур освітленням і напівпрозорість; вимкнені
-//                 вони були НЕ навмисно, а через нульовий gpu_unai_config_ext
-//   cyclemul<N> - скільки тактів коштує інструкція гостя (175 = штатно)
+// Speedups and rasterization quality. All disabled by default, except those
+// where disabling is itself a loss (see light/blend below).
+//   pixskip  - skip invisible pixels in high horizontal resolution modes
+//   ilace<N> - skip lines (1 = every other line)
+//   gtenf    - do not calculate GTE flags in dynarec
+//   light/blend - texture lighting modulation and blending; they were
+//                 disabled UNINTENTIONALLY due to zeroed gpu_unai_config_ext
+//   cyclemul<N> - how many cycles guest instruction costs (175 = stock)
 static TInt g_hackPixelSkip;
 static TInt g_hackIlace;
 static TBool g_hackGteNoFlags;
@@ -419,95 +419,95 @@ static TInt g_cycleMul;
 
 extern "C" void gpu_unai_set_config(int aPixelSkip, int aIlaceForce,
 	int aLighting, int aFastLighting, int aBlending);
-// Копіює конфіг у робочу структуру растеризатора вже після renderer_init.
+// Copies config into rasterizer working struct after renderer_init.
 extern "C" void gpu_unai_apply_config(void);
-// Є лише у збірці gpu_unai з -DGPU_UNAI_PRIMSTATS; слабкий символ, щоб звичайна
-// збірка лінкувалася без нього. Порядок полів - як у gpu_unai_primstats_t.
+// Present only in gpu_unai build with -DGPU_UNAI_PRIMSTATS; weak symbol so regular
+// build links without it. Field order matches gpu_unai_primstats_t.
 extern "C" int gpu_unai_get_primstats(unsigned *aOut, int aMax)
 	__attribute__((weak));
-// Межу кадру растеризатор не бачить, а лічильник різних текстур за кадр без неї
-// не має сенсу; тому кличемо звідси.
+// Rasterizer does not see frame boundary, and distinct texture counter per frame
+// is meaningless without it; therefore called from here.
 extern "C" void gpu_unai_primstats_frame(void)
 	__attribute__((weak));
-// Робота з VRAM повз растеризатор (gpulib): запис, читання, копіювання - у
-// штуках і пікселях. Для апаратного рендерера це точки синхронізації.
+// VRAM operations bypassing rasterizer (gpulib): write, read, copy - in
+// counts and pixels. For hardware renderer these are synchronization points.
 extern "C" unsigned int gpulib_vram_stats[6];
 extern "C" int g_gpuSpeedPct;
 
-// Пропуск виведення: кожен (N+1)-й кадр показуємо, решту лише рахуємо. Емуляцію
-// і растеризацію це НЕ пропускає - економить саме вивід (конвертація + вікно),
-// а це 13 з 37 мс кадру. Чесніше називати це пропуском показу, а не кадрів.
+// Presentation skip: show every (N+1)-th frame, only compute the rest. Emulation
+// and rasterization are NOT skipped - saves presentation itself (conversion + window),
+// which is 13 of 37 ms per frame. More accurately called presentation skip rather than frameskip.
 static TInt g_frameskip;
 
-// Пропуск РАСТЕРИЗАЦІЇ силами gpulib: скільки кадрів поспіль дозволено не малювати
-// (0 - вимкнено). На відміну від g_frameskip вище, тут пропускається сама робота, а
-// не лише її показ; gpulib ще й тримає власні охоронні перевірки (не пропускає,
-// коли гра малює просто у видиму область).
+// RASTERIZATION skip via gpulib: how many consecutive frames are allowed to skip rendering
+// (0 - disabled). Unlike g_frameskip above, here the work itself is skipped, not
+// just its presentation; gpulib also maintains its own guard checks (does not skip
+// when game draws directly into display area).
 static TInt g_gpuFrameskip;
 
-// Зонди для замірів (лише командний рядок, у меню їх немає).
+// Probes for measurements (command line only, not present in menu).
 static TBool g_hackNoStalls;
-// Кадр першого знімка екрана; 3300 - трасa, менші значення потрапляють у меню гри,
-// де вона працює в 640x480 і видно роботу масштабування.
+// Frame of the first screenshot; 3300 - track, lower values hit game menu,
+// where it runs in 640x480 and scaling behavior is visible.
 static TInt g_dumpAt = 3300;
 
-// Збереження і завантаження стану для стенду швидкодії.
+// Save and load state for benchmark harness.
 static const char KBenchSavePath[] = "E:\\PS1\\saves\\bench.sav";
 _LIT(KBenchSavePathDes, "E:\\PS1\\saves\\bench.sav");
 static TInt g_saveStateAt;
 static TInt g_loadStateAt;
 static TBool g_savedState;
 
-// Накладка з метриками. Вікно усереднення ~0,5 с: за одним кадром число стрибало
-// б так, що прочитати його з екрана неможливо.
+// Metrics overlay. Averaging window ~0.5 s: with single frame the number would jump
+// so much that reading it from screen would be impossible.
 static const TInt KFpsWindowMs = 500;
 static TBool g_fpsOverlay;
 static TUint g_fpsWinTick;
 static TInt  g_fpsWinFrame;
-static TUint g_fpsWinShown;   // лічильник показаних кадрів на початку вікна
+static TUint g_fpsWinShown;   // presented frames counter at start of window
 
-// Образ диска, обраний у меню. Порожній - беремо KDiscImg.
+// Disc image selected in menu. Empty - use KDiscImg.
 static char g_discPath[256];
-// Ім'я дампу BIOS у теці E:\PS1\bios (без шляху - його дає Config.BiosDir).
-// Порожнє означає типовий KBiosFile; задається з меню, зокрема окремо на гру.
+// BIOS dump name in E:\PS1\bios folder (without path - provided by Config.BiosDir).
+// Empty means default KBiosFile; set from menu, including per-game.
 static char g_biosFile[64];
 
-// Вікно належить контейнеру CCoeControl і прив'язується до виведення ще до setup,
-// тож у GUI-режимі власного вікна не створюємо й не закриваємо. Оголошено тут,
-// бо від нього залежить частота діагностичних записів у сторожі (нижче).
+// Window belongs to CCoeControl container and attaches to output before setup,
+// so in GUI mode we do not create or destroy own window. Declared here
+// because diagnostic logging frequency in watchdog (below) depends on it.
 static TBool g_guiMode;
 
-static volatile TInt g_wdRun;    // 1, поки прохід хоче, щоб сторож жив
-static volatile TInt g_wdFired;  // 1, якщо сторож спрацював (спін довше ліміту)
+static volatile TInt g_wdRun;    // 1 while pass wants watchdog alive
+static volatile TInt g_wdFired;  // 1 if watchdog triggered (spin longer than limit)
 
-// Діагностика: сторож семплює pc/cycle раз на ~2 с. Траєкторія показує, чи
-// виконання стоїть на одній інструкції (хендлер висить), чи повзе - без цього
-// повільний/завислий BIOS нічим не локалізувати на залізі.
+// Diagnostics: watchdog samples pc/cycle once every ~2 s. Trajectory shows whether
+// execution is stuck on single instruction (handler hung) or creeping - without this,
+// slow/hung BIOS cannot be localized on hardware.
 static const TInt KWdSamples = 40;
 static volatile TUint32 g_wdPc[KWdSamples];
 static volatile TUint32 g_wdCyc[KWdSamples];
 static volatile TInt g_wdSamples;
 
-// Ознака життя циклу кадрів: інкремент на кожен крок.
+// Heartbeat of frame loop: incremented on every step.
 static volatile TInt g_wdBeat;
 
-// Ідентифікатор головного потоку: сторож читає його контекст (де саме він виконується).
+// Main thread ID: watchdog reads its context (where exactly it is executing).
 static TThreadId g_mainThreadId;
 
-// Завершується КООПЕРАТИВНО: перевіряє g_wdRun короткими кроками й виходить сам,
-// коли прохід його вимкне. Так не треба RThread::Kill (паніка при вбивстві вже
-// мертвого потоку) і немає гонки на завершенні.
+// Terminates COOPERATIVELY: checks g_wdRun in short steps and exits on its own
+// when pass disables it. Avoids RThread::Kill (panic when killing already
+// dead thread) and avoids shutdown race conditions.
 static void crashHandler(TExcType aType);
 
-// Знімок стека з обробника виключень. Ядро кладе збережений контекст збійного
-// коду на стек потоку перед викликом обробника, тож адреса збійної інструкції
-// лежить у цих словах - шукати серед них значення в межах кешу трансляцій або
-// коду програми. Сам обробник у файл не пише: stdio з нього мовчав, а RFs звідти
-// відкривати надто ризиковано (вторинний збій - і не лишиться нічого).
-// Обробник не робить ЖОДНОГО системного виклику до публікації: минулий варіант
-// брав StackInfo і чекав через User::After, і не записав нічого - блокувальний
-// виклик з контексту виключення знімає потік мовчки. Вершина стека тому
-// запам'ятовується заздалегідь (paintStack), а чекає обробник спін-циклом.
+// Stack snapshot from exception handler. Core places saved faulting code
+// context on thread stack before invoking handler, so faulting instruction
+// address is among these words - look for values within translation cache or
+// program code. Handler itself does not write to file: stdio from it produced nothing,
+// and opening RFs from there is too risky (secondary fault leaves nothing).
+// Handler makes NO system calls prior to publication: previous implementation
+// took StackInfo and waited via User::After, and recorded nothing - blocking
+// call from exception context kills thread silently. Stack base is therefore
+// remembered in advance (paintStack), and handler waits via spin loop.
 static const TInt KCrashWords = 64;
 static volatile TInt g_crashType = -1;
 static volatile TInt g_crashStep;
@@ -517,28 +517,28 @@ static volatile TInt g_crashWords;
 static volatile TInt g_crashPublished;
 static TUint32 g_stackBase;
 
-// Слід рекомпілятора (new_dynarec.c): який гостьовий блок і який прохід саме
-// виконувався. Без цього адреса збійної інструкції нічого не каже про причину.
+// Recompiler trace (new_dynarec.c): which guest block and pass was currently
+// executing. Without this, faulting instruction address reveals nothing about the cause.
 extern "C" {
 extern unsigned int ndrc_dbg_addr, ndrc_dbg_pass, ndrc_dbg_i, ndrc_dbg_slen, ndrc_dbg_out;
 }
 
 static TInt watchdogThread(TAny *aArg)
 	{
-	// Обробник виключень - на потік, а не на процес: без цього збій саме в сторожі
-	// вбивав би процес мовчки, і виглядало б це так само, як збій у циклі кадрів.
+	// Exception handler is per-thread, not per-process: without this, fault in watchdog itself
+	// would kill process silently, looking identical to fault in frame loop.
 	User::SetExceptionHandler(crashHandler,
 		KExceptionAbort | KExceptionKill | KExceptionUserInterrupt | KExceptionFpe |
 		KExceptionFault | KExceptionInteger | KExceptionDebug);
 
-	// Чорна скринька. KERN-EXEC 3 знімає процес так, що обробник виключень не
-	// встигає нічого записати (перевірено: встановлюється, але не викликається),
-	// тож стан пише СУСІДНІЙ потік - те, що вже лягло на флеш, паніка не відбере.
-	// Нативний RFile, а не stdio: ESTLIB тримає стан C-бібліотеки на потік, і
-	// fopen звідси просто повертав NULL (файл не з'являвся).
-	// Контекст головного потоку: його PC каже, ДЕ він виконується - у кеші
-	// трансляцій (згенерований код) чи в коді програми (сам рекомпілятор). Це
-	// розділяє простір пошуку навпіл, чого сам лічильник стадій не дає.
+	// Black box. KERN-EXEC 3 terminates process so quickly that exception handler
+	// cannot write anything (verified: installed, but never called),
+	// so state is written by NEIGHBORING thread - panic cannot erase data already on flash.
+	// Native RFile rather than stdio: ESTLIB keeps C library state per-thread, and
+	// fopen from here simply returned NULL (file was not created).
+	// Main thread context: its PC indicates WHERE it executes - in translation
+	// cache (generated code) or in program code (recompiler itself). This
+	// divides search space in half, which stage counter alone cannot provide.
 	RThread mainT;
 	const TBool haveMainT = (mainT.Open(g_mainThreadId) == KErrNone);
 
@@ -555,8 +555,8 @@ static TInt watchdogThread(TAny *aArg)
 		}
 
 	const TInt limitMs = (TInt)aArg;
-	// Крок 5 мс: після збою процес живе лічені десятки мілісекунд, і рідший
-	// крок не встигає зафіксувати зупинку (перевірено - на 25 мс губилось).
+	// 5 ms step: after crash process survives only tens of milliseconds, and a coarser
+	// step fails to capture the stall (verified - at 25 ms it was lost).
 	const TInt step = 5;
 	TInt elapsed = 0;
 	TInt idleMs = 0;
@@ -576,15 +576,15 @@ static TInt watchdogThread(TAny *aArg)
 			{
 			unsigned gpData = 0, gpDataMem = 0, gpDma = 0, gpStatus = 0;
 			voutSymbianGpuStats(&gpData, &gpDataMem, &gpDma, &gpStatus);
-			// Купа: метадані динареку (блоки, списки переходів, хеш-таблиці)
-			// живуть саме тут і ростуть найшвидше на завантаженні нового коду.
-			// EPOCHEAPSIZE обмежує їх зверху, а невдалий malloc у динареку
-			// перевіряється не скрізь - тоді запис іде за нульовим покажчиком.
+			// Heap: dynarec metadata (blocks, jump lists, hash tables)
+			// lives here and grows fastest when loading new code.
+			// EPOCHEAPSIZE caps them, and failed malloc in dynarec
+			// is not checked everywhere - then write occurs through null pointer.
 			TInt heapBiggest = 0;
 			const TInt heapAvail = User::Heap().Available(heapBiggest);
 
-			// r13/r14/r15 головного потоку. TArmRegSet - масив 32-бітних слів,
-			// PC у ньому 16-й (індекс 15).
+			// r13/r14/r15 of main thread. TArmRegSet is array of 32-bit words,
+			// PC in it is 16th (index 15).
 			TUint32 hsp = 0, hlr = 0, hpc = 0;
 			if (haveMainT)
 				{
@@ -609,25 +609,25 @@ static TInt watchdogThread(TAny *aArg)
 				(TUint)ndrc_dbg_slen, (TUint32)ndrc_dbg_out);
 			beatFile.Write(line);
 			beatFile.Flush();
-			// Кожен удар - це запис із Flush на картку пам'яті, тобто службова
-			// операція FAT посеред кадру. У полюванні на збій (консоль) 50 мс
-			// виправдані: після падіння процес живе десятки мілісекунд. У грі це
-			// 20 звернень до флеш-пам'яті щосекунди - рівно ті регулярні
-			// підфризування, які видно на геймплеї, тож там крок секундний.
+			// Each heartbeat is a write with Flush to memory card, i.e. a FAT
+			// maintenance operation mid-frame. When hunting crashes (console), 50 ms
+			// is justified: after crash process survives tens of milliseconds. In game this
+			// is 20 flash memory accesses per second - precisely the periodic
+			// micro-stutters visible in gameplay, so there the interval is one second.
 			nextBeatMs += g_guiMode ? 1000 : 50;
 
-			// Адреса збійної інструкції без обробника виключень. Той на цьому
-			// апараті не викликається, зате ядро лишає контекст збійного коду на
-			// стеку головного потоку - а сторож живе в тому ж процесі й читає
-			// його пам'ять напряму. Ознака зупинки: pc, sp І лічильник тактів
-			// гостя не змінилися між відліками, хоча стадія - виконання.
+			// Faulting instruction address without exception handler. That handler is not
+			// invoked on this device, but core leaves faulting code context on
+			// main thread stack - and watchdog runs in same process and reads
+			// its memory directly. Stall indication: pc, sp AND guest cycle counter
+			// have not changed between samples while stage is execution.
 			if (!stuckDumped && g_stage == EStageExec && hpc == lastHpc &&
 				hsp == lastHsp && (TUint32)psxRegs.cycle == lastCycle && hsp)
 				{
-				// Пишемо знімок ПОПЕРЕДНЬОГО відліку, а не свіжий: на цьому кроці
-				// головний потік уже мертвий, його стек відображення не має, і
-				// читання звідти вбивало сам сторож (перевірено - файл обривався).
-				// Одним записом: процес помирає за мілісекунди.
+				// Write snapshot of PREVIOUS sample rather than fresh one: at this step
+				// main thread is already dead, its stack is unmapped, and
+				// reading from it killed watchdog itself (verified - file was truncated).
+				// Single write: process dies in milliseconds.
 				stuckDumped = ETrue;
 				TBuf8<1200> rec;
 				rec.Format(_L8("{\"stuck\":1,\"hpc\":\"%08x\",\"excsp\":\"%08x\","
@@ -643,10 +643,10 @@ static TInt watchdogThread(TAny *aArg)
 				}
 			else if (hsp)
 				{
-				// Котиться щовідліку, поки потік живий: читати його стек безпечно
-				// лише до збою, а потрібен він саме за станом на момент збою.
-				// Вікно і вниз від sp: невідомо, з якого боку ядро кладе контекст
-				// збійного коду, а кадр збійної функції лежить саме нижче.
+				// Rolling update on every sample while thread is alive: reading its stack
+				// is safe only before crash, and state at crash moment is what is needed.
+				// Window extends below sp: side on which kernel places faulting code
+				// context is unspecified, and faulting function frame lies below.
 				TUint32 lo = hsp - KSnapBelow * 4;
 				TUint32 top = lo + KSnapWords * 4;
 				if (g_stackBase && top > g_stackBase) top = g_stackBase;
@@ -689,16 +689,16 @@ static TInt watchdogThread(TAny *aArg)
 			}
 		User::After(step * 1000);
 		elapsed += step;
-		// Не даємо екрану згаснути. Це не зручність, а умова порівнюваності: коли
-		// дисплей гасне, віконному серверу нема чого компонувати, і present падає
-		// з 12000 до 1700 мс на 9000 кадрів - більше за будь-який ефект, який ми
-		// тут міряємо. Раз на 10 с достатньо.
+		// Keep screen awake. This is not convenience, but comparability requirement: when
+		// display sleeps, window server has nothing to compose, and present drops
+		// from 12000 to 1700 ms per 9000 frames - larger than any effect measured
+		// here. Once every 10 s is sufficient.
 		if ((elapsed % 10000) < step)
 			User::ResetInactivityTime();
-		// Міряємо ЗАСТІЙ, а не тривалість проходу: у GUI сесія триває годинами, і
-		// ліміт на весь прохід обривав би гру посеред неї. Зупинка лічильника
-		// кадрів - саме той випадок, заради якого сторож існує (Execute не
-		// повертається, бо BIOS крутиться до першого VBlank).
+		// Measure STALL, not pass duration: in GUI session lasts hours, and
+		// total pass limit would cut game mid-play. Frame counter
+		// stopping is the exact case watchdog exists for (Execute does not
+		// return because BIOS spins before first VBlank).
 		if (g_wdBeat != lastBeat) { lastBeat = g_wdBeat; idleMs = 0; }
 		else                      { idleMs += step; }
 		}
@@ -717,8 +717,8 @@ static TInt watchdogThread(TAny *aArg)
 
 static unsigned int g_gpuHcnt;
 
-// Звук: справжній SPU - dfsound через обгортки ps1Spu* у snd_symbian.cpp (там
-// plugins.h не включено, тож назви функцій dfsound не конфліктують із typedef).
+// Sound: real SPU - dfsound via ps1Spu* wrappers in snd_symbian.cpp (plugins.h
+// is not included there, so dfsound function names do not conflict with typedef).
 extern "C" {
 long ps1SpuInit(void);
 long ps1SpuShutdown(void);
@@ -742,10 +742,10 @@ void ps1SndCloseOutput(void);
 void ps1SndSetPumpAo(int aOn);
 }
 
-// SPU freeze передаємо в dfsound, щоб SaveState/LoadState не отримували нульовий розмір і NULL.
+// SPU freeze is forwarded to dfsound so SaveState/LoadState do not get zero size and NULL.
 extern "C" long DoFreeze(int, SPUFreeze_t *, unsigned short **, void *, unsigned int);
 
-// XA/CD-аудіо не потрібні - лишаємо заглушками.
+// XA/CD audio are not needed - left as stubs.
 static void CALLBACK spuPlayADPCMchannel(xa_decode_t *, unsigned int, int)    { }
 static long CALLBACK spuFreeze(int aMode, SPUFreeze_t *aHdr, unsigned short **aRam, void *aP2, unsigned int aCycles)
 	{
@@ -754,9 +754,9 @@ static long CALLBACK spuFreeze(int aMode, SPUFreeze_t *aHdr, unsigned short **aR
 static int  CALLBACK spuPlayCDDAchannel(short *, int, unsigned int, int)      { return 0; }
 static void CALLBACK spuSetCDvol(unsigned char, unsigned char, unsigned char, unsigned char, unsigned int) { }
 
-// --- Збереження і завантаження стану через нативні RFile (без стиснення) ---
+// --- Save and load state via native RFile (uncompressed) ---
 
-// Прапорець вмикається аргументом "savefuncs" - див. коментар біля підміни.
+// Flag enabled by "savefuncs" argument - see comment near hook.
 static TBool g_saveFuncsOverride;
 static const TInt KSaveBufferSize = 64 * 1024;
 
@@ -870,7 +870,7 @@ static int symbianSaveRead(void *file, void *buf, u32 len)
 		{
 		return 0;
 		}
-	// Захист від від'ємних/надвеликих значень u32
+	// Guard against negative/excessive u32 values
 	if ((TInt)len <= 0 || len > 0x10000000)
 		{
 		logEvent("save", "SAVE_READ_FAIL", "bad read length len=%u", (unsigned)len);
@@ -919,7 +919,7 @@ static int symbianSaveWrite(void *file, const void *buf, u32 len)
 		{
 		return 0;
 		}
-	// Захист від від'ємних/надвеликих значень u32
+	// Guard against negative/excessive u32 values
 	if ((TInt)len <= 0 || len > 0x10000000)
 		{
 		logEvent("save", "SAVE_WRITE_FAIL", "bad write length len=%u", (unsigned)len);
@@ -1025,7 +1025,7 @@ static long symbianSaveSeek(void *file, long offs, int whence)
 		{
 		if (f->iWriting)
 			{
-			// При записі розширюємо файл, бо RFile::Seek обрізає позицію до Size
+			// On write extend file because RFile::Seek clamps position to Size
 			err = f->iFile.SetSize(targetPos);
 			if (err != KErrNone)
 				{
@@ -1113,7 +1113,7 @@ static void bindStubPlugins()
 	SPU_playCDDAchannel  = spuPlayCDDAchannel;
 	SPU_setCDvol         = spuSetCDvol;
 
-	// Власний шлях запису стану поверх RFile (без стиснення).
+	// Custom state save path on top of RFile (uncompressed).
 	if (g_saveFuncsOverride)
 		{
 		SaveFuncs.open  = symbianSaveOpen;
@@ -1124,10 +1124,10 @@ static void bindStubPlugins()
 		}
 	}
 
-// --- Точка входу ------------------------------------------------------------
+// --- Entry point ------------------------------------------------------------
 
-// Один попередній лог зберігаємо: запуск затирає поточний, і цікавий прогін
-// пропадає, щойно застосунок піднімуть ще раз - на цьому вже раз згоріли.
+// Preserve one previous log: new launch overwrites current, and valuable run
+// is lost as soon as application is launched again - got burned by this before.
 static void rotateLog(const TDesC &aPath, const TDesC &aPrev)
 	{
 	RFs fs;
@@ -1138,8 +1138,8 @@ static void rotateLog(const TDesC &aPath, const TDesC &aPrev)
 	fs.Close();
 	}
 
-// Тека емулятора має існувати до першого fopen: ESTLIB тек не створює, і без
-// цього і лог, і образи мовчки не відкривались би на чистому апараті.
+// Emulator directory must exist before first fopen: ESTLIB does not create dirs,
+// and without this both log and images would fail to open silently on clean device.
 void ps1EnsureDirs()
 	{
 	RFs fs;
@@ -1158,15 +1158,15 @@ static void openLog()
 	_LIT(KLogPath, "E:\\PS1\\logs\\ps1_stage1.jsonl");
 	_LIT(KLogPrev, "E:\\PS1\\logs\\ps1_stage1_prev.jsonl");
 	rotateLog(KLogPath, KLogPrev);
-	// E: - змонтована карта пам'яті, тобто тека хоста: лог видно ззовні емулятора.
+	// E: is mounted memory card, i.e. host folder: log is visible outside emulator.
 	g_log = fopen("E:\\PS1\\logs\\ps1_stage1.jsonl", "w");
 	if (!g_log)
 		g_log = fopen("C:\\ps1_stage1.jsonl", "w");
 	}
 
-// Командний рядок: [кількість кадрів] [bios] [gputest] [drc]
-// aHaveArgs == EFalse означає запуск з меню телефона - там аргументів немає,
-// і тоді проганяються обидва режими ЦП підряд для порівняння.
+// Command line: [frame count] [bios] [gputest] [drc]
+// aHaveArgs == EFalse means launch from phone menu - there are no arguments,
+// and both CPU modes are run in succession for comparison.
 static void parseCommandLine(TInt &aFrames, TBool &aUseBios, TBool &aGpuTest, TBool &aDrc,
 	TBool &aShowScreen, TBool &aUseDisc, TBool &aHaveArgs)
 	{
@@ -1196,20 +1196,20 @@ static void parseCommandLine(TInt &aFrames, TBool &aUseBios, TBool &aGpuTest, TB
 	if (cmd.FindF(KGpuTestArg) != KErrNotFound)
 		aGpuTest = ETrue;
 
-	// Динарек умисно за прапорцем: у EKA2L1 його результат нічого не доводить
-	// (CLAUDE.md розділ 6), тож типовим лишається інтерпретатор.
+	// Dynarec is intentionally behind flag: in EKA2L1 its result proves nothing
+	// (CLAUDE.md section 6), so interpreter remains default.
 	_LIT(KDrcArg, "drc");
 	if (cmd.FindF(KDrcArg) != KErrNotFound)
 		aDrc = ETrue;
 
-	// Виведення кадру на екран (Етап 2). За замовчуванням вимкнено, бо псує
-	// чистий headless-прогін замірів: показ тримає процес KScreenHoldMs зайвих.
+	// On-screen frame output (Stage 2). Disabled by default because it skews
+	// clean headless benchmark runs: presentation holds process for extra KScreenHoldMs.
 	_LIT(KScreenArg, "screen");
 	if (cmd.FindF(KScreenArg) != KErrNotFound)
 		aShowScreen = ETrue;
 
-	// Завантаження гри з диска (E:\gt.cue). Потребує справжнього BIOS, тож вмикає
-	// і його. CheckCdrom сам визначить регіон (US->NTSC), тож PsxType не форсуємо.
+	// Game disc loading (E:\gt.cue). Requires real BIOS, so enables
+	// that as well. CheckCdrom determines region itself (US->NTSC), so PsxType is not forced.
 	_LIT(KDiscArg, "disc");
 	if (cmd.FindF(KDiscArg) != KErrNotFound)
 		{
@@ -1217,19 +1217,19 @@ static void parseCommandLine(TInt &aFrames, TBool &aUseBios, TBool &aGpuTest, TB
 		aUseBios = ETrue;
 		}
 
-	// DSA-вивід (прямий запис у буфер екрана). Типово ВИМКНЕНИЙ - ламає 16-бітні
-	// режими гри; вмикається явним "dsa" для пошуку причини.
+	// DSA output (direct write to screen buffer). DISABLED by default - breaks 16-bit
+	// game modes; enabled by explicit "dsa" to investigate cause.
 	_LIT(KDsaArgC, "dsa");
 	voutSymbianSetDsa(cmd.FindF(KDsaArgC) != KErrNotFound ? 1 : 0);
 	_LIT(KNoDirtyArgC, "nodirty");
 	voutSymbianSetDirtyOnly(cmd.FindF(KNoDirtyArgC) != KErrNotFound ? 0 : 1);
 
-	// GL ES вивід (MBX): GPU масштабує й презентує через eglSwapBuffers.
+	// GL ES output (MBX): GPU scales and presents via eglSwapBuffers.
 	_LIT(KGlArg, "gl");
 	if (cmd.FindF(KGlArg) != KErrNotFound)
 		voutSymbianSetGl(1);
 
-	// Збереження і завантаження стану для стенду.
+	// State save and load for test harness.
 	_LIT(KSaveStateArgC, "savestate");
 	const TInt ssp = cmd.FindF(KSaveStateArgC);
 	if (ssp != KErrNotFound)
@@ -1255,16 +1255,16 @@ static void parseCommandLine(TInt &aFrames, TBool &aUseBios, TBool &aGpuTest, TB
 		}
 	}
 
-// Самоперевірка растеризації: подаємо команди GP0 напряму, без BIOS і без гри.
-// Це єдиний спосіб перевірити gpu_unai поки процесор крутиться в пастці HLE.
-// Формати команд - стандартні GP0 PlayStation.
+// Rasterization self-test: submit GP0 commands directly, without BIOS and without game.
+// Only way to test gpu_unai while CPU spins in HLE trap.
+// Command formats are standard PlayStation GP0.
 static void runGpuSelfTest()
 	{
-	// Налаштування вікна дисплея через GP1 (320x240 NTSC, 15bit). На растеризацію
-	// у VRAM це не впливає (GP0 пише в VRAM незалежно від регістрів дисплея), тож
-	// дамп лишається тим самим. Мета - щоб gpulib виставив screen.w/h=320/240, і
-	// показ пішов справжньою гілкою масштабування (320x240 -> 240x180 летербокс),
-	// а не fallback'ом (розмір екрана). GP1 = (команда<<24)|дані.
+	// Display window setup via GP1 (320x240 NTSC, 15bit). Does not affect VRAM
+	// rasterization (GP0 writes to VRAM independently of display registers), so
+	// dump remains unchanged. Goal is for gpulib to set screen.w/h=320/240, so
+	// presentation uses real scaling branch (320x240 -> 240x180 letterbox),
+	// rather than fallback (screen size). GP1 = (cmd<<24)|data.
 	// hrange x1=0x200,x2=0xC00 -> (x2-x1)/hdiv(8)=320; vrange y1=0x10,y2=0x100 -> 240.
 	ps1GpuWriteStatus(0x06000000u | (0xC00u << 12) | 0x200u); // GP1(06) hor range
 	ps1GpuWriteStatus(0x07000000u | (0x100u << 10) | 0x010u); // GP1(07) ver range
@@ -1272,18 +1272,18 @@ static void runGpuSelfTest()
 	ps1GpuWriteStatus(0x05000000u);                           // GP1(05) display start = (0,0)
 	ps1GpuWriteStatus(0x03000000u);                           // GP1(03) display enable
 
-	// 0x02 - заливка прямокутника у VRAM: колір, потім (y<<16|x), потім (h<<16|w).
-	// Слово кольору - 0xCCBBGGRR, тож 0x000080 це червоний, а не синій.
+	// 0x02 - rectangle fill in VRAM: color, then (y<<16|x), then (h<<16|w).
+	// Color word is 0xCCBBGGRR, so 0x000080 is red, not blue.
 	const uint32_t fill[] = {
-		0x02FFFFFFu,          // білий, як і трикутник: щоб порівняти тракти кольору
+		0x02FFFFFFu,          // white, like triangle: to compare color pipelines
 		(20u << 16) | 10u,    // x=10, y=20
 		(60u << 16) | 100u    // w=100, h=60
 	};
 	for (unsigned i = 0; i < sizeof(fill) / sizeof(fill[0]); i++)
 		ps1GpuWriteData(fill[i]);
 
-	// 0x20 - суцільний трикутник без текстури: колір, потім три вершини.
-	// Білий: у BGR555 має вийти 0x7fff, і це перевіряє тракт кольору цілком.
+	// 0x20 - untextured solid triangle: color, then three vertices.
+	// White: should produce 0x7fff in BGR555, testing entire color pipeline.
 	const uint32_t tri[] = {
 		0x20FFFFFFu,
 		(200u << 16) | 200u,
@@ -1294,21 +1294,21 @@ static void runGpuSelfTest()
 		ps1GpuWriteData(tri[i]);
 	}
 
-// Один прогін: ініціалізація ядра, N кадрів, вимкнення. Викликається двічі
-// (інтерпретатор, потім динарек), тож усе, що псує наступний прогін, має тут
-// прибиратися - звідси EmuShutdown у кінці.
+// Single pass: core init, N frames, shutdown. Called twice
+// (interpreter, then dynarec), so anything corrupting next pass must be
+// cleaned up here - hence EmuShutdown at the end.
 //
-// Розділений на setup/step/teardown, бо GUI-оболонка виконує кадри по одному з
-// активного об'єкта: суцільний цикл не віддавав би керування планувальнику, і
-// фреймворк CONE не встигав би ні роздати клавіші, ні обробити вихід. Консольна
-// гілка складає три частини назад у runPass, тож її поведінка не змінилась.
+// Split into setup/step/teardown because GUI shell executes frames one by one from
+// active object: continuous loop would not yield to scheduler, and
+// CONE framework would not dispatch key events or handle exit in time. Console
+// branch recombines the three parts into runPass, so its behavior is unchanged.
 static RThread g_wdThread;
 static TRequestStatus g_wdStat;
 
-// Стек: замір на вершині циклу нічого не дає - глибина набирається всередині
-// psxCpu->Execute (компіляція блоку), і на момент запису вже розкручена назад.
-// Тому фарбуємо вільну частину взірцем один раз, а далі рахуємо, скільки його
-// лишилось незачепленим: це найглибша точка ЗА ВЕСЬ ЧАС, а не миттєва.
+// Stack: measurement at top of loop is uninformative - depth grows inside
+// psxCpu->Execute (block compilation), and is already unwound by time of logging.
+// Therefore free stack portion is painted once with a pattern, and remaining untouched
+// part is measured: this gives all-time high-water mark rather than instantaneous value.
 static const TUint32 KStackPaint = 0xA5A5A5A5;
 static TUint32 *g_paintFrom;
 static TUint32 *g_paintTo;
@@ -1320,16 +1320,16 @@ static void paintStack()
 	if (me.StackInfo(info) != KErrNone)
 		return;
 	TUint8 here;
-	// Вершина стека - обробникові виключень: там StackInfo викликати вже не можна.
+	// Stack base to exception handler: StackInfo cannot be called there.
 	g_stackBase = (TUint32)info.iBase;
-	// Запас під поточний кадр виклику, щоб не затерти те, чим користуємось зараз.
+	// Margin for current stack frame to avoid clobbering what is currently in use.
 	g_paintFrom = (TUint32 *)info.iLimit;
 	g_paintTo   = (TUint32 *)(((TLinAddr)&here - 256) & ~3u);
 	for (TUint32 *p = g_paintFrom; p < g_paintTo; p++)
 		*p = KStackPaint;
 	}
 
-// Скільки байтів стека жодного разу не використали. Прямує до нуля - переповнення.
+// Number of stack bytes never touched. Approaching zero means overflow.
 static TInt stackHighWater()
 	{
 	if (!g_paintFrom)
@@ -1340,10 +1340,10 @@ static TInt stackHighWater()
 	return (TInt)((TUint8 *)p - (TUint8 *)g_paintFrom);
 	}
 
-// Виставляє оболонка на виході користувача: цикл кадрів завершується штатно.
+// Set by shell on user exit: frame loop finishes normally.
 static volatile TInt g_guiExit;
 
-// Обидві живуть нижче, поряд зі слідом кнопок, бо працюють з його масивами.
+// Both live below, next to button trace, because they operate on its arrays.
 static void inputTraceOpen();
 static void benchLoadState(const char *aMode);
 
@@ -1366,84 +1366,84 @@ static TInt passSetup(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTes
 	g_mdecDecodeTicks = 0;
 	g_mdecWords = 0;
 
-	// Мінімальний еквівалент emu_core_preinit() з frontend/main.c:435.
+	// Minimal equivalent of emu_core_preinit() from frontend/main.c:435.
 	memset(&Config, 0, sizeof(Config));
 	strcpy(Config.Bios[0], "HLE");
 	Config.HLE = 1;
 	Config.PsxAuto = 1;
 	Config.Cpu = aUseDrc ? CPU_DYNAREC : CPU_INTERPRETER;
 
-	// Дефолти з emu_set_default_config() (frontend/main.c:108), які memset обнуляє.
-	// КРИТИЧНО: cycle_multiplier. Із 0 виходить subCycleStep=0x10000*0/100=0, і
-	// addCycle() (psxinterpreter.c:235) не нарощує psxRegs.cycle - таймери й VBlank
-	// ніколи не цокають, і петля-очікування в BIOS крутиться вічно (виявлено
-	// семплюванням pc/cycle: pc у bfc04a48-8c, cycle застиг на 555). Решта -
-	// авто-сентинели (-1), які ядро інакше плутає з явним режимом 0.
-	// cyclemul<N> дозволяє відхилитись від штатних 175: більше - інструкція
-	// гостя коштує більше тактів, тож на кадр їх виконується менше (кадрів на
-	// секунду більше, ігрова логіка повільніша). Це компроміс, не оптимізація.
+	// Defaults from emu_set_default_config() (frontend/main.c:108) cleared by memset.
+	// CRITICAL: cycle_multiplier. 0 results in subCycleStep=0x10000*0/100=0, and
+	// addCycle() (psxinterpreter.c:235) does not advance psxRegs.cycle - timers and VBlank
+	// never tick, and BIOS wait loop spins forever (discovered via pc/cycle sampling:
+	// pc at bfc04a48-8c, cycle frozen at 555). Remaining values are auto-sentinels (-1),
+	// which core would otherwise confuse with explicit mode 0.
+	// cyclemul<N> allows deviation from stock 175: higher - guest instruction costs
+	// more cycles, executing fewer per frame (higher FPS, slower game logic).
+	// This is a tradeoff, not an optimization.
 	Config.cycle_multiplier = g_cycleMul > 0 ? g_cycleMul : CYCLE_MULT_DEFAULT;
 	Config.GpuListWalking = -1;
 	Config.FractionalFramerate = -1;
 	Config.AlternativeFlip = -1;
 
-	// Справжній BIOS вмикається другим аргументом ("bios"). Тепер GPU справжній
-	// (gpu_unai), тож BIOS завантажується й виконується (див. plans/progress.md).
+	// Real BIOS enabled by second argument ("bios"). GPU is now real
+	// (gpu_unai), so BIOS loads and executes (see plans/progress.md).
 	if (aUseBios)
 		{
 		strcpy(Config.BiosDir, KBiosDir);
-		// Один і той самий дамп у всі три слоти: регіон визначає CheckCdrom за
-		// диском, і класти файл лише в європейський слот означало б, що для
-		// японської гри BIOS мовчки не підхопиться.
+		// Same dump in all three slots: CheckCdrom determines region from
+		// disc, and putting file only in European slot would mean BIOS
+		// is silently skipped for Japanese games.
 		const char *bios = g_biosFile[0] ? g_biosFile : KBiosFile;
 		for (int rg = 0; rg < PSX_REGION_COUNT; rg++)
 			strcpy(Config.Bios[rg], bios);
 		Config.PsxRegion = PSX_REGION_EU;
 
-		// SlowBoot=1: повний бут із заставкою (логотип SCE/PS). З 0 емулятор
-		// патчить BIOS, щоб пропустити анімацію - тоді екран лишається чорним аж
-		// до очікування диска, і показувати нічого. Раніше було 0, бо GPU був
-		// заглушкою; тепер вмикаємо, щоб побачити логотип.
+		// SlowBoot=1: full boot with intro screen (SCE/PS logo). With 0 emulator
+		// patches BIOS to skip animation - screen stays black until disc wait,
+		// with nothing to display. Was previously 0 because GPU was a stub;
+		// now enabled to see the logo.
 		Config.SlowBoot = 1;
 
-		// Без диска автовизначення регіону (misc.c) не спрацює - дамп європейський.
-		// З диском регіон визначить CheckCdrom нижче, тож PsxType не форсуємо.
+		// Without disc region auto-detection (misc.c) will not work - dump is European.
+		// With disc CheckCdrom determines region below, so PsxType is not forced.
 		if (!aUseDisc)
 			Config.PsxType = PSX_TYPE_PAL;
 		}
 
-	// Хаки сумісності динареку вимкнено: GT падав рівно після "vsync @8008ab10"
-	// (два прогони поспіль, більш нічого в лозі). Це do_vsync/vsync_hack_assemble -
-	// динарек упізнає петлю "VSync: timeout" і вбудовує замість неї свій ARM-код,
-	// який читає гостьову пам'ять через ram_offset/ROREG. Саме ця гілка потрібна
-	// нам і майже не потрібна на Linux: там RAM лягає за фіксованою адресою
-	// ("RAM is not directly mapped" у нашому лозі - ram_offset != 0). Петля
-	// VSync-timeout крутиться якраз на завантаженні траси, де падіння й ловиться.
-	// Ціна вимкнення - повільніше проходження цієї петлі; PE2-хак нам байдужий.
+	// Dynarec compatibility hacks disabled: GT crashed right after "vsync @8008ab10"
+	// (two consecutive runs, nothing else in log). This is do_vsync/vsync_hack_assemble -
+	// dynarec detects "VSync: timeout" loop and embeds custom ARM code instead,
+	// reading guest memory via ram_offset/ROREG. This exact branch is needed
+	// by us and almost unused on Linux: there RAM sits at a fixed address
+	// ("RAM is not directly mapped" in our log - ram_offset != 0). VSync-timeout
+	// loop runs during track loading, which is where the crash occurs.
+	// Cost of disabling is slower progress through this loop; PE2 hack is irrelevant to us.
 	ndrc_g.hacks |= NDHACK_NO_COMPAT_HACKS;
 
-	// NDHACK_NO_SMC_CHECK НЕ вмикати: перевірено на апараті - без вбудованої
-	// перевірки самомодифікації BIOS не стартує взагалі (чорний екран). Скидання
-	// з боку C його не заміняє: BIOS пише свій код звичайними записами, а не DMA.
+	// Do NOT enable NDHACK_NO_SMC_CHECK: verified on hardware - without built-in
+	// self-modifying code check BIOS does not boot at all (black screen). Invalidation
+	// from C side does not replace it: BIOS writes its code via regular stores, not DMA.
 
-	// nostalls: не емулювати затримки конвеєра R3000. Точність за швидкодію -
-	// сумісність падає, тож лише явним аргументом.
+	// nostalls: do not emulate R3000 pipeline stalls. Accuracy for speed -
+	// compatibility drops, so only via explicit argument.
 	if (g_hackNoStalls)
 		ndrc_g.hacks |= NDHACK_NO_STALLS;
 
-	// gtenf: не рахувати прапорці GTE. Динарек і так пропускає їх там, де аналіз
-	// живучості довів, що вони не читаються; цей прапорець прибирає їх скрізь.
+	// gtenf: do not compute GTE flags. Dynarec already skips them where liveness
+	// analysis proved they are unread; this flag removes them everywhere.
 	if (g_hackGteNoFlags)
 		ndrc_g.hacks |= NDHACK_GTE_NO_FLAGS;
 	logEvent("hacks", NULL, "%s: ndrc=%08x gtenf=%d cyclemul=%d", mode,
 		(unsigned)ndrc_g.hacks, (int)g_hackGteNoFlags, (int)Config.cycle_multiplier);
 
-	// Диск гри (E:\gt.bin) або його відсутність. SetIsoFile до cdra_init - ISOopen
-	// робить fopen(fname) як основний образ, тож шлях має вказувати на .bin.
+	// Game disc (E:\gt.bin) or lack thereof. SetIsoFile before cdra_init - ISOopen
+	// calls fopen(fname) as primary image, so path must point to .bin.
 	SetIsoFile(aUseDisc ? (g_discPath[0] ? g_discPath : KDiscImg) : NULL);
 
-	// Карти пам'яті. Ядро вантажить їх не саме - це робив frontend, який ми не
-	// беремо, тож досі збереження ігор мовчки нікуди не потрапляли.
+	// Memory cards. Core does not load them on its own - frontend did that, which
+	// we omit, so until now game saves silently went nowhere.
 	strcpy(Config.Mcd1, "E:\\PS1\\saves\\card1.mcd");
 	strcpy(Config.Mcd2, "E:\\PS1\\saves\\card2.mcd");
 
@@ -1454,35 +1454,35 @@ static TInt passSetup(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTes
 		}
 	LoadMcds(Config.Mcd1, Config.Mcd2);
 
-	// Ініціалізація приводу CD: ядро кличе cdra_init лише в LoadPlugins, який ми
-	// обходимо. CheckCdrom читає диск (регіон, boot-запис), як у frontend/main.c:684.
+	// CD drive init: core calls cdra_init only in LoadPlugins, which we bypass.
+	// CheckCdrom reads disc (region, boot record) as in frontend/main.c:684.
 	if (aUseDisc)
 		{
 		const int cdInitRc = cdra_init();
-		const int cdOpenRc = cdra_open();      // ISOopen(GetIsoFile) - відкриває образ
+		const int cdOpenRc = cdra_open();      // ISOopen(GetIsoFile) - opens image
 		const int cdChkRc = CheckCdrom();
 		logEvent("disc", (cdInitRc || cdOpenRc) ? "CDRA_FAIL" : NULL,
 			"%s: cdra_init=%d cdra_open=%d checkcdrom=%d region=%d", mode,
 			cdInitRc, cdOpenRc, cdChkRc, (int)Config.PsxRegion);
 		}
 
-	// GPU_init() робиться раз на процес у runStage1 (як LoadPlugins у фронтенді);
-	// тут - лише GPU_open() на кожен прохід (як OpenPlugins, frontend/main.c:210).
-	// Порожній gpuDisp: наш backend вікна дисплея з нього не бере (vout_symbian).
+	// GPU_init() called once per process in runStage1 (like LoadPlugins in frontend);
+	// here - only GPU_open() per pass (like OpenPlugins, frontend/main.c:210).
+	// Empty gpuDisp: our display window backend does not take from it (vout_symbian).
 	unsigned long gpuDisp = 0;
 	const long gpuOpenRc = ps1GpuOpen(&gpuDisp, (char *)"PCSX", NULL);
 	logEvent("gpu_open", gpuOpenRc ? "GPU_OPEN_FAIL" : NULL, "%s: open=%ld", mode, gpuOpenRc);
 
-	// SPU_open викликає SetupSound (out_current = none); перенаправляємо на наш
-	// драйвер (скидає лічильники амплітуди на цей прохід).
+	// SPU_open calls SetupSound (out_current = none); redirect to our
+	// driver (resets amplitude counters for this pass).
 	const long spuOpenRc = SPU_open();
 	ps1SndSelectOutput();
 	logEvent("spu_open", spuOpenRc ? "SPU_OPEN_FAIL" : NULL, "%s: open=%ld", mode, spuOpenRc);
 
-	// Вивід у динамік лише в інтерактивних прогонах (screen): у бенчмарку звук
-	// псував би заміри, а вікна/акт.планувальника там нема.
-	// Аргумент "nosnd": не відкривати вивід у динамік. SPU далі мікшує, тож
-	// таймінги емуляції й хід повтору не змінюються - мовчить лише апарат.
+	// Speaker output only in interactive runs (screen): in benchmark sound
+	// would skew measurements, and no window/active scheduler is present there.
+	// "nosnd" argument: do not open speaker output. SPU still mixes, so
+	// emulation timing and replay flow remain unchanged - only device is silent.
 	if (aShowScreen && !g_noSound)
 		{
 		const int sndRc = ps1SndOpenOutput();
@@ -1490,13 +1490,13 @@ static TInt passSetup(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTes
 		}
 
 	EmuReset();
-	// Config.HLE == 0 - єдине надійне свідчення, що дамп справді підхопився.
+	// Config.HLE == 0 - only reliable indication that dump was actually picked up.
 	logEvent("reset", (aUseBios && Config.HLE) ? "BIOS_NOT_LOADED" : NULL,
 		"%s: EmuReset ok, hle=%d type=%s", mode,
 		(int)Config.HLE, Config.PsxType ? "PAL" : "NTSC");
 
-	// Тип відомий лише після EmuReset, а від нього залежить номінальна тривалість
-	// кадру, з якою адаптивний пропуск порівнює реальну.
+	// Type is known only after EmuReset, and nominal frame duration
+	// against which adaptive frameskip compares real duration depends on it.
 	fsAdaptiveStart(g_gpuFrameskip == -1 ? (Config.PsxType ? 50 : 60) : 0);
 
 	if (aGpuTest)
@@ -1505,74 +1505,74 @@ static TInt passSetup(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTes
 		logEvent("gpu_selftest", NULL, "%s: GP0 fill + triangle submitted", mode);
 		}
 
-	// Поперовий лог тут НЕ ведеться навмисно: fflush коштує більше за саму
-	// емуляцію (виміряно - 59 кадрів, 2274 мс проти 689 мс), і при поперовому
-	// логуванні порівняння інтерпретатора з динареком міряло б файлову систему.
-	// Один запис перед першим Execute: якщо процес гине на першому ж блоці,
-	// у лозі має лишитись слід саме про це, а не тиша після gpu_selftest.
+	// Per-frame logging is intentionally NOT done here: fflush costs more than
+	// emulation itself (measured - 59 frames, 2274 ms vs 689 ms), and with per-frame
+	// logging interpreter vs dynarec comparison would measure filesystem performance.
+	// Single write before first Execute: if process dies on first block,
+	// log must contain a trace of that rather than silence after gpu_selftest.
 	flushCoreRepeat();
 	logEvent("exec_begin", NULL, "%s: entering frame loop, %d frames", mode, aFrames);
 
-	// Живий вивід: вікно один раз до циклу, кадр - щокадру всередині. У GUI воно
-	// вже прив'язане до контейнера CCoeControl, тож свого не створюємо.
+	// Live presentation: window once before loop, frame - every frame inside. In GUI it
+	// is already attached to CCoeControl container, so we do not create our own.
 	if (aShowScreen)
 		{
 		const int initRc = g_guiMode ? KErrNone : voutSymbianInit();
 		logEvent("screen_init", initRc ? "SHOW_FAIL" : NULL, "%s: rc=%d gui=%d", mode,
 			initRc, (int)g_guiMode);
-		// Діагностика direct-FB: сирі HAL-параметри буфера проти розміру вікна WS.
+		// Direct-FB diagnostics: raw HAL buffer parameters vs WS window size.
 		int fbOk = 0, xpix = 0, ypix = 0, lineB = 0, bpp = 0, firstOff = 0, winW = 0, winH = 0;
 		voutSymbianFbInfo(&fbOk, &xpix, &ypix, &lineB, &bpp, &firstOff, &winW, &winH);
 		logEvent("fb", NULL, "%s: ok=%d hal=%dx%d line=%dB bpp=%d first=%d win=%dx%d",
 			mode, fbOk, xpix, ypix, lineB, bpp, firstOff, winW, winH);
 		}
 
-	// Слід кнопок треба відкрити ДО завантаження стану: перемотування покажчика
-	// відтворення читає вже завантажений масив подій.
+	// Input trace must be opened BEFORE loading state: rewinding replay
+	// pointer reads the already loaded event array.
 	inputTraceOpen();
 	g_savedState = EFalse;
 	benchLoadState(mode);
 
-	// Озброїти сторож на весь прохід. Анонімний потік із малим стеком: великий
-	// EPOCSTACKSIZE апарат відхиляє (RThread::Create -> KErrTooBig, див. Етап 3).
+	// Arm watchdog for entire pass. Anonymous thread with small stack: large
+	// EPOCSTACKSIZE is rejected by device (RThread::Create -> KErrTooBig, see Stage 3).
 	g_wdRun = 1;
 	g_wdFired = 0;
 	g_wdSamples = 0;
 	g_wdBeat = 0;
-	g_mainThreadId = RThread().Id();   // до створення сторожа: він читає наш контекст
+	g_mainThreadId = RThread().Id();   // before creating watchdog: it reads our context
 	g_pass.haveWd =
 		(g_wdThread.Create(KNullDesC, watchdogThread, 8192, NULL, (TAny *)g_watchdogMs) == KErrNone);
 	if (g_pass.haveWd)
 		{
-		// Вище за головний: після збою той крутиться в спін-циклі, чекаючи запису,
-		// і сторож мусить його витіснити, а не ділити з ним квант.
+		// Higher than main: after crash main spins in loop waiting for write,
+		// and watchdog must preempt it rather than share timeslice.
 		g_wdThread.SetPriority(EPriorityMore);
 		g_wdThread.Logon(g_wdStat);
 		g_wdThread.Resume();
 		}
 
 	g_pass.framesAtStart = frame_counter;
-	// Профілювання пайплайну: сумарний час (мс) на кожен етап за весь прохід.
-	// NTickCount тут ~1мс; пер-кадрова похибка усереднюється на сотнях кадрів.
+	// Pipeline profiling: cumulative time (ms) for each stage across entire pass.
+	// NTickCount is ~1ms here; per-frame error averages out over hundreds of frames.
 	g_pass.tStart = User::NTickCount();
-	// Вікно накладки відкриваємо разом із проходом, а не при вмиканні в меню: між
-	// меню і першим кадром лежить ініціалізація ядра (BIOS, образ диска), і перше
-	// значення вийшло б утричі заниженим.
+	// Overlay window opens along with pass, not upon menu toggle: between
+	// menu and first frame lies core init (BIOS, disc image), which would
+	// make first value three times lower.
 	g_fpsWinTick = g_pass.tStart;
 	g_fpsWinFrame = g_pass.i;
-	g_fpsWinShown = voutSymbianPresents();   // лічильник живе через проходи
+	g_fpsWinShown = voutSymbianPresents();   // counter persists across passes
 	return KErrNone;
 	}
 
-// Запис і відтворення вводу. Падіння в динареку відтворюється лише через
-// кількахвилинну гру руками, і кожна перевірка гіпотези коштує окремого сеансу.
-// Слід кнопок, прив'язаний до НОМЕРА КАДРУ (а не до часу), знімає людину з циклу:
-// той самий сеанс проганяється стільки разів, скільки треба.
+// Input recording and playback. Dynarec crash reproduces only after several
+// minutes of manual play, and each hypothesis check costs a separate session.
+// Button trace tied to FRAME NUMBER (not time) removes human from loop:
+// exact same session is replayed as many times as needed.
 //
-// Формат навмисно не JSONL: файл читає сам апарат, і розбір рядка тут має бути
-// тривіальним. Один рядок на ЗМІНУ стану кнопок:  <кадр> <пад hex> <цикл>
-// Цикл потрібен для перевірки самого відтворення: якщо на тому ж кадрі лічильник
-// розійшовся, повтор не точний, і всі висновки з нього нічого не варті.
+// Format is intentionally not JSONL: file is parsed by device itself, and line
+// parsing must be trivial. One line per button state CHANGE: <frame> <pad hex> <cycle>
+// Cycle is needed to verify playback accuracy: if cycle counter diverges at
+// the same frame, replay is inaccurate, and all conclusions from it are worthless.
 enum TInputMode { EInputOff = 0, EInputRecord, EInputPlay };
 static TInputMode g_inputMode;
 _LIT(KInputPath, "E:\\PS1\\logs\\ps1_input.rec");
@@ -1583,8 +1583,8 @@ static TBool g_recOpen;
 static TUint16 g_recLastPad;
 static TBool g_recStarted;
 
-// Відтворення тримається в пам'яті: слід малий (одна зміна на десятки кадрів),
-// а читати з флеші щокадру - додаткова недетермінованість у таймінгах.
+// Replay kept in memory: trace is small (one change per dozens of frames),
+// and reading flash every frame adds timing non-determinism.
 static const TInt KMaxPlayEvents = 8192;
 static TInt *g_playFrame;
 static TUint16 *g_playPad;
@@ -1663,10 +1663,10 @@ static void inputTraceOpen()
 	else if (g_inputMode == EInputPlay && !g_playFrame) inputPlayLoad();
 	}
 
-// Старт заміру зі збереженого стану. Слід кнопок прив'язаний до номера кадру,
-// тому він дійсний лише для того темпу гостя, за якого його записано: зміна
-// cyclemul зсуває натискання, гра не проходить меню й лишається в ньому
-// (заміряно - 495 намальованих кадрів замість 2220). Стан знімає цю залежність.
+// Starting benchmark from saved state. Button trace is tied to frame number,
+// so it is valid only for guest pace it was recorded with: changing
+// cyclemul shifts inputs, game fails to navigate menu and stays in it
+// (measured - 495 rendered frames instead of 2220). State removes this dependency.
 static void benchLoadState(const char *aMode)
 	{
 	if (g_loadStateAt <= 0)
@@ -1689,7 +1689,7 @@ static void benchLoadState(const char *aMode)
 			g_playNext++;
 			rewound++;
 			}
-		// Кнопка, затиснута на момент збереження, інакше виявилась би відпущеною.
+		// Button held at save time would otherwise appear released.
 		if (lastBefore >= 0)
 			in_keystate[0] = g_playPad[lastBefore];
 		}
@@ -1713,8 +1713,8 @@ static void inputTraceClose()
 	g_playCount = g_playNext = 0;
 	}
 
-// Викликається щокадру одразу після опитування клавіш: у записі фіксує зміни,
-// у відтворенні ПЕРЕЗАПИСУЄ in_keystate[0] слідом.
+// Called every frame immediately after polling keys: records changes during recording,
+// OVERWRITES in_keystate[0] with trace during playback.
 static void inputTrace(TInt aFrame)
 	{
 	if (g_inputMode == EInputRecord)
@@ -1735,9 +1735,9 @@ static void inputTrace(TInt aFrame)
 
 	while (g_playNext < g_playCount && g_playFrame[g_playNext] <= aFrame)
 		{
-		// Розбіжність лічильника циклів на тому самому кадрі означає, що повтор
-		// пішов іншим шляхом (найімовірніше - інший таймінг читання з диска).
-		// Кажемо про це один раз: далі всі відхилення вже похідні.
+		// Cycle counter divergence at the same frame means replay
+		// took a different path (most likely - different disc read timing).
+		// Report once: all subsequent deviations are derivative.
 		if (!g_playDiverged && g_playFrame[g_playNext] == aFrame &&
 			g_playCycle[g_playNext] != (TUint32)psxRegs.cycle)
 			{
@@ -1752,14 +1752,14 @@ static void inputTrace(TInt aFrame)
 		}
 	}
 
-// Один кадр. EFalse = прохід завершено (кадри вичерпано, сторож або вихід).
+// Single frame. EFalse = pass finished (frames exhausted, watchdog or exit).
 static TBool passStep()
 	{
 	if (g_pass.i >= g_pass.frames || g_guiExit)
 		return EFalse;
-	// Стеля на сеанс. Поки йде налагодження виводу, прогін має завершуватись сам:
-	// демон блокований на дочірньому процесі й не шле keepalive, тож довга сесія
-	// щоразу коштує розриву WiFi і повторного пошуку апарата в мережі.
+	// Session ceiling. While output is being debugged, run must self-terminate:
+	// daemon is blocked on child process and does not send keepalive, so long session
+	// drops WiFi and forces reconnecting to device each time.
 	if (g_playLimitMs > 0 && (TInt)(User::NTickCount() - g_pass.tStart) >= g_playLimitMs)
 		{
 		logEvent("timelimit", NULL, "%s: %d ms reached at frame %d",
@@ -1769,8 +1769,8 @@ static TBool passStep()
 
 	const char *mode = g_pass.mode;
 
-	// Ввід: свіжий стан кнопок до Execute, бо ядро читає пад усередині кадру.
-	// Лише за наявності вікна (screen); у headless-бенчмарку клавіш нема.
+	// Input: fresh button state before Execute, since core reads pad inside frame.
+	// Only when window is present (screen); no keys in headless benchmark.
 	TUint t0 = User::NTickCount();
 	g_stage = EStagePoll;
 	if (g_pass.showScreen)
@@ -1780,13 +1780,13 @@ static TBool passStep()
 	TUint t1 = User::NTickCount(); g_pass.tPoll += t1 - t0;
 	g_stage = EStageExec;
 	psxRegs.stop = 0;
-	// Растеризатор на MBX збирає примітиви протягом усього кадру, тож межі
-	// кадру - тут, обабіч Execute.
+	// MBX rasterizer collects primitives throughout the frame, so frame
+	// boundaries are here, wrapping Execute.
 	glrBeginFrame();
 	const TUint32 cyc0 = psxRegs.cycle;
 	psxCpu->Execute(&psxRegs);
-	// Перші кадри після завантаження стану: скільки тактів гість справді пройшов.
-	// Порожній кадр тут виглядає точно так само, як здоровий, поки не глянути на це.
+	// First frames after state load: how many cycles guest actually ran.
+	// An empty frame here looks identical to a healthy one until inspecting this.
 	if (g_loadStateAt > 0 && g_pass.i < g_loadStateAt + 3)
 		logEvent("loadstate", NULL, "%s: frame=%d ran=%u pc=%08x vbl=%u hsync=%u"
 			" base=%u start=%u cyc=%u", mode,
@@ -1806,35 +1806,35 @@ static TBool passStep()
 		return EFalse;
 		}
 
-	// Живий кадр на екран. Додає накладні (конвертація+BitBlt), тож псує
-	// заміри - вмикається лише за прапорцем screen, не в бенчмарку.
+	// Live frame to screen. Adds overhead (conversion+BitBlt), skewing
+	// measurements - enabled only with screen flag, not in benchmark.
 	if (g_pass.showScreen)
 		{
 		g_stage = EStageBlit;
-		// Пропуск показу: емуляція й растеризація йдуть щокадру, на екран
-		// потрапляє кожен (skip+1)-й. Звук пампимо завжди - інакше буфер
-		// спорожніє саме на пропущених кадрах.
+		// Presentation skip: emulation and rasterization run every frame,
+		// every (skip+1)-th reaches screen. Audio is always pumped - otherwise buffer
+		// empties on skipped frames.
 		if (!g_frameskip || (g_pass.i % (g_frameskip + 1)) == 0)
 			{
-			// Коли працює растеризатор на MBX, кадр показує він - інакше своп
-			// зробили б двічі, і на екрані лишався б той із двох, що прийшов
-			// другим, тобто порівнювати шляхи стало б неможливо.
+			// When MBX rasterizer is active, it presents the frame - otherwise swap
+			// would happen twice, leaving on screen whichever came
+			// second, making path comparison impossible.
 			if (!glrEndFrame())
 				voutSymbianPresent();
 			}
 		TUint t3 = User::NTickCount(); g_pass.tBlit += t3 - t2;
 		g_stage = EStageSnd;
-		ps1SndPump();   // обслужити аудіо-callback'и й долити буфер
+		ps1SndPump();   // service audio callbacks and refill buffer
 		g_pass.tSnd += User::NTickCount() - t3;
 		}
 
 	g_stage = EStageIdle;
 	g_pass.i++;
 
-	// Метрики для накладки. fps - ПОКАЗАНІ кадри: емуляційний темп залежить від
-	// множника тактів PS1 і росте там, де на екрані плавності не додається, тобто
-	// міряє не те, що видно. ms лишається часом на кадр емуляції - це ціна кадру,
-	// і саме з нею зіставні заміри в лозі. Ділення тут два на пів секунди.
+	// Metrics for overlay. fps - PRESENTED frames: emulation rate depends on
+	// PS1 cycle multiplier and increases where screen smoothness does not, meaning
+	// it measures not what is visible. ms remains emulation time per frame - frame cost,
+	// and matches measurements in log. Two divisions per half-second here.
 	if (g_fpsOverlay && g_pass.showScreen)
 		{
 		const TUint now = User::NTickCount();
@@ -1852,9 +1852,9 @@ static TBool passStep()
 			}
 		}
 
-	// Рідкісні маркери: 6 записів на прогін вимір не псують, зате показують,
-	// доки дійшло, коли процес гине без жодного повідомлення. У GUI прохід іде
-	// годинами, тож крок більший: кожен запис коштує fflush на флеш.
+	// Sparse markers: 6 writes per run do not skew measurement, but show
+	// progress reached when process dies without any message. In GUI pass runs
+	// for hours, so step is larger: each write costs fflush to flash.
 	const TInt every = g_guiMode ? 1000 : KProgressEvery;
 	if (g_pass.i % every == 0)
 		{
@@ -1863,7 +1863,7 @@ static TBool passStep()
 			(unsigned)(User::NTickCount() - g_pass.tStart), (int)stackHighWater());
 		}
 
-	// Збереження стану на заданому кадрі (рівно один раз за прогін).
+	// State save at specified frame (exactly once per pass).
 	if (g_saveStateAt > 0 && !g_savedState && g_pass.i == g_saveStateAt)
 		{
 		g_savedState = ETrue;
@@ -1886,40 +1886,40 @@ static TBool passStep()
 			hSyncCount, (unsigned)rcnts[3].cycle, (unsigned)rcnts[3].cycleStart);
 		}
 
-	// Z2+Z3: скільки кадрів гра справді оновила і в якій геометрії. updates - це
-	// лічильник викликів vout_update; різниця між фазами меню (0-4000) і траси
-	// показує, чи виграш від показу за латчем не є артефактом стенду.
-	// Знімки екрана в характерних точках: меню гри (2D) і траса (3D). Порівняння
-	// цих двох файлів відповідає на питання, чому 2D не видно, а відео видно.
+	// Z2+Z3: how many frames game actually updated and in what geometry. updates is
+	// counter of vout_update calls; difference between menu (0-4000) and track phases
+	// shows whether latch-based presentation gain is not a harness artifact.
+	// Screenshots at representative points: game menu (2D) and track (3D). Comparing
+	// these two files answers why 2D is not visible while video is.
 	if (g_pass.showScreen && (g_pass.i == g_dumpAt || g_pass.i == 6000))
 		{
 		char p[32];
 		snprintf(p, sizeof(p), "E:\\PS1\\logs\\ps1_scr%d.bin", (int)g_pass.i);
 		const int sr = voutSymbianScreenDump(p);
-		// Під GL дамп екрана порожній: показує не DSA, а GL. Знімок беремо
-		// з самого GL, наступним кадром - readPixels можливий лише до обміну.
+		// Under GL screen dump is empty: GL presents instead of DSA. Screenshot is taken
+		// from GL itself, next frame - readPixels is possible only before swap.
 		if (glrEnabled())
 			{
 			char gp[40];
 			snprintf(gp, sizeof(gp), "E:\\PS1\\logs\\ps1_gl%d.bin", (int)g_pass.i);
 			glrShot(gp);
 			}
-		// Адресу пишемо ДО читання: якщо вона фізична, читання вб'є потік.
+		// Write address BEFORE reading: if physical, reading will kill thread.
 		logEvent("screen_dump", sr ? "SCR_FAIL" : NULL, "frame=%d rc=%d halAddr=0x%x",
 			g_pass.i, sr, (unsigned)voutSymbianHalAddr());
-		// І програмний VRAM тим самим кадром: це єдиний доступний еталон, з
-		// яким можна звірити картинку GL. Дамп у кінці прогону не годиться -
-		// там уже інша сцена.
+		// And software VRAM at the same frame: only available ground truth to
+		// compare against GL output. End-of-pass dump will not do -
+		// scene has already changed there.
 		snprintf(p, sizeof(p), "E:\\PS1\\logs\\ps1_vram%d.bin", (int)g_pass.i);
 		const int vr = voutSymbianDump(p);
 		logEvent("vram_dump", vr ? "DUMP_FAIL" : NULL, "frame=%d rc=%d",
 			g_pass.i, vr);
-		// Той самий кадр із буфера за HAL-адресою: чи доїхав він до сканованого.
+		// Same frame from buffer at HAL address: whether it reached scanned buffer.
 		snprintf(p, sizeof(p), "E:\\PS1\\logs\\ps1_hal%d.bin", (int)g_pass.i);
 		const int hr = voutSymbianHalDump(p);
 		logEvent("hal_dump", hr ? "HAL_FAIL" : NULL, "frame=%d rc=%d", g_pass.i, hr);
-		// Візерунок відомо робочим шляхом + сирий дамп: розкладку буфера екрана
-		// (байтів на піксель, крок) визначаємо потім на хості.
+		// Pattern via known working path + raw dump: screen buffer layout
+		// (bytes per pixel, stride) is determined later on host.
 		if (g_pass.i == g_dumpAt)
 			{
 			int m = 0, t = 0, bad[4];
@@ -1929,8 +1929,8 @@ static TBool passStep()
 				rb, m, t, bad[0], bad[1], (unsigned)bad[2], (unsigned)bad[3], rr);
 			if (g_fbVis)
 				{
-				// Спершу зелений хрест через bitgdi, потім червоний сирим записом,
-				// по 5 с кожен. Що з них видно на панелі - те й відповідь.
+				// First green cross via bitgdi, then red via raw write,
+				// 5 s each. Whatever shows on panel is the answer.
 				const int v0 = voutSymbianVisTest(0);
 				User::After(5000000);
 				const int v1 = voutSymbianVisTest(1);
@@ -1940,19 +1940,19 @@ static TBool passStep()
 			}
 		}
 
-	// Той самий рахунок, що й для сторожа: кожен logEvent - це fflush на картку.
-	// Сто кадрів - це раз на три секунди гри, і саме на цьому кадрі йде затримка.
+	// Same concern as with watchdog: every logEvent is fflush to card.
+	// 100 frames is once every three game seconds, causing delay on that exact frame.
 	if (g_pass.showScreen && (g_pass.i % (g_guiMode ? 3000 : 100)) == 0)
 		{
 		int srcW = 0, srcH = 0, dstW = 0, dstH = 0, ox = 0, oy = 0;
 		voutSymbianGeom(&srcW, &srcH, &dstW, &dstH, &ox, &oy);
 		int fbd = 0, fbda = 0, st = 0, sx = 0, sy = 0, sw = 0, sh = 0, voff = 0, stale = 0;
 		voutSymbianDbgState(&fbd, &fbda, &st, &sx, &sy, &sw, &sh, &voff, &stale);
-		// gp0/dma - лічильники команд малювання: якщо в застиглому вікні вони
-		// РОСТУТЬ, гра малює, а ми не показуємо (вада). Якщо стоять - гра справді
-		// нічого не робить, і завмирання коректне.
-		// fbPages: скільки РІЗНИХ адрес першого пікселя віддав драйвер. >1 означає
-		// подвійну буферизацію, тобто запис у кешовану адресу лягає повз панель.
+		// gp0/dma - draw command counters: if in frozen window they
+		// GROW, game is drawing while we fail to present (bug). If frozen - game
+		// actually does nothing, and freeze is expected.
+		// fbPages: how many DISTINCT first-pixel addresses driver returned. >1 means
+		// double buffering, so writes to cached address miss the panel.
 		int fbChg = 0, fbSeen = 0, fbB0 = 0, fbB1 = 0;
 		voutSymbianFbPages(&fbChg, &fbSeen, &fbB0, &fbB1);
 		logEvent("vout_geom", NULL,
@@ -1967,7 +1967,7 @@ static TBool passStep()
 	return ETrue;
 	}
 
-// Підсумки проходу, звільнення ядра. Дзеркало passSetup.
+// Pass summary, core cleanup. Mirror of passSetup.
 static void passTeardown()
 	{
 	const char *mode = g_pass.mode;
@@ -1981,11 +1981,11 @@ static void passTeardown()
 
 	inputTraceClose();
 
-	// Роззброїти сторож: просимо вийти й чекаємо, поки він завершиться сам.
+	// Disarm watchdog: request exit and wait for it to finish on its own.
 	g_wdRun = 0;
 	if (g_pass.haveWd) { User::WaitForRequest(g_wdStat); g_wdThread.Close(); g_pass.haveWd = EFalse; }
 
-	// Траєкторія pc/cycle зі сторожа: показує, де саме застрягло виконання.
+	// pc/cycle trajectory from watchdog: shows where execution stalled.
 	for (TInt s = 0; s < g_wdSamples; s++)
 		logEvent("wdsample", NULL, "%s: t=%ds pc=%08x cycle=%u", mode, (int)(s * 2),
 			(unsigned)g_wdPc[s], (unsigned)g_wdCyc[s]);
@@ -1997,23 +1997,23 @@ static void passTeardown()
 		(unsigned)psxRegs.pc, (unsigned)psxRegs.cycle,
 		g_vblanks, (int)g_fsAdvised);
 
-	// Скільки GPU-команд BIOS реально надіслав: локалізує чорний екран - доставка
-	// команд (усе 0) проти растеризації (ненульові, а VRAM порожній).
+	// How many GPU commands BIOS actually sent: localizes black screen - command
+	// delivery (all 0) vs rasterization (non-zero, but VRAM is empty).
 	unsigned gpData = 0, gpDataMem = 0, gpDma = 0, gpStatus = 0;
 	voutSymbianGpuStats(&gpData, &gpDataMem, &gpDma, &gpStatus);
 	logEvent("gpustats", NULL, "%s: gp0=%u dataMem=%u dmaChain=%u gp1=%u", mode,
 		gpData, gpDataMem, gpDma, gpStatus);
 
-	// Ground truth з gpulib: якщо тут теж нулі - BIOS не малює (застряг раніше);
-	// якщо ненульові, а VRAM порожній - проблема в растеризації gpu_unai.
+	// Ground truth from gpulib: if also zeros here - BIOS does not draw (stuck earlier);
+	// if non-zero, but VRAM is empty - problem is in gpu_unai rasterization.
 	logEvent("gpulibstats", NULL,
 		"%s: wData=%u wDataMem=%u dmaChain=%u dmaWords=%u wStatus=%u rStatus=%u statusLast=%08x",
 		mode, g_gpulibWriteData, g_gpulibWriteDataMem, g_gpulibDmaChain,
 		g_gpulibDmaWords, g_gpulibWriteStatus, g_gpulibReadStatus, g_gpulibStatusLast);
 
-	// Що саме гру просить намалювати: пікселі й штуки по класах примітивів.
-	// Потрібно, щоб порівняти gpu_unai з апаратним растеризатором MBX, у якого
-	// ціна визначається площею, а не кількістю викликів.
+	// What game asks to draw: pixels and counts per primitive class.
+	// Needed to compare gpu_unai against MBX hardware rasterizer, whose
+	// cost is determined by area rather than call count.
 	if (gpu_unai_get_primstats)
 		{
 		unsigned v[29];
@@ -2046,22 +2046,22 @@ static void passTeardown()
 		gpulib_vram_stats[2], gpulib_vram_stats[3],
 		gpulib_vram_stats[4], gpulib_vram_stats[5]);
 
-	// Звук (Фаза A): скільки семплів SPU видав і пікова амплітуда. maxAmp>0 =
-	// SPU реально генерує звук BIOS; вивід у динамік - Фаза B.
+	// Sound (Phase A): how many samples SPU output and peak amplitude. maxAmp>0 =
+	// SPU actually generates BIOS audio; speaker output is Phase B.
 	unsigned sndFeeds = 0, sndSamples = 0, sndUnder = 0; int sndMax = 0, sndStep = 0;
 	ps1SndStats(&sndFeeds, &sndSamples, &sndMax, &sndUnder, &sndStep);
-	// under - число розривів у динаміку, step - у скільки разів потік розтягнуто
-	// під фактичну швидкість емуляції (65536 = 1.0, менше = емуляція відстає).
+	// under - speaker underrun count, step - stream stretch factor
+	// for actual emulation speed (65536 = 1.0, lower = emulation lagging).
 	logEvent("sndstats", NULL, "%s: feeds=%u samples=%u maxAmp=%d under=%u step=%d", mode,
 		sndFeeds, sndSamples, sndMax, sndUnder, sndStep);
 
-	// Профіль пайплайну: сумарний час на етап + частка від загального. Показує,
-	// що оптимізувати - емуляцію (drc) чи вивід (блит)/звук.
+	// Pipeline profile: cumulative time per stage + share of total. Shows
+	// what to optimize - emulation (drc) or presentation (blit)/sound.
 	{
 	const TUint tTot = tPoll + tEmu + tBlit + tSnd;
 	const TUint den = tTot ? tTot : 1;
-	// gpuRaster - частина emu, витрачена на растеризацію gpu_unai (тики->мс). Решта
-	// emu - це CPU (drc) + генерація звуку. Показує, CPU чи GPU оптимізувати далі.
+	// gpuRaster - emu portion spent on gpu_unai rasterization (ticks->ms). Rest of
+	// emu is CPU (drc) + sound generation. Shows whether to optimize CPU or GPU next.
 	const unsigned freq = ndrc_symbian_fastfreq();
 	const unsigned gpuRasterMs = (unsigned)(g_gpulibRenderTicks * 1000ULL / (freq ? freq : 1));
 	const unsigned spuMixMs = (unsigned)(g_spuMixTicks * 1000ULL / (freq ? freq : 1));
@@ -2083,9 +2083,9 @@ static void passTeardown()
 		voutSymbianDsaActive(), voutSymbianGlActive(), voutSymbianFbFromPlatform());
 	}
 
-	// Тримаємо останній кадр (докручуючи аудіо), тоді прибираємо вікно й звук.
-	// У GUI тримати нема сенсу - користувач сам вирішив вийти, і вікно однаково
-	// належить контейнеру (voutSymbianFinish там лише відв'язується).
+	// Hold last frame (flushing audio), then tear down window and sound.
+	// In GUI holding makes no sense - user decided to exit, and window belongs
+	// to container anyway (voutSymbianFinish merely detaches there).
 	if (aShowScreen)
 		{
 		const int holdMs = g_guiMode ? 0 : KScreenHoldMs;
@@ -2096,12 +2096,12 @@ static void passTeardown()
 			(unsigned)aProduced, holdMs);
 		}
 
-	// Дзеркало passSetup у зворотному порядку. Ядро цього не робить: у фронтенді
-	// плагіни й привід закриває ClosePlugins, який ми обходимо (нема .so).
-	// Ключове тут - cdra_close: ISOopen першим рядком повертає 0, якщо образ уже
-	// відкрито ("it's already open"), тож без закриття наступний cdra_open мовчки
-	// НЕ відкриває новий диск. Гра після зміни диска діставала попередній образ із
-	// чужою таблицею доріжок - звідси й зависання на логотипі.
+	// Mirror of passSetup in reverse order. Core does not do this: frontend
+	// closes plugins and drive in ClosePlugins, which we bypass (no .so).
+	// Key call here is cdra_close: ISOopen first line returns 0 if image is already
+	// open ("it's already open"), so without closing next cdra_open silently
+	// FAILS to open new disc. Game after disc change received previous image with
+	// mismatched track table - hence the hang on logo.
 	SPU_close();
 	ps1GpuClose();
 	cdra_close();
@@ -2109,7 +2109,7 @@ static void passTeardown()
 	EmuShutdown();
 	}
 
-// Консольна гілка: три частини назад у суцільний прохід.
+// Console branch: three parts back into continuous pass.
 static TInt runPass(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
 	TBool aShowScreen, TBool aUseDisc, TUint &aTicks, u32 &aProduced)
 	{
@@ -2126,19 +2126,19 @@ static TInt runPass(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
 	return aProduced ? KErrNone : KErrGeneral;
 	}
 
-// Апаратне виключення (KERN-EXEC 3 і подібні) знімає процес миттєво: підсумковий
-// блок не пишеться, і в лозі лишається сам лише обрив. Обробник встигає записати,
-// ЩО впало - стадія кадру, його номер, гостьовий pc і лічильники GPU. Після
-// повернення звідси помилка виникла б знову, тож виходимо самі.
+// Hardware exception (KERN-EXEC 3 and similar) terminates process instantly: summary
+// block is not written, leaving only abrupt end in log. Handler manages to record
+// WHAT crashed - frame stage, frame number, guest pc, and GPU counters. After
+// returning from here fault would recur, so exit explicitly.
 static void crashHandler(TExcType aType)
 	{
-	// Тип - найперше й одним записом: якщо далі обробник загине, сторож усе одно
-	// побачить, що виключення взагалі доставлено.
+	// Type - first and in single write: if handler dies later, watchdog still
+	// sees that exception was delivered at all.
 	g_crashType = (TInt)aType;
 	g_crashStep = 1;
 
-	// Знімок стека вгору від власного кадру: саме там ядро лишило контекст
-	// збійного коду, включно з адресою збійної інструкції.
+	// Stack snapshot above own frame: kernel placed faulting code context
+	// there, including address of faulting instruction.
 	TUint8 here;
 	TUint32 sp = ((TUint32)&here) & ~3u;
 	TUint32 top = sp + KCrashWords * 4;
@@ -2153,8 +2153,8 @@ static void crashHandler(TExcType aType)
 	g_crashWords = n;
 	g_crashStep = 2;
 
-	// Публікує сторож (окремий потік, RFile): з обробника stdio мовчить.
-	// Спін, а не User::After - блокувальний виклик звідси не повертається.
+	// Published by watchdog (separate thread, RFile): stdio from handler is silent.
+	// Spin rather than User::After - blocking call never returns from here.
 	for (volatile TInt w = 0; w < 40000000 && !g_crashPublished; ++w)
 		{ }
 	g_crashStep = 3;
@@ -2171,11 +2171,11 @@ static void crashHandler(TExcType aType)
 	User::Exit(KErrAbort);
 	}
 
-// Раз на процес, спільне для обох гілок.
+// Once per process, shared by both branches.
 static void coreInitOnce()
 	{
-	// Повна маска: минулого разу обробник не спрацював, і звужена маска - одна з
-	// двох причин (друга - переповнення стека, коли викликати його нема на чому).
+	// Full mask: handler failed last time, and narrow mask was one of
+	// two reasons (second was stack overflow when no stack was left to call it).
 	const TInt excRc = User::SetExceptionHandler(crashHandler,
 		KExceptionAbort | KExceptionKill | KExceptionUserInterrupt | KExceptionFpe |
 		KExceptionFault | KExceptionInteger | KExceptionDebug);
@@ -2184,57 +2184,57 @@ static void coreInitOnce()
 
 	bindStubPlugins();
 
-	// Конфіг растеризатора - обов'язково ДО GPU_init: renderer_init копіює його
-	// у робочу структуру один раз. GPUrearmedCallbacks (нижче) викликаємо з
-	// нульовою структурою, тож без цього рядка конфіг лишається нульовим, і
-	// вимкненими виявляються не лише прискорювачі, а й освітлення з напівпрозорістю.
+	// Rasterizer config - MUST be BEFORE GPU_init: renderer_init copies it
+	// into working struct once. GPUrearmedCallbacks (below) is called with
+	// zero struct, so without this line config remains zeroed, disabling
+	// not only speedups but also lighting and blending.
 	gpu_unai_set_config(g_hackPixelSkip, g_hackIlace, g_gpuLighting,
 		g_gpuLighting /*fast*/, g_gpuBlending);
-	// Вивід мусить знати про пропуск рядків: інакше він показує непарні рядки VRAM,
-	// яких растеризатор не переписував, і статичні накладки лишають слід на екрані.
+	// Output must know about line skipping: otherwise it displays odd VRAM lines
+	// that rasterizer did not update, causing static overlays to leave ghost trails.
 	voutSymbianSetIlaceOut(g_hackIlace ? 1 : 0);
 	logEvent("gpu_cfg", NULL, "pixskip=%d ilace=%d light=%d blend=%d",
 		(int)g_hackPixelSkip, (int)g_hackIlace, (int)g_gpuLighting, (int)g_gpuBlending);
 
-	// GPU_init() раз на процес: виділяє VRAM і виконує do_reset() у gpulib
-	// (gpu.status = 0x14802000, біт 28 = готовність до DMA). Фронтенд робить це в
-	// LoadPlugins() (plugins.c:328); ми обходимо LoadPlugins (нема .so), тож
-	// викликаємо самі. Обидва проходи (interp/drc) поділяють один VRAM.
+	// GPU_init() once per process: allocates VRAM and executes do_reset() in gpulib
+	// (gpu.status = 0x14802000, bit 28 = DMA ready). Frontend does this in
+	// LoadPlugins() (plugins.c:328); we bypass LoadPlugins (no .so), so
+	// call it ourselves. Both passes (interp/drc) share single VRAM.
 	const long gpuInitRc = ps1GpuInit();
 	logEvent("gpu_init", gpuInitRc ? "GPU_INIT_FAIL" : NULL, "init=%ld", gpuInitRc);
 
-	// Колбеки - суворо ПІСЛЯ GPU_init: GPUinit робить memset на gpu.state і
-	// gpu.frameskip (gpu.c:355-359) і повертає лічильник кадрів на власний нуль.
-	// Стояло це вище й тихо скасовувалось: gpulib увесь час бачив frame_count=0,
-	// а frameskip.set=0 не давав пропуску растеризації спрацювати взагалі.
+	// Callbacks - strictly AFTER GPU_init: GPUinit memsets gpu.state and
+	// gpu.frameskip (gpu.c:355-359) and resets frame counter back to zero.
+	// Placed earlier this was silently overwritten: gpulib always saw frame_count=0,
+	// while frameskip.set=0 prevented rasterization skipping from working at all.
 	ps1GpuSetCallbacks(&frame_counter, &g_gpuHcnt, g_gpuFrameskip);
-	// І одразу назад конфіг растеризатора: GPUrearmedCallbacks усередині кличе
-	// renderer_set_config (gpu.c:1288), а той безумовно перезаписує lighting,
-	// blending та ilace_force полями cbs->gpu_unai, яких ми не заповнюємо. Відколи
-	// колбеки переїхали ПІСЛЯ GPU_init, це мовчки вимикало освітлення й
-	// напівпрозорість незалежно від меню.
+	// And re-apply rasterizer config immediately: GPUrearmedCallbacks internally calls
+	// renderer_set_config (gpu.c:1288), which unconditionally overwrites lighting,
+	// blending and ilace_force with cbs->gpu_unai fields that we do not populate. Since
+	// callbacks moved AFTER GPU_init, this was silently disabling lighting and
+	// blending regardless of menu settings.
 	gpu_unai_apply_config();
 	logEvent("gpu_cbs", NULL, "frameskip=%d", (int)g_gpuFrameskip);
 
-	// Звук: конфіг dfsound до SPU_init, тоді ініціалізація SPU (раз на процес).
+	// Sound: configure dfsound before SPU_init, then initialize SPU (once per process).
 	ps1SndConfigure();
 	const long spuInitRc = SPU_init();
 	logEvent("spu_init", spuInitRc ? "SPU_INIT_FAIL" : NULL, "init=%ld", spuInitRc);
 	}
 
-// --- Гілка GUI (оболонка AVKON, app_symbian.cpp) ----------------------------
-// Ті самі кроки, що й консольний прохід, але під активний об'єкт: Setup один раз,
-// Step на кожен тік, Shutdown при виході. Прохід один - гра з диска.
+// --- GUI branch (AVKON shell, app_symbian.cpp) ------------------------------
+// Same steps as console pass, but tailored for active object: Setup once,
+// Step per tick, Shutdown on exit. Single pass - game from disc.
 
 static TBool g_guiUp;
-// Аргумент "interp" з деплою: той самий сеанс, але на інтерпретаторі. Розділяє
-// найбільшу розвилку причин падіння - код, згенерований динареком, проти всього
-// іншого (растеризація gpu_unai, ядро, наш вивід).
+// "interp" argument from deploy: same session, but on interpreter. Splits
+// the major crash root cause branch - dynarec generated code vs everything
+// else (gpu_unai rasterization, core, our output).
 static TBool g_guiInterp;
 
-// Кадрів на конфігурацію в зонді GL; 0 = зонд не запитано.
+// Frames per configuration in GL probe; 0 = probe not requested.
 static TInt g_glBench;
-// Растеризатор на MBX замість показу з VRAM (аргумент "glrender").
+// MBX rasterizer instead of VRAM presentation ("glrender" argument).
 static TBool g_glRender;
 static TBool g_texWhite;
 static TInt g_glrSkip;
@@ -2248,8 +2248,8 @@ extern "C" int ps1GuiSetup(void)
 	{
 	g_guiMode = ETrue;
 	g_guiExit = 0;
-	// Зонд GL іде замість проходу: ядро для нього не потрібне взагалі, а вікно й
-	// контекст на цей момент уже підняті (AttachOutput кличеться перед нами).
+	// GL probe runs instead of pass: core is not needed at all, while window and
+	// context are already initialized (AttachOutput is called before us).
 	if (g_glBench > 0)
 		{
 		logEvent("start", NULL, "stage1 begin (glbench), frames=%d", (int)g_glBench);
@@ -2258,7 +2258,7 @@ extern "C" int ps1GuiSetup(void)
 		return KErrNone;
 		}
 	g_watchdogMs = KPlayWatchdogMs;
-	ps1SndSetPumpAo(0);   // планувальник крутить CIdle між кадрами
+	ps1SndSetPumpAo(0);   // scheduler runs CIdle between frames
 	voutSymbianSetPumpAo(0);
 	coreInitOnce();
 	const TInt frames = g_playFrames > 0 ? g_playFrames : KPlayFrames;
@@ -2266,11 +2266,11 @@ extern "C" int ps1GuiSetup(void)
 		g_guiInterp ? "interp" : "drc", (int)g_inputMode);
 	const TInt rc = passSetup(!g_guiInterp, frames, ETrue /*bios*/, EFalse /*gputest*/,
 		ETrue /*screen*/, ETrue /*disc*/);
-	// Після passSetup: слід прив'язаний до номера кадру, а лічильник кадрів
-	// починається саме тут.
+	// After passSetup: trace is tied to frame number, and frame counter
+	// starts right here.
 	inputTraceOpen();
-	// Після passSetup: вікно й контекст GL уже підняті, тож растеризатор має
-	// що ініціалізувати.
+	// After passSetup: window and GL context are already active, so rasterizer has
+	// resources to initialize.
 	if (g_glRender && rc == KErrNone)
 		{
 		const TInt grc = glrInit();
@@ -2291,16 +2291,16 @@ extern "C" int ps1GuiStep(void)
 	return passStep() ? 1 : 0;
 	}
 
-// Перезапуск проходу в тому ж процесі: інший диск (або інша гілка процесора,
-// BIOS, звук, GL, DSA) вимагає повторної ініціалізації ядра. Саме так працює
-// консольна гілка - два проходи підряд, - тож пара teardown/setup перевірена.
-// VRAM, кеш трансляцій і SPU лишаються від coreInitOnce: вони на процес.
+// Pass restart in same process: different disc (or different CPU branch,
+// BIOS, sound, GL, DSA) requires core reinitialization. Console branch works
+// exactly like this - two consecutive passes - so teardown/setup pair is proven.
+// VRAM, translation cache, and SPU persist from coreInitOnce: they are per-process.
 //
-// Два окремі виклики, а не один: між ними оболонка мусить наново прив'язати
-// вивід. passTeardown відв'язує вікно (voutSymbianFinish), тож прив'язка ДО
-// нього пропадала - гра рахувала кадри, а на екрані лишався останній кадр
-// попередньої. Кликати лише з тіку CIdle, не з обробника клавіші: усередині є
-// і звук, і DSA.
+// Two separate calls rather than one: between them shell must re-attach
+// output. passTeardown detaches window (voutSymbianFinish), so attaching BEFORE
+// it was lost - game computed frames while screen retained last frame of
+// previous run. Call only from CIdle tick, never from key handler: internally contains
+// both sound and DSA.
 extern "C" void ps1GuiEndPass(void)
 	{
 	if (!g_guiUp)
@@ -2322,10 +2322,10 @@ extern "C" int ps1GuiStartPass(void)
 	return rc;
 	}
 
-// Закриття гри посеред сеансу: образ, який зараз читає ядро, збираються стиснути,
-// а конвертер має його і прочитати, і видалити. Прохід згортаємо повністю - назад
-// його вже не підняти (VRAM і кеш трансляцій одні на процес), тож оболонка після
-// цього лишає в меню тільки вихід.
+// Closing game mid-session: image currently read by core is about to be compressed,
+// and converter must both read and delete it. Pass is torn down completely - cannot
+// be restored back (single VRAM and translation cache per process), so shell leaves
+// only exit in menu afterwards.
 extern "C" void ps1GuiCloseGame(void)
 	{
 	if (!g_guiUp)
@@ -2343,22 +2343,22 @@ extern "C" void ps1GuiShutdown(void)
 	g_guiUp = EFalse;
 	passTeardown();
 
-	// Знімок VRAM для перевірки растеризації на хості (Етап 2).
+	// VRAM snapshot to verify rasterization on host (Stage 2).
 	const int dumpRc = voutSymbianDump("E:\\PS1\\logs\\ps1_vram.bin");
 	logEvent("vram_dump", dumpRc ? "DUMP_FAIL" : NULL, "rc=%d", dumpRc);
 
-	ps1GpuShutdown();   // парний до ps1GpuInit: звільняє VRAM після знімка
+	ps1GpuShutdown();   // paired with ps1GpuInit: frees VRAM after snapshot
 	logEvent("shutdown", NULL, "gui: frames=%u ms=%u",
 		(unsigned)g_pass.produced, (unsigned)g_pass.ticks);
 	}
 
-// Оболонка просить завершити прохід (користувач вийшов).
+// Shell requests pass termination (user exited).
 extern "C" void ps1GuiRequestExit(void)
 	{
 	g_guiExit = 1;
 	}
 
-// Один потік JSONL на процес: оболонка пише через нього, а не окремим файлом.
+// Single JSONL stream per process: shell writes through it rather than separate file.
 extern "C" void ps1Log(const char *aType, const char *aMsg)
 	{
 	logEvent(aType, NULL, "%s", aMsg ? aMsg : "");
@@ -2369,18 +2369,18 @@ extern "C" void ps1LogInt(const char *aType, const char *aMsg, int aVal)
 	logEvent(aType, NULL, "%s=%d", aMsg ? aMsg : "", aVal);
 	}
 
-// Рівень 1..5 з меню -> поріг контрасту. Менший поріг захоплює більше пікселів:
-// заміряно на трасі 10 -> 26% кадру, 6 -> 33%, 2 -> 60%. Верхньої межі НЕ ставимо:
-// з нею фільтр пропускав саме найконтрастніші межі, тобто ті, які єдині й помітні
-// на екрані - перевірено на апараті, ефекту не було видно.
+// Level 1..5 from menu -> contrast threshold. Lower threshold captures more pixels:
+// measured on track 10 -> 26% of frame, 6 -> 33%, 2 -> 60%. Do NOT set upper limit:
+// with it filter skipped highest-contrast edges, which are the only ones noticeable
+// on screen - verified on hardware, no effect was visible.
 static void applyFxaaLevel(TInt aLevel)
 	{
 	static const TInt KFxaaThr[6] = { 0, 10, 8, 6, 4, 2 };
 	voutSymbianSetFxaa(KFxaaThr[(aLevel >= 0 && aLevel <= 5) ? aLevel : 0], 31);
 	}
 
-// Налаштування з меню. Викликається ДО ps1GuiSetup, тобто до будь-якої
-// ініціалізації ядра й растеризатора - інакше частина з них не подіє.
+// Settings from menu. Called BEFORE ps1GuiSetup, i.e. before any
+// core and rasterizer initialization - otherwise some will not take effect.
 extern "C" void ps1CfgApply(const char *aDisc, const char *aBios, int aInterp,
 	int aIlace, int aLight, int aBlend, int aPixSkip, int aGteNf,
 	int aSound, int aGl, int aDirty, int aDsa, int aFps, int aGpuSkip, int aCycle,
@@ -2411,9 +2411,9 @@ extern "C" void ps1CfgApply(const char *aDisc, const char *aBios, int aInterp,
 	g_noSound        = aSound ? EFalse : ETrue;
 	voutSymbianSetGl(aGl);
 	voutSymbianSetDirtyOnly(aDirty);
-	// DSA піднімається у voutSymbianAttachWindow, а меню віддає конфіг ПІСЛЯ нього,
-	// тож саму прив'язку треба переробити - інакше прапорець подіє лише з наступного
-	// запуску. Це робить ps1GuiReattach() у першому тіку.
+	// DSA initializes in voutSymbianAttachWindow, but menu delivers config AFTER it,
+	// so attachment itself must be redone - otherwise flag takes effect only on next
+	// launch. Handled by ps1GuiReattach() on first tick.
 	voutSymbianSetDsa(aDsa);
 	g_fpsOverlay = aFps ? ETrue : EFalse;
 	voutSymbianSetOverlay(aFps);
@@ -2435,10 +2435,10 @@ extern "C" void ps1CfgApply(const char *aDisc, const char *aBios, int aInterp,
 		(int)gpu_unai_sw_off);
 	}
 
-// Те саме, але з меню, відкритого вже в грі. Сюди потрапляє лише те, що можна
-// перемкнути між кадрами; вибір диска, гілка процесора, GL, DSA, звук і хаки GTE
-// потребують повторної ініціалізації й лишаються за ps1CfgApply. Викликати можна
-// тільки з паузи (тік CIdle не в кадрі): нижче є скидання кеша трансляцій.
+// Same, but from menu opened while already in-game. Includes only settings switchable
+// between frames; disc selection, CPU branch, GL, DSA, sound, and GTE hacks
+// require reinitialization and remain in ps1CfgApply. Call only
+// during pause (CIdle tick outside frame): translation cache flush occurs below.
 extern "C" void ps1CfgApplyLive(int aIlace, int aLight, int aBlend, int aPixSkip,
 	int aFps, int aGpuSkip, int aCycle, int aSmooth, int aFxaa, int aDirty,
 	int aSwDraw)
@@ -2463,8 +2463,8 @@ extern "C" void ps1CfgApplyLive(int aIlace, int aLight, int aBlend, int aPixSkip
 	if (aGpuSkip != g_gpuFrameskip)
 		{
 		g_gpuFrameskip = (aGpuSkip > 0 || aGpuSkip == -1) ? aGpuSkip : 0;
-		// Єдиний шлях до gpu.frameskip.set - повторні колбеки, а вони знову
-		// перезаписують конфіг растеризатора (див. коментар у coreInitOnce).
+		// Only way to set gpu.frameskip.set is re-registering callbacks, which again
+		// overwrites rasterizer config (see comment in coreInitOnce).
 		ps1GpuSetCallbacks(&frame_counter, &g_gpuHcnt, g_gpuFrameskip);
 		gpu_unai_apply_config();
 		fsAdaptiveStart(g_gpuFrameskip == -1 ? (Config.PsxType ? 50 : 60) : 0);
@@ -2474,8 +2474,8 @@ extern "C" void ps1CfgApplyLive(int aIlace, int aLight, int aBlend, int aPixSkip
 		{
 		g_cycleMul = aCycle;
 		Config.cycle_multiplier = g_cycleMul;
-		// ApplyConfig сам скидає кеш трансляцій, коли множник змінився: блоки,
-		// зібрані під старе значення, інакше лишились би з чужим таймінгом.
+		// ApplyConfig flushes translation cache itself when multiplier changes: blocks
+		// compiled for old value would otherwise retain foreign timing.
 		if (psxCpu && psxCpu->ApplyConfig)
 			psxCpu->ApplyConfig();
 		}
@@ -2503,8 +2503,8 @@ static TInt runStage1()
 	TBool useBios, gpuTest, useDrc, showScreen, useDisc, haveArgs;
 	parseCommandLine(framesToRun, useBios, gpuTest, useDrc, showScreen, useDisc, haveArgs);
 
-	// Діагностика direct-FB: аргумент "fbtest" малює тест-патерн прямо в LCD (без
-	// емуляції) і тримає 8с. За побаченим визначаємо stride/буфер/орієнтацію.
+	// Direct-FB diagnostics: "fbtest" argument draws test pattern directly to LCD (no
+	// emulation) and holds for 8s. Stride/buffer/orientation are identified from result.
 	TBuf<256> cl; User::CommandLine(cl); cl.Trim();
 	_LIT(KFbTest, "fbtest");
 	if (cl.FindF(KFbTest) != KErrNotFound)
@@ -2516,8 +2516,8 @@ static TInt runStage1()
 		logEvent("fb", NULL, "init=%d ok=%d hal=%dx%d line=%dB bpp=%d first=%d win=%dx%d",
 			ir, fbOk, xp, yp, lb, bpp, fo, ww, wh);
 
-		// Z1: розкладка ВІД ПЛАТФОРМИ поряд із HAL-значеннями. Якщо stride або база
-		// різняться - це і є пряме пояснення перекошеного кадру 2026-08-01.
+		// Z1: layout FROM PLATFORM alongside HAL values. If stride or base
+		// differ - this is the direct explanation for skewed frame on 2026-08-01.
 		int bits = 0, stride = 0, sw = 0, sh = 0, mode = -1, rot = -1, halBase = 0;
 		voutSymbianScreenLayout(&bits, &stride, &sw, &sh, &mode, &rot, &halBase);
 		logEvent("screen_layout", NULL,
@@ -2526,14 +2526,14 @@ static TInt runStage1()
 			bits, halBase, stride, sw, sh, mode, rot, lb,
 			voutSymbianFbFromPlatform());
 
-		// Z1/M-RB: візерунок відомо робочим шляхом, читання назад сирим покажчиком.
+		// Z1/M-RB: pattern via known working path, readback via raw pointer.
 		int m = 0, t = 0, badA[4];
 		const int rb0 = voutSymbianReadBack(0, &m, &t, badA);
 		logEvent("readback", rb0 ? "RB_FAIL" : NULL,
 			"pass=first rc=%d match=%d/%d firstBad=(%d,%d) want=0x%x got=0x%x",
 			rb0, m, t, badA[0], badA[1], badA[2], badA[3]);
 
-		// Повтор без нового малювання: якщо збіги зникли - подвійна буферизація.
+		// Repeat without redraw: if matches disappeared - double buffering.
 		User::After(100000);
 		int m2 = 0, t2 = 0, badB[4];
 		const int rb1 = voutSymbianReadBack(1, &m2, &t2, badB);
@@ -2549,9 +2549,9 @@ static TInt runStage1()
 
 	coreInitOnce();
 
-	// Без аргументів = запуск з меню апарата (alpha 1.0): граємо GT з диска -
-	// великий бюджет кадрів і довший сторож, щоб не обірвати гру. З аргументами
-	// (деплой/бенчмарк) поведінка стара.
+	// No arguments = launch from device menu (alpha 1.0): playing GT from disc -
+	// large frame budget and longer watchdog to avoid interrupting game. With arguments
+	// (deploy/benchmark) legacy behavior applies.
 	if (!haveArgs)
 		{
 		framesToRun = KPlayFrames;
@@ -2572,34 +2572,34 @@ static TInt runStage1()
 		}
 	else
 		{
-		// alpha 1.0: одразу граємо GT - диск+екран+drc+звук. Без бенчмарку двох
-		// режимів (для замірів запускати з аргументами через деплой).
+		// alpha 1.0: immediately play GT - disc+screen+drc+sound. No dual-mode
+		// benchmark (run with arguments via deploy for benchmarking).
 		rc = runPass(ETrue /*drc*/, framesToRun, ETrue /*bios*/, EFalse /*gputest*/,
 			ETrue /*screen*/, ETrue /*disc*/, drcTicks, drcFrames);
 		(void)interpTicks; (void)interpFrames;
 		}
 
-	// Знімок VRAM для перевірки растеризації на хості (Етап 2). Вивід на екран
-	// тепер живий, усередині runPass (кадр за кадром), а не одноразово тут.
+	// VRAM snapshot to verify rasterization on host (Stage 2). On-screen display
+	// is now live inside runPass (frame by frame), rather than one-shot here.
 	const int dumpRc = voutSymbianDump("E:\\PS1\\logs\\ps1_vram.bin");
 	logEvent("vram_dump", dumpRc ? "DUMP_FAIL" : NULL, "rc=%d", dumpRc);
 
-	// Парний до ps1GpuInit(): звільняє VRAM після знімка (звідси - після дампу).
+	// Paired with ps1GpuInit(): frees VRAM after snapshot (here - after dump).
 	ps1GpuShutdown();
 
 	logEvent("shutdown", NULL, NULL);
 	return rc;
 	}
 
-// Оболонка AVKON (app_symbian.cpp). Не повертається, доки застосунок не закрито.
+// AVKON shell (app_symbian.cpp). Does not return until application is closed.
 extern "C" int ps1AppRun(void);
 
-// Зонд вартості читання сектора. Кадровий прогін для порівняння форматів образу
-// не годиться: cdRead там ~5 с із 175, і денний розкид самого апарата (той самий
-// .bin давав 3950 і 5504 мс) більший за різницю між форматами. Тут емуляції немає
-// зовсім, тож міряється рівно читання плюс розпакування.
-// Крок 1 - послідовно (кеш блока влучає), великий крок - кожне читання в новий
-// блок, тобто гірша межа.
+// Sector read cost probe. Frame-based run is unsuitable for comparing image
+// formats: cdRead is ~5 s out of 175, and day-to-day variance of hardware itself
+// (same .bin produced 3950 and 5504 ms) exceeds format differences. No emulation
+// here, measuring strictly read plus decompression.
+// Stride 1 - sequential (block cache hits), large stride - every read in new
+// block, i.e. worst-case boundary.
 static void cdBenchPass(const char *aPath, TInt aCount, TInt aStride)
 	{
 	g_cdReadTicks = 0;
@@ -2630,8 +2630,8 @@ static void cdBenchPass(const char *aPath, TInt aCount, TInt aStride)
 		(unsigned)(g_cdReadTicks * 1000ULL / d), g_cdReadCount);
 	}
 
-// Відкриваємо образ один раз на запуск: повторний cdra_init/cdra_open на вже
-// відкритому образі ISOopen відхиляє ("it's already open").
+// Open image once per launch: repeated cdra_init/cdra_open on already
+// opened image is rejected by ISOopen ("it's already open").
 static void cdBench(const char *aPath)
 	{
 	SetIsoFile(aPath);
@@ -2656,10 +2656,10 @@ GLDEF_C TInt E32Main()
 	TBuf8<256> cl8;
 	cl8.Copy(cl);
 
-	// Без аргументів = запуск із меню апарата: повноцінний застосунок AVKON. Він
-	// потрібен не лише заради виходу й таск-листа - MBX-EGL створює поверхню лише
-	// на вікні під CCoeEnv. Бенчмарк лишається консольним (аргументи з деплою), бо
-	// там ні вікна, ні фреймворку не треба, а заміри мають лишитись порівнюваними.
+	// No arguments = launch from device menu: full AVKON application. Needed
+	// not only for exit and task list - MBX-EGL creates surface only
+	// on window under CCoeEnv. Benchmark remains console-based (deploy arguments),
+	// as neither window nor framework is needed, keeping measurements comparable.
 	_LIT(KGuiArg, "gui");
 	_LIT(KGlArg, "gl");
 	const TBool gui = (cl.Length() == 0) || (cl.FindF(KGuiArg) != KErrNotFound);
@@ -2686,9 +2686,9 @@ GLDEF_C TInt E32Main()
 		}
 	logEvent("gpuspeed", NULL, "g_gpuSpeedPct=%d", (int)g_gpuSpeedPct);
 
-	// Зонд імпорту: "conv img<файл>" бере E:\PS1\games\<файл> і збирає з нього
-	// .pbp поруч. Перевіряти конвертацію через меню наосліп неможливо, а тут
-	// результат можна забрати на хост і звірити psxpack.py.
+	// Import probe: "conv img<file>" takes E:\PS1\games\<file> and builds
+	// .pbp next to it. Testing conversion blindly via menu is impossible, whereas here
+	// result can be pulled to host and verified with psxpack.py.
 	_LIT(KConvArg, "conv");
 	if (cl.FindF(KConvArg) != KErrNotFound)
 		{
@@ -2706,13 +2706,13 @@ GLDEF_C TInt E32Main()
 		_LIT(KCopyArg, "storeas");
 		const TConvMode mode = (cl.FindF(KCopyArg) != KErrNotFound)
 			? EConvModeCopy : EConvModePbp;
-		// Консольна гілка йде до створення cleanup stack у runStage1, а TRAP без
-		// нього - паніка E32USER-CBase 69.
+		// Console branch executes before cleanup stack creation in runStage1, and TRAP
+		// without it panics with E32USER-CBase 69.
 		CTrapCleanup *cs = CTrapCleanup::New();
 		if (!cs)
 			return KErrNoMemory;
 		logEvent("conv", NULL, "probe entered");
-		// Тільки в купі: CDesCArrayFlat - C-клас, а вони на стеку не живуть.
+		// Heap only: CDesCArrayFlat is a C-class, and they do not live on the stack.
 		CDesCArrayFlat *list = new CDesCArrayFlat(1);
 		if (!list)
 			{
@@ -2752,7 +2752,7 @@ GLDEF_C TInt E32Main()
 		return KErrNone;
 		}
 
-	// "cdbench imgX cdbench imgY ..." не буває: один образ на запуск, шлях з img.
+	// "cdbench imgX cdbench imgY ..." is invalid: single image per launch, path from img.
 	_LIT(KCdBenchArg, "cdbench");
 	if (cl.FindF(KCdBenchArg) != KErrNotFound)
 		{
@@ -2777,25 +2777,25 @@ GLDEF_C TInt E32Main()
 
 	if (gui)
 		{
-		// Прапорці виводу - до старту фреймворку: EikStart не повертається, доки
-		// застосунок живий, а вікно прив'язується вже всередині нього.
+		// Output flags set before framework start: EikStart does not return while
+		// app is alive, and window is attached inside it.
 		if (cl.FindF(KGlArg) != KErrNotFound)
 			voutSymbianSetGl(1);
-		// Зонд накладних GL замість гри: та сама кількість примітивів на кадр, що
-		// й у Gran Turismo, але без емуляції. GL вмикає сам - без нього міряти
-		// нічого. "glbenchN" задає число кадрів на конфігурацію.
-		// Растеризатор на MBX. Вмикає GL сам, бо без контексту малювати нічим.
-		// На цьому кроці він малює ПОРУЧ із gpu_unai, а не замість нього:
-		// показує GL, але VRAM лишається порахованим програмно, тож зняти
-		// прапорець і побачити ту саму сцену старим шляхом можна будь-коли.
+		// GL overhead probe instead of game: same primitive count per frame
+		// as Gran Turismo, but without emulation. Enables GL itself - nothing to
+		// measure without it. "glbenchN" sets frame count per configuration.
+		// MBX rasterizer. Enables GL itself, as there is nothing to draw with without context.
+		// At this step it renders ALONGSIDE gpu_unai rather than replacing it:
+		// presents GL, but VRAM remains software-computed, so clearing
+		// flag to view same scene via legacy path is possible anytime.
 		_LIT(KGlrArg, "glrender");
 		if (cl.FindF(KGlrArg) != KErrNotFound)
 			{
 			g_glRender = ETrue;
 			voutSymbianSetGl(1);
 			}
-		// "glrskipN" - зонд: не малювати клас примітивів (1 полігони, 2
-		// прямокутники, 4 заливка); складається бітами.
+		// "glrskipN" - probe: skip primitive class (1 polygons, 2
+		// rectangles, 4 fill); bitmask combined.
 		_LIT(KGlrSkipArg, "glrskip");
 		const TInt gskp = cl.FindF(KGlrSkipArg);
 		if (gskp != KErrNotFound)
@@ -2804,12 +2804,12 @@ GLDEF_C TInt E32Main()
 			TInt n = 0;
 			g_glrSkip = (lex.Val(n) == KErrNone) ? n : 0;
 			}
-		// "texwhite" - зонд: текстури без модуляції кольором вершини.
+		// "texwhite" - probe: textures without vertex color modulation.
 		_LIT(KTexWhiteArg, "texwhite");
 		if (cl.FindF(KTexWhiteArg) != KErrNotFound)
 			g_texWhite = ETrue;
-		// "swoff" знімає програмний прохід: сцену малює лише MBX. Сам собою
-		// сенсу не має - лише разом із "glrender".
+		// "swoff" disables software pass: scene is rendered exclusively by MBX. Meaningless
+		// on its own - only in conjunction with "glrender".
 		_LIT(KSwOffArg, "swoff");
 		if (cl.FindF(KSwOffArg) != KErrNotFound)
 			{ gpu_unai_sw_off = 1; g_swoffCli = 1; }
@@ -2822,22 +2822,22 @@ GLDEF_C TInt E32Main()
 			g_glBench = (lex.Val(n) == KErrNone && n > 0) ? n : 200;
 			voutSymbianSetGl(1);
 			}
-		// "dsa"/"rowcopy" тут ОБОВ'ЯЗКОВО: parseCommandLine розбирає їх лише в
-		// консольній гілці, а вікно в GUI прив'язується до неї - прапорець приходив
-		// би після того, як DSA треба було підняти, і прогін мовчки йшов віконним
-		// шляхом (у логу dsa active=0 при заданому dsa).
-		// Показ за латчем типово увімкнений; "nodirty" вимикає.
+		// "dsa"/"rowcopy" are MANDATORY here: parseCommandLine parses them only in
+		// console branch, while GUI window binds beforehand - flag would arrive
+		// after DSA needed to initialize, silently falling back to windowed
+		// path (log shows dsa active=0 when dsa was specified).
+		// Latch-based presentation enabled by default; "nodirty" disables it.
 		_LIT(KNoDirtyArg, "nodirty");
 		voutSymbianSetDirtyOnly(cl.FindF(KNoDirtyArg) != KErrNotFound ? 0 : 1);
-		// direct-FB коректний (причина була в Update() без регіону) і в меню
-		// увімкнений типово. Тут лишається вимкненим і вмикається явним "dsa":
-		// бенчмарк має лишатись зіставним із раніше знятими числами.
+		// direct-FB is correct (root cause was Update() without region) and enabled
+		// by default in menu. Kept disabled here and enabled by explicit "dsa":
+		// benchmark must remain comparable to previously measured figures.
 		_LIT(KDsaArgG, "dsa");
 		voutSymbianSetDsa(cl.FindF(KDsaArgG) != KErrNotFound ? 1 : 0);
-		// Візуальний A/B шляхів виводу на кадрі 3300 (потрібні очі).
+		// Visual A/B of output paths at frame 3300 (requires manual inspection).
 		_LIT(KFbVisArg, "fbvis");
 		g_fbVis = (cl.FindF(KFbVisArg) != KErrNotFound);
-		// Накладка з метриками. У бенчмарку типово вимкнена: вона малює по кадру.
+		// Metrics overlay. Disabled by default in benchmark: draws over frame.
 		_LIT(KFpsArg, "fps");
 		g_fpsOverlay = (cl.FindF(KFpsArg) != KErrNotFound);
 		voutSymbianSetOverlay(g_fpsOverlay ? 1 : 0);
@@ -2863,9 +2863,9 @@ GLDEF_C TInt E32Main()
 		_LIT(KNoSndArg, "nosnd");
 		if (cl.FindF(KNoSndArg) != KErrNotFound)
 			g_noSound = ETrue;
-		// Образ диска для прогону: "img<файл>" бере E:\<файл> замість KDiscImg.
-		// Меню сюди не дістає (ps1CfgApply у консольній гілці не викликається), а
-		// порівняння форматів образу одним слідом вводу інакше не зняти.
+		// Disc image for run: "img<file>" takes E:\<file> instead of KDiscImg.
+		// Menu does not reach here (ps1CfgApply is not called in console branch), and
+		// comparing image formats with identical input trace is impossible otherwise.
 		_LIT(KImgArg, "img");
 		const TInt imp = cl.FindF(KImgArg);
 		if (imp != KErrNotFound)
@@ -2903,15 +2903,15 @@ GLDEF_C TInt E32Main()
 			TInt n = 0;
 			g_hackIlace = (lex.Val(n) == KErrNone && n > 0) ? n : 1;
 			}
-		// Замірні зонди: без емуляції затримок конвеєра / без Update() екрана.
+		// Benchmark probes: no pipeline stall emulation / no screen Update().
 		_LIT(KNoStallsArg, "nostalls");
 		g_hackNoStalls = (cl.FindF(KNoStallsArg) != KErrNotFound);
 		_LIT(KNoUpdateArg, "noupdate");
 		voutSymbianSetNoUpdate(cl.FindF(KNoUpdateArg) != KErrNotFound ? 1 : 0);
 		_LIT(KNoSmoothArg, "nosmooth");
 		voutSymbianSetSmooth(cl.FindF(KNoSmoothArg) != KErrNotFound ? 0 : 1);
-		// Прототип згладжування: "fxaa" бере нижній поріг 3, "fxaa6" - шість.
-		// "fxmax14" ставить верхній, щоб не чіпати контрастний текст. Типово вимкнено.
+		// Antialiasing prototype: "fxaa" uses lower threshold 3, "fxaa6" - six.
+		// "fxmax14" sets upper threshold to avoid blurring high-contrast text. Disabled by default.
 		_LIT(KFxMaxArg, "fxmax");
 		TInt fxMax = 31;
 		const TInt fmp = cl.FindF(KFxMaxArg);
@@ -2939,7 +2939,7 @@ GLDEF_C TInt E32Main()
 			if (lex.Val(n) == KErrNone && n > 0)
 				g_dumpAt = n;
 			}
-		// Пропуск ПОКАЗУ (кадр малюється й викидається) - для порівняння з gpuskip.
+		// PRESENTATION skip (frame rendered and discarded) - for comparison with gpuskip.
 		_LIT(KShowSkipArg, "showskip");
 		const TInt ssp = cl.FindF(KShowSkipArg);
 		if (ssp != KErrNotFound)
@@ -2948,7 +2948,7 @@ GLDEF_C TInt E32Main()
 			TInt n = 0;
 			g_frameskip = (lex.Val(n) == KErrNone && n > 0) ? n : 1;
 			}
-		// Пропуск растеризації в gpulib: "gpuskip1" - не малювати кожен другий кадр.
+		// Rasterization skip in gpulib: "gpuskip1" - skip rendering every other frame.
 		_LIT(KGpuSkipArg, "gpuskip");
 		const TInt gsp = cl.FindF(KGpuSkipArg);
 		if (gsp != KErrNotFound)
@@ -2984,9 +2984,9 @@ GLDEF_C TInt E32Main()
 			if (lex.Val(n) == KErrNone && n > 0)
 				g_saveStateAt = n;
 			}
-		// Тут ОБОВ'ЯЗКОВО: parseCommandLine розбирає це лише в консольній гілці,
-		// а прогони стенду йдуть у GUI, тож прапорець туди не доходив і замір
-		// мовчки міряв старий шлях через zlib.
+		// MANDATORY here: parseCommandLine parses this only in console branch,
+		// while test runs execute in GUI, so flag never reached it and benchmark
+		// silently measured legacy path via zlib.
 		_LIT(KSaveFuncsArgG, "savefuncs");
 		if (cl.FindF(KSaveFuncsArgG) != KErrNotFound)
 			g_saveFuncsOverride = ETrue;
@@ -3003,11 +3003,11 @@ GLDEF_C TInt E32Main()
 				g_loadStateAt = n;
 			}
 
-		// Той самий вибір файлом-маркером, бо запуск із меню аргументів не має.
-		// Довгий сеанс через демон не варіант: поки він чекає на дочірній процес,
-		// його keepalive не працює, WiFi паркується і з'єднання рветься.
-		// За вмістом, а не за наявністю: демон уміє класти файли, але не видаляти,
-		// тож перемикати режим інакше можна було б лише в один бік.
+		// Same selection via marker file, since launch from menu has no arguments.
+		// Long session via daemon is not an option: while waiting for child process,
+		// its keepalive stalls, WiFi idles and connection drops.
+		// By content rather than existence: daemon can write files but not delete them,
+		// so toggling mode would otherwise work only in one direction.
 		_LIT(KModeMark, "E:\\PS1\\logs\\ps1_interp.txt");
 		RFs markFs;
 		if (markFs.Connect() == KErrNone)
@@ -3021,7 +3021,7 @@ GLDEF_C TInt E32Main()
 				_LIT8(KInterp, "interp");
 				if (m.Find(KInterp) != KErrNotFound)
 					ps1GuiUseInterpreter();
-				// Той самий маркер керує слідом вводу: "rec" пише, "play" відтворює.
+				// Same marker controls input trace: "rec" records, "play" replays.
 				_LIT8(KRec, "rec");
 				_LIT8(KPlay, "play");
 				if (m.Find(KPlay) != KErrNotFound)     g_inputMode = EInputPlay;
