@@ -266,10 +266,20 @@ static unsigned short g_tiltPad;
 static TInt  g_tiltReads;
 static TInt  g_tiltLastX;
 static TInt  g_tiltLastY;
-const TInt KTiltOn  = 70;
-const TInt KTiltOff = 40;
-const TInt KTiltPitchOn  = 110;
-const TInt KTiltPitchOff = 70;
+// The digital bits are a fallback for a game that never leaves digital mode, so
+// they fire only where the stick is already at full deflection.
+const TInt KTiltOn  = 140;
+const TInt KTiltOff = 110;
+const TInt KTiltPitchOn  = 200;
+const TInt KTiltPitchOff = 160;
+// Analog: the point of tilt is a proportional turn, so the dead zone is only what
+// a hand cannot hold still, and full deflection sits at a comfortable wrist angle.
+const TInt KTiltDead      = 10;
+const TInt KTiltSpan      = 140;
+const TInt KTiltPitchDead = 40;
+const TInt KTiltPitchSpan = 200;
+static unsigned char g_tiltAX = 127;
+static unsigned char g_tiltAY = 127;
 static unsigned short tiltPad(void);
 
 // Direct write to LCD buffer (HAL): scale frame directly to screen, merging fill
@@ -1792,7 +1802,7 @@ extern "C" unsigned short voutSymbianPollPad(void)
 	if (!g_wsReady)
 		return 0;
 	if (!g_ownWindow)
-		return (unsigned short)(g_pad | tiltPad());   // events are dispatched by CONE, queue not armed here
+		{ tiltPad(); return g_pad; }   // events are dispatched by CONE, queue not armed here
 	while (g_evStat != KRequestPending)
 		{
 		TWsEvent ev;
@@ -1806,7 +1816,8 @@ extern "C" unsigned short voutSymbianPollPad(void)
 			}
 		g_ws.EventReady(&g_evStat);
 		}
-	return (unsigned short)(g_pad | tiltPad());
+	tiltPad();
+	return g_pad;
 	}
 
 extern "C" void voutSymbianPresent(void)
@@ -2009,6 +2020,18 @@ static void tiltAxis(TInt aVal, TInt aOn, TInt aOff, unsigned short aNeg, unsign
 		g_tiltPad = (unsigned short)(g_tiltPad & ~(aNeg | aPos));
 	}
 
+// One axis of the stick from one axis of the sensor: 0..255 with 127 the centre.
+static unsigned char tiltStick(TInt aVal, TInt aDead, TInt aSpan)
+	{
+	if (aVal > -aDead && aVal < aDead)
+		return 127;
+	TInt v = aVal + ((aVal > 0) ? -aDead : aDead);
+	const TInt span = aSpan - aDead;
+	if (v > span) v = span;
+	if (v < -span) v = -span;
+	return (unsigned char)(127 - (v * 127) / span);
+	}
+
 // Measured on the N95 held for play: tilting the phone left drives Y positive and
 // tipping its far edge down drives X positive, so the pad follows the tilt the way
 // a marble on the screen would. The pitch axis wanders about a hundred units while
@@ -2029,7 +2052,25 @@ static unsigned short tiltPad(void)
 		(unsigned short)(1 << DKEY_RIGHT), (unsigned short)(1 << DKEY_LEFT));
 	tiltAxis(x - g_tiltZeroX, KTiltPitchOn, KTiltPitchOff,
 		(unsigned short)(1 << DKEY_DOWN), (unsigned short)(1 << DKEY_UP));
+	g_tiltAX = tiltStick(y - g_tiltZeroY, KTiltDead, KTiltSpan);
+	g_tiltAY = tiltStick(x - g_tiltZeroX, KTiltPitchDead, KTiltPitchSpan);
 	return g_tiltPad;
+	}
+
+// The stick the tilt drives, and the pad bits it would press if the game never
+// leaves digital mode. Both come from the sample taken in the frame poll.
+extern "C" int voutSymbianTiltAnalog(unsigned char *aX, unsigned char *aY)
+	{
+	if (!g_tilt || !g_tiltZeroed)
+		return 0;
+	if (aX) *aX = g_tiltAX;
+	if (aY) *aY = g_tiltAY;
+	return 1;
+	}
+
+extern "C" unsigned short voutSymbianTiltPadBits(void)
+	{
+	return g_tilt ? g_tiltPad : 0;
 	}
 
 extern "C" void voutSymbianSetSmooth(int aOn)

@@ -223,15 +223,38 @@ void pl_frame_limit(void)
 
 unsigned short in_keystate[8];
 
+// Tilt reaches the pad here rather than through in_keystate: it drives the stick,
+// which the key path knows nothing about.
+int voutSymbianTiltAnalog(unsigned char *aX, unsigned char *aY);
+unsigned short voutSymbianTiltPadBits(void);
+
 // in_keystate[0] holds pressed buttons active-high (DKEY_* bits), populated
 // every frame from device keys (voutSymbianPollPad). PS1 expects active-low, hence ~.
 void PAD1_readPort(struct PadDataS *pad, int *is_multitap)
 	{
 	if (pad)
 		{
-		memset(pad, 0, sizeof(*pad));
-		pad->controllerType = PSE_PAD_TYPE_STANDARD;
-		pad->buttonStatus = (unsigned short)~in_keystate[0];
+		unsigned char ax = 127, ay = 127;
+		const int tilt = voutSymbianTiltAnalog(&ax, &ay);
+		// The core keeps DualShock state - analog and config mode - inside this
+		// struct between polls, so wiping it here would undo the mode every frame.
+		if (tilt)
+			{
+			pad->controllerType = PSE_PAD_TYPE_ANALOGPAD;
+			// There is no ANALOG button to press on a phone, so the mode is held on:
+			// a tilt that only moves a d-pad throws away everything it is good for.
+			pad->ds.padMode = 1;
+			pad->ds.userToggled = 1;
+			}
+		else
+			pad->controllerType = PSE_PAD_TYPE_STANDARD;
+		// The digital bits fire only at full stick, so a game that ignores the
+		// stick still answers a hard tilt, and one that reads it sees nothing new.
+		pad->buttonStatus = (unsigned short)~(in_keystate[0] | voutSymbianTiltPadBits());
+		pad->leftJoyX = ax;
+		pad->leftJoyY = ay;
+		pad->rightJoyX = 127;
+		pad->rightJoyY = 127;
 		}
 	if (is_multitap) *is_multitap = 0;
 	}
@@ -1790,8 +1813,10 @@ static TBool passStep()
 		{
 		int tx = 0, ty = 0, tzx = 0, tzy = 0, tp = 0;
 		const int tn = voutSymbianTiltStats(&tx, &ty, &tzx, &tzy, &tp);
-		logEvent("tilttrace", NULL, "f=%d n=%d x=%d y=%d dx=%d dy=%d pad=%04x",
-			(int)g_pass.i, tn, tx, ty, tx - tzx, ty - tzy, (unsigned)tp);
+		unsigned char sx = 127, sy = 127;
+		voutSymbianTiltAnalog(&sx, &sy);
+		logEvent("tilttrace", NULL, "f=%d n=%d x=%d y=%d dx=%d dy=%d sx=%d sy=%d pad=%04x",
+			(int)g_pass.i, tn, tx, ty, tx - tzx, ty - tzy, (int)sx, (int)sy, (unsigned)tp);
 		}
 	inputTrace(g_pass.i);
 
