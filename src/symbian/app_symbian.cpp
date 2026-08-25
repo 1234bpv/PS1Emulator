@@ -1957,9 +1957,9 @@ TKeyResponse CPs1Container::AskKeyL(TInt aScan)
 			{
 			iConvMode = (iAskSel == 0) ? EConvModePbp : EConvModeCopy;
 			iAsk = EAskDelete;
-			// Default is delete: card space is exactly what it is, and keeping two
-			// copies of the same disc makes no sense.
-			iAskSel = 0;
+			// Keep is the default, even though the card is small: deleting is
+			// irreversible, and two OK presses in a row are a habit on this phone.
+			iAskSel = 1;
 			}
 		else if (iAsk == EAskDelete)
 			{
