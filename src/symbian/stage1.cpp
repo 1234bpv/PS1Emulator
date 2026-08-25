@@ -283,6 +283,7 @@ static int g_tiltCli;
 extern "C" int ps1TiltCli(void) { return g_tiltCli; }
 extern "C" void voutSymbianSetTilt(int aOn);
 extern "C" int voutSymbianTiltActive(void);
+extern "C" int voutSymbianTiltStats(int *aX, int *aY, int *aZeroX, int *aZeroY, int *aPad);
 extern "C" TInt accelStart(void);
 extern "C" void accelStop(void);
 extern "C" TInt accelRead(TInt *aX, TInt *aY, TInt *aZ);
@@ -1783,6 +1784,15 @@ static TBool passStep()
 	g_stage = EStagePoll;
 	if (g_pass.showScreen)
 		in_keystate[0] = voutSymbianPollPad();
+	// Which raw axis is which on screen cannot be settled without the phone in
+	// hand, so a tilt run is traced and read back off the log afterwards.
+	if (g_tiltCli && voutSymbianTiltActive() && (g_pass.i % 15) == 0)
+		{
+		int tx = 0, ty = 0, tzx = 0, tzy = 0, tp = 0;
+		const int tn = voutSymbianTiltStats(&tx, &ty, &tzx, &tzy, &tp);
+		logEvent("tilttrace", NULL, "f=%d n=%d x=%d y=%d dx=%d dy=%d pad=%04x",
+			(int)g_pass.i, tn, tx, ty, tx - tzx, ty - tzy, (unsigned)tp);
+		}
 	inputTrace(g_pass.i);
 
 	TUint t1 = User::NTickCount(); g_pass.tPoll += t1 - t0;
@@ -2062,6 +2072,14 @@ static void passTeardown()
 	// for actual emulation speed (65536 = 1.0, lower = emulation lagging).
 	logEvent("sndstats", NULL, "%s: feeds=%u samples=%u maxAmp=%d under=%u step=%d", mode,
 		sndFeeds, sndSamples, sndMax, sndUnder, sndStep);
+
+	if (voutSymbianTiltActive())
+		{
+		int tx = 0, ty = 0, tzx = 0, tzy = 0, tp = 0;
+		const int tn = voutSymbianTiltStats(&tx, &ty, &tzx, &tzy, &tp);
+		logEvent("tiltstats", NULL, "%s: n=%d x=%d y=%d zerox=%d zeroy=%d pad=%04x",
+			mode, tn, tx, ty, tzx, tzy, (unsigned)tp);
+		}
 
 	// Pipeline profile: cumulative time per stage + share of total. Shows
 	// what to optimize - emulation (drc) or presentation (blit)/sound.

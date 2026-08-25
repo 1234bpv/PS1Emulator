@@ -263,8 +263,13 @@ static TBool g_tiltZeroed;
 static TInt  g_tiltZeroX;
 static TInt  g_tiltZeroY;
 static unsigned short g_tiltPad;
+static TInt  g_tiltReads;
+static TInt  g_tiltLastX;
+static TInt  g_tiltLastY;
 const TInt KTiltOn  = 70;
 const TInt KTiltOff = 40;
+const TInt KTiltPitchOn  = 110;
+const TInt KTiltPitchOff = 70;
 static unsigned short tiltPad(void);
 
 // Direct write to LCD buffer (HAL): scale frame directly to screen, merging fill
@@ -1967,6 +1972,18 @@ extern "C" int voutSymbianTiltActive(void)
 	return g_tilt ? 1 : 0;
 	}
 
+// Diagnostics: how many samples the sensor delivered, what the last one was, and
+// what the zero point and the resulting pad bits are.
+extern "C" int voutSymbianTiltStats(int *aX, int *aY, int *aZeroX, int *aZeroY, int *aPad)
+	{
+	if (aX) *aX = g_tiltLastX;
+	if (aY) *aY = g_tiltLastY;
+	if (aZeroX) *aZeroX = g_tiltZeroX;
+	if (aZeroY) *aZeroY = g_tiltZeroY;
+	if (aPad) *aPad = g_tiltPad;
+	return g_tiltReads;
+	}
+
 extern "C" void voutSymbianSetTilt(int aOn)
 	{
 	if (aOn && !g_tilt)
@@ -1984,28 +2001,34 @@ extern "C" void voutSymbianSetTilt(int aOn)
 	}
 
 // One axis of the pad from one axis of the sensor, with hysteresis.
-static void tiltAxis(TInt aVal, unsigned short aNeg, unsigned short aPos)
+static void tiltAxis(TInt aVal, TInt aOn, TInt aOff, unsigned short aNeg, unsigned short aPos)
 	{
-	if (aVal <= -KTiltOn) { g_tiltPad |= aNeg; g_tiltPad = (unsigned short)(g_tiltPad & ~aPos); }
-	else if (aVal >= KTiltOn) { g_tiltPad |= aPos; g_tiltPad = (unsigned short)(g_tiltPad & ~aNeg); }
-	else if (aVal > -KTiltOff && aVal < KTiltOff)
+	if (aVal <= -aOn) { g_tiltPad |= aNeg; g_tiltPad = (unsigned short)(g_tiltPad & ~aPos); }
+	else if (aVal >= aOn) { g_tiltPad |= aPos; g_tiltPad = (unsigned short)(g_tiltPad & ~aNeg); }
+	else if (aVal > -aOff && aVal < aOff)
 		g_tiltPad = (unsigned short)(g_tiltPad & ~(aNeg | aPos));
 	}
 
-// The window is auto-rotated to landscape by the phone, so the sensor axis that
-// runs across the screen is Y and the one along it is X. Which way round the
-// signs go depends on the direction the phone rotates, and is not verified.
+// Measured on the N95 held for play: tilting the phone left drives Y positive and
+// tipping its far edge down drives X positive, so the pad follows the tilt the way
+// a marble on the screen would. The pitch axis wanders about a hundred units while
+// the phone is merely held, hence its own, larger threshold.
 static unsigned short tiltPad(void)
 	{
 	if (!g_tilt)
 		return 0;
 	TInt x = 0, y = 0, z = 0;
-	if (accelRead(&x, &y, &z) <= 0)
+	g_tiltReads = accelRead(&x, &y, &z);
+	if (g_tiltReads <= 0)
 		return 0;
+	g_tiltLastX = x;
+	g_tiltLastY = y;
 	if (!g_tiltZeroed)
 		{ g_tiltZeroX = x; g_tiltZeroY = y; g_tiltZeroed = ETrue; }
-	tiltAxis(y - g_tiltZeroY, DKEY_LEFT, DKEY_RIGHT);
-	tiltAxis(x - g_tiltZeroX, DKEY_UP, DKEY_DOWN);
+	tiltAxis(y - g_tiltZeroY, KTiltOn, KTiltOff,
+		(unsigned short)(1 << DKEY_RIGHT), (unsigned short)(1 << DKEY_LEFT));
+	tiltAxis(x - g_tiltZeroX, KTiltPitchOn, KTiltPitchOff,
+		(unsigned short)(1 << DKEY_DOWN), (unsigned short)(1 << DKEY_UP));
 	return g_tiltPad;
 	}
 
