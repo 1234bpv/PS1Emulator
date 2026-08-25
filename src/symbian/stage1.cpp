@@ -279,6 +279,13 @@ int voutSymbianGpulibUpdates(void);
 int voutSymbianShow(int holdMs);
 int voutSymbianInit(void);
 unsigned short voutSymbianPollPad(void);
+static int g_tiltCli;
+extern "C" int ps1TiltCli(void) { return g_tiltCli; }
+extern "C" void voutSymbianSetTilt(int aOn);
+extern "C" int voutSymbianTiltActive(void);
+extern "C" TInt accelStart(void);
+extern "C" void accelStop(void);
+extern "C" TInt accelRead(TInt *aX, TInt *aY, TInt *aZ);
 void voutSymbianPresent(void);
 int voutSymbianFinish(int holdMs);
 void voutSymbianGpuStats(unsigned *data, unsigned *dataMem, unsigned *dma, unsigned *status);
@@ -2755,6 +2762,42 @@ GLDEF_C TInt E32Main()
 		return KErrNone;
 		}
 
+	// Sensor probe: "accel" starts the accelerometer and logs what it delivers.
+	_LIT(KAccelArg, "accel");
+	if (cl.FindF(KAccelArg) != KErrNotFound)
+		{
+		// Console branch runs before runStage1 makes the cleanup stack; TRAP without it
+		// panics with E32USER-CBase 69.
+		CTrapCleanup *acs = CTrapCleanup::New();
+		if (!acs)
+			return KErrNoMemory;
+		// The console path has no scheduler of its own, and the sensor delivers through one.
+		CActiveScheduler *sched = NULL;
+		if (!CActiveScheduler::Current())
+			{
+			sched = new CActiveScheduler;
+			if (sched) CActiveScheduler::Install(sched);
+			}
+		const TInt ar = accelStart();
+		logEvent("accel", ar == KErrNone ? NULL : "ACCEL_FAIL", "start=%d", (int)ar);
+		if (ar == KErrNone)
+			{
+			for (TInt i = 0; i < 40; i++)
+				{
+				TInt x = 0, y = 0, z = 0;
+				const TInt n = accelRead(&x, &y, &z);
+				logEvent("accel", NULL, "n=%d x=%d y=%d z=%d", (int)n, (int)x, (int)y, (int)z);
+				// The sensor delivers through the active scheduler, so it has to run.
+				TInt e; while (CActiveScheduler::RunIfReady(e, CActive::EPriorityIdle)) { }
+				User::After(250000);
+				}
+			accelStop();
+			}
+		if (sched) { CActiveScheduler::Install(NULL); delete sched; }
+		delete acs;
+		return KErrNone;
+		}
+
 	// "cdbench imgX cdbench imgY ..." is invalid: single image per launch, path from img.
 	_LIT(KCdBenchArg, "cdbench");
 	if (cl.FindF(KCdBenchArg) != KErrNotFound)
@@ -2784,6 +2827,12 @@ GLDEF_C TInt E32Main()
 		// app is alive, and window is attached inside it.
 		if (cl.FindF(KGlArg) != KErrNotFound)
 			voutSymbianSetGl(1);
+		// Tilt probe: the menu switch is the normal route, this only presets it.
+		// Switching the sensor on here would panic - the cleanup stack belongs to
+		// the framework and does not exist yet.
+		_LIT(KTiltArg, "tiltcli");
+		if (cl.FindF(KTiltArg) != KErrNotFound)
+			g_tiltCli = 1;
 		// GL overhead probe instead of game: same primitive count per frame
 		// as Gran Turismo, but without emulation. Enables GL itself - nothing to
 		// measure without it. "glbenchN" sets frame count per configuration.

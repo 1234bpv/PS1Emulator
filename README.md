@@ -51,6 +51,7 @@ All listed features are implemented and verified in the codebase:
   - Complete 14-button digital PlayStation controller mapping.
   - In-app key remapping interface with secondary key assignment.
   - Key toggle/hold mode for sustaining button states (e.g., vehicle acceleration).
+  - Optional tilt control on phones with an accelerometer (Nokia N95); the position the phone is held in when it is switched on becomes the neutral one.
 - **Native User Interface**:
   - Full-screen AVKON interface with custom rendering.
   - Built-in file browser with game auto-detection.
@@ -142,6 +143,7 @@ Settings are divided into logical sections within the menu. Items marked with `*
 - **`Sound` \*** (`on` / `off`): Enables or disables SPU sound emulation and audio output.
 
 ### CONTROLS Section
+- **`Tilt control`** (`on` / `off`): Steers the D-pad from the accelerometer. It reverts to `off` on a phone that has no sensor, so the switch never sits on `on` doing nothing.
 - **`Controls...`**: Opens the button mapping menu to configure scan codes and hold/toggle flags for all 14 controller buttons.
 
 ### SYSTEM Section

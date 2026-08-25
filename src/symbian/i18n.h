@@ -32,6 +32,7 @@ enum TStrId
 	EStrItemCycle,
 	EStrItemFps,
 	EStrItemSound,
+	EStrItemTilt,
 	EStrItemKeys,
 	EStrItemLang,
 	EStrItemReset,

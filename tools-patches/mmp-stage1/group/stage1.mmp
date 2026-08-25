@@ -48,6 +48,8 @@ SOURCE          glrender.cpp
 // AVKON shell: window under CCoeEnv (needed by EGL), exit, orientation.
 SOURCE          app_symbian.cpp
 SOURCE          i18n.cpp
+// Accelerometer through the ROM sensor library; absent from the SDK.
+SOURCE          accel.cpp
 // Sound glue: ps1Spu* wrappers over dfsound + out-driver (separate from plugins.h).
 SOURCE          snd_symbian.cpp
 // Platform replacement of mmap(PROT_EXEC)/__clear_cache for the dynarec.

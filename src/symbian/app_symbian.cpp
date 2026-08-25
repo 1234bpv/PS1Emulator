@@ -55,6 +55,9 @@ void ps1CfgApply(const char *aDisc, const char *aBios, int aInterp, int aIlace,
 void ps1CfgApplyLive(int aIlace, int aLight, int aBlend, int aPixSkip,
 	int aFps, int aGpuSkip, int aCycle, int aSmooth, int aFxaa, int aDirty,
 	int aSwDraw);
+extern "C" void voutSymbianSetTilt(int aOn);
+extern "C" int voutSymbianTiltActive(void);
+extern "C" int ps1TiltCli(void);
 void voutSymbianSetKeyMap(const int *aScan, const int *aAlt, int aCount,
 	unsigned int aToggle);
 int  voutSymbianPadButtons(void);
@@ -88,7 +91,7 @@ enum TCfgItem
 	ECfgDirty, ECfgDsa, ECfgGl, ECfgSwDraw,
 	ECfgCpu, ECfgGteNf, ECfgGpuSkip, ECfgCycle, ECfgFps,
 	ECfgSound,
-	ECfgKeys,
+	ECfgTilt, ECfgKeys,
 	ECfgLang,
 	ECfgReset, ECfgExit,
 	ECfgCount
@@ -109,7 +112,7 @@ static const unsigned char KItemSection[ECfgCount] =
 	ESecVideo, ESecVideo, ESecVideo, ESecVideo,
 	ESecSpeed, ESecSpeed, ESecSpeed, ESecSpeed, ESecSpeed,
 	ESecSound,
-	ESecInput,
+	ESecInput, ESecInput,
 	ESecSystem, ESecSystem, ESecSystem
 	};
 
@@ -123,6 +126,7 @@ static const TStrId KItemLabelStrId[ECfgCount] =
 	EStrItemCpu, EStrItemGteNf, EStrItemGpuSkip, EStrItemCycle,
 	EStrItemFps,
 	EStrItemSound,
+	EStrItemTilt,
 	EStrItemKeys,
 	EStrItemLang,
 	EStrItemReset, EStrItemExit
@@ -138,7 +142,7 @@ static const char *const KCfgKey[ECfgCount] =
 	"dirty", "dsa", "gl", "swdraw",
 	"cpu", "gtenf", "gpuskip", "cycle", "fps",
 	"sound",
-	NULL,
+	"tilt", NULL,
 	"lang",
 	NULL, NULL
 	};
@@ -185,6 +189,7 @@ public:
 	TInt iInterp, iIlace, iLight, iBlend, iPixSkip, iGteNf, iSound, iGl;
 	TInt iDirty, iDsa, iFps, iGpuSkip, iCycle, iSmooth, iFxaa, iProfile, iSwDraw;
 	TInt iLang;
+	TInt iTilt;
 	TInt iKeyScan[KPadMax], iKeyAlt[KPadMax], iKeyHold[KPadMax];
 	// BIOS dump name in E:\PS1\bios (without path). Empty means default scph7502.bin.
 	// Stored in the game profile, so games released in only one region get their
@@ -201,6 +206,8 @@ void TPs1Cfg::SetDefaults()
 	iCycle = KCycleDefault;
 	// Averaging during downscale is ON by default: without it in 640x* modes
 	// the decimation eats thin font strokes, and that is an artifact, not a speedup.
+	// Tilt is off until asked for: it costs a sensor session and only one phone has one.
+	iTilt = 0;
 	iSmooth = 1;
 	// Edge anti-aliasing is OFF by default: measured -17% frames on trace, and on a
 	// 320x240 screen the benefit is not visible in every game. Enable deliberately.
@@ -251,6 +258,7 @@ TInt &TPs1Cfg::Value(TInt aItem)
 		case ECfgFxaa:    return iFxaa;
 		case ECfgProfile: return iProfile;
 		case ECfgLang:    return iLang;
+		case ECfgTilt:    return iTilt;
 		default:          return iDummy;
 		}
 	}
@@ -455,7 +463,12 @@ void CPs1Container::ConstructL(const TRect &aRect)
 		}
 	if (!iGamePath.Length())
 		AutoPickGameL();
+	if (ps1TiltCli())
+		iCfg.iTilt = 1;
 	ApplyKeyMap();
+	voutSymbianSetTilt(iCfg.iTilt);
+	if (iCfg.iTilt && !voutSymbianTiltActive()) iCfg.iTilt = 0;
+	ps1LogInt("tilt", "active", voutSymbianTiltActive());
 
 	iBrowsePath = KImgDir;
 
@@ -1507,6 +1520,9 @@ void CPs1Container::DoCloseMenu(TBool aWithRestart)
 	{
 	SaveAll();
 	ApplyKeyMap();
+	voutSymbianSetTilt(iCfg.iTilt);
+	// No sensor means the switch would sit on "on" and do nothing.
+	if (iCfg.iTilt && !voutSymbianTiltActive()) iCfg.iTilt = 0;
 	// A different disc (or BIOS, CPU branch, sound, GL, DSA) cannot be switched on the
 	// fly: the pass must be torn down and brought up again. This is done by the tick,
 	// not by this branch - we got here from a key handler.
@@ -1558,6 +1574,9 @@ void CPs1Container::ApplyAndStart()
 		return;
 	SaveAll();
 	ApplyKeyMap();
+	voutSymbianSetTilt(iCfg.iTilt);
+	// No sensor means the switch would sit on "on" and do nothing.
+	if (iCfg.iTilt && !voutSymbianTiltActive()) iCfg.iTilt = 0;
 	TBuf8<KMaxFileName> path8;
 	path8.Copy(iGamePath);
 	TBuf8<KMaxFileName> bios8;

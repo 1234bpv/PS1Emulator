@@ -254,6 +254,19 @@ static CActiveScheduler *g_dsaSched;   // non-null only if created by DSA
 // in GUI - forbidden (reentrancy, same rule as in snd_symbian).
 static TBool g_pumpAo = ETrue;
 
+// Tilt control. The accelerometer reads about 300 units per g, so the threshold
+// below is roughly a quarter of a g, with a lower release level so a hand held
+// near the edge does not chatter. The neutral position is whatever the phone was
+// in when tilt was switched on.
+static TBool g_tilt;
+static TBool g_tiltZeroed;
+static TInt  g_tiltZeroX;
+static TInt  g_tiltZeroY;
+static unsigned short g_tiltPad;
+const TInt KTiltOn  = 70;
+const TInt KTiltOff = 40;
+static unsigned short tiltPad(void);
+
 // Direct write to LCD buffer (HAL): scale frame directly to screen, merging fill
 // and present into single pass (profiling showed: present is 150KB copy bandwidth,
 // not overhead). Only when DSA is active (owns screen) and format = RGB565.
@@ -1774,7 +1787,7 @@ extern "C" unsigned short voutSymbianPollPad(void)
 	if (!g_wsReady)
 		return 0;
 	if (!g_ownWindow)
-		return g_pad;   // events are dispatched by CONE, queue not armed here
+		return (unsigned short)(g_pad | tiltPad());   // events are dispatched by CONE, queue not armed here
 	while (g_evStat != KRequestPending)
 		{
 		TWsEvent ev;
@@ -1788,7 +1801,7 @@ extern "C" unsigned short voutSymbianPollPad(void)
 			}
 		g_ws.EventReady(&g_evStat);
 		}
-	return g_pad;
+	return (unsigned short)(g_pad | tiltPad());
 	}
 
 extern "C" void voutSymbianPresent(void)
@@ -1943,6 +1956,59 @@ extern "C" void voutSymbianSetFxaa(int aThreshold, int aMax)
 
 // Block averaging on downscaling instead of decimation. Font legibility in
 // 640x* modes depends entirely on this.
+extern "C" TInt accelStart(void);
+extern "C" void accelStop(void);
+extern "C" TInt accelRead(TInt *aX, TInt *aY, TInt *aZ);
+
+// Tilt is switched on and off from the menu; on a phone without the sensor the
+// library simply does not load and the setting stays inert.
+extern "C" int voutSymbianTiltActive(void)
+	{
+	return g_tilt ? 1 : 0;
+	}
+
+extern "C" void voutSymbianSetTilt(int aOn)
+	{
+	if (aOn && !g_tilt)
+		{
+		g_tilt = (accelStart() == KErrNone);
+		g_tiltZeroed = EFalse;
+		g_tiltPad = 0;
+		}
+	else if (!aOn && g_tilt)
+		{
+		accelStop();
+		g_tilt = EFalse;
+		g_tiltPad = 0;
+		}
+	}
+
+// One axis of the pad from one axis of the sensor, with hysteresis.
+static void tiltAxis(TInt aVal, unsigned short aNeg, unsigned short aPos)
+	{
+	if (aVal <= -KTiltOn) { g_tiltPad |= aNeg; g_tiltPad = (unsigned short)(g_tiltPad & ~aPos); }
+	else if (aVal >= KTiltOn) { g_tiltPad |= aPos; g_tiltPad = (unsigned short)(g_tiltPad & ~aNeg); }
+	else if (aVal > -KTiltOff && aVal < KTiltOff)
+		g_tiltPad = (unsigned short)(g_tiltPad & ~(aNeg | aPos));
+	}
+
+// The window is auto-rotated to landscape by the phone, so the sensor axis that
+// runs across the screen is Y and the one along it is X. Which way round the
+// signs go depends on the direction the phone rotates, and is not verified.
+static unsigned short tiltPad(void)
+	{
+	if (!g_tilt)
+		return 0;
+	TInt x = 0, y = 0, z = 0;
+	if (accelRead(&x, &y, &z) <= 0)
+		return 0;
+	if (!g_tiltZeroed)
+		{ g_tiltZeroX = x; g_tiltZeroY = y; g_tiltZeroed = ETrue; }
+	tiltAxis(y - g_tiltZeroY, DKEY_LEFT, DKEY_RIGHT);
+	tiltAxis(x - g_tiltZeroX, DKEY_UP, DKEY_DOWN);
+	return g_tiltPad;
+	}
+
 extern "C" void voutSymbianSetSmooth(int aOn)
 	{
 	g_smoothDown = aOn ? ETrue : EFalse;
