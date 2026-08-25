@@ -47,6 +47,7 @@ SOURCE          vout_symbian.cpp
 SOURCE          glrender.cpp
 // Оболонка AVKON: вікно під CCoeEnv (потрібне EGL), вихід, орієнтація.
 SOURCE          app_symbian.cpp
+SOURCE          i18n.cpp
 // Glue звуку: обгортки ps1Spu* над dfsound + out-драйвер (окремо від plugins.h).
 SOURCE          snd_symbian.cpp
 // Платформна заміна mmap(PROT_EXEC)/__clear_cache для динареку.
