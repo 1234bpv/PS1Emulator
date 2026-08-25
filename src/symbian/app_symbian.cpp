@@ -29,6 +29,8 @@
 #include "i18n.h"
 
 extern "C" {
+int  SaveState(const char *file);
+int  LoadState(const char *file);
 int  ps1GuiSetup(void);
 int  ps1GuiStep(void);
 void ps1GuiShutdown(void);
@@ -81,7 +83,7 @@ enum TCfgItem
 	// There is intentionally no DISPLAY skip ("Show every") here: it renders the
 	// frame and discards it, i.e. pays for the expensive part. Measured -4.3% vs
 	// -22.5% for ECfgGpuSkip. Kept as a command-line probe "showskip".
-	ECfgStart = 0, ECfgGame, ECfgAdd, ECfgBios, ECfgProfile,
+	ECfgStart = 0, ECfgGame, ECfgSaveState, ECfgLoadState, ECfgAdd, ECfgBios, ECfgProfile,
 	ECfgLight, ECfgBlend, ECfgIlace, ECfgPixSkip, ECfgSmooth, ECfgFxaa,
 	ECfgDirty, ECfgDsa, ECfgGl, ECfgSwDraw,
 	ECfgCpu, ECfgGteNf, ECfgGpuSkip, ECfgCycle, ECfgFps,
@@ -102,7 +104,7 @@ static const TStrId KSecStrId[ESecCount] =
 
 static const unsigned char KItemSection[ECfgCount] =
 	{
-	ESecGame, ESecGame, ESecGame, ESecGame, ESecGame,
+	ESecGame, ESecGame, ESecGame, ESecGame, ESecGame, ESecGame, ESecGame,
 	ESecVideo, ESecVideo, ESecVideo, ESecVideo, ESecVideo, ESecVideo,
 	ESecVideo, ESecVideo, ESecVideo, ESecVideo,
 	ESecSpeed, ESecSpeed, ESecSpeed, ESecSpeed, ESecSpeed,
@@ -113,8 +115,8 @@ static const unsigned char KItemSection[ECfgCount] =
 
 static const TStrId KItemLabelStrId[ECfgCount] =
 	{
-	EStrItemStart, EStrItemGame, EStrItemAdd, EStrItemBios,
-	EStrItemProfile,
+	EStrItemStart, EStrItemGame, EStrItemSaveState, EStrItemLoadState,
+	EStrItemAdd, EStrItemBios, EStrItemProfile,
 	EStrItemLight, EStrItemBlend, EStrItemIlace, EStrItemPixSkip,
 	EStrItemSmooth, EStrItemFxaa, EStrItemDirty, EStrItemDsa,
 	EStrItemGl, EStrItemSwDraw,
@@ -131,7 +133,7 @@ static const TStrId KItemLabelStrId[ECfgCount] =
 // the old file remains valid, missing keys get their default value.
 static const char *const KCfgKey[ECfgCount] =
 	{
-	NULL, NULL, NULL, NULL, "profile",
+	NULL, NULL, NULL, NULL, NULL, NULL, "profile",
 	"light", "blend", "ilace", "pixskip", "smooth", "fxaa",
 	"dirty", "dsa", "gl", "swdraw",
 	"cpu", "gtenf", "gpuskip", "cycle", "fps",
@@ -152,9 +154,9 @@ static TBool restartOnly(TInt aItem)
 
 static TBool isCommand(TInt aItem)
 	{
-	return aItem == ECfgStart || aItem == ECfgGame || aItem == ECfgAdd ||
-	       aItem == ECfgBios || aItem == ECfgKeys ||
-	       aItem == ECfgReset || aItem == ECfgExit;
+	return aItem == ECfgStart || aItem == ECfgGame || aItem == ECfgSaveState ||
+	       aItem == ECfgLoadState || aItem == ECfgAdd || aItem == ECfgBios ||
+	       aItem == ECfgKeys || aItem == ECfgReset || aItem == ECfgExit;
 	}
 
 // PS1 cycle multiplier. Upstream default is CYCLE_MULT_DEFAULT (175); higher means
@@ -173,6 +175,7 @@ _LIT(KCfgPath, "E:\\PS1\\cfg\\ps1_settings.txt");
 _LIT(KProfDir, "E:\\PS1\\cfg\\");
 _LIT(KImgDir,  "E:\\PS1\\games\\");
 _LIT(KBiosDir, "E:\\PS1\\bios\\");
+_LIT(KSavesDir, "E:\\PS1\\saves\\");
 
 class TPs1Cfg
 	{
@@ -296,7 +299,8 @@ enum TMenuPage
 	EPageImport,      // browser with checkmarks for batch import
 	EPageBios,        // BIOS dump selection (including from archives)
 	EPageAsk,         // yes/no question before a long operation
-	EPageProgress
+	EPageProgress,
+	EPageError
 	};
 
 // What to show in the browser. The browser is one, but the consumers differ:
@@ -304,7 +308,7 @@ enum TMenuPage
 enum TScanMode { EScanGames = 0, EScanImport, EScanBios };
 
 // Question awaiting an answer on EPageAsk.
-enum TAskWhat { EAskNone = 0, EAskMode, EAskDelete };
+enum TAskWhat { EAskNone = 0, EAskMode, EAskDelete, EAskRestart };
 
 class CPs1Container : public CCoeControl
 	{
@@ -322,6 +326,7 @@ public:
 	// initialization. Read by the tick: restarting the pass from a key handler is
 	// unsafe (sound, DSA, scheduler).
 	TBool TakeRestart() { const TBool r = iRestartReq; iRestartReq = EFalse; return r; }
+	void ShowError();
 private:
 	void ConstructL(const TRect &aRect);
 	void Draw(const TRect &aRect) const;
@@ -332,12 +337,14 @@ private:
 	void DrawKeys(CWindowGc &gc, const TRect &aBody) const;
 	void DrawFiles(CWindowGc &gc, const TRect &aBody) const;
 	void DrawAsk(CWindowGc &gc, const TRect &aBody) const;
+	void DrawError(CWindowGc &gc, const TRect &aBody) const;
 	TBool RunningGamePicked() const;
 	void DrawProgress(CWindowGc &gc, const TRect &aBody) const;
 	void DrawRow(CWindowGc &gc, const TRect &aBody, TInt aY, TInt aLh,
 	             const TDesC &aLeft, const TDesC &aRight, TBool aSel) const;
 	void ItemLabel(TInt aItem, TDes &aOut) const;
 	void ItemValue(TInt aItem, TDes &aOut) const;
+	TBool ItemVisible(TInt aItem) const;
 
 	// pages
 	TKeyResponse MainKeyL(TInt aScan);
@@ -347,8 +354,16 @@ private:
 	TKeyResponse BiosKeyL(TInt aScan);
 	TKeyResponse AskKeyL(TInt aScan);
 	TKeyResponse ProgressKeyL(TInt aScan);
+	TKeyResponse ErrorKeyL(TInt aScan);
 	void OpenMenu();
 	void CloseMenu();
+	void DoCloseMenu(TBool aWithRestart);
+	void RevertRestartSettings();
+
+	// state save / load
+	void StatePath(TDes &aOut, TInt aSlot) const;
+	void DoSaveState();
+	void DoLoadState();
 
 	// file browser
 	void MigrateOldLayout();
@@ -391,6 +406,8 @@ private:
 	TInt iKeySel;
 	TInt iCapture;            // button awaiting a key press (-1 = none)
 	TInt iConfirm;            // item awaiting confirmation (-1 = none)
+	TInt iStateSlot;          // state slot (1..5)
+	TBuf<80> iStatusMsg;      // message shown in hint bar (e.g. state save/load result)
 	TInt iPadCount;
 	TBool iStartedOnce;       // config already sent to the core; only live changes from now on
 	TBool iGameClosed;        // game was shut down for importing its own disc image
@@ -423,6 +440,8 @@ void CPs1Container::ConstructL(const TRect &aRect)
 	if (iPadCount > KPadMax) iPadCount = KPadMax;
 	iCapture = -1;
 	iConfirm = -1;
+	iStateSlot = 1;
+	iStatusMsg.Zero();
 
 	MigrateOldLayout();
 	iCfg.SetDefaults();
@@ -458,6 +477,21 @@ CPs1Container::~CPs1Container()
 	ConvRelease();
 	delete iBrowse;
 	delete iPicked;
+	}
+
+void CPs1Container::ShowError()
+	{
+	iStartedOnce = EFalse;
+	iPage = EPageError;
+	voutSymbianSuspend(1);
+	DrawNow();
+	}
+
+TBool CPs1Container::ItemVisible(TInt aItem) const
+	{
+	if (aItem == ECfgSaveState || aItem == ECfgLoadState)
+		return iStartedOnce && !iGameClosed;
+	return ETrue;
 	}
 
 // First image in the card root - so that the first launch does not require going to the browser.
@@ -719,6 +753,74 @@ void CPs1Container::ProfilePath(TDes &aOut) const
 	aOut.Append(_L(".txt"));
 	}
 
+void CPs1Container::StatePath(TDes &aOut, TInt aSlot) const
+	{
+	TFileName n = iGamePath;
+	const TInt s = n.LocateReverse('\\');
+	if (s >= 0)
+		n.Delete(0, s + 1);
+	const TInt d = n.LocateReverse('.');
+	if (d > 0)
+		n.SetLength(d);
+	if (n.Length() > 32)
+		n.SetLength(32);
+	aOut.Copy(KSavesDir);
+	for (TInt i = 0; i < n.Length(); i++)
+		{
+		const TChar c = n[i];
+		aOut.Append(c.IsAlphaDigit() ? c : TChar('_'));
+		}
+	aOut.AppendFormat(_L("_slot%d.sav"), aSlot);
+	}
+
+void CPs1Container::DoSaveState()
+	{
+	if (!iStartedOnce || iGameClosed)
+		return;
+	RFs fs;
+	if (fs.Connect() == KErrNone)
+		{
+		fs.MkDirAll(KSavesDir);
+		fs.Close();
+		}
+	TFileName path;
+	StatePath(path, iStateSlot);
+	TBuf8<KMaxFileName> path8;
+	path8.Copy(path);
+	const int r = SaveState((const char *)path8.PtrZ());
+	if (r == 0)
+		{
+		iStatusMsg.Format(Tr(EStrStateSaveOk), iStateSlot);
+		ps1LogInt("state", "saved slot", iStateSlot);
+		}
+	else
+		{
+		iStatusMsg.Copy(Tr(EStrStateSaveErr));
+		ps1LogInt("state", "save failed", r);
+		}
+	}
+
+void CPs1Container::DoLoadState()
+	{
+	if (!iStartedOnce || iGameClosed)
+		return;
+	TFileName path;
+	StatePath(path, iStateSlot);
+	TBuf8<KMaxFileName> path8;
+	path8.Copy(path);
+	const int r = LoadState((const char *)path8.PtrZ());
+	if (r == 0)
+		{
+		iStatusMsg.Format(Tr(EStrStateLoadOk), iStateSlot);
+		ps1LogInt("state", "loaded slot", iStateSlot);
+		}
+	else
+		{
+		iStatusMsg.Copy(Tr(EStrStateLoadErr));
+		ps1LogInt("state", "load failed", r);
+		}
+	}
+
 void CPs1Container::LoadCfg(const TDesC &aPath)
 	{
 	RFs fs;
@@ -910,6 +1012,10 @@ void CPs1Container::ItemValue(TInt aItem, TDes &aOut) const
 			else
 				aOut.Copy(Tr(EStrValNone));
 			break;
+		case ECfgSaveState:
+		case ECfgLoadState:
+			aOut.Format(Tr(EStrValSlotFmt), iStateSlot);
+			break;
 		case ECfgAdd:
 			aOut.Copy(Tr(EStrValPressOk));
 			break;
@@ -982,8 +1088,16 @@ TRect CPs1Container::DrawChrome(CWindowGc &gc, const TDesC &aTitle,
 	gc.SetPenStyle(CGraphicsContext::ESolidPen);
 	gc.SetPenColor(TRgb(0xd8, 0xe8, 0xff));
 	gc.DrawText(aTitle, TPoint(r.iTl.iX + 6, r.iTl.iY + asc + 2));
-	gc.SetPenColor(TRgb(0x88, 0x90, 0xa0));
-	gc.DrawText(aHint, TPoint(r.iTl.iX + 6, r.iBr.iY - 4));
+	if (iStatusMsg.Length())
+		{
+		gc.SetPenColor(TRgb(0xff, 0xdc, 0x88));
+		gc.DrawText(iStatusMsg, TPoint(r.iTl.iX + 6, r.iBr.iY - 4));
+		}
+	else
+		{
+		gc.SetPenColor(TRgb(0x88, 0x90, 0xa0));
+		gc.DrawText(aHint, TPoint(r.iTl.iX + 6, r.iBr.iY - 4));
+		}
 
 	return TRect(r.iTl.iX, r.iTl.iY + lh + 8, r.iBr.iX, r.iBr.iY - lh - 4);
 	}
@@ -1019,10 +1133,22 @@ void CPs1Container::DrawMain(CWindowGc &gc, const TRect &aBody) const
 	TInt rows = aBody.Height() / lh;
 	if (rows < 1) rows = 1;
 
-	// Section headers participate in scrolling as regular rows; otherwise the
-	// selected item near the window boundary would scroll off-screen.
-	const TInt total = ECfgCount + ESecCount;
-	const TInt selRow = iSel + KItemSection[iSel] + 1;
+	// Section headers participate in scrolling as regular rows; count only visible items.
+	TInt total = 0;
+	TInt selRow = 0;
+	for (TInt sec = 0; sec < ESecCount; sec++)
+		{
+		total++;
+		for (TInt i = 0; i < ECfgCount; i++)
+			{
+			if (KItemSection[i] != sec || !ItemVisible(i))
+				continue;
+			if (i == iSel)
+				selRow = total;
+			total++;
+			}
+		}
+
 	TInt first = selRow - rows / 2;
 	if (first > total - rows) first = total - rows;
 	if (first < 0) first = 0;
@@ -1040,7 +1166,7 @@ void CPs1Container::DrawMain(CWindowGc &gc, const TRect &aBody) const
 		row++;
 		for (TInt i = 0; i < ECfgCount; i++)
 			{
-			if (KItemSection[i] != sec)
+			if (KItemSection[i] != sec || !ItemVisible(i))
 				continue;
 			if (row >= first && row < first + rows)
 				{
@@ -1159,8 +1285,12 @@ void CPs1Container::DrawAsk(CWindowGc &gc, const TRect &aBody) const
 	const TInt lh = font->HeightInPixels() + 3;
 	TInt y = aBody.iTl.iY + font->AscentInPixels() + lh;
 
-	const TDesC &o0 = Tr(iAsk == EAskMode ? EStrAskCompress : EStrAskDeleteYes);
-	const TDesC &o1 = Tr(iAsk == EAskMode ? EStrAskStore : EStrAskDeleteNo);
+	const TDesC &o0 = Tr(iAsk == EAskMode ? EStrAskCompress
+		: iAsk == EAskDelete ? EStrAskDeleteYes
+		: EStrAskRestartYes);
+	const TDesC &o1 = Tr(iAsk == EAskMode ? EStrAskStore
+		: iAsk == EAskDelete ? EStrAskDeleteNo
+		: EStrAskRestartNo);
 	DrawRow(gc, aBody, y, lh, o0, KNullDesC, iAskSel == 0);
 	y += lh;
 	DrawRow(gc, aBody, y, lh, o1, KNullDesC, iAskSel == 1);
@@ -1175,12 +1305,20 @@ void CPs1Container::DrawAsk(CWindowGc &gc, const TRect &aBody) const
 			TPoint(aBody.iTl.iX + 10, y + lh));
 		y += lh * 2;
 		}
-	else
+	else if (iAsk == EAskDelete)
 		{
 		TBuf<80> n;
 		n.Format(Tr(EStrAskFilesFmt), iPicked->Count());
 		gc.DrawText(n, TPoint(aBody.iTl.iX + 10, y));
 		y += lh;
+		}
+	else if (iAsk == EAskRestart)
+		{
+		gc.SetPenColor(TRgb(0xff, 0xdc, 0x88));
+		gc.DrawText(Tr(EStrAskRestartWarn1),
+			TPoint(aBody.iTl.iX + 10, y));
+		gc.DrawText(Tr(EStrAskRestartWarn2),
+			TPoint(aBody.iTl.iX + 10, y + lh));
 		}
 
 	// Game-close warning - shown on both questions: the decision about the disc
@@ -1195,6 +1333,22 @@ void CPs1Container::DrawAsk(CWindowGc &gc, const TRect &aBody) const
 		gc.DrawText(Tr(EStrAskRunWarn3),
 			TPoint(aBody.iTl.iX + 10, y + lh * 3));
 		}
+	}
+
+void CPs1Container::DrawError(CWindowGc &gc, const TRect &aBody) const
+	{
+	const CFont *font = iCoeEnv->NormalFont();
+	const TInt lh = font->HeightInPixels() + 3;
+	TInt y = aBody.iTl.iY + font->AscentInPixels() + lh;
+
+	gc.SetPenColor(TRgb(0xff, 0x90, 0x90));
+	gc.DrawText(Tr(EStrErrDiscOrBios1), TPoint(aBody.iTl.iX + 10, y));
+	y += lh * 2;
+
+	gc.SetPenColor(TRgb(0xc8, 0xc8, 0xd0));
+	gc.DrawText(Tr(EStrErrDiscOrBios2), TPoint(aBody.iTl.iX + 10, y));
+	y += lh;
+	gc.DrawText(Tr(EStrErrDiscOrBios3), TPoint(aBody.iTl.iX + 10, y));
 	}
 
 void CPs1Container::DrawProgress(CWindowGc &gc, const TRect &aBody) const
@@ -1264,9 +1418,16 @@ void CPs1Container::Draw(const TRect & /*aRect*/) const
 	else if (iPage == EPageAsk)
 		{
 		const TRect body = DrawChrome(gc,
-			Tr(iAsk == EAskMode ? EStrTitleStore : EStrTitleDelete),
+			Tr(iAsk == EAskMode ? EStrTitleStore
+				: iAsk == EAskDelete ? EStrTitleDelete
+				: EStrTitleRestart),
 			Tr(EStrHintAsk));
 		DrawAsk(gc, body);
+		}
+	else if (iPage == EPageError)
+		{
+		const TRect body = DrawChrome(gc, Tr(EStrTitleError), Tr(EStrHintErrorBack));
+		DrawError(gc, body);
 		}
 	else if (iPage == EPageProgress)
 		{
@@ -1303,17 +1464,18 @@ void CPs1Container::OpenMenu()
 	voutSymbianSuspend(1);
 	iPage = EPageMain;
 	iConfirm = -1;
+	iStatusMsg.Zero();
 	DrawNow();
 	}
 
-void CPs1Container::CloseMenu()
+void CPs1Container::DoCloseMenu(TBool aWithRestart)
 	{
 	SaveAll();
 	ApplyKeyMap();
 	// A different disc (or BIOS, CPU branch, sound, GL, DSA) cannot be switched on the
 	// fly: the pass must be torn down and brought up again. This is done by the tick,
 	// not by this branch - we got here from a key handler.
-	if (RestartNeeded())
+	if (aWithRestart && RestartNeeded())
 		iRestartReq = ETrue;
 	ps1CfgApplyLive(iCfg.iIlace, iCfg.iLight, iCfg.iBlend, iCfg.iPixSkip,
 		iCfg.iFps, iCfg.iGpuSkip, iCfg.iCycle, iCfg.iSmooth, iCfg.iFxaa, iCfg.iDirty,
@@ -1321,6 +1483,22 @@ void CPs1Container::CloseMenu()
 	iPage = EPageNone;
 	voutSymbianSuspend(0);
 	ps1Log("menu", "close");
+	}
+
+void CPs1Container::CloseMenu()
+	{
+	DoCloseMenu(ETrue);
+	}
+
+void CPs1Container::RevertRestartSettings()
+	{
+	iGamePath = iGameAtStart;
+	iCfg.iBios = iBiosAtStart;
+	iCfg.iInterp = iInterpAtStart;
+	iCfg.iGteNf = iGteNfAtStart;
+	iCfg.iSound = iSoundAtStart;
+	iCfg.iGl = iGlAtStart;
+	iCfg.iDsa = iDsaAtStart;
 	}
 
 // Progress page redraw: it receives no key events, and its state is changed by another
@@ -1341,6 +1519,8 @@ void CPs1Container::MenuTick()
 // Passes the selection to the core and yields control to the emulator.
 void CPs1Container::ApplyAndStart()
 	{
+	if (!iGamePath.Length())
+		return;
 	SaveAll();
 	ApplyKeyMap();
 	TBuf8<KMaxFileName> path8;
@@ -1384,7 +1564,17 @@ TKeyResponse CPs1Container::MainKeyL(TInt aScan)
 	if (aScan == EStdKeyDevice1 || aScan == EStdKeyBackspace || aScan == EStdKeyEscape)
 		{
 		if (iStartedOnce && !iGameClosed)
-			CloseMenu();
+			{
+			if (RestartNeeded())
+				{
+				iAsk = EAskRestart;
+				iAskSel = 0;
+				iPage = EPageAsk;
+				DrawNow();
+				return EKeyWasConsumed;
+				}
+			DoCloseMenu(EFalse);
+			}
 		else
 			CEikonEnv::Static()->EikAppUi()->HandleCommandL(EEikCmdExit);
 		return EKeyWasConsumed;
@@ -1392,9 +1582,14 @@ TKeyResponse CPs1Container::MainKeyL(TInt aScan)
 
 	if (aScan == EStdKeyUpArrow || aScan == EStdKeyDownArrow)
 		{
-		const TInt d = (aScan == EStdKeyUpArrow) ? ECfgCount - 1 : 1;
-		iSel = (iSel + d) % ECfgCount;
+		const TInt d = (aScan == EStdKeyUpArrow) ? -1 : 1;
+		do
+			{
+			iSel = (iSel + d + ECfgCount) % ECfgCount;
+			}
+		while (!ItemVisible(iSel));
 		iConfirm = -1;      // confirmation applies only while staying on the item
+		iStatusMsg.Zero();
 		DrawNow();
 		return EKeyWasConsumed;
 		}
@@ -1402,45 +1597,82 @@ TKeyResponse CPs1Container::MainKeyL(TInt aScan)
 	TInt d = 0;
 	if (aScan == EStdKeyLeftArrow)  d = -1;
 	if (aScan == EStdKeyRightArrow) d = 1;
-	if (d && !isCommand(iSel))
+	if (d)
 		{
-		TInt &v = iCfg.Value(iSel);
-		if (iSel == ECfgGpuSkip)
+		if (iSel == ECfgSaveState || iSel == ECfgLoadState)
 			{
-			// -1 is the adaptive mode of gpulib: it decides per-frame and is the one
-			// that synchronizes the skip with the moment the game flips the buffer.
-			v += d;
-			if (v < -1) v = 3;
-			if (v > 3) v = -1;
+			iStateSlot += d;
+			if (iStateSlot < 1) iStateSlot = 5;
+			if (iStateSlot > 5) iStateSlot = 1;
+			iStatusMsg.Zero();
+			DrawNow();
+			return EKeyWasConsumed;
 			}
-		else if (iSel == ECfgFxaa)
+		if (!isCommand(iSel))
 			{
-			v += d;
-			if (v < 0) v = 5;
-			if (v > 5) v = 0;
+			TInt &v = iCfg.Value(iSel);
+			if (iSel == ECfgGpuSkip)
+				{
+				// -1 is the adaptive mode of gpulib: it decides per-frame and is the one
+				// that synchronizes the skip with the moment the game flips the buffer.
+				v += d;
+				if (v < -1) v = 3;
+				if (v > 3) v = -1;
+				}
+			else if (iSel == ECfgFxaa)
+				{
+				v += d;
+				if (v < 0) v = 5;
+				if (v > 5) v = 0;
+				}
+			else if (iSel == ECfgCycle)
+				{
+				v += d * KCycleStep;
+				if (v < KCycleMin) v = KCycleMax;
+				if (v > KCycleMax) v = KCycleMin;
+				}
+			else if (iSel == ECfgLang)
+				{
+				const TInt count = I18nLanguageCount();
+				v = (v + d + count) % count;
+				I18nSetLanguage(v);
+				}
+			else
+				v = v ? 0 : 1;
+			iStatusMsg.Zero();
+			DrawNow();
+			return EKeyWasConsumed;
 			}
-		else if (iSel == ECfgCycle)
-			{
-			v += d * KCycleStep;
-			if (v < KCycleMin) v = KCycleMax;
-			if (v > KCycleMax) v = KCycleMin;
-			}
-		else if (iSel == ECfgLang)
-			{
-			const TInt count = I18nLanguageCount();
-			v = (v + d + count) % count;
-			I18nSetLanguage(v);
-			}
-		else
-			v = v ? 0 : 1;
-		DrawNow();
-		return EKeyWasConsumed;
 		}
 
 	if (aScan == EStdKeyDevice3 || aScan == EStdKeyEnter || aScan == EStdKeyNkpEnter)
 		{
 		switch (iSel)
 			{
+			case ECfgStart:
+				if (iGameClosed)
+					CEikonEnv::Static()->EikAppUi()->HandleCommandL(EEikCmdExit);
+				else if (!iGamePath.Length())
+					{
+					iBrowsePath = KImgDir;
+					iScanMode = EScanGames;
+					ScanDirL();
+					iPage = EPageFiles;
+					}
+				else if (iStartedOnce)
+					{
+					if (RestartNeeded())
+						{
+						iAsk = EAskRestart;
+						iAskSel = 0;
+						iPage = EPageAsk;
+						}
+					else
+						DoCloseMenu(EFalse);
+					}
+				else
+					ApplyAndStart();
+				break;
 			case ECfgGame:
 				// Start browsing from the current game's directory - this is the most common need.
 				if (iGamePath.Length())
@@ -1448,9 +1680,17 @@ TKeyResponse CPs1Container::MainKeyL(TInt aScan)
 					const TInt s = iGamePath.LocateReverse('\\');
 					iBrowsePath = iGamePath.Left(s + 1);
 					}
+				else
+					iBrowsePath = KImgDir;
 				iScanMode = EScanGames;
 				ScanDirL();
 				iPage = EPageFiles;
+				break;
+			case ECfgSaveState:
+				DoSaveState();
+				break;
+			case ECfgLoadState:
+				DoLoadState();
 				break;
 			case ECfgAdd:
 				// Start from the card root: what is being imported was just copied
@@ -1490,8 +1730,24 @@ TKeyResponse CPs1Container::MainKeyL(TInt aScan)
 			default:
 				if (iGameClosed)
 					CEikonEnv::Static()->EikAppUi()->HandleCommandL(EEikCmdExit);
+				else if (!iGamePath.Length() && !iStartedOnce)
+					{
+					iBrowsePath = KImgDir;
+					iScanMode = EScanGames;
+					ScanDirL();
+					iPage = EPageFiles;
+					}
 				else if (iStartedOnce)
-					CloseMenu();
+					{
+					if (RestartNeeded())
+						{
+						iAsk = EAskRestart;
+						iAskSel = 0;
+						iPage = EPageAsk;
+						}
+					else
+						DoCloseMenu(EFalse);
+					}
 				else
 					ApplyAndStart();
 				return EKeyWasConsumed;
@@ -1689,7 +1945,7 @@ TKeyResponse CPs1Container::AskKeyL(TInt aScan)
 	{
 	if (aScan == EStdKeyDevice1 || aScan == EStdKeyBackspace || aScan == EStdKeyEscape)
 		{
-		iPage = EPageImport;
+		iPage = (iAsk == EAskRestart) ? EPageMain : EPageImport;
 		DrawNow();
 		return EKeyWasConsumed;
 		}
@@ -1705,11 +1961,30 @@ TKeyResponse CPs1Container::AskKeyL(TInt aScan)
 			// copies of the same disc makes no sense.
 			iAskSel = 0;
 			}
-		else
+		else if (iAsk == EAskDelete)
 			{
 			StartImportL();
 			}
+		else if (iAsk == EAskRestart)
+			{
+			if (iAskSel == 0)
+				{
+				DoCloseMenu(ETrue);
+				}
+			else
+				{
+				RevertRestartSettings();
+				DoCloseMenu(EFalse);
+				}
+			}
 		}
+	DrawNow();
+	return EKeyWasConsumed;
+	}
+
+TKeyResponse CPs1Container::ErrorKeyL(TInt /*aScan*/)
+	{
+	iPage = EPageMain;
 	DrawNow();
 	return EKeyWasConsumed;
 	}
@@ -1807,6 +2082,7 @@ TKeyResponse CPs1Container::DispatchKeyL(const TKeyEvent &aKeyEvent, TEventCode 
 		if (iPage == EPageBios)     return BiosKeyL(sc);
 		if (iPage == EPageAsk)      return AskKeyL(sc);
 		if (iPage == EPageProgress) return ProgressKeyL(sc);
+		if (iPage == EPageError)    return ErrorKeyL(sc);
 		return MainKeyL(sc);
 		}
 
@@ -1963,8 +2239,10 @@ TInt CPs1AppUi::Tick()
 		AttachOutput();
 		if (ps1GuiSetup() != KErrNone)
 			{
-			ps1Log("gui", "emu setup failed - exiting");
-			more = EFalse;
+			ps1Log("gui", "emu setup failed");
+			iStarted = EFalse;
+			if (iContainer)
+				iContainer->ShowError();
 			}
 		}
 	// Pass restart after the menu: different disc or different core branch. Done here,
@@ -1980,8 +2258,10 @@ TInt CPs1AppUi::Tick()
 		AttachOutput();
 		if (ps1GuiStartPass() != KErrNone)
 			{
-			ps1Log("gui", "emu restart failed - exiting");
-			more = EFalse;
+			ps1Log("gui", "emu restart failed");
+			iStarted = EFalse;
+			if (iContainer)
+				iContainer->ShowError();
 			}
 		}
 	else if (!ps1GuiStep())

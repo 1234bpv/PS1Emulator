@@ -106,6 +106,23 @@ enum TStrId
 	EStrHintGameClosed,
 	EStrHintMainResume,
 	EStrHintMainStart,
+	EStrItemSaveState,
+	EStrItemLoadState,
+	EStrValSlotFmt,
+	EStrStateSaveOk,
+	EStrStateSaveErr,
+	EStrStateLoadOk,
+	EStrStateLoadErr,
+	EStrTitleError,
+	EStrHintErrorBack,
+	EStrErrDiscOrBios1,
+	EStrErrDiscOrBios2,
+	EStrErrDiscOrBios3,
+	EStrTitleRestart,
+	EStrAskRestartYes,
+	EStrAskRestartNo,
+	EStrAskRestartWarn1,
+	EStrAskRestartWarn2,
 	EStrCount
 	};
 
