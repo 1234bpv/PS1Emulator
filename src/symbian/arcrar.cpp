@@ -164,6 +164,8 @@ TInt CRarVol::Scan4L(RFile &aFile, TInt aPos, TInt aSize)
 			TUint8 *fh = (TUint8 *)User::Alloc(hsize);
 			if (!fh)
 				return KErrNoMemory;
+			// AddL can leave; the header buffer would be stranded.
+			CleanupStack::PushL(fh);
 			TPtr8 pf(fh, hsize);
 			if (aFile.Read(aPos, pf, hsize) == KErrNone && pf.Length() == hsize &&
 			    hsize >= 32)
@@ -194,7 +196,7 @@ TInt CRarVol::Scan4L(RFile &aFile, TInt aPos, TInt aSize)
 						AddL(name, e);
 					}
 				}
-			User::Free(fh);
+			CleanupStack::PopAndDestroy(fh);
 			}
 
 		const TInt step = hsize + dsize;

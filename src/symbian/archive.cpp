@@ -289,11 +289,13 @@ TInt CZipVol::ScanL(RFs &aFs, const TDesC &aPath)
 		f.Close();
 		return KErrNoMemory;
 		}
+	// AppendL below can leave; the buffer is up to 8 MB.
+	CleanupStack::PushL(cd);
 	got = f.ReadAt(cdOff, cd, cdSize);
 	f.Close();
 	if (got != cdSize)
 		{
-		User::Free(cd);
+		CleanupStack::PopAndDestroy(cd);
 		return KErrCorrupt;
 		}
 
@@ -330,7 +332,7 @@ TInt CZipVol::ScanL(RFs &aFs, const TDesC &aPath)
 			}
 		p += 46 + nlen + elen + clen;
 		}
-	User::Free(cd);
+	CleanupStack::PopAndDestroy(cd);
 	return iNames->MdcaCount() ? KErrNone : KErrCorrupt;
 	}
 

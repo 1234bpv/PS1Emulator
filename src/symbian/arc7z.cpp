@@ -448,8 +448,16 @@ TInt C7zVol::ScanL(RFs &aFs, const TDesC &aPath)
 		if (!name.Length())
 			continue;
 
-		iNames->AppendL(name);
-		iEnts.AppendL(e);
+		// Trapped: leaving here would strand look.buf and the archive database.
+		TRAPD(err, iNames->AppendL(name));
+		if (err == KErrNone) err = iEnts.Append(e);
+		if (err != KErrNone)
+			{
+			SzArEx_Free(&db, &g_szAlloc);
+			User::Free(look.buf);
+			file.Close();
+			return err;
+			}
 		}
 
 	SzArEx_Free(&db, &g_szAlloc);
