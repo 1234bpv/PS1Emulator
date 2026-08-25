@@ -428,19 +428,22 @@ TInt C7zVol::ScanL(RFs &aFs, const TDesC &aPath)
 		                     db.UnpackPositions[db.FolderToFile[fo]]);
 
 		TFileName name;
-		UInt16 *w = (UInt16 *)User::Alloc(512 * sizeof(UInt16));
+		// Ask for the length FIRST: given a destination the SDK writes the whole
+		// name and takes no buffer size, so a fixed buffer is a heap overflow
+		// waiting for an archive with a long path.
+		const size_t len = SzArEx_GetFileNameUtf16(&db, i, NULL);
+		if (len < 2 || len > 8192)
+			continue;
+		UInt16 *w = (UInt16 *)User::Alloc(len * sizeof(UInt16));
 		if (!w)
 			break;
-		const size_t len = SzArEx_GetFileNameUtf16(&db, i, w);
-		if (len > 1 && len < 512)
-			{
-			// SDK UTF-16 matches Symbian TText.
-			name.Copy(TPtrC((const TText *)w, (TInt)len - 1).Left(name.MaxLength()));
-			TInt s = name.LocateReverse('/');
-			if (s < 0) s = name.LocateReverse('\\');
-			if (s >= 0)
-				name.Delete(0, s + 1);
-			}
+		SzArEx_GetFileNameUtf16(&db, i, w);
+		// SDK UTF-16 matches Symbian TText.
+		name.Copy(TPtrC((const TText *)w, (TInt)len - 1).Left(name.MaxLength()));
+		TInt s = name.LocateReverse('/');
+		if (s < 0) s = name.LocateReverse('\\');
+		if (s >= 0)
+			name.Delete(0, s + 1);
 		User::Free(w);
 		if (!name.Length())
 			continue;

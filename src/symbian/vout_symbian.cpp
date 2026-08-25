@@ -1405,6 +1405,10 @@ static void blitCurrent()
 		}
 	else
 		{
+		// The bitmap is dropped when Create fails on low memory or a rotation,
+		// and this is the only path that touches it.
+		if (!g_bmp)
+			return;
 		g_bmp->LockHeap();
 		dstB = (TUint8 *)g_bmp->DataAddress();
 		dstStrideB = g_bmp->DataStride();

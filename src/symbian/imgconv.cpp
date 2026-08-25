@@ -283,6 +283,10 @@ static TInt parseCue(const TDesC8 &aTxt, TCue &aCue)
 			{
 			if (aCue.iCount >= KMaxTrk - 1)
 				return KErrOverflow;
+			// A TRACK before any FILE would leave iFile at -1 and panic the
+			// descriptor array later, in code that has no idea why.
+			if (aCue.iFiles->MdcaCount() <= 0)
+				return KErrCorrupt;
 			TTrk &t = aCue.iTrk[++aCue.iCount];
 			t.iType = 0;
 			t.iIdx0 = t.iIdx1 = -1;
