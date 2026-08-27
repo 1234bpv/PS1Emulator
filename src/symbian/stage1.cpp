@@ -353,6 +353,8 @@ extern int gpu_unai_sw_off;
 extern "C" int ndrc_skip_load_blocks;
 // Set when "swoff" CLI arg is used; menu must not override it.
 static int g_swoffCli;
+// Same for "glrender": a measurement run picks the rasteriser, not the menu.
+static int g_glRenderCli;
 int voutSymbianVisTest(int raw);
 void voutSymbianSetOverlay(int on);
 void voutSymbianSetNoUpdate(int on);
@@ -2478,6 +2480,11 @@ extern "C" void ps1CfgApply(const char *aDisc, const char *aBios, int aInterp,
 	applyFxaaLevel(aFxaa);
 	if (!g_swoffCli)
 		gpu_unai_sw_off = (aGl && !aSwDraw) ? 1 : 0;
+	// Switching the software pass off is how a user asks for the MBX rasteriser.
+	// Without this the menu only turned gpu_unai off and left nobody drawing at
+	// all, so the picture stopped changing.
+	if (!g_glRenderCli)
+		g_glRender = gpu_unai_sw_off ? ETrue : EFalse;
 	logEvent("cfg_bios", NULL, "bios=%s", g_biosFile[0] ? g_biosFile : KBiosFile);
 	logEvent("cfg", NULL, "disc=%s interp=%d ilace=%d light=%d blend=%d "
 		"pixskip=%d gtenf=%d snd=%d gl=%d dirty=%d dsa=%d fps=%d gpuskip=%d cyclemul=%d "
@@ -2513,6 +2520,17 @@ extern "C" void ps1CfgApplyLive(int aIlace, int aLight, int aBlend, int aPixSkip
 	voutSymbianSetDirtyOnly(aDirty);
 	if (!g_swoffCli)
 		gpu_unai_sw_off = (voutSymbianGlActive() && !aSwDraw) ? 1 : 0;
+	if (!g_glRenderCli)
+		{
+		// glrInit is idempotent, and the GL context is up by now, so the
+		// rasteriser can be taken up and put down between frames.
+		g_glRender = gpu_unai_sw_off ? ETrue : EFalse;
+		const TInt grc = g_glRender ? glrInit() : 0;
+		glrSetEnabled((g_glRender && grc == 0) ? 1 : 0);
+		logEvent("glr", (g_glRender && grc) ? "GLR_INIT_FAIL" : NULL,
+			"live rc=%d active=%d swoff=%d", (int)grc, (int)glrEnabled(),
+			(int)gpu_unai_sw_off);
+		}
 
 	if (aGpuSkip != g_gpuFrameskip)
 		{
@@ -2888,6 +2906,7 @@ GLDEF_C TInt E32Main()
 		if (cl.FindF(KGlrArg) != KErrNotFound)
 			{
 			g_glRender = ETrue;
+			g_glRenderCli = 1;
 			voutSymbianSetGl(1);
 			}
 		// "glrskipN" - probe: skip primitive class (1 polygons, 2

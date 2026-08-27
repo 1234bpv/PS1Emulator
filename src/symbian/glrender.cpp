@@ -98,6 +98,14 @@ static TInt      g_curClip;       // draw area of the current primitive, -1 = di
 static TInt      g_vpW, g_vpH;
 static TInt      g_over;          // how many primitives did not fit
 static TInt      g_logged;      // how many diagnostic frames have been written
+// A direct write into guest VRAM - an image upload, a VRAM copy, an MDEC video
+// frame - carries no primitives, so none of it can reach this rasteriser. The
+// bounding box of such writes is collected per frame; when it lands in the
+// buffer the frame was drawn into, the frame belongs to the old VRAM display
+// path and this one steps aside.
+static TInt      g_wrX0, g_wrY0, g_wrX1, g_wrY1;   // empty while iX1 < iX0
+static TInt      g_vramFrames;    // frames handed back to the VRAM path
+static TInt      g_mixedFrames;   // ... of those, ones that also had primitives
 
 // --- texture cache -----------------------------------------------------------
 // Measured (section 14): per frame the game uses 12.7 distinct "page + CLUT"
@@ -226,8 +234,10 @@ extern "C" int glrInit(void)
 	{
 	if (g_ready)
 		return 0;
-	g_v = (TGlrVert *)User::Alloc(KMaxVerts * sizeof(TGlrVert));
-	g_decode = (TUint16 *)User::Alloc(KTexSide * KTexSide * 2);
+	if (!g_v)
+		g_v = (TGlrVert *)User::Alloc(KMaxVerts * sizeof(TGlrVert));
+	if (!g_decode)
+		g_decode = (TUint16 *)User::Alloc(KTexSide * KTexSide * 2);
 	if (!g_v || !g_decode)
 		{
 		User::Free(g_v); g_v = NULL;
@@ -261,6 +271,16 @@ extern "C" int glrInit(void)
 		(int)KMaxPrims, (unsigned)glGetError(), (int)maxTex, (int)maxUnits,
 		(const char *)glGetString(GL_VENDOR), (const char *)glGetString(GL_RENDERER));
 	return 0;
+	}
+
+// The window was re-attached - on this device a screen rotation does that - and
+// the EGL context went with it. Texture names belong to the dead context, so they
+// are dropped rather than deleted, and the next frame initialises again.
+extern "C" void glrLoseContext(void)
+	{
+	g_ready = EFalse;
+	g_nTex = 0;
+	g_lastTex = -1;
 	}
 
 extern "C" void glrShutdown(void)
@@ -462,6 +482,21 @@ extern "C" void glrSetVram(const void *aVram)
 // rectangle is in halfwords, like everything in VRAM.
 extern "C" void glrInvalidateRect(int aX, int aY, int aW, int aH)
 	{
+	if (g_on)
+		{
+		// A transfer that runs off the edge wraps on the hardware, so the box it
+		// really touched is the whole width or height, not the range as given.
+		if (aX + aW > 1024) { aX = 0; aW = 1024; }
+		if (aY + aH > 512)  { aY = 0; aH = 512; }
+		if (g_wrX1 < g_wrX0) { g_wrX0 = aX; g_wrY0 = aY; g_wrX1 = aX + aW; g_wrY1 = aY + aH; }
+		else
+			{
+			if (aX < g_wrX0) g_wrX0 = aX;
+			if (aY < g_wrY0) g_wrY0 = aY;
+			if (aX + aW > g_wrX1) g_wrX1 = aX + aW;
+			if (aY + aH > g_wrY1) g_wrY1 = aY + aH;
+			}
+		}
 	for (TInt i = 0; i < g_nTex; i++)
 		{
 		if (!g_tex[i].iValid)
@@ -795,7 +830,9 @@ extern "C" void glrPrim(unsigned aCmd, const unsigned *aPacket, const int *aStat
 
 extern "C" void glrBeginFrame(void)
 	{
-	if (!g_on || !g_ready)
+	if (!g_on)
+		return;
+	if (!g_ready && glrInit() != 0)
 		return;
 	g_nVerts = 0;
 	g_nBatch = 0;
@@ -803,6 +840,7 @@ extern "C" void glrBeginFrame(void)
 	g_curClip = -1;
 	g_over = 0;
 	g_frame++;
+	g_wrX0 = 0; g_wrY0 = 0; g_wrX1 = -1; g_wrY1 = -1;
 	for (TInt i = 0; i < KMaxTex; i++)
 		{
 		g_tex[i].iUseU0 = 0x7FFFFFFF;
@@ -832,15 +870,30 @@ static void applyBlend(TInt aMode)
 		}
 	}
 
+// A snapshot was asked for on a frame this rasteriser does not show. Saying so
+// and dropping the request beats writing it on some later, unrelated frame.
+static void vramPathShot(void)
+	{
+	if (!g_shotWanted)
+		return;
+	g_shotWanted = EFalse;
+	ps1LogFmt("glr", "shot: %s skipped, frame shown from VRAM", g_shotPath);
+	}
+
 extern "C" int glrEndFrame(void)
 	{
 	if (!g_on || !g_ready)
 		return 0;
-	// The frame is ours even when there is nothing to draw: handing it to the
-	// VRAM display path would show a scene we just did not compute. An empty
-	// frame simply leaves the previous one on screen.
+	// Nothing was drawn, so there is nothing to show: the frame goes back to the
+	// VRAM display path. Keeping it here and skipping the swap was the reason a
+	// video or a menu drawn straight into VRAM froze the screen - with the
+	// software pass off, no primitive ever arrives for those.
 	if (g_nBatch == 0 || g_nClips == 0)
-		return 1;
+		{
+		g_vramFrames++;
+		vramPathShot();
+		return 0;
+		}
 	// The back buffer is the group with the most vertices.
 	TInt best = 0;
 	for (TInt i = 1; i < g_nClips; i++)
@@ -858,6 +911,20 @@ extern "C" int glrEndFrame(void)
 	g_clip[1] = g_ofs[best][1];
 	g_clip[2] = g_clip[0] + dw;
 	g_clip[3] = g_clip[1] + dh;
+
+	// The buffer this frame was drawn into was also written directly - a video
+	// frame, a decoded picture, a VRAM to VRAM copy. Those bytes exist only in
+	// guest VRAM, so the frame is shown from there; drawing our primitives alone
+	// would leave the picture underneath them missing.
+	if (g_wrX1 >= g_wrX0 &&
+	    !(g_wrX0 >= g_clip[2] || g_wrX1 <= g_clip[0] ||
+	      g_wrY0 >= g_clip[3] || g_wrY1 <= g_clip[1]))
+		{
+		g_vramFrames++;
+		g_mixedFrames++;
+		vramPathShot();
+		return 0;
+		}
 
 	// The window on this device rotates by itself, and the field of view was set
 	// once at initialisation. After a rotation it stayed at the old size - the
@@ -975,7 +1042,14 @@ extern "C" int glrEndFrame(void)
 	g_tDraw += (unsigned int)(tDraw1 - tDraw0);
 	glMatrixMode(GL_TEXTURE);
 	glLoadIdentity();
+	// The VRAM display path shares this context and sets its projection once,
+	// at context creation. Now that a frame can fall back to it at any moment,
+	// the projection has to be handed back the way it was found.
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrthof(0, (GLfloat)g_vpW, (GLfloat)g_vpH, 0, -1, 1);
 	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
 	if (g_skipMask & 8)
 		glDisable(GL_SCISSOR_TEST);
 
@@ -1029,12 +1103,27 @@ extern "C" int glrEndFrame(void)
 		// scene (are the area and contents right). No more - the log is not per pixel.
 	if (g_logged < 4 && (g_logged == 0 || g_nVerts > 300))
 		{
+		// Where the primitives actually landed. Without it the frame rectangle
+		// alone cannot say whether the scene is drawn small inside a large
+		// projection or the projection is simply wrong.
+		TInt px0 = 32767, py0 = 32767, px1 = -32768, py1 = -32768;
+		for (TInt i = 0; i < g_nVerts; i++)
+			{
+			if (g_v[i].x < px0) px0 = g_v[i].x;
+			if (g_v[i].x > px1) px1 = g_v[i].x;
+			if (g_v[i].y < py0) py0 = g_v[i].y;
+			if (g_v[i].y > py1) py1 = g_v[i].y;
+			}
 		ps1LogFmt("glr", "frame%d: frame=%d,%d..%d,%d verts=%d/%d batches=%d clips=%d"
-			" tex=%d hit=%d miss=%d evict=%d nofit=%d bover=%d over=%d vp=%dx%d err=%u",
+			" tex=%d hit=%d miss=%d evict=%d nofit=%d bover=%d over=%d vp=%dx%d"
+			" prim=%d,%d..%d,%d vramwr=%d,%d..%d,%d err=%u",
 			(int)g_logged, g_clip[0], g_clip[1], g_clip[2], g_clip[3],
 			(int)g_clipVerts[best], (int)g_nVerts, (int)g_nBatch, (int)g_nClips,
 			(int)g_nTex, (int)g_hit, (int)g_miss, (int)g_evict, (int)g_nofit, (int)g_batchOver,
-			(int)g_over, (int)g_vpW, (int)g_vpH, (unsigned)glGetError());
+			(int)g_over, (int)g_vpW, (int)g_vpH,
+			(int)px0, (int)py0, (int)px1, (int)py1,
+			(int)g_wrX0, (int)g_wrY0, (int)g_wrX1, (int)g_wrY1,
+			(unsigned)glGetError());
 		g_logged++;
 		}
 	return 1;
@@ -1052,9 +1141,10 @@ extern "C" void glrStats(int *aVerts, int *aBatches, int *aOver,
 	if (aEvict)   *aEvict = g_evict;
 	if (aOver)    *aOver = g_nofit + g_batchOver;   // silent losses of both kinds
 	ps1LogFmt("glrbrk", "batches=%d frames=%d brkTex=%d brkBlend=%d brkClip=%d"
-		" spriteWrap=%d/%d",
+		" spriteWrap=%d/%d vramFrames=%d mixedFrames=%d",
 		(int)g_batchSum, (int)g_frameSum, (int)g_brkTex, (int)g_brkBlend,
-		(int)g_brkClip, (int)g_spriteWrap, (int)g_spriteAll);
+		(int)g_brkClip, (int)g_spriteWrap, (int)g_spriteAll,
+		(int)g_vramFrames, (int)g_mixedFrames);
 	const unsigned int freq = ndrc_symbian_fastfreq();
 	const unsigned int f = freq ? freq : 1;
 	ps1LogFmt("glrtime", "setup=%ums clear=%ums draw=%ums swap=%ums frames=%d",

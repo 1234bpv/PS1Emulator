@@ -339,6 +339,7 @@ static TBool      g_glLogged;        // log first frame diagnostics only once
 static TUint16   *g_glBuf;           // conversion buffer (rows*w, RGB565)
 static TBool glInitOnWindow();       // defined below, called from initL
 static void  glShutdown();
+extern "C" void glrLoseContext(void);
 extern "C" int voutSymbianScreenDump(const char *aPath);   // defined below
 
 static void queryFramebuffer()
@@ -947,6 +948,8 @@ static void glPresentFrame(const TUint8 *vbytes, TInt startByte,
 
 static void glShutdown()
 	{
+	// The rasteriser draws in this context and holds texture names in it.
+	glrLoseContext();
 	if (g_eglDpy != EGL_NO_DISPLAY)
 		{
 		eglMakeCurrent(g_eglDpy, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
