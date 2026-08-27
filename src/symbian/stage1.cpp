@@ -347,6 +347,7 @@ void glrShot(const char *path);
 void glrSetTexWhite(int on);
 void glrSetSkip(int mask);
 void glrSetDummyTex(int aSide);
+void glrSetBgForce(int on);
 // Switch for gpu_unai software pass ("swoff" argument). Lives in gpulib_if.cpp.
 extern int gpu_unai_sw_off;
 // Dynarec block pre-compile on state load: crashes on this device, off by default.
@@ -2290,6 +2291,7 @@ static TBool g_guiInterp;
 static TInt g_glBench;
 // MBX rasterizer instead of VRAM presentation ("glrender" argument).
 static TBool g_glRender;
+static TInt  g_glBgForce;
 static TBool g_texWhite;
 static TInt g_glrSkip;
 static TInt g_dummyTexSide;   // probe: bind cost against texture size
@@ -2333,6 +2335,7 @@ extern "C" int ps1GuiSetup(void)
 		glrSetTexWhite(g_texWhite ? 1 : 0);
 		glrSetSkip(g_glrSkip);
 		glrSetDummyTex(g_dummyTexSide);
+		glrSetBgForce(g_glBgForce);
 		logEvent("glr", grc ? "GLR_INIT_FAIL" : NULL, "init rc=%d active=%d swoff=%d",
 			(int)grc, (int)glrEnabled(), (int)gpu_unai_sw_off);
 		}
@@ -2928,6 +2931,10 @@ GLDEF_C TInt E32Main()
 			g_glrSkip = (lex.Val(n) == KErrNone) ? n : 0;
 			}
 		// "texwhite" - probe: textures without vertex color modulation.
+		// "glbgforce" - probe: lay the VRAM picture under every rasterised frame.
+		_LIT(KGlBgArg, "glbgforce");
+		if (cl.FindF(KGlBgArg) != KErrNotFound)
+			g_glBgForce = 1;
 		_LIT(KTexWhiteArg, "texwhite");
 		if (cl.FindF(KTexWhiteArg) != KErrNotFound)
 			g_texWhite = ETrue;

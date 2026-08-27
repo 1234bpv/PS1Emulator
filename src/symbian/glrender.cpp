@@ -27,6 +27,7 @@
 
 extern "C" void ps1LogFmt(const char *aType, const char *aFmt, ...);
 extern "C" int  voutSymbianGlSwap(void);
+extern "C" int  voutSymbianGlVramQuad(void);
 extern "C" void voutSymbianGlSize(int *aW, int *aH);
 extern "C" void voutSymbianDbgState(int *aFbDirty, int *aFbDirtyArea, int *aStatus,
 	int *aSrcX, int *aSrcY, int *aScrW, int *aScrH, int *aVoutOffset, int *aStale);
@@ -105,7 +106,9 @@ static TInt      g_logged;      // how many diagnostic frames have been written
 // path and this one steps aside.
 static TInt      g_wrX0, g_wrY0, g_wrX1, g_wrY1;   // empty while iX1 < iX0
 static TInt      g_vramFrames;    // frames handed back to the VRAM path
-static TInt      g_mixedFrames;   // ... of those, ones that also had primitives
+static TInt      g_mixedFrames;   // frames whose scene sat on a VRAM picture
+static TInt      g_bgFrames;      // ... of those, ones where the picture went down
+static TBool     g_bgForce;       // probe: put the VRAM picture under every frame
 
 // --- texture cache -----------------------------------------------------------
 // Measured (section 14): per frame the game uses 12.7 distinct "page + CLUT"
@@ -169,6 +172,7 @@ static unsigned long long g_useTexels, g_fullTexels, g_useSlots;
 // through DSA) sees nothing under GL, and the picture has to be checked somehow.
 static char  g_shotPath[64];
 static TBool g_shotWanted;
+static TBool g_shotDeferred;
 
 extern "C" void glrShot(const char *aPath)
 	{
@@ -182,6 +186,7 @@ extern "C" void glrShot(const char *aPath)
 		}
 	g_shotPath[n] = 0;
 	g_shotWanted = ETrue;
+	g_shotDeferred = EFalse;
 	}
 
 // The read happens BEFORE the buffer swap: after it the back buffer contents
@@ -216,8 +221,9 @@ static void writeShot(void)
 		fs.Close();
 		}
 	User::Free(buf);
-	ps1LogFmt("glr", "shot: %s %dx%d rgba rc=%d err=%u",
-		g_shotPath, (int)g_vpW, (int)g_vpH, (int)rc, (unsigned)err);
+	ps1LogFmt("glr", "shot: %s %dx%d rgba rc=%d err=%u glrframe=%d deferred=%d",
+		g_shotPath, (int)g_vpW, (int)g_vpH, (int)rc, (unsigned)err,
+		(int)g_frame, (int)g_shotDeferred);
 	}
 
 extern "C" int glrEnabled(void)
@@ -463,6 +469,13 @@ static void ensureDummyTex(void)
 			}
 		}
 	g_dummySide = g_dummyTex ? g_dummySide : 0;
+	}
+
+// Probe: the background normally goes down only when a direct VRAM write landed
+// in the drawn buffer, which is rare enough to be hard to catch. This forces it.
+extern "C" void glrSetBgForce(int aOn)
+	{
+	g_bgForce = aOn ? ETrue : EFalse;
 	}
 
 extern "C" void glrSetDummyTex(int aSide)
@@ -870,14 +883,15 @@ static void applyBlend(TInt aMode)
 		}
 	}
 
-// A snapshot was asked for on a frame this rasteriser does not show. Saying so
-// and dropping the request beats writing it on some later, unrelated frame.
+// A snapshot was asked for on a frame this rasteriser does not show. The request
+// waits for a frame it does draw, and the log says which one that turned out to
+// be, so the file is never mistaken for the frame that was asked for.
 static void vramPathShot(void)
 	{
-	if (!g_shotWanted)
+	if (!g_shotWanted || g_shotDeferred)
 		return;
-	g_shotWanted = EFalse;
-	ps1LogFmt("glr", "shot: %s skipped, frame shown from VRAM", g_shotPath);
+	g_shotDeferred = ETrue;
+	ps1LogFmt("glr", "shot: %s deferred, that frame came from VRAM", g_shotPath);
 	}
 
 extern "C" int glrEndFrame(void)
@@ -914,17 +928,13 @@ extern "C" int glrEndFrame(void)
 
 	// The buffer this frame was drawn into was also written directly - a video
 	// frame, a decoded picture, a VRAM to VRAM copy. Those bytes exist only in
-	// guest VRAM, so the frame is shown from there; drawing our primitives alone
-	// would leave the picture underneath them missing.
-	if (g_wrX1 >= g_wrX0 &&
+	// guest VRAM and carry no primitives, so the scene goes on TOP of them
+	// instead of replacing them.
+	const TBool bg = g_bgForce || (g_wrX1 >= g_wrX0 &&
 	    !(g_wrX0 >= g_clip[2] || g_wrX1 <= g_clip[0] ||
-	      g_wrY0 >= g_clip[3] || g_wrY1 <= g_clip[1]))
-		{
-		g_vramFrames++;
+	      g_wrY0 >= g_clip[3] || g_wrY1 <= g_clip[1]));
+	if (bg)
 		g_mixedFrames++;
-		vramPathShot();
-		return 0;
-		}
 
 	// The window on this device rotates by itself, and the field of view was set
 	// once at initialisation. After a rotation it stayed at the old size - the
@@ -971,6 +981,27 @@ extern "C" int glrEndFrame(void)
 	glClear(GL_COLOR_BUFFER_BIT);
 	const unsigned int tClear1 = ndrc_symbian_fastcount();
 	g_tClear += (unsigned int)(tClear1 - tClear0);
+
+	if (bg)
+		{
+		// The background quad has no colour array, and ours is enabled here with a
+		// pointer that is only set further down - the driver followed it to NULL and
+		// took the process with it.
+		glDisableClientState(GL_COLOR_ARRAY);
+		if (voutSymbianGlVramQuad())
+			{
+			// The background is drawn in window pixels and leaves that projection
+			// behind, so ours has to be set again before the scene.
+			glMatrixMode(GL_PROJECTION);
+			glLoadIdentity();
+			glOrthof((GLfloat)g_clip[0], (GLfloat)g_clip[2],
+			         (GLfloat)g_clip[3], (GLfloat)g_clip[1], -1, 1);
+			glMatrixMode(GL_MODELVIEW);
+			glLoadIdentity();
+			g_bgFrames++;
+			}
+		glEnableClientState(GL_COLOR_ARRAY);
+		}
 
 	const unsigned int tSetup2 = ndrc_symbian_fastcount();
 	// Texture coords are raw PS1 texels; the divide by 256 is done by the texture
@@ -1141,10 +1172,10 @@ extern "C" void glrStats(int *aVerts, int *aBatches, int *aOver,
 	if (aEvict)   *aEvict = g_evict;
 	if (aOver)    *aOver = g_nofit + g_batchOver;   // silent losses of both kinds
 	ps1LogFmt("glrbrk", "batches=%d frames=%d brkTex=%d brkBlend=%d brkClip=%d"
-		" spriteWrap=%d/%d vramFrames=%d mixedFrames=%d",
+		" spriteWrap=%d/%d vramFrames=%d mixedFrames=%d bgFrames=%d",
 		(int)g_batchSum, (int)g_frameSum, (int)g_brkTex, (int)g_brkBlend,
 		(int)g_brkClip, (int)g_spriteWrap, (int)g_spriteAll,
-		(int)g_vramFrames, (int)g_mixedFrames);
+		(int)g_vramFrames, (int)g_mixedFrames, (int)g_bgFrames);
 	const unsigned int freq = ndrc_symbian_fastfreq();
 	const unsigned int f = freq ? freq : 1;
 	ps1LogFmt("glrtime", "setup=%ums clear=%ums draw=%ums swap=%ums frames=%d",

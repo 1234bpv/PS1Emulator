@@ -881,11 +881,49 @@ static TBool glInitOnWindow()
 	return ETrue;
 	}
 
+// Where in VRAM the frame to be shown lives, and how it is laid out. Shared by
+// the blit path and by the background the MBX rasteriser puts under its scene.
+static const TUint8 *voutSrcGeom(TInt &aStart, TInt &aW, TInt &aH,
+                                TBool &aRgb24, TBool &aField, TInt &aSrcRows)
+	{
+	const TUint8 *vbytes = (const TUint8 *)g_vout.vram;
+	if (!vbytes)
+		return NULL;
+	aStart = 0;
+	aW = g_scr.iWidth; aH = g_scr.iHeight;
+	aRgb24 = g_vout.rgb24;
+	if (g_vout.w > 0 && g_vout.h > 0)
+		{ aStart = g_vout.offset; aW = g_vout.w; aH = g_vout.h; }
+	if (aW < 1) aW = 1;
+	if (aH < 1) aH = 1;
+	const TInt maxW = aRgb24 ? 682 : 1024;          // 2048 bytes per VRAM row
+	if (aW > maxW) aW = maxW;
+	const TInt startRow = aStart / 2048;
+	if (aH > 512 - startRow) aH = 512 - startRow;   // do not read past 1024x512 VRAM
+	if (aH < 1) aH = 1;
+	// Interlaced modes (hi-res, h>256) put the fields in adjacent VRAM rows, so
+	// reading them in order combs. Take one field; the aspect still uses the full
+	// height, because on hardware the field is stretched over the whole frame.
+	aField = (aH > 256);
+	aSrcRows = aField ? aH / 2 : aH;
+	return vbytes;
+	}
+
 // One frame via GL: convert field to buffer (BGR555->RGB565), upload to
 // texture, draw letterboxed quad, swap. Scaling and present - on GPU.
 static void glPresentFrame(const TUint8 *vbytes, TInt startByte,
-                           TInt sw, TInt sh, TBool field, TInt srcRows)
+                           TInt sw, TInt sh, TBool field, TInt srcRows,
+                           TBool aOwnFrame = ETrue)
 	{
+	// Set here, not once at context creation: the MBX rasteriser shares this
+	// context and leaves its own projection and texture matrix behind.
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrthof(0, (GLfloat)g_glW, (GLfloat)g_glH, 0, -1, 1);
+	glMatrixMode(GL_TEXTURE);
+	glLoadIdentity();
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
 	// The same two counters as on bitmap path so the numbers are comparable:
 	// "fill" = conversion + texture upload, "present" = drawing + swap.
 	const TUint _gc0 = User::FastCounter();
@@ -927,11 +965,13 @@ static void glPresentFrame(const TUint8 *vbytes, TInt startByte,
 	const GLfloat verts[8] = { x0, y0,  x1, y0,  x0, y1,  x1, y1 };
 	const GLfloat texc[8]  = { 0, 0,   u, 0,    0, v,    u, v };
 
-	glClear(GL_COLOR_BUFFER_BIT);
+	if (aOwnFrame)
+		glClear(GL_COLOR_BUFFER_BIT);
 	glVertexPointer(2, GL_FLOAT, 0, verts);
 	glTexCoordPointer(2, GL_FLOAT, 0, texc);
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-	eglSwapBuffers(g_eglDpy, g_eglSurf);
+	if (aOwnFrame)
+		eglSwapBuffers(g_eglDpy, g_eglSurf);
 	g_blitPresentTicks += (unsigned)(User::FastCounter() - _gc1);
 
 	// Once after first frame: GL error here means texture upload
@@ -975,6 +1015,26 @@ static void glShutdown()
 // glrender.cpp draws on its own, but context and surface are held by this file. We provide
 // it with exactly two things: surface size and swap. EGL does not leave
 // this file.
+
+// The scene the rasteriser is about to draw sits on top of a picture that lives
+// only in guest VRAM - a decoded image, a video frame, a copy inside VRAM. This
+// lays that picture down first, in the same context, without clearing or
+// swapping: the rasteriser owns both ends of the frame.
+extern "C" int voutSymbianGlVramQuad(void)
+	{
+	if (!g_wsReady || !g_glReady)
+		return 0;
+	g_voutSelfCall = 1;
+	vout_update(&gpu, gpu.screen.src_x, gpu.screen.src_y);
+	g_voutSelfCall = 0;
+	TInt start = 0, sw = 0, sh = 0, srcRows = 0;
+	TBool rgb24 = EFalse, field = EFalse;
+	const TUint8 *vbytes = voutSrcGeom(start, sw, sh, rgb24, field, srcRows);
+	if (!vbytes || rgb24)
+		return 0;
+	glPresentFrame(vbytes, start, sw, sh, field, srcRows, EFalse);
+	return 1;
+	}
 
 extern "C" int voutSymbianGlSwap(void)
 	{
@@ -1349,26 +1409,11 @@ static void drawOverlay(TUint8 *aDst, TInt aStrideB, TInt aPixB, TInt aSW, TInt 
 // black bars) and blits into window.
 static void blitCurrent()
 	{
-	const TUint8 *vbytes = (const TUint8 *)g_vout.vram;
+	TInt startByte = 0, sw = 0, sh = 0, srcRows = 0;
+	TBool rgb24 = EFalse, field = EFalse;
+	const TUint8 *vbytes = voutSrcGeom(startByte, sw, sh, rgb24, field, srcRows);
 	if (!vbytes)
 		return;
-
-	TInt startByte = 0;
-	TInt sw = g_scr.iWidth, sh = g_scr.iHeight;
-	const TBool rgb24 = g_vout.rgb24;
-	if (g_vout.w > 0 && g_vout.h > 0)
-		{
-		startByte = g_vout.offset;
-		sw = g_vout.w;
-		sh = g_vout.h;
-		}
-	if (sw < 1) sw = 1;
-	if (sh < 1) sh = 1;
-	const TInt maxW = rgb24 ? 682 : 1024;          // 2048 bytes per VRAM row
-	if (sw > maxW) sw = maxW;
-	const TInt startRow = startByte / 2048;
-	if (sh > 512 - startRow) sh = 512 - startRow;  // do not read past 1024x512 VRAM bounds
-	if (sh < 1) sh = 1;
 
 	// Pump scheduler (DSA abort/restart) before picking target to avoid writing to
 	// screen that WS has already reclaimed. Disabled in GUI (see g_pumpAo): there frame
@@ -1388,12 +1433,6 @@ static void blitCurrent()
 	// directly into physical LCD buffer (dimensions from HAL).
 	const TInt SW = directFb ? g_fbW : g_scr.iWidth;
 	const TInt SH = directFb ? g_fbH : g_scr.iHeight;
-
-	// Interlaced modes (hi-res, sh>256) place fields in adjacent VRAM rows, so
-	// linear reading produces combing artifacts. Take one field (even rows); calculate aspect ratio
-	// using full height, because on hardware field is stretched over entire frame.
-	const TBool field = (sh > 256);
-	const TInt srcRows = field ? sh / 2 : sh;
 
 	// GL ES path (MBX): GPU scales and presents (eglSwapBuffers). Replaces entire
 	// bitmap+present below. rgb24 is kept on bitmap path for now (untested).
