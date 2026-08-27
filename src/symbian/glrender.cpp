@@ -109,6 +109,12 @@ static TInt      g_vramFrames;    // frames handed back to the VRAM path
 static TInt      g_mixedFrames;   // frames whose scene sat on a VRAM picture
 static TInt      g_bgFrames;      // ... of those, ones where the picture went down
 static TBool     g_bgForce;       // probe: put the VRAM picture under every frame
+// Two silent losses, counted rather than left to be mistaken for a drawing fault:
+// primitives whose group did not fit in the table, and whole groups that were not
+// the one the projection was built from.
+static TInt      g_clipFull;      // primitives with no group left to join
+static TInt      g_dropVerts;     // vertices skipped for belonging to another group
+static TInt      g_dropGroups;    // groups skipped, summed over frames
 
 // --- texture cache -----------------------------------------------------------
 // Measured (section 14): per frame the game uses 12.7 distinct "page + CLUT"
@@ -663,6 +669,8 @@ extern "C" void glrPrim(unsigned aCmd, const unsigned *aPacket, const int *aStat
 		g_ofs[g_curClip][1] = aState[EStOfsY];
 		g_clipVerts[g_curClip] = 0;
 		}
+	if (g_curClip < 0)
+		g_clipFull++;
 
 	const TInt ofsX = aState[EStOfsX], ofsY = aState[EStOfsY];
 	// Semi-transparency is carried by bit 1 of the command code; the mode is in the state.
@@ -909,6 +917,7 @@ extern "C" int glrEndFrame(void)
 		return 0;
 		}
 	// The back buffer is the group with the most vertices.
+	g_dropGroups += g_nClips - 1;
 	TInt best = 0;
 	for (TInt i = 1; i < g_nClips; i++)
 		if (g_clipVerts[i] > g_clipVerts[best])
@@ -1044,7 +1053,10 @@ extern "C" int glrEndFrame(void)
 			// Primitives of other areas are skipped: in this projection they
 			// would land at random, and there is nowhere to show them anyway.
 		if (g_batch[b].iCount <= 0 || g_batch[b].iClip != best)
+			{
+			g_dropVerts += g_batch[b].iCount;
 			continue;
+			}
 		if (g_batch[b].iTex != curTex)
 			{
 			curTex = g_batch[b].iTex;
@@ -1172,10 +1184,12 @@ extern "C" void glrStats(int *aVerts, int *aBatches, int *aOver,
 	if (aEvict)   *aEvict = g_evict;
 	if (aOver)    *aOver = g_nofit + g_batchOver;   // silent losses of both kinds
 	ps1LogFmt("glrbrk", "batches=%d frames=%d brkTex=%d brkBlend=%d brkClip=%d"
-		" spriteWrap=%d/%d vramFrames=%d mixedFrames=%d bgFrames=%d",
+		" spriteWrap=%d/%d vramFrames=%d mixedFrames=%d bgFrames=%d"
+		" clipFull=%d dropVerts=%d dropGroups=%d",
 		(int)g_batchSum, (int)g_frameSum, (int)g_brkTex, (int)g_brkBlend,
 		(int)g_brkClip, (int)g_spriteWrap, (int)g_spriteAll,
-		(int)g_vramFrames, (int)g_mixedFrames, (int)g_bgFrames);
+		(int)g_vramFrames, (int)g_mixedFrames, (int)g_bgFrames,
+		(int)g_clipFull, (int)g_dropVerts, (int)g_dropGroups);
 	const unsigned int freq = ndrc_symbian_fastfreq();
 	const unsigned int f = freq ? freq : 1;
 	ps1LogFmt("glrtime", "setup=%ums clear=%ums draw=%ums swap=%ums frames=%d",
