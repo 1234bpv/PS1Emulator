@@ -51,15 +51,19 @@ enum TGlrState
 	EStCount
 	};
 
-// Ceiling per frame. Measured 324 primitives per frame; take four times that
-// for headroom, since a cutscene or menu frame can be denser.
-static const TInt KMaxPrims = 1400;
+// Ceiling per frame. The old one, 1400, came from 324 primitives measured on a
+// replay and four times that for headroom. A real race is nothing like it: with
+// traffic on screen the vertex array filled every frame and 750 to 860 triangles
+// were thrown away per frame - and being thrown away at the END of the frame,
+// they were the interface and the cars nearest the camera, which is exactly how
+// it looked. Measured on the device, not estimated.
+static const TInt KMaxPrims = 6000;
 static const TInt KMaxVerts = KMaxPrims * 6;
 // Batches per frame. 256 was too few: in Gran Turismo every quad comes with its
 // own palette, that is its own batch, and past the limit batchFor returned
 // silently while emitVertex kept appending vertices to the LAST batch - so
 // everything past it drew with its texture - half a frame flooded with grass.
-static const TInt KMaxBatch = 4096;
+static const TInt KMaxBatch = 8192;
 
 struct TGlrVert
 	{
@@ -135,7 +139,11 @@ static TInt      g_lastSrcX = -1, g_lastSrcY = -1;   // display start last frame
 //   - do NOT write into a texture the current frame draws from (a separate MBX penalty);
 //   - the driver paletted format does not pay off on a whole page, so unpack ourselves.
 static const TInt KTexSide   = 256;       // a PS1 page is always 256x256 texels
-static const TInt KMaxTex    = 64;
+// A race frame asked for more than sixty-four distinct page-and-palette pairs and
+// 130 to 210 primitives per frame were left with no texture at all - drawn flat,
+// which is the white silhouette where a car should be. A slot is a 256x256 page
+// at two bytes a texel, so this is 16 MB of texture memory against 8.
+static const TInt KMaxTex    = 128;
 
 struct TGlrTex
 	{
