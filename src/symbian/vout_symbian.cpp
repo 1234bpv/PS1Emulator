@@ -797,7 +797,7 @@ static TBool glInitOnWindow()
 		EGL_RED_SIZE,     5,
 		EGL_GREEN_SIZE,   6,
 		EGL_BLUE_SIZE,    5,
-		EGL_DEPTH_SIZE,   16,
+		EGL_DEPTH_SIZE,   0,
 		EGL_NONE };
 	// KEY for non-ScreenPlay devices (and N95/S60v3 is such). Symbian
 	// Developer Library, "Symbian-Specific Behavior": RWindow display mode
@@ -827,27 +827,44 @@ static TBool glInitOnWindow()
 	const TDisplayMode got = g_winp->DisplayMode();
 	const EGLint gotBits = (got == EColor64K) ? 16 : (got == EColor16M ? 24 : 32);
 
-	// The colour depth must match the window, and the rasteriser wants a depth
-	// buffer on top of that - it is what lets primitives be regrouped by texture
-	// instead of drawn in submission order. Colour match wins if both cannot be had.
-	EGLConfig cfg = cfgs[0]; EGLint cfgBits = 0; EGLint cfgDepth = 0;
-	for (EGLint pass = 0; pass < 2 && cfgBits == 0; pass++)
-		for (EGLint i = 0; i < n; i++)
-			{
-			EGLint bs = 0, ds = 0;
-			eglGetConfigAttrib(g_eglDpy, cfgs[i], EGL_BUFFER_SIZE, &bs);
-			eglGetConfigAttrib(g_eglDpy, cfgs[i], EGL_DEPTH_SIZE, &ds);
-			if (bs != gotBits || (pass == 0 && ds < 16))
-				continue;
-			cfg = cfgs[i]; cfgBits = bs; cfgDepth = ds;
-			break;
-			}
+	// The config is chosen ONLY by the colour depth the window agreed to, and by
+	// nothing else. Asking eglChooseConfig for a depth buffer changed which config
+	// came back - three instead of four - and the picture went white on this
+	// driver. A depth buffer is worth having but not at the price of a config the
+	// window does not like, so it is taken only if this one happens to carry it.
+	EGLConfig cfg = cfgs[0]; EGLint cfgBits = 0; EGLint cfgDepth = 0, cfgId = 0;
+	for (EGLint i = 0; i < n; i++)
+		{
+		EGLint bs = 0;
+		eglGetConfigAttrib(g_eglDpy, cfgs[i], EGL_BUFFER_SIZE, &bs);
+		if (bs == gotBits) { cfg = cfgs[i]; cfgBits = bs; break; }
+		}
+	// Every config on offer, once: which of them carry a depth buffer decides
+	// whether the rasteriser can ever stop drawing in submission order.
+	for (EGLint i = 0; i < n; i++)
+		{
+		EGLint id = 0, bs = 0, ds = 0, ss = 0, st = 0, r = 0, g = 0, b = 0, a = 0;
+		eglGetConfigAttrib(g_eglDpy, cfgs[i], EGL_CONFIG_ID, &id);
+		eglGetConfigAttrib(g_eglDpy, cfgs[i], EGL_BUFFER_SIZE, &bs);
+		eglGetConfigAttrib(g_eglDpy, cfgs[i], EGL_DEPTH_SIZE, &ds);
+		eglGetConfigAttrib(g_eglDpy, cfgs[i], EGL_STENCIL_SIZE, &ss);
+		eglGetConfigAttrib(g_eglDpy, cfgs[i], EGL_SURFACE_TYPE, &st);
+		eglGetConfigAttrib(g_eglDpy, cfgs[i], EGL_RED_SIZE, &r);
+		eglGetConfigAttrib(g_eglDpy, cfgs[i], EGL_GREEN_SIZE, &g);
+		eglGetConfigAttrib(g_eglDpy, cfgs[i], EGL_BLUE_SIZE, &b);
+		eglGetConfigAttrib(g_eglDpy, cfgs[i], EGL_ALPHA_SIZE, &a);
+		ps1LogFmt("glcfg", "i=%d id=%d bufsz=%d rgba=%d%d%d%d depth=%d stencil=%d"
+			" surftype=0x%x", (int)i, (int)id, (int)bs, (int)r, (int)g, (int)b, (int)a,
+			(int)ds, (int)ss, (unsigned)st);
+		}
+	eglGetConfigAttrib(g_eglDpy, cfg, EGL_DEPTH_SIZE, &cfgDepth);
+	eglGetConfigAttrib(g_eglDpy, cfg, EGL_CONFIG_ID, &cfgId);
 	g_glDepthBits = cfgDepth;
 	g_eglCfg = cfg;
 	ps1LogFmt("gl", "configs=%d have16=%d have32=%d wantMode=%d gotMode=%d bits=%d"
-		" cfgBits=%d depth=%d",
+		" cfgBits=%d depth=%d id=%d",
 		(int)n, (int)want16, (int)want32, (int)dm, (int)got, (int)gotBits, (int)cfgBits,
-		(int)g_glDepthBits);
+		(int)g_glDepthBits, (int)cfgId);
 	g_eglSurf = eglCreateWindowSurface(g_eglDpy, cfg, (NativeWindowType)g_winp, NULL);
 	if (g_eglSurf == EGL_NO_SURFACE) return EFalse;
 	g_eglCtx = eglCreateContext(g_eglDpy, cfg, EGL_NO_CONTEXT, NULL);
