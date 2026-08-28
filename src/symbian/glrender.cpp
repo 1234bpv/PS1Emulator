@@ -59,7 +59,7 @@ static const TInt KMaxVerts = KMaxPrims * 6;
 // own palette, that is its own batch, and past the limit batchFor returned
 // silently while emitVertex kept appending vertices to the LAST batch - so
 // everything past it drew with its texture - half a frame flooded with grass.
-static const TInt KMaxBatch = 1024;
+static const TInt KMaxBatch = 4096;
 
 struct TGlrVert
 	{
@@ -116,6 +116,13 @@ static TInt      g_clipFull;      // primitives with no group left to join
 static TInt      g_dropVerts;     // vertices skipped for belonging to another group
 static TInt      g_dropGroups;    // groups skipped, summed over frames
 static TInt      g_holdFrames;    // frames with nothing new, screen left alone
+static TBool     g_batchFull;     // the batch table is full and this primitive is lost
+static TInt      g_dropPrims;     // primitives dropped for want of a batch
+static TInt      g_lossLogged;    // how many per-frame loss lines have been written
+// Every counter above is cumulative, which cannot say WHICH frame lost something
+// nor how close that frame ran to the limits. These hold the values at frame start.
+static TInt      g_f0Nofit, g_f0BatchOver, g_f0DropPrims, g_f0Over;
+static TInt      g_f0ClipFull, g_f0DropVerts, g_f0Evict, g_f0Miss;
 static TInt      g_lastSrcX = -1, g_lastSrcY = -1;   // display start last frame
 
 // --- texture cache -----------------------------------------------------------
@@ -556,7 +563,10 @@ static void batchFor(TInt aBlend, TInt aTex)
 	if (g_nBatch > 0 && g_batch[g_nBatch - 1].iBlend == aBlend
 	                 && g_batch[g_nBatch - 1].iTex == aTex
 	                 && g_batch[g_nBatch - 1].iClip == g_curClip)
+		{
+		g_batchFull = EFalse;
 		return;
+		}
 	if (g_nBatch > 0)
 		{
 		const TGlrBatch &b = g_batch[g_nBatch - 1];
@@ -566,7 +576,11 @@ static void batchFor(TInt aBlend, TInt aTex)
 		}
 	if (g_nBatch >= KMaxBatch)
 		{
+		// The table is full and this primitive needs a state of its own. Letting it
+		// through would append it to the LAST batch and draw it with a foreign
+		// texture - that is how half a frame once came out flooded with grass.
 		g_batchOver++;
+		g_batchFull = ETrue;
 		return;
 		}
 	g_batch[g_nBatch].iFirst = g_nVerts;
@@ -575,6 +589,7 @@ static void batchFor(TInt aBlend, TInt aTex)
 	g_batch[g_nBatch].iTex   = aTex;
 	g_batch[g_nBatch].iClip  = g_curClip;
 	g_nBatch++;
+	g_batchFull = EFalse;
 	}
 
 static inline void emitVertex(TInt aX, TInt aY, TUint32 aBgr, TInt aAlpha,
@@ -600,6 +615,7 @@ static inline void emitVertex(TInt aX, TInt aY, TUint32 aBgr, TInt aAlpha,
 static void emitTri(const TInt *aX, const TInt *aY, const TUint32 *aCol,
 	TInt aAlpha, const TInt *aU, const TInt *aV)
 	{
+	if (g_batchFull || g_nBatch == 0) { g_dropPrims++; return; }
 	if (g_nVerts + 3 > KMaxVerts) { g_over++; return; }
 	emitVertex(aX[0], aY[0], aCol[0], aAlpha, aU[0], aV[0]);
 	emitVertex(aX[1], aY[1], aCol[1], aAlpha, aU[1], aV[1]);
@@ -864,6 +880,11 @@ extern "C" void glrBeginFrame(void)
 	g_over = 0;
 	g_frame++;
 	g_wrX0 = 0; g_wrY0 = 0; g_wrX1 = -1; g_wrY1 = -1;
+	g_batchFull = EFalse;
+	g_f0Nofit = g_nofit;         g_f0BatchOver = g_batchOver;
+	g_f0DropPrims = g_dropPrims; g_f0Over = g_over;
+	g_f0ClipFull = g_clipFull;   g_f0DropVerts = g_dropVerts;
+	g_f0Evict = g_evict;         g_f0Miss = g_miss;
 	for (TInt i = 0; i < KMaxTex; i++)
 		{
 		g_tex[i].iUseU0 = 0x7FFFFFFF;
@@ -1101,6 +1122,29 @@ extern "C" int glrEndFrame(void)
 		}
 	const unsigned int tDraw1 = ndrc_symbian_fastcount();
 	g_tDraw += (unsigned int)(tDraw1 - tDraw0);
+
+	// Only frames that actually lost something, and only the first forty of them.
+	// A limit that quietly drops work reads as a rendering fault, so it says so,
+	// together with how close that frame ran to each limit.
+		{
+		const TInt lNofit = g_nofit - g_f0Nofit;
+		const TInt lBatch = g_batchOver - g_f0BatchOver;
+		const TInt lPrim  = g_dropPrims - g_f0DropPrims;
+		const TInt lVert  = g_over - g_f0Over;
+		const TInt lClip  = g_clipFull - g_f0ClipFull;
+		const TInt lDrop  = g_dropVerts - g_f0DropVerts;
+		if (g_lossLogged < 40 &&
+		    (lNofit || lBatch || lPrim || lVert || lClip || lDrop))
+			{
+			g_lossLogged++;
+			ps1LogFmt("glrloss", "f=%d nofit=%d batchover=%d dropprim=%d vertover=%d"
+				" clipfull=%d dropverts=%d tex=%d verts=%d batches=%d clips=%d"
+				" upload=%d evict=%d",
+				(int)g_frame, (int)lNofit, (int)lBatch, (int)lPrim, (int)lVert,
+				(int)lClip, (int)lDrop, (int)g_nTex, (int)g_nVerts, (int)g_nBatch,
+				(int)g_nClips, (int)(g_miss - g_f0Miss), (int)(g_evict - g_f0Evict));
+			}
+		}
 	glMatrixMode(GL_TEXTURE);
 	glLoadIdentity();
 	// The VRAM display path shares this context and sets its projection once,
@@ -1203,11 +1247,12 @@ extern "C" void glrStats(int *aVerts, int *aBatches, int *aOver,
 	if (aOver)    *aOver = g_nofit + g_batchOver;   // silent losses of both kinds
 	ps1LogFmt("glrbrk", "batches=%d frames=%d brkTex=%d brkBlend=%d brkClip=%d"
 		" spriteWrap=%d/%d vramFrames=%d mixedFrames=%d bgFrames=%d"
-		" clipFull=%d dropVerts=%d dropGroups=%d holdFrames=%d",
+		" clipFull=%d dropVerts=%d dropGroups=%d holdFrames=%d dropPrims=%d",
 		(int)g_batchSum, (int)g_frameSum, (int)g_brkTex, (int)g_brkBlend,
 		(int)g_brkClip, (int)g_spriteWrap, (int)g_spriteAll,
 		(int)g_vramFrames, (int)g_mixedFrames, (int)g_bgFrames,
-		(int)g_clipFull, (int)g_dropVerts, (int)g_dropGroups, (int)g_holdFrames);
+		(int)g_clipFull, (int)g_dropVerts, (int)g_dropGroups, (int)g_holdFrames,
+		(int)g_dropPrims);
 	const unsigned int freq = ndrc_symbian_fastfreq();
 	const unsigned int f = freq ? freq : 1;
 	ps1LogFmt("glrtime", "setup=%ums clear=%ums draw=%ums swap=%ums frames=%d",
