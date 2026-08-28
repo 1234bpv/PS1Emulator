@@ -209,6 +209,15 @@ static TInt      g_brkTex, g_brkBlend, g_brkClip, g_batchSum, g_frameSum;
 // into the neighbouring page. For polygons the question does not arise - there U and V are bytes.
 static TInt      g_spriteWrap, g_spriteAll;
 static unsigned long long g_tSetup, g_tClear, g_tDraw, g_tSwap;
+// The texture window mask is baked into the page, so the page is a tiled repeat
+// of a (maskU+1)x(maskV+1) image. Uploading only that image and leaving the
+// tiling to GL_REPEAT is exact, and bound texture size is what this driver
+// charges for. These two count what that would save before it is written.
+static unsigned long long g_upFull, g_upMask;
+// A cropped page has to stay a power of two on each side and sit on a multiple
+// of that size, or GL_REPEAT no longer reproduces the page. This counts the
+// texels such a block would hold, against the whole page.
+static unsigned long long g_blkTexels;
 static unsigned long long g_useTexels, g_fullTexels, g_useSlots;
 
 
@@ -553,6 +562,8 @@ static TInt texFor(TUint32 aTba, TUint32 aCba, TInt aMode, TInt aMaskU, TInt aMa
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, KTexSide, KTexSide, 0,
 		GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, g_decode);
+	g_upFull += 65536ULL;
+	g_upMask += (unsigned long long)(aMaskU + 1) * (unsigned long long)(aMaskV + 1);
 	g_tex[slot].iTba = (TInt)aTba;
 	g_tex[slot].iCba = cba;
 	g_tex[slot].iMode = aMode;
@@ -1457,6 +1468,10 @@ extern "C" int glrEndFrame(void)
 			const unsigned long long th = (unsigned long long)(g_tex[i].iUseV1 - g_tex[i].iUseV0 + 1);
 			g_useTexels += tw * th;
 			g_fullTexels += 65536ULL;
+			TInt bw = 1, bh = 1;
+			while (bw < 256 && (g_tex[i].iUseU0 / bw) != (g_tex[i].iUseU1 / bw)) bw <<= 1;
+			while (bh < 256 && (g_tex[i].iUseV0 / bh) != (g_tex[i].iUseV1 / bh)) bh <<= 1;
+			g_blkTexels += (unsigned long long)bw * (unsigned long long)bh;
 			g_useSlots++;
 			}
 		}
@@ -1533,6 +1548,11 @@ extern "C" void glrStats(int *aVerts, int *aBatches, int *aOver,
 		(unsigned int)(g_tDraw * 1000ULL / f),
 		(unsigned int)(g_tSwap * 1000ULL / f),
 		(int)g_frameSum);
+	ps1LogFmt("glrblk", "blk=%uK", (unsigned int)(g_blkTexels / 1024ULL));
+	ps1LogFmt("glrmask", "uploads=%u full=%uK masked=%uK",
+		(unsigned int)(g_upFull / 65536ULL),
+		(unsigned int)(g_upFull / 1024ULL),
+		(unsigned int)(g_upMask / 1024ULL));
 	ps1LogFmt("glruv", "use=%uK full=%uK slots=%d frames=%d",
 		(unsigned int)(g_useTexels / 1024ULL),
 		(unsigned int)(g_fullTexels / 1024ULL),
