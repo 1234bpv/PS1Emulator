@@ -115,6 +115,8 @@ static TBool     g_bgForce;       // probe: put the VRAM picture under every fra
 static TInt      g_clipFull;      // primitives with no group left to join
 static TInt      g_dropVerts;     // vertices skipped for belonging to another group
 static TInt      g_dropGroups;    // groups skipped, summed over frames
+static TInt      g_holdFrames;    // frames with nothing new, screen left alone
+static TInt      g_lastSrcX = -1, g_lastSrcY = -1;   // display start last frame
 
 // --- texture cache -----------------------------------------------------------
 // Measured (section 14): per frame the game uses 12.7 distinct "page + CLUT"
@@ -906,12 +908,28 @@ extern "C" int glrEndFrame(void)
 	{
 	if (!g_on || !g_ready)
 		return 0;
-	// Nothing was drawn, so there is nothing to show: the frame goes back to the
-	// VRAM display path. Keeping it here and skipping the swap was the reason a
-	// video or a menu drawn straight into VRAM froze the screen - with the
-	// software pass off, no primitive ever arrives for those.
+	// Nothing was drawn. That happens for two unrelated reasons, and telling them
+	// apart is what the picture depends on. A game running at half the video rate
+	// has no new frame at all, and the screen must keep the one it shows: the
+	// surface is double buffered, so swapping would put up the OTHER buffer, two
+	// frames old - measured as the race alternating with a black frame at every
+	// second vblank. But a video or a picture written straight into VRAM is new
+	// content that carries no primitives, and that one has to be shown.
+	TInt sx = 0, sy = 0, dsw = 0, dsh = 0;
+	voutSymbianDbgState(NULL, NULL, NULL, &sx, &sy, &dsw, &dsh, NULL, NULL);
+	const TBool moved = (sx != g_lastSrcX || sy != g_lastSrcY);
+	g_lastSrcX = sx;
+	g_lastSrcY = sy;
 	if (g_nBatch == 0 || g_nClips == 0)
 		{
+		const TBool wrote = (g_wrX1 >= g_wrX0 && dsw > 0 && dsh > 0 &&
+		    !(g_wrX0 >= sx + dsw || g_wrX1 <= sx ||
+		      g_wrY0 >= sy + dsh || g_wrY1 <= sy));
+		if (!wrote && !moved)
+			{
+			g_holdFrames++;
+			return 1;
+			}
 		g_vramFrames++;
 		vramPathShot();
 		return 0;
@@ -1185,11 +1203,11 @@ extern "C" void glrStats(int *aVerts, int *aBatches, int *aOver,
 	if (aOver)    *aOver = g_nofit + g_batchOver;   // silent losses of both kinds
 	ps1LogFmt("glrbrk", "batches=%d frames=%d brkTex=%d brkBlend=%d brkClip=%d"
 		" spriteWrap=%d/%d vramFrames=%d mixedFrames=%d bgFrames=%d"
-		" clipFull=%d dropVerts=%d dropGroups=%d",
+		" clipFull=%d dropVerts=%d dropGroups=%d holdFrames=%d",
 		(int)g_batchSum, (int)g_frameSum, (int)g_brkTex, (int)g_brkBlend,
 		(int)g_brkClip, (int)g_spriteWrap, (int)g_spriteAll,
 		(int)g_vramFrames, (int)g_mixedFrames, (int)g_bgFrames,
-		(int)g_clipFull, (int)g_dropVerts, (int)g_dropGroups);
+		(int)g_clipFull, (int)g_dropVerts, (int)g_dropGroups, (int)g_holdFrames);
 	const unsigned int freq = ndrc_symbian_fastfreq();
 	const unsigned int f = freq ? freq : 1;
 	ps1LogFmt("glrtime", "setup=%ums clear=%ums draw=%ums swap=%ums frames=%d",
