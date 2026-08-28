@@ -139,6 +139,11 @@ static TBool     g_depth;         // a depth buffer exists and is in use
 // Regrouping by texture is off by default. It made a menu come out white, and the
 // cause is not found yet; submission order is the behaviour that is known good.
 static TBool     g_sortOn;
+// Which half of the experiment is on. Regrouping needs both; each alone is here
+// so the one that turned a menu white can be named rather than guessed at.
+static TBool     g_zOn;           // depth in the vertex and the depth-range projection
+static TBool     g_idxOn;         // one indexed call per state instead of one per batch
+static TBool     g_shotBig;       // snapshot the first frame with a real scene in it
 static TInt      g_draws;         // draw calls issued, summed over frames
 static TInt     *g_order;         // batch indices in the order they go out
 static TInt     *g_batchNext;     // next batch with the same texture, -1 ends
@@ -603,6 +608,24 @@ extern "C" void glrSetSort(int aOn)
 	g_sortOn = aOn ? ETrue : EFalse;
 	}
 
+extern "C" void glrSetZ(int aOn)
+	{
+	g_zOn = aOn ? ETrue : EFalse;
+	}
+
+extern "C" void glrSetIdx(int aOn)
+	{
+	g_idxOn = aOn ? ETrue : EFalse;
+	}
+
+// A snapshot of the first frame that actually has a scene in it. The frame number
+// route lands on whatever the game happens to be doing, which so far has been a
+// flat grey screen - useless for telling one drawing path from another.
+extern "C" void glrShotBig(void)
+	{
+	g_shotBig = ETrue;
+	}
+
 extern "C" void glrSetBgForce(int aOn)
 	{
 	g_bgForce = aOn ? ETrue : EFalse;
@@ -786,7 +809,7 @@ extern "C" void glrPrim(unsigned aCmd, const unsigned *aPacket, const int *aStat
 		return;
 	// Later primitives must win, and the projection makes a smaller z the nearer
 	// one, so the depth counts down as the frame goes on.
-	g_primZ = g_sortOn
+	g_primZ = (g_sortOn || g_zOn)
 		? (GLshort)-((g_primIdx < KMaxPrims) ? (KMaxPrims - g_primIdx) : 1)
 		: (GLshort)0;
 	g_primIdx++;
@@ -1005,7 +1028,7 @@ extern "C" void glrBeginFrame(void)
 	g_wrX0 = 0; g_wrY0 = 0; g_wrX1 = -1; g_wrY1 = -1;
 	g_batchFull = EFalse;
 	g_primIdx = 0;
-	g_primZ = g_sortOn ? (GLshort)-KMaxPrims : (GLshort)0;
+	g_primZ = (g_sortOn || g_zOn) ? (GLshort)-KMaxPrims : (GLshort)0;
 	g_f0Nofit = g_nofit;         g_f0BatchOver = g_batchOver;
 	g_f0DropPrims = g_dropPrims; g_f0Over = g_over;
 	g_f0ClipFull = g_clipFull;   g_f0DropVerts = g_dropVerts;
@@ -1121,12 +1144,15 @@ extern "C" int glrEndFrame(void)
 		ps1LogFmt("glr", "viewport changed: %dx%d", (int)g_vpW, (int)g_vpH);
 		}
 
+	// The projection and the vertex follow the z switch; only the regrouping needs
+	// the depth test itself, and only it needs a depth buffer to exist.
+	const TBool zOn = (g_sortOn || g_zOn);
 	g_depth = (g_sortOn && voutSymbianGlDepthBits() >= 16);
 	const unsigned int tSetup0 = ndrc_symbian_fastcount();
 	// The PS1 back buffer covers the whole window. Y axis downwards, as in VRAM.
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	if (g_depth)
+	if (zOn)
 		glOrthof((GLfloat)g_clip[0], (GLfloat)g_clip[2],
 		         (GLfloat)g_clip[3], (GLfloat)g_clip[1], 1.0f, (GLfloat)(KMaxPrims + 1));
 	else
@@ -1205,7 +1231,7 @@ extern "C" int glrEndFrame(void)
 	glLoadIdentity();
 	glScalef(1.0f / 256.0f, 1.0f / 256.0f, 1.0f);
 	glMatrixMode(GL_MODELVIEW);
-	glVertexPointer(g_depth ? 3 : 2, GL_SHORT, sizeof(TGlrVert), &g_v[0].x);
+	glVertexPointer(zOn ? 3 : 2, GL_SHORT, sizeof(TGlrVert), &g_v[0].x);
 	glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(TGlrVert), &g_v[0].r);
 	glTexCoordPointer(2, GL_SHORT, sizeof(TGlrVert), &g_v[0].u);
 	const unsigned int tSetup3 = ndrc_symbian_fastcount();
@@ -1314,7 +1340,7 @@ extern "C" int glrEndFrame(void)
 				{ glDepthMask(GL_FALSE); depthWrite = EFalse; }
 			}
 		const TInt first = g_batch[b].iFirst;
-		if (!g_depth)
+		if (!g_depth && !g_idxOn)
 			{
 			// Submission order: the batch is already contiguous, so it goes out as it
 			// is. This is the path that was confirmed good on a lap.
@@ -1436,6 +1462,11 @@ extern "C" int glrEndFrame(void)
 		}
 	g_batchSum += g_nBatch;
 	g_frameSum++;
+	if (g_shotBig && g_nVerts > 300)
+		{
+		g_shotBig = EFalse;
+		glrShot("E:\\PS1\\logs\\ps1_glbig.bin");
+		}
 	if (g_shotWanted)
 		writeShot();
 

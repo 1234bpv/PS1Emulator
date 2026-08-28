@@ -350,6 +350,9 @@ void glrSetDummyTex(int aSide);
 void glrSetBgForce(int on);
 void glrDepthProbe(void);
 void glrSetSort(int on);
+void glrSetZ(int on);
+void glrSetIdx(int on);
+void glrShotBig(void);
 // Switch for gpu_unai software pass ("swoff" argument). Lives in gpulib_if.cpp.
 extern int gpu_unai_sw_off;
 // Dynarec block pre-compile on state load: crashes on this device, off by default.
@@ -2296,6 +2299,9 @@ static TBool g_glRender;
 static TInt  g_glBgForce;
 static TInt  g_glDepthProbe;
 static TInt  g_glSort;
+static TInt  g_glZ;
+static TInt  g_glIdx;
+static TInt  g_glShotBig;
 static TBool g_texWhite;
 static TInt g_glrSkip;
 static TInt g_dummyTexSide;   // probe: bind cost against texture size
@@ -2341,6 +2347,10 @@ extern "C" int ps1GuiSetup(void)
 		glrSetDummyTex(g_dummyTexSide);
 		glrSetBgForce(g_glBgForce);
 		glrSetSort(g_glSort);
+		glrSetZ(g_glZ);
+		glrSetIdx(g_glIdx);
+		if (g_glShotBig)
+			glrShotBig();
 		if (g_glDepthProbe)
 			glrDepthProbe();
 		logEvent("glr", grc ? "GLR_INIT_FAIL" : NULL, "init rc=%d active=%d swoff=%d",
@@ -2944,6 +2954,17 @@ GLDEF_C TInt E32Main()
 		// "glsort" - regroup opaque primitives by texture; off until the white menu
 		// is understood. Also settable from the marker file, which is the only way
 		// in when the emulator is started from its icon.
+		// Halves of the same experiment, so the one that broke the picture can be
+		// named: "glz" is the depth in the vertex, "glidx" the indexed draw calls.
+		_LIT(KGlZArg, "glz");
+		if (cl.FindF(KGlZArg) != KErrNotFound)
+			g_glZ = 1;
+		_LIT(KGlIdxArg, "glidx");
+		if (cl.FindF(KGlIdxArg) != KErrNotFound)
+			g_glIdx = 1;
+		_LIT(KGlShotBigArg, "glshotbig");
+		if (cl.FindF(KGlShotBigArg) != KErrNotFound)
+			g_glShotBig = 1;
 		_LIT(KGlSortArg, "glsort");
 		if (cl.FindF(KGlSortArg) != KErrNotFound)
 			g_glSort = 1;
@@ -3177,6 +3198,12 @@ GLDEF_C TInt E32Main()
 				_LIT8(KGlSort, "glsort");
 				if (m.Find(KGlSort) != KErrNotFound)
 					g_glSort = 1;
+				_LIT8(KGlZ, "glz");
+				if (m.Find(KGlZ) != KErrNotFound)
+					g_glZ = 1;
+				_LIT8(KGlIdx, "glidx");
+				if (m.Find(KGlIdx) != KErrNotFound)
+					g_glIdx = 1;
 				_LIT8(KGl, "gl");
 				if (m.Find(KGl) != KErrNotFound)
 					voutSymbianSetGl(1);
