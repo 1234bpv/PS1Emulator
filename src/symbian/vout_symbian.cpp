@@ -242,9 +242,7 @@ extern "C" unsigned int ndrc_symbian_fastfreq(void);
 // pattern written by bitgdi reads back with raw pointer 64/64.
 // That probe ran in console branch, while game runs in GUI - hence false conclusion.
 //
-// rgb24 is not allowed in this path (branch writes 16-bit words and is untested),
-// so 24-bit splash screens and videos take window path. That is why the defect was once
-// interpreted as "video is visible, but 2D is not".
+// Direct write to LCD buffer (direct-FB) is supported for both 16-bit and 24-bit frames.
 static TBool g_useDsa;
 static CDirectScreenAccess *g_dsa;
 static CFbsBitGc *g_dsaGc;
@@ -587,33 +585,124 @@ blitRow565(TUint32 *aDst, const TUint32 *aSrc, TInt aPairs)
 		} while (--aPairs);
 	}
 
-// Same for 32-bit screen buffer (EColor16MU/16MA, XRGB8888).
-//
-// MEASURED by 2026-08-03 probe: platform gives stride=1280B at 320 pixels and
-// DisplayMode=EColor16MU, meaning screen buffer is 32-bit, while HAL reports
-// bpp=16 and line=640B. The 2026-08-01 direct-FB attempt relied on HAL numbers -
-// hence the "offset": we wrote 16-bit pixels with stride 640 into 32-bit buffer
-// with stride 1280. Here we convert directly to target format, removing intermediate
-// bitmap and 565->8888 conversion inside bitgdi (which is most of present).
-//
+// PS1 VRAM - BGR555 (bit15 mask, 14-10 B, 9-5 G, 4-0 R); screen EColor64K -
+// RGB565. Expand green from 5 to 6 bits to preserve brightness.
+static inline TUint16 Bgr555ToRgb565(TUint16 aPix)
+	{
+	const TUint r = aPix & 0x1f;
+	const TUint g = (aPix >> 5) & 0x1f;
+	const TUint b = (aPix >> 10) & 0x1f;
+	const TUint g6 = (g << 1) | (g >> 4);
+	return (TUint16)((r << 11) | (g6 << 5) | b);
+	}
+
 // 5 bits -> 8 is done as (v<<3)|(v>>2): multiplication by 255/31 within precision of 1,
 // without tables or division.
+static inline TUint32 Bgr555ToXrgb8888(TUint32 aPix)
+	{
+	const TUint32 r = aPix & 0x1f;
+	const TUint32 g = (aPix >> 5) & 0x1f;
+	const TUint32 b = (aPix >> 10) & 0x1f;
+	return 0xff000000u | (((r << 3) | (r >> 2)) << 16)
+	                   | (((g << 3) | (g >> 2)) << 8)
+	                   |  ((b << 3) | (b >> 2));
+	}
+
+// Same for 32-bit screen buffer (EColor16MU/16MA, XRGB8888).
+// Convert 2 pixels per 32-bit load and write 4-word (16-byte) blocks.
 static void __attribute__((__noinline__))
 blitRow8888(TUint32 *aDst, const TUint16 *aSrc, TInt aPixels)
 	{
-	TUint32 m5 = 0x1fu;
-	__asm__ __volatile__ ("" : "+r"(m5));
-	do
+	if (aPixels <= 0)
+		return;
+	if ((TUint)aSrc & 2)
 		{
-		const TUint32 p = *aSrc++;
-		const TUint32 r = p & m5;
-		const TUint32 g = (p >> 5) & m5;
-		const TUint32 b = (p >> 10) & m5;
-		*aDst++ = 0xff000000u
-		        | (((r << 3) | (r >> 2)) << 16)
-		        | (((g << 3) | (g >> 2)) << 8)
-		        |  ((b << 3) | (b >> 2));
-		} while (--aPixels);
+		*aDst++ = Bgr555ToXrgb8888(*aSrc++);
+		if (--aPixels <= 0)
+			return;
+		}
+	TInt blocks = aPixels >> 2;
+	if (blocks > 0)
+		{
+		const TUint32 *s32 = (const TUint32 *)aSrc;
+		TUint32 m5 = 0x1fu;
+		__asm__ __volatile__ ("" : "+r"(m5));
+		do
+			{
+			const TUint32 p01 = *s32++;
+			const TUint32 r0 = p01 & m5;
+			const TUint32 g0 = (p01 >> 5) & m5;
+			const TUint32 b0 = (p01 >> 10) & m5;
+			TUint32 w0 = 0xff000000u | (((r0 << 3) | (r0 >> 2)) << 16) | (((g0 << 3) | (g0 >> 2)) << 8) | ((b0 << 3) | (b0 >> 2));
+
+			const TUint32 p1 = p01 >> 16;
+			const TUint32 r1 = p1 & m5;
+			const TUint32 g1 = (p1 >> 5) & m5;
+			const TUint32 b1 = (p1 >> 10) & m5;
+			TUint32 w1 = 0xff000000u | (((r1 << 3) | (r1 >> 2)) << 16) | (((g1 << 3) | (g1 >> 2)) << 8) | ((b1 << 3) | (b1 >> 2));
+
+			__asm__ __volatile__ ("" : "+r"(w0), "+r"(w1));
+
+			const TUint32 p23 = *s32++;
+			const TUint32 r2 = p23 & m5;
+			const TUint32 g2 = (p23 >> 5) & m5;
+			const TUint32 b2 = (p23 >> 10) & m5;
+			const TUint32 w2 = 0xff000000u | (((r2 << 3) | (r2 >> 2)) << 16) | (((g2 << 3) | (g2 >> 2)) << 8) | ((b2 << 3) | (b2 >> 2));
+
+			const TUint32 p3 = p23 >> 16;
+			const TUint32 r3 = p3 & m5;
+			const TUint32 g3 = (p3 >> 5) & m5;
+			const TUint32 b3 = (p3 >> 10) & m5;
+			const TUint32 w3 = 0xff000000u | (((r3 << 3) | (r3 >> 2)) << 16) | (((g3 << 3) | (g3 >> 2)) << 8) | ((b3 << 3) | (b3 >> 2));
+
+			// Four adjacent word stores: the compiler folds them into one stm.
+			// Naming r0-r3 by hand instead collides with whatever register the
+			// pointer itself was given.
+			aDst[0] = w0; aDst[1] = w1; aDst[2] = w2; aDst[3] = w3;
+			aDst += 4;
+			} while (--blocks);
+		aSrc = (const TUint16 *)s32;
+		aPixels &= 3;
+		}
+	while (aPixels > 0)
+		{
+		*aDst++ = Bgr555ToXrgb8888(*aSrc++);
+		aPixels--;
+		}
+	}
+
+// RGB24 -> XRGB8888 conversion for 32-bit screen buffer in 4-pixel blocks.
+static void __attribute__((__noinline__))
+blitRow8888_rgb24(TUint32 *aDst, const TUint8 *aSrc, TInt aPixels)
+	{
+	if (aPixels <= 0)
+		return;
+	TInt blocks = aPixels >> 2;
+	if (blocks > 0)
+		{
+		const TUint8 *p = aSrc;
+		do
+			{
+			const TUint32 w0 = 0xff000000u | ((TUint32)p[0] << 16) | ((TUint32)p[1] << 8) | (TUint32)p[2];
+			const TUint32 w1 = 0xff000000u | ((TUint32)p[3] << 16) | ((TUint32)p[4] << 8) | (TUint32)p[5];
+			const TUint32 w2 = 0xff000000u | ((TUint32)p[6] << 16) | ((TUint32)p[7] << 8) | (TUint32)p[8];
+			const TUint32 w3 = 0xff000000u | ((TUint32)p[9] << 16) | ((TUint32)p[10] << 8) | (TUint32)p[11];
+			// Four adjacent word stores: the compiler folds them into one stm.
+			// Naming r0-r3 by hand instead collides with whatever register the
+			// pointer itself was given.
+			aDst[0] = w0; aDst[1] = w1; aDst[2] = w2; aDst[3] = w3;
+			aDst += 4;
+			p += 12;
+			} while (--blocks);
+		aSrc = p;
+		aPixels &= 3;
+		}
+	while (aPixels > 0)
+		{
+		*aDst++ = 0xff000000u | ((TUint32)aSrc[0] << 16) | ((TUint32)aSrc[1] << 8) | (TUint32)aSrc[2];
+		aSrc += 3;
+		aPixels--;
+		}
 	}
 
 // Average of two BGR555 pixels without overflow between adjacent fields:
@@ -652,27 +741,6 @@ static inline TUint16 FxaaPixel(const TUint16 *aRow, const TUint16 *aUp,
 	const TInt gv = (ln > ls) ? ln - ls : ls - ln;   // vertical gradient
 	const TInt gh = (lw > le) ? lw - le : le - lw;   // ...and horizontal
 	return (gv >= gh) ? Avg555(m, Avg555(n, s)) : Avg555(m, Avg555(w, e));
-	}
-
-// PS1 VRAM - BGR555 (bit15 mask, 14-10 B, 9-5 G, 4-0 R); screen EColor64K -
-// RGB565. Expand green from 5 to 6 bits to preserve brightness.
-static inline TUint16 Bgr555ToRgb565(TUint16 aPix)
-	{
-	const TUint r = aPix & 0x1f;
-	const TUint g = (aPix >> 5) & 0x1f;
-	const TUint b = (aPix >> 10) & 0x1f;
-	const TUint g6 = (g << 1) | (g >> 4);
-	return (TUint16)((r << 11) | (g6 << 5) | b);
-	}
-
-static inline TUint32 Bgr555ToXrgb8888(TUint16 aPix)
-	{
-	const TUint32 r = aPix & 0x1f;
-	const TUint32 g = (aPix >> 5) & 0x1f;
-	const TUint32 b = (aPix >> 10) & 0x1f;
-	return 0xff000000u | (((r << 3) | (r >> 2)) << 16)
-	                   | (((g << 3) | (g >> 2)) << 8)
-	                   |  ((b << 3) | (b >> 2));
 	}
 
 static void initL()
@@ -1463,10 +1531,8 @@ static void blitCurrent()
 	// will not arrive at all - game remains running, but unresponsive.
 	if (g_pumpAo && g_useDsa && CActiveScheduler::Current())
 		{ TInt _e; while (CActiveScheduler::RunIfReady(_e, CActive::EPriorityIdle)) { } }
-	// rgb24 is not allowed into direct buffer: that branch writes 16-bit words and is
-	// untested on hardware, and a bug here means writing out of screen buffer bounds.
 	const TBool directFb = (g_useDsa && g_dsaActive && g_fbOk && !g_useRowCopy &&
-	                        !rgb24 && dsaCoversScreen());
+	                        dsaCoversScreen());
 
 	// Fit source into screen preserving aspect ratio. Do NOT rotate orientation
 	// ourselves: device handles window auto-rotation via accelerometer. In directFb target
@@ -1562,8 +1628,7 @@ static void blitCurrent()
 		const TInt srcLine = (TInt)((syStep * (TUint)dy) >> 16);
 		TInt ssy = field ? srcLine * 2 : srcLine;
 		// Rasterizer with "Skip lines" never overwrites odd VRAM lines, so
-		// they contain content of previous frames (static overlays left traces).
-		// Take even row instead of stale odd row.
+		// they hold content of previous frames. Take the even row instead.
 		if (g_ilaceOut && !field)
 			ssy &= ~1;
 		TUint16 *drow = (TUint16 *)(dstB + (oy + dy) * dstStrideB + ox * pixB);
@@ -1579,13 +1644,38 @@ static void blitCurrent()
 		TUint sxf = 0;
 		if (rgb24)
 			{
-			// RGB24: 3 bytes per pixel (R,G,B). Not yet verified on hardware.
+			// RGB24: 3 bytes per pixel (R, G, B) from VRAM.
 			const TUint8 *srow = vbytes + startByte + ssy * 2048;
-			for (TInt dx = 0; dx < dstW; dx++)
+			if (pixB == 4)
 				{
-				const TUint8 *p = srow + (sxf >> 16) * 3;
-				drow[dx] = (TUint16)(((p[0] >> 3) << 11) | ((p[1] >> 2) << 5) | (p[2] >> 3));
-				sxf += sxStep;
+				TUint32 *d32 = (TUint32 *)drow;
+				if (sxStep == 0x10000u)
+					blitRow8888_rgb24(d32, srow, dstW);
+				else
+					{
+					for (TInt dx = 0; dx < dstW; dx++, sxf += sxStep)
+						{
+						const TUint8 *p = srow + (sxf >> 16) * 3;
+						d32[dx] = 0xff000000u | ((TUint32)p[0] << 16) | ((TUint32)p[1] << 8) | (TUint32)p[2];
+						}
+					}
+				}
+			else
+				{
+				if (sxStep == 0x10000u)
+					{
+					const TUint8 *p = srow;
+					for (TInt dx = 0; dx < dstW; dx++, p += 3)
+						drow[dx] = (TUint16)(((p[0] >> 3) << 11) | ((p[1] >> 2) << 5) | (p[2] >> 3));
+					}
+				else
+					{
+					for (TInt dx = 0; dx < dstW; dx++, sxf += sxStep)
+						{
+						const TUint8 *p = srow + (sxf >> 16) * 3;
+						drow[dx] = (TUint16)(((p[0] >> 3) << 11) | ((p[1] >> 2) << 5) | (p[2] >> 3));
+						}
+					}
 				}
 			}
 		else
