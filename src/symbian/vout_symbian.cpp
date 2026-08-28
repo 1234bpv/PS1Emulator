@@ -337,6 +337,7 @@ static GLuint     g_glTex;
 static TInt       g_glW, g_glH;      // EGL surface dimensions (not window)
 static TBool      g_glLogged;        // log first frame diagnostics only once
 static TUint16   *g_glBuf;           // conversion buffer (rows*w, RGB565)
+static TInt       g_glDepthBits;     // depth bits the chosen config actually has
 static TBool glInitOnWindow();       // defined below, called from initL
 static void  glShutdown();
 extern "C" void glrLoseContext(void);
@@ -796,7 +797,7 @@ static TBool glInitOnWindow()
 		EGL_RED_SIZE,     5,
 		EGL_GREEN_SIZE,   6,
 		EGL_BLUE_SIZE,    5,
-		EGL_DEPTH_SIZE,   0,
+		EGL_DEPTH_SIZE,   16,
 		EGL_NONE };
 	// KEY for non-ScreenPlay devices (and N95/S60v3 is such). Symbian
 	// Developer Library, "Symbian-Specific Behavior": RWindow display mode
@@ -826,16 +827,27 @@ static TBool glInitOnWindow()
 	const TDisplayMode got = g_winp->DisplayMode();
 	const EGLint gotBits = (got == EColor64K) ? 16 : (got == EColor16M ? 24 : 32);
 
-	EGLConfig cfg = cfgs[0]; EGLint cfgBits = 0;
-	for (EGLint i = 0; i < n; i++)
-		{
-		EGLint bs = 0;
-		eglGetConfigAttrib(g_eglDpy, cfgs[i], EGL_BUFFER_SIZE, &bs);
-		if (bs == gotBits) { cfg = cfgs[i]; cfgBits = bs; break; }
-		}
+	// The colour depth must match the window, and the rasteriser wants a depth
+	// buffer on top of that - it is what lets primitives be regrouped by texture
+	// instead of drawn in submission order. Colour match wins if both cannot be had.
+	EGLConfig cfg = cfgs[0]; EGLint cfgBits = 0; EGLint cfgDepth = 0;
+	for (EGLint pass = 0; pass < 2 && cfgBits == 0; pass++)
+		for (EGLint i = 0; i < n; i++)
+			{
+			EGLint bs = 0, ds = 0;
+			eglGetConfigAttrib(g_eglDpy, cfgs[i], EGL_BUFFER_SIZE, &bs);
+			eglGetConfigAttrib(g_eglDpy, cfgs[i], EGL_DEPTH_SIZE, &ds);
+			if (bs != gotBits || (pass == 0 && ds < 16))
+				continue;
+			cfg = cfgs[i]; cfgBits = bs; cfgDepth = ds;
+			break;
+			}
+	g_glDepthBits = cfgDepth;
 	g_eglCfg = cfg;
-	ps1LogFmt("gl", "configs=%d have16=%d have32=%d wantMode=%d gotMode=%d bits=%d cfgBits=%d",
-		(int)n, (int)want16, (int)want32, (int)dm, (int)got, (int)gotBits, (int)cfgBits);
+	ps1LogFmt("gl", "configs=%d have16=%d have32=%d wantMode=%d gotMode=%d bits=%d"
+		" cfgBits=%d depth=%d",
+		(int)n, (int)want16, (int)want32, (int)dm, (int)got, (int)gotBits, (int)cfgBits,
+		(int)g_glDepthBits);
 	g_eglSurf = eglCreateWindowSurface(g_eglDpy, cfg, (NativeWindowType)g_winp, NULL);
 	if (g_eglSurf == EGL_NO_SURFACE) return EFalse;
 	g_eglCtx = eglCreateContext(g_eglDpy, cfg, EGL_NO_CONTEXT, NULL);
@@ -924,6 +936,10 @@ static void glPresentFrame(const TUint8 *vbytes, TInt startByte,
 	glLoadIdentity();
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
+	// The rasteriser leaves the depth test on; this quad is the whole picture and
+	// must not be judged against depths left from a frame it knows nothing about.
+	glDisable(GL_DEPTH_TEST);
+	glDepthMask(GL_FALSE);
 	// The same two counters as on bitmap path so the numbers are comparable:
 	// "fill" = conversion + texture upload, "present" = drawing + swap.
 	const TUint _gc0 = User::FastCounter();
@@ -1041,6 +1057,13 @@ extern "C" int voutSymbianGlSwap(void)
 	if (!g_glReady)
 		return -1;
 	return eglSwapBuffers(g_eglDpy, g_eglSurf) ? 0 : -1;
+	}
+
+// Whether the rasteriser may use a depth buffer at all: without one it has to keep
+// drawing in submission order.
+extern "C" int voutSymbianGlDepthBits(void)
+	{
+	return g_glReady ? g_glDepthBits : 0;
 	}
 
 extern "C" void voutSymbianGlSize(int *aW, int *aH)

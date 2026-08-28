@@ -28,6 +28,7 @@
 extern "C" void ps1LogFmt(const char *aType, const char *aFmt, ...);
 extern "C" int  voutSymbianGlSwap(void);
 extern "C" int  voutSymbianGlVramQuad(void);
+extern "C" int  voutSymbianGlDepthBits(void);
 extern "C" void voutSymbianGlSize(int *aW, int *aH);
 extern "C" void voutSymbianDbgState(int *aFbDirty, int *aFbDirtyArea, int *aStatus,
 	int *aSrcX, int *aSrcY, int *aScrW, int *aScrH, int *aVoutOffset, int *aStale);
@@ -65,9 +66,13 @@ static const TInt KMaxVerts = KMaxPrims * 6;
 // everything past it drew with its texture - half a frame flooded with grass.
 static const TInt KMaxBatch = 8192;
 
+// The z carries the submission index: on PS1 a later primitive covers an earlier
+// one, and with a depth buffer that rule holds without keeping the draw order, so
+// primitives may be regrouped by texture. The spare short is padding - the driver
+// wants the colour and texture offsets four-byte aligned.
 struct TGlrVert
 	{
-	GLshort x, y;
+	GLshort x, y, z, pad;
 	GLshort u, v;
 	GLubyte r, g, b, a;
 	};
@@ -127,6 +132,14 @@ static TInt      g_lossLogged;    // how many per-frame loss lines have been wri
 // nor how close that frame ran to the limits. These hold the values at frame start.
 static TInt      g_f0Nofit, g_f0BatchOver, g_f0DropPrims, g_f0Over;
 static TInt      g_f0ClipFull, g_f0DropVerts, g_f0Evict, g_f0Miss;
+static TInt      g_primIdx;       // primitives seen this frame, counted for the depth
+static GLshort   g_primZ;         // depth of the primitive being assembled
+static TBool     g_depth;         // a depth buffer exists and is in use
+static TInt      g_draws;         // draw calls issued, summed over frames
+static TInt     *g_order;         // batch indices in the order they go out
+static TInt     *g_batchNext;     // next batch with the same texture, -1 ends
+static TInt     *g_texHead, *g_texTail;   // first and last batch per texture
+static unsigned short *g_idx;     // vertex indices of the call being assembled
 static TInt      g_lastSrcX = -1, g_lastSrcY = -1;   // display start last frame
 
 // --- texture cache -----------------------------------------------------------
@@ -267,10 +280,26 @@ extern "C" int glrInit(void)
 		g_v = (TGlrVert *)User::Alloc(KMaxVerts * sizeof(TGlrVert));
 	if (!g_decode)
 		g_decode = (TUint16 *)User::Alloc(KTexSide * KTexSide * 2);
-	if (!g_v || !g_decode)
+	if (!g_idx)
+		g_idx = (unsigned short *)User::Alloc(KMaxVerts * sizeof(unsigned short));
+	if (!g_order)
+		g_order = (TInt *)User::Alloc(KMaxBatch * sizeof(TInt));
+	if (!g_batchNext)
+		g_batchNext = (TInt *)User::Alloc(KMaxBatch * sizeof(TInt));
+	if (!g_texHead)
+		g_texHead = (TInt *)User::Alloc((KMaxTex + 1) * sizeof(TInt));
+	if (!g_texTail)
+		g_texTail = (TInt *)User::Alloc((KMaxTex + 1) * sizeof(TInt));
+	if (!g_v || !g_decode || !g_idx || !g_order || !g_batchNext ||
+	    !g_texHead || !g_texTail)
 		{
 		User::Free(g_v); g_v = NULL;
 		User::Free(g_decode); g_decode = NULL;
+		User::Free(g_idx); g_idx = NULL;
+		User::Free(g_order); g_order = NULL;
+		User::Free(g_batchNext); g_batchNext = NULL;
+		User::Free(g_texHead); g_texHead = NULL;
+		User::Free(g_texTail); g_texTail = NULL;
 		ps1LogFmt("glr", "init failed: out of memory");
 		return -1;
 		}
@@ -606,6 +635,8 @@ static inline void emitVertex(TInt aX, TInt aY, TUint32 aBgr, TInt aAlpha,
 	TGlrVert *v = g_v + g_nVerts;
 	v->x = (GLshort)aX;
 	v->y = (GLshort)aY;
+	v->z = g_primZ;
+	v->pad = 0;
 	v->u = (GLshort)aU;
 	v->v = (GLshort)aV;
 	v->r = (GLubyte)(aBgr & 0xFF);
@@ -675,6 +706,10 @@ extern "C" void glrPrim(unsigned aCmd, const unsigned *aPacket, const int *aStat
 	{
 	if (!g_on || !g_ready)
 		return;
+	// Later primitives must win, and the projection makes a smaller z the nearer
+	// one, so the depth counts down as the frame goes on.
+	g_primZ = (GLshort)((g_primIdx < KMaxPrims) ? (KMaxPrims - g_primIdx) : 1);
+	g_primIdx++;
 	// Which back buffer this primitive belongs to. The area alone is not enough:
 	// Gran Turismo keeps both buffers under one area 0,0..640,480 and tells them
 	// apart only by the draw offset, so group by the pair.
@@ -889,6 +924,8 @@ extern "C" void glrBeginFrame(void)
 	g_frame++;
 	g_wrX0 = 0; g_wrY0 = 0; g_wrX1 = -1; g_wrY1 = -1;
 	g_batchFull = EFalse;
+	g_primIdx = 0;
+	g_primZ = (GLshort)KMaxPrims;
 	g_f0Nofit = g_nofit;         g_f0BatchOver = g_batchOver;
 	g_f0DropPrims = g_dropPrims; g_f0Over = g_over;
 	g_f0ClipFull = g_clipFull;   g_f0DropVerts = g_dropVerts;
@@ -1009,7 +1046,7 @@ extern "C" int glrEndFrame(void)
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	glOrthof((GLfloat)g_clip[0], (GLfloat)g_clip[2],
-	         (GLfloat)g_clip[3], (GLfloat)g_clip[1], -1, 1);
+	         (GLfloat)g_clip[3], (GLfloat)g_clip[1], 0, -(GLfloat)KMaxPrims);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
@@ -1030,11 +1067,26 @@ extern "C" int glrEndFrame(void)
 	// cut entirely and B/2+F/2 would pass by one quantisation step. What has to
 	// be cut is exactly zero, so the threshold is close to zero.
 	glAlphaFunc(GL_GREATER, 0.05f);
+	g_depth = (voutSymbianGlDepthBits() >= 16);
+	if (g_depth)
+		{
+		glEnable(GL_DEPTH_TEST);
+		// LEQUAL, not LESS. The projection puts primitive zero at depth 1.0, which is
+		// exactly the cleared value, so LESS would throw away the first primitive of
+		// every frame - usually the one that covers the whole screen. It also keeps
+		// drawing in submission order if a frame ever runs past KMaxPrims and the
+		// depths stop being distinct.
+		glDepthFunc(GL_LEQUAL);
+		glDepthMask(GL_TRUE);
+		}
+	else
+		glDisable(GL_DEPTH_TEST);
 	const unsigned int tSetup1 = ndrc_symbian_fastcount();
 	g_tSetup += (unsigned int)(tSetup1 - tSetup0);
 
 	const unsigned int tClear0 = ndrc_symbian_fastcount();
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClear(g_depth ? (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+	                : GL_COLOR_BUFFER_BIT);
 	const unsigned int tClear1 = ndrc_symbian_fastcount();
 	g_tClear += (unsigned int)(tClear1 - tClear0);
 
@@ -1054,6 +1106,8 @@ extern "C" int glrEndFrame(void)
 			         (GLfloat)g_clip[3], (GLfloat)g_clip[1], -1, 1);
 			glMatrixMode(GL_MODELVIEW);
 			glLoadIdentity();
+			if (g_depth)
+				{ glEnable(GL_DEPTH_TEST); glDepthMask(GL_TRUE); }
 			g_bgFrames++;
 			}
 		glEnableClientState(GL_COLOR_ARRAY);
@@ -1067,7 +1121,7 @@ extern "C" int glrEndFrame(void)
 	glLoadIdentity();
 	glScalef(1.0f / 256.0f, 1.0f / 256.0f, 1.0f);
 	glMatrixMode(GL_MODELVIEW);
-	glVertexPointer(2, GL_SHORT, sizeof(TGlrVert), &g_v[0].x);
+	glVertexPointer(3, GL_SHORT, sizeof(TGlrVert), &g_v[0].x);
 	glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(TGlrVert), &g_v[0].r);
 	glTexCoordPointer(2, GL_SHORT, sizeof(TGlrVert), &g_v[0].u);
 	const unsigned int tSetup3 = ndrc_symbian_fastcount();
@@ -1093,10 +1147,47 @@ extern "C" int glrEndFrame(void)
 		}
 	const unsigned int tDraw0 = ndrc_symbian_fastcount();
 	ensureDummyTex();
+	// The order the batches go out in. Measured on a lap of Gran Turismo: 404
+	// batches per frame, and 99.6 per cent of the breaks between them were texture
+	// changes, at 9.5 to 14 us for a draw call and as much again for a bind. With a
+	// depth buffer the overlap rule no longer needs submission order, so opaque
+	// batches are grouped by texture and merged into one indexed call per texture.
+	// Translucent ones keep their order, come last and write no depth: they must
+	// blend with what is already there, and only 2914 breaks in 1.5 million were
+	// theirs, so nothing is lost by leaving them alone.
+	TInt nOrder = 0;
+	if (g_depth)
+		{
+		for (TInt t = 0; t <= g_nTex; t++)
+			{ g_texHead[t] = -1; g_texTail[t] = -1; }
+		for (TInt b = 0; b < g_nBatch; b++)
+			{
+			if (g_batch[b].iBlend >= 0)
+				continue;
+			const TInt t = (g_batch[b].iTex < 0) ? g_nTex : g_batch[b].iTex;
+			g_batchNext[b] = -1;
+			if (g_texTail[t] < 0) g_texHead[t] = b;
+			else                  g_batchNext[g_texTail[t]] = b;
+			g_texTail[t] = b;
+			}
+		for (TInt t = 0; t <= g_nTex; t++)
+			for (TInt b = g_texHead[t]; b >= 0; b = g_batchNext[b])
+				g_order[nOrder++] = b;
+		for (TInt b = 0; b < g_nBatch; b++)
+			if (g_batch[b].iBlend >= 0)
+				g_order[nOrder++] = b;
+		}
+	else
+		for (TInt b = 0; b < g_nBatch; b++)
+			g_order[nOrder++] = b;
+
 	TInt curTex = -2;
 	TInt curBlend = -2;
-	for (TInt b = 0; (g_skipMask & 16) == 0 && b < g_nBatch; b++)
+	TInt idxN = 0;
+	TBool depthWrite = ETrue;
+	for (TInt o = 0; (g_skipMask & 16) == 0 && o < nOrder; o++)
 		{
+		const TInt b = g_order[o];
 			// Primitives of other areas are skipped: in this projection they
 			// would land at random, and there is nowhere to show them anyway.
 		if (g_batch[b].iCount <= 0 || g_batch[b].iClip != best)
@@ -1104,29 +1195,48 @@ extern "C" int glrEndFrame(void)
 			g_dropVerts += g_batch[b].iCount;
 			continue;
 			}
-		if (g_batch[b].iTex != curTex)
+		const TInt bt = g_batch[b].iTex, bb = g_batch[b].iBlend;
+		if (bt != curTex || bb != curBlend || idxN + g_batch[b].iCount > KMaxVerts)
 			{
-			curTex = g_batch[b].iTex;
-			if (curTex >= 0 && !(g_skipMask & 64))
+			if (idxN > 0)
 				{
-				glEnable(GL_TEXTURE_2D);
-				glEnable(GL_ALPHA_TEST);
-				if (g_dummyTex)
-					glBindTexture(GL_TEXTURE_2D, g_dummyTex);
-				glBindTexture(GL_TEXTURE_2D, g_tex[curTex].iTex);
+				glDrawElements(GL_TRIANGLES, idxN, GL_UNSIGNED_SHORT, g_idx);
+				g_draws++;
+				idxN = 0;
 				}
-			else
+			if (bt != curTex)
 				{
-				glDisable(GL_TEXTURE_2D);
-				glDisable(GL_ALPHA_TEST);
+				curTex = bt;
+				if (curTex >= 0 && !(g_skipMask & 64))
+					{
+					glEnable(GL_TEXTURE_2D);
+					glEnable(GL_ALPHA_TEST);
+					if (g_dummyTex)
+						glBindTexture(GL_TEXTURE_2D, g_dummyTex);
+					glBindTexture(GL_TEXTURE_2D, g_tex[curTex].iTex);
+					}
+				else
+					{
+					glDisable(GL_TEXTURE_2D);
+					glDisable(GL_ALPHA_TEST);
+					}
 				}
+			if (bb != curBlend)
+				{
+				curBlend = bb;
+				applyBlend(curBlend);
+				}
+			if (g_depth && depthWrite && bb >= 0)
+				{ glDepthMask(GL_FALSE); depthWrite = EFalse; }
 			}
-		if (g_batch[b].iBlend != curBlend)
-			{
-			curBlend = g_batch[b].iBlend;
-			applyBlend(curBlend);
-			}
-		glDrawArrays(GL_TRIANGLES, g_batch[b].iFirst, g_batch[b].iCount);
+		const TInt first = g_batch[b].iFirst;
+		for (TInt v = 0; v < g_batch[b].iCount; v++)
+			g_idx[idxN++] = (unsigned short)(first + v);
+		}
+	if (idxN > 0)
+		{
+		glDrawElements(GL_TRIANGLES, idxN, GL_UNSIGNED_SHORT, g_idx);
+		g_draws++;
 		}
 	const unsigned int tDraw1 = ndrc_symbian_fastcount();
 	g_tDraw += (unsigned int)(tDraw1 - tDraw0);
@@ -1168,6 +1278,8 @@ extern "C" int glrEndFrame(void)
 
 	glDisable(GL_BLEND);
 	glDisable(GL_ALPHA_TEST);
+	glDisable(GL_DEPTH_TEST);
+	glDepthMask(GL_FALSE);
 		// Restore the state the vout display path expects, so flipping the flag
 		// mid-session does not leave it with the arrays disabled.
 	glDisableClientState(GL_COLOR_ARRAY);
@@ -1255,12 +1367,13 @@ extern "C" void glrStats(int *aVerts, int *aBatches, int *aOver,
 	if (aOver)    *aOver = g_nofit + g_batchOver;   // silent losses of both kinds
 	ps1LogFmt("glrbrk", "batches=%d frames=%d brkTex=%d brkBlend=%d brkClip=%d"
 		" spriteWrap=%d/%d vramFrames=%d mixedFrames=%d bgFrames=%d"
-		" clipFull=%d dropVerts=%d dropGroups=%d holdFrames=%d dropPrims=%d",
+		" clipFull=%d dropVerts=%d dropGroups=%d holdFrames=%d dropPrims=%d"
+		" draws=%d depth=%d",
 		(int)g_batchSum, (int)g_frameSum, (int)g_brkTex, (int)g_brkBlend,
 		(int)g_brkClip, (int)g_spriteWrap, (int)g_spriteAll,
 		(int)g_vramFrames, (int)g_mixedFrames, (int)g_bgFrames,
 		(int)g_clipFull, (int)g_dropVerts, (int)g_dropGroups, (int)g_holdFrames,
-		(int)g_dropPrims);
+		(int)g_dropPrims, (int)g_draws, (int)g_depth);
 	const unsigned int freq = ndrc_symbian_fastfreq();
 	const unsigned int f = freq ? freq : 1;
 	ps1LogFmt("glrtime", "setup=%ums clear=%ums draw=%ums swap=%ums frames=%d",
