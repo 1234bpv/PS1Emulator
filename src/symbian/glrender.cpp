@@ -128,6 +128,7 @@ static TInt      g_holdFrames;    // frames with nothing new, screen left alone
 static TBool     g_batchFull;     // the batch table is full and this primitive is lost
 static TInt      g_dropPrims;     // primitives dropped for want of a batch
 static TInt      g_lossLogged;    // how many per-frame loss lines have been written
+static TInt      g_errLogged;     // how many GL errors have been reported
 // Every counter above is cumulative, which cannot say WHICH frame lost something
 // nor how close that frame ran to the limits. These hold the values at frame start.
 static TInt      g_f0Nofit, g_f0BatchOver, g_f0DropPrims, g_f0Over;
@@ -785,7 +786,9 @@ extern "C" void glrPrim(unsigned aCmd, const unsigned *aPacket, const int *aStat
 		return;
 	// Later primitives must win, and the projection makes a smaller z the nearer
 	// one, so the depth counts down as the frame goes on.
-	g_primZ = (GLshort)-((g_primIdx < KMaxPrims) ? (KMaxPrims - g_primIdx) : 1);
+	g_primZ = g_sortOn
+		? (GLshort)-((g_primIdx < KMaxPrims) ? (KMaxPrims - g_primIdx) : 1)
+		: (GLshort)0;
 	g_primIdx++;
 	// Which back buffer this primitive belongs to. The area alone is not enough:
 	// Gran Turismo keeps both buffers under one area 0,0..640,480 and tells them
@@ -1002,7 +1005,7 @@ extern "C" void glrBeginFrame(void)
 	g_wrX0 = 0; g_wrY0 = 0; g_wrX1 = -1; g_wrY1 = -1;
 	g_batchFull = EFalse;
 	g_primIdx = 0;
-	g_primZ = (GLshort)-KMaxPrims;
+	g_primZ = g_sortOn ? (GLshort)-KMaxPrims : (GLshort)0;
 	g_f0Nofit = g_nofit;         g_f0BatchOver = g_batchOver;
 	g_f0DropPrims = g_dropPrims; g_f0Over = g_over;
 	g_f0ClipFull = g_clipFull;   g_f0DropVerts = g_dropVerts;
@@ -1118,12 +1121,17 @@ extern "C" int glrEndFrame(void)
 		ps1LogFmt("glr", "viewport changed: %dx%d", (int)g_vpW, (int)g_vpH);
 		}
 
+	g_depth = (g_sortOn && voutSymbianGlDepthBits() >= 16);
 	const unsigned int tSetup0 = ndrc_symbian_fastcount();
 	// The PS1 back buffer covers the whole window. Y axis downwards, as in VRAM.
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	glOrthof((GLfloat)g_clip[0], (GLfloat)g_clip[2],
-	         (GLfloat)g_clip[3], (GLfloat)g_clip[1], 1.0f, (GLfloat)(KMaxPrims + 1));
+	if (g_depth)
+		glOrthof((GLfloat)g_clip[0], (GLfloat)g_clip[2],
+		         (GLfloat)g_clip[3], (GLfloat)g_clip[1], 1.0f, (GLfloat)(KMaxPrims + 1));
+	else
+		glOrthof((GLfloat)g_clip[0], (GLfloat)g_clip[2],
+		         (GLfloat)g_clip[3], (GLfloat)g_clip[1], -1, 1);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
@@ -1144,7 +1152,6 @@ extern "C" int glrEndFrame(void)
 	// cut entirely and B/2+F/2 would pass by one quantisation step. What has to
 	// be cut is exactly zero, so the threshold is close to zero.
 	glAlphaFunc(GL_GREATER, 0.05f);
-	g_depth = (g_sortOn && voutSymbianGlDepthBits() >= 16);
 	if (g_depth)
 		{
 		glEnable(GL_DEPTH_TEST);
@@ -1198,7 +1205,7 @@ extern "C" int glrEndFrame(void)
 	glLoadIdentity();
 	glScalef(1.0f / 256.0f, 1.0f / 256.0f, 1.0f);
 	glMatrixMode(GL_MODELVIEW);
-	glVertexPointer(3, GL_SHORT, sizeof(TGlrVert), &g_v[0].x);
+	glVertexPointer(g_depth ? 3 : 2, GL_SHORT, sizeof(TGlrVert), &g_v[0].x);
 	glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(TGlrVert), &g_v[0].r);
 	glTexCoordPointer(2, GL_SHORT, sizeof(TGlrVert), &g_v[0].u);
 	const unsigned int tSetup3 = ndrc_symbian_fastcount();
@@ -1307,6 +1314,14 @@ extern "C" int glrEndFrame(void)
 				{ glDepthMask(GL_FALSE); depthWrite = EFalse; }
 			}
 		const TInt first = g_batch[b].iFirst;
+		if (!g_depth)
+			{
+			// Submission order: the batch is already contiguous, so it goes out as it
+			// is. This is the path that was confirmed good on a lap.
+			glDrawArrays(GL_TRIANGLES, first, g_batch[b].iCount);
+			g_draws++;
+			continue;
+			}
 		for (TInt v = 0; v < g_batch[b].iCount; v++)
 			g_idx[idxN++] = (unsigned short)(first + v);
 		}
@@ -1317,6 +1332,19 @@ extern "C" int glrEndFrame(void)
 		}
 	const unsigned int tDraw1 = ndrc_symbian_fastcount();
 	g_tDraw += (unsigned int)(tDraw1 - tDraw0);
+
+	// A driver that has run out of something says so once and then draws nothing
+	// useful; without asking, that reads as a fault in this code.
+		{
+		const GLenum ge = glGetError();
+		if (ge != GL_NO_ERROR && g_errLogged < 8)
+			{
+			g_errLogged++;
+			ps1LogFmt("glrerr", "f=%d err=%u tex=%d verts=%d batches=%d draws=%d",
+				(int)g_frame, (unsigned)ge, (int)g_nTex, (int)g_nVerts,
+				(int)g_nBatch, (int)g_draws);
+			}
+		}
 
 	// Only frames that actually lost something, and only the first forty of them.
 	// A limit that quietly drops work reads as a rendering fault, so it says so,
