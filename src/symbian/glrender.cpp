@@ -135,6 +135,9 @@ static TInt      g_f0ClipFull, g_f0DropVerts, g_f0Evict, g_f0Miss;
 static TInt      g_primIdx;       // primitives seen this frame, counted for the depth
 static GLshort   g_primZ;         // depth of the primitive being assembled
 static TBool     g_depth;         // a depth buffer exists and is in use
+// Regrouping by texture is off by default. It made a menu come out white, and the
+// cause is not found yet; submission order is the behaviour that is known good.
+static TBool     g_sortOn;
 static TInt      g_draws;         // draw calls issued, summed over frames
 static TInt     *g_order;         // batch indices in the order they go out
 static TInt     *g_batchNext;     // next batch with the same texture, -1 ends
@@ -334,6 +337,73 @@ extern "C" int glrInit(void)
 // The window was re-attached - on this device a screen rotation does that - and
 // the EGL context went with it. Texture names belong to the dead context, so they
 // are dropped rather than deleted, and the next frame initialises again.
+// Whether a later primitive really does cover an earlier one is a property of the
+// driver and of the projection, not something to be assumed: the whole regrouping
+// by texture rests on it. Two overlapping quads, submitted in order, read back.
+static void depthProbeOnce(const char *aWhat, GLfloat aNear, GLfloat aFar, TInt aSign)
+	{
+	const TInt depthBits = voutSymbianGlDepthBits();
+	glViewport(0, 0, g_vpW, g_vpH);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrthof(0, 64.0f, 64.0f, 0, aNear, aFar);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	glMatrixMode(GL_TEXTURE);
+	glLoadIdentity();
+	glMatrixMode(GL_MODELVIEW);
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_BLEND);
+	glDisable(GL_ALPHA_TEST);
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_COLOR_ARRAY);
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	if (depthBits >= 16)
+		{ glEnable(GL_DEPTH_TEST); glDepthFunc(GL_LEQUAL); glDepthMask(GL_TRUE); }
+	else
+		glDisable(GL_DEPTH_TEST);
+	glClearColor(0, 0, 0, 1);
+	glClear(GL_COLOR_BUFFER_BIT | (depthBits >= 16 ? GL_DEPTH_BUFFER_BIT : 0));
+	// Primitive 0 red, primitive 1 green, both over the same square. Submitted in
+	// that order, green must win.
+	for (TInt p = 0; p < 2; p++)
+		{
+		const GLshort z = (GLshort)(aSign * (KMaxPrims - p));
+		for (TInt v = 0; v < 6; v++)
+			{
+			static const GLshort qx[6] = { 0, 64, 0, 64, 64, 0 };
+			static const GLshort qy[6] = { 0, 0, 64, 0, 64, 64 };
+			g_v[v].x = qx[v]; g_v[v].y = qy[v]; g_v[v].z = z; g_v[v].pad = 0;
+			g_v[v].u = 0; g_v[v].v = 0;
+			g_v[v].r = (GLubyte)(p == 0 ? 255 : 0);
+			g_v[v].g = (GLubyte)(p == 0 ? 0 : 255);
+			g_v[v].b = 0; g_v[v].a = 255;
+			}
+		glVertexPointer(3, GL_SHORT, sizeof(TGlrVert), &g_v[0].x);
+		glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(TGlrVert), &g_v[0].r);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		}
+	TUint8 px[4] = { 0, 0, 0, 0 };
+	glReadPixels(g_vpW / 4, g_vpH / 4, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, px);
+	ps1LogFmt("glrdepth", "%s: near=%d far=%d zsign=%d depthBits=%d r=%d g=%d b=%d"
+		" later_wins=%d err=%u", aWhat, (int)aNear, (int)aFar, (int)aSign,
+		(int)depthBits, (int)px[0], (int)px[1], (int)px[2],
+		(int)(px[1] > px[0]), (unsigned)glGetError());
+	glDisable(GL_DEPTH_TEST);
+	glDepthMask(GL_FALSE);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	}
+
+extern "C" void glrDepthProbe(void)
+	{
+	if (!g_ready || !g_v)
+		return;
+	// The form now in use, and the one that produced a white screen: a far plane
+	// behind the eye. Both are asked rather than argued about.
+	depthProbeOnce("conventional", 1.0f, (GLfloat)(KMaxPrims + 1), -1);
+	depthProbeOnce("negativefar", 0.0f, -(GLfloat)KMaxPrims, 1);
+	}
+
 extern "C" void glrLoseContext(void)
 	{
 	g_ready = EFalse;
@@ -525,6 +595,13 @@ static void ensureDummyTex(void)
 
 // Probe: the background normally goes down only when a direct VRAM write landed
 // in the drawn buffer, which is rare enough to be hard to catch. This forces it.
+// Regroup opaque primitives by texture, resolving overlap with the depth buffer
+// instead of with the order they were submitted in.
+extern "C" void glrSetSort(int aOn)
+	{
+	g_sortOn = aOn ? ETrue : EFalse;
+	}
+
 extern "C" void glrSetBgForce(int aOn)
 	{
 	g_bgForce = aOn ? ETrue : EFalse;
@@ -708,7 +785,7 @@ extern "C" void glrPrim(unsigned aCmd, const unsigned *aPacket, const int *aStat
 		return;
 	// Later primitives must win, and the projection makes a smaller z the nearer
 	// one, so the depth counts down as the frame goes on.
-	g_primZ = (GLshort)((g_primIdx < KMaxPrims) ? (KMaxPrims - g_primIdx) : 1);
+	g_primZ = (GLshort)-((g_primIdx < KMaxPrims) ? (KMaxPrims - g_primIdx) : 1);
 	g_primIdx++;
 	// Which back buffer this primitive belongs to. The area alone is not enough:
 	// Gran Turismo keeps both buffers under one area 0,0..640,480 and tells them
@@ -925,7 +1002,7 @@ extern "C" void glrBeginFrame(void)
 	g_wrX0 = 0; g_wrY0 = 0; g_wrX1 = -1; g_wrY1 = -1;
 	g_batchFull = EFalse;
 	g_primIdx = 0;
-	g_primZ = (GLshort)KMaxPrims;
+	g_primZ = (GLshort)-KMaxPrims;
 	g_f0Nofit = g_nofit;         g_f0BatchOver = g_batchOver;
 	g_f0DropPrims = g_dropPrims; g_f0Over = g_over;
 	g_f0ClipFull = g_clipFull;   g_f0DropVerts = g_dropVerts;
@@ -1046,7 +1123,7 @@ extern "C" int glrEndFrame(void)
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	glOrthof((GLfloat)g_clip[0], (GLfloat)g_clip[2],
-	         (GLfloat)g_clip[3], (GLfloat)g_clip[1], 0, -(GLfloat)KMaxPrims);
+	         (GLfloat)g_clip[3], (GLfloat)g_clip[1], 1.0f, (GLfloat)(KMaxPrims + 1));
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
@@ -1067,7 +1144,7 @@ extern "C" int glrEndFrame(void)
 	// cut entirely and B/2+F/2 would pass by one quantisation step. What has to
 	// be cut is exactly zero, so the threshold is close to zero.
 	glAlphaFunc(GL_GREATER, 0.05f);
-	g_depth = (voutSymbianGlDepthBits() >= 16);
+	g_depth = (g_sortOn && voutSymbianGlDepthBits() >= 16);
 	if (g_depth)
 		{
 		glEnable(GL_DEPTH_TEST);
@@ -1298,10 +1375,25 @@ extern "C" int glrEndFrame(void)
 					(int)i, g_tex[i].iTba, g_tex[i].iCba, g_tex[i].iMode,
 					g_tex[i].iMaskU, g_tex[i].iMaskV,
 					g_tex[i].iX, g_tex[i].iY, g_tex[i].iW, g_tex[i].iH);
-		for (TInt b = 0; b < g_nBatch && b < 12; b++)
-			ps1LogFmt("glrbatch", "b=%d n=%d tex=%d blend=%d clip=%d",
+		ps1LogFmt("glrshot", "frame=%d,%d..%d,%d vp=%dx%d best=%d clips=%d"
+			" verts=%d batches=%d draws=%d sort=%d depth=%d",
+			g_clip[0], g_clip[1], g_clip[2], g_clip[3], (int)g_vpW, (int)g_vpH,
+			(int)best, (int)g_nClips, (int)g_nVerts, (int)g_nBatch, (int)g_draws,
+			(int)g_sortOn, (int)g_depth);
+		for (TInt c = 0; c < g_nClips; c++)
+			ps1LogFmt("glrclip", "c=%d ofs=%d,%d area=%d,%d..%d,%d verts=%d",
+				(int)c, g_ofs[c][0], g_ofs[c][1], g_clips[c][0], g_clips[c][1],
+				g_clips[c][2], g_clips[c][3], (int)g_clipVerts[c]);
+		for (TInt b = 0; b < g_nBatch && b < 16; b++)
+			{
+			const TGlrVert &v0 = g_v[g_batch[b].iFirst];
+			ps1LogFmt("glrbatch", "b=%d n=%d tex=%d blend=%d clip=%d"
+				" xy=%d,%d z=%d rgb=%02x%02x%02x",
 				(int)b, g_batch[b].iCount, (int)g_batch[b].iTex,
-				g_batch[b].iBlend, g_batch[b].iClip);
+				g_batch[b].iBlend, g_batch[b].iClip,
+				(int)v0.x, (int)v0.y, (int)v0.z,
+				(unsigned)v0.r, (unsigned)v0.g, (unsigned)v0.b);
+			}
 		}
 	for (TInt i = 0; i < KMaxTex; i++)
 		{

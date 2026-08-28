@@ -348,6 +348,8 @@ void glrSetTexWhite(int on);
 void glrSetSkip(int mask);
 void glrSetDummyTex(int aSide);
 void glrSetBgForce(int on);
+void glrDepthProbe(void);
+void glrSetSort(int on);
 // Switch for gpu_unai software pass ("swoff" argument). Lives in gpulib_if.cpp.
 extern int gpu_unai_sw_off;
 // Dynarec block pre-compile on state load: crashes on this device, off by default.
@@ -2292,6 +2294,8 @@ static TInt g_glBench;
 // MBX rasterizer instead of VRAM presentation ("glrender" argument).
 static TBool g_glRender;
 static TInt  g_glBgForce;
+static TInt  g_glDepthProbe;
+static TInt  g_glSort;
 static TBool g_texWhite;
 static TInt g_glrSkip;
 static TInt g_dummyTexSide;   // probe: bind cost against texture size
@@ -2336,6 +2340,9 @@ extern "C" int ps1GuiSetup(void)
 		glrSetSkip(g_glrSkip);
 		glrSetDummyTex(g_dummyTexSide);
 		glrSetBgForce(g_glBgForce);
+		glrSetSort(g_glSort);
+		if (g_glDepthProbe)
+			glrDepthProbe();
 		logEvent("glr", grc ? "GLR_INIT_FAIL" : NULL, "init rc=%d active=%d swoff=%d",
 			(int)grc, (int)glrEnabled(), (int)gpu_unai_sw_off);
 		}
@@ -2932,6 +2939,17 @@ GLDEF_C TInt E32Main()
 			}
 		// "texwhite" - probe: textures without vertex color modulation.
 		// "glbgforce" - probe: lay the VRAM picture under every rasterised frame.
+		// "gldepthprobe" - ask the driver, once, whether a later primitive really
+		// does cover an earlier one under our projection.
+		// "glsort" - regroup opaque primitives by texture; off until the white menu
+		// is understood. Also settable from the marker file, which is the only way
+		// in when the emulator is started from its icon.
+		_LIT(KGlSortArg, "glsort");
+		if (cl.FindF(KGlSortArg) != KErrNotFound)
+			g_glSort = 1;
+		_LIT(KGlDepthArg, "gldepthprobe");
+		if (cl.FindF(KGlDepthArg) != KErrNotFound)
+			g_glDepthProbe = 1;
 		_LIT(KGlBgArg, "glbgforce");
 		if (cl.FindF(KGlBgArg) != KErrNotFound)
 			g_glBgForce = 1;
@@ -3156,6 +3174,9 @@ GLDEF_C TInt E32Main()
 				_LIT8(KPlay, "play");
 				if (m.Find(KPlay) != KErrNotFound)     g_inputMode = EInputPlay;
 				else if (m.Find(KRec) != KErrNotFound) g_inputMode = EInputRecord;
+				_LIT8(KGlSort, "glsort");
+				if (m.Find(KGlSort) != KErrNotFound)
+					g_glSort = 1;
 				_LIT8(KGl, "gl");
 				if (m.Find(KGl) != KErrNotFound)
 					voutSymbianSetGl(1);
