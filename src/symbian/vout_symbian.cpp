@@ -625,23 +625,88 @@ blitRow8888(TUint32 *aDst, const TUint16 *aSrc, TInt aPixels)
 	if (blocks > 0)
 		{
 		const TUint32 *s32 = (const TUint32 *)aSrc;
+#ifdef __GCCE__
+		// Hand-written because both compilers spill the four accumulators to the
+		// stack here and split the four-word store; the spilling cost more than
+		// the conversion itself. Pinned registers keep the store one stm, and the
+		// two source words are converted interleaved so that neither dependency
+		// chain stalls the pipeline waiting for its own previous result.
+		// The low three bits of each channel repeat its high three, which the
+		// mask in m adds to all three channels at once.
+		register TUint32 w0 __asm__("r4");
+		register TUint32 w1 __asm__("r5");
+		register TUint32 w2 __asm__("r6");
+		register TUint32 w3 __asm__("r7");
+		TUint32 p0, p1, t0, t1, m;
+		__asm__ __volatile__ (
+		"	mov	%[m], #0x00070000\n"
+		"	orr	%[m], %[m], #0x00000700\n"
+		"	orr	%[m], %[m], #0x00000007\n"
+		"1:\n"
+		"	ldr	%[p0], [%[s]], #4\n"
+		"	ldr	%[p1], [%[s]], #4\n"
+		"	and	%[t0], %[p0], #0x1f\n"
+		"	and	%[t1], %[p1], #0x1f\n"
+		"	mov	%[w0], %[t0], lsl #19\n"
+		"	mov	%[w2], %[t1], lsl #19\n"
+		"	and	%[t0], %[p0], #0x3e0\n"
+		"	and	%[t1], %[p1], #0x3e0\n"
+		"	orr	%[w0], %[w0], %[t0], lsl #6\n"
+		"	orr	%[w2], %[w2], %[t1], lsl #6\n"
+		"	and	%[t0], %[p0], #0x7c00\n"
+		"	and	%[t1], %[p1], #0x7c00\n"
+		"	orr	%[w0], %[w0], %[t0], lsr #7\n"
+		"	orr	%[w2], %[w2], %[t1], lsr #7\n"
+		"	and	%[t0], %[m], %[w0], lsr #5\n"
+		"	and	%[t1], %[m], %[w2], lsr #5\n"
+		"	orr	%[w0], %[w0], %[t0]\n"
+		"	orr	%[w2], %[w2], %[t1]\n"
+		"	mov	%[p0], %[p0], lsr #16\n"
+		"	mov	%[p1], %[p1], lsr #16\n"
+		"	orr	%[w0], %[w0], #0xff000000\n"
+		"	orr	%[w2], %[w2], #0xff000000\n"
+		"	and	%[t0], %[p0], #0x1f\n"
+		"	and	%[t1], %[p1], #0x1f\n"
+		"	mov	%[w1], %[t0], lsl #19\n"
+		"	mov	%[w3], %[t1], lsl #19\n"
+		"	and	%[t0], %[p0], #0x3e0\n"
+		"	and	%[t1], %[p1], #0x3e0\n"
+		"	orr	%[w1], %[w1], %[t0], lsl #6\n"
+		"	orr	%[w3], %[w3], %[t1], lsl #6\n"
+		"	and	%[t0], %[p0], #0x7c00\n"
+		"	and	%[t1], %[p1], #0x7c00\n"
+		"	orr	%[w1], %[w1], %[t0], lsr #7\n"
+		"	orr	%[w3], %[w3], %[t1], lsr #7\n"
+		"	and	%[t0], %[m], %[w1], lsr #5\n"
+		"	and	%[t1], %[m], %[w3], lsr #5\n"
+		"	orr	%[w1], %[w1], %[t0]\n"
+		"	orr	%[w3], %[w3], %[t1]\n"
+		"	orr	%[w1], %[w1], #0xff000000\n"
+		"	orr	%[w3], %[w3], #0xff000000\n"
+		"	stmia	%[d]!, {r4, r5, r6, r7}\n"
+		"	subs	%[n], %[n], #1\n"
+		"	bne	1b\n"
+		: [s] "+r" (s32), [d] "+r" (aDst), [n] "+r" (blocks),
+		  [p0] "=&r" (p0), [p1] "=&r" (p1), [t0] "=&r" (t0), [t1] "=&r" (t1),
+		  [m] "=&r" (m),
+		  [w0] "=&r" (w0), [w1] "=&r" (w1), [w2] "=&r" (w2), [w3] "=&r" (w3)
+		:
+		: "cc", "memory");
+#else
 		TUint32 m5 = 0x1fu;
-		__asm__ __volatile__ ("" : "+r"(m5));
 		do
 			{
 			const TUint32 p01 = *s32++;
 			const TUint32 r0 = p01 & m5;
 			const TUint32 g0 = (p01 >> 5) & m5;
 			const TUint32 b0 = (p01 >> 10) & m5;
-			TUint32 w0 = 0xff000000u | (((r0 << 3) | (r0 >> 2)) << 16) | (((g0 << 3) | (g0 >> 2)) << 8) | ((b0 << 3) | (b0 >> 2));
+			const TUint32 w0 = 0xff000000u | (((r0 << 3) | (r0 >> 2)) << 16) | (((g0 << 3) | (g0 >> 2)) << 8) | ((b0 << 3) | (b0 >> 2));
 
 			const TUint32 p1 = p01 >> 16;
 			const TUint32 r1 = p1 & m5;
 			const TUint32 g1 = (p1 >> 5) & m5;
 			const TUint32 b1 = (p1 >> 10) & m5;
-			TUint32 w1 = 0xff000000u | (((r1 << 3) | (r1 >> 2)) << 16) | (((g1 << 3) | (g1 >> 2)) << 8) | ((b1 << 3) | (b1 >> 2));
-
-			__asm__ __volatile__ ("" : "+r"(w0), "+r"(w1));
+			const TUint32 w1 = 0xff000000u | (((r1 << 3) | (r1 >> 2)) << 16) | (((g1 << 3) | (g1 >> 2)) << 8) | ((b1 << 3) | (b1 >> 2));
 
 			const TUint32 p23 = *s32++;
 			const TUint32 r2 = p23 & m5;
@@ -655,12 +720,10 @@ blitRow8888(TUint32 *aDst, const TUint16 *aSrc, TInt aPixels)
 			const TUint32 b3 = (p3 >> 10) & m5;
 			const TUint32 w3 = 0xff000000u | (((r3 << 3) | (r3 >> 2)) << 16) | (((g3 << 3) | (g3 >> 2)) << 8) | ((b3 << 3) | (b3 >> 2));
 
-			// Four adjacent word stores: the compiler folds them into one stm.
-			// Naming r0-r3 by hand instead collides with whatever register the
-			// pointer itself was given.
 			aDst[0] = w0; aDst[1] = w1; aDst[2] = w2; aDst[3] = w3;
 			aDst += 4;
 			} while (--blocks);
+#endif
 		aSrc = (const TUint16 *)s32;
 		aPixels &= 3;
 		}
@@ -1428,6 +1491,10 @@ static const TInt KOvlPad   = 2;
 
 static TBool g_noUpdate;    // probe: skip screen Update() (see setter below)
 static TBool g_smoothDown = ETrue;   // box filter downscaling (see blitCurrent)
+// Which row loop the frame conversion actually took: counted to keep the fast
+// paths honest, because a guard that never matches looks exactly like a change
+// that does not help.
+static TUint g_rowBox, g_rowPlain, g_rowOther;
 static TInt  g_fxaaThr;              // lower FXAA threshold in green steps; 0 - disabled
 static TInt  g_fxaaMax = 31;         // upper: above this untouched (UI text)
 
@@ -1710,6 +1777,7 @@ static void blitCurrent()
 				if (pixB == 4)
 					{
 					TUint32 *d32 = (TUint32 *)drow;
+					g_rowBox++;
 					for (TInt dx = 0; dx < dstW; dx++, sxf += sxStep)
 						{
 						const TInt sx = (TInt)(sxf >> 16);
@@ -1720,6 +1788,7 @@ static void blitCurrent()
 					}
 				else
 					{
+					g_rowOther++;
 					for (TInt dx = 0; dx < dstW; dx++, sxf += sxStep)
 						{
 						const TInt sx = (TInt)(sxf >> 16);
@@ -1728,14 +1797,14 @@ static void blitCurrent()
 							Avg555(s2[sx],   s2[sx + hOff])));
 						}
 					}
-				}
+			}
 			// 32-bit screen buffer: convert directly to XRGB8888, without intermediate
 			// 16-bit bitmap and without 565->8888 conversion in bitgdi.
 			else if (pixB == 4)
 				{
 				TUint32 *d32 = (TUint32 *)drow;
 				if (sxStep == 0x10000u)
-					blitRow8888(d32, srow, dstW);
+					{ g_rowPlain++; blitRow8888(d32, srow, dstW); }
 				else
 					{
 					for (TInt dx = 0; dx < dstW; dx++)
@@ -2324,6 +2393,27 @@ extern "C" int voutSymbianFbFromPlatform(void)
 	return g_fbFromPlatform ? 1 : 0;
 	}
 
+// Bytes per pixel and row stride of the buffer the frame is really written
+// into. HAL reports the panel, which need not be the same thing.
+extern "C" int voutSymbianFbPixBytes(void)
+	{
+	return g_fbPixBytes;
+	}
+
+extern "C" int voutSymbianFbStrideB(void)
+	{
+	return g_fbStrideB;
+	}
+
+// How many rows each conversion loop converted over the run.
+extern "C" void voutSymbianRowStats(unsigned *aBox,
+	unsigned *aPlain, unsigned *aOther)
+	{
+	if (aBox)     *aBox     = g_rowBox;
+	if (aPlain)   *aPlain   = g_rowPlain;
+	if (aOther)   *aOther   = g_rowOther;
+	}
+
 // Frame geometry after scaling (Z3): what the game provides and where it is placed.
 extern "C" void voutSymbianGeom(int *aSrcW, int *aSrcH, int *aDstW, int *aDstH,
                                 int *aOx, int *aOy)
@@ -2655,6 +2745,195 @@ extern "C" void voutSymbianBlitSplit(unsigned *aFillMs, unsigned *aPresentMs)
 	const unsigned freq = f ? f : 1;
 	if (aFillMs)    *aFillMs    = (unsigned)(g_blitFillTicks * 1000ULL / freq);
 	if (aPresentMs) *aPresentMs = (unsigned)(g_blitPresentTicks * 1000ULL / freq);
+	}
+
+// Memory bandwidth microbenchmark (fbwr, fbrd, heapwr, heaprd, vramrd, copy).
+static volatile TUint32 g_memBenchSink;
+
+static void __attribute__((__noinline__))
+memBenchWriteWords(TUint32 *aDst, TInt aWords)
+	{
+	TInt n = aWords >> 3;
+	const TUint32 val = 0x5a5a5a5au;
+	do
+		{
+		aDst[0] = val;
+		aDst[1] = val;
+		aDst[2] = val;
+		aDst[3] = val;
+		aDst[4] = val;
+		aDst[5] = val;
+		aDst[6] = val;
+		aDst[7] = val;
+		aDst += 8;
+		} while (--n);
+	}
+
+static TUint32 __attribute__((__noinline__))
+memBenchReadWords(const TUint32 *aSrc, TInt aWords)
+	{
+	TInt n = aWords >> 3;
+	TUint32 s0 = 0, s1 = 0, s2 = 0, s3 = 0;
+	do
+		{
+		s0 += aSrc[0] + aSrc[1];
+		s1 += aSrc[2] + aSrc[3];
+		s2 += aSrc[4] + aSrc[5];
+		s3 += aSrc[6] + aSrc[7];
+		aSrc += 8;
+		} while (--n);
+	return s0 + s1 + s2 + s3;
+	}
+
+static TUint memBenchFastFreq()
+	{
+	TInt f = 0;
+	if (HAL::Get(HALData::EFastCounterFrequency, f) != KErrNone || f < 1)
+		f = (TInt)ndrc_symbian_fastfreq();
+	return (f > 0) ? (TUint)f : 1;
+	}
+
+static TUint calcMbPerSec(TUint64 aTotalBytes, TUint aTicks, TUint aFreq)
+	{
+	if (aTicks == 0 || aFreq == 0)
+		return 0;
+	return (TUint)((aTotalBytes * (TUint64)aFreq) / ((TUint64)aTicks * 1048576ULL));
+	}
+
+extern "C" void voutSymbianMemBench(char *aOut, int aOutLen)
+	{
+	if (!aOut || aOutLen <= 0)
+		return;
+
+	const TInt benchBytes = 300 * 1024;
+	const TInt benchWords = benchBytes / (TInt)sizeof(TUint32);
+	const TUint freq = memBenchFastFreq();
+	const TUint minTicks = (TUint)(((TUint64)freq * 200ULL) / 1000ULL);
+
+	refreshFbFromPlatform();
+	const TBool fbOk = g_fbOk && (g_fbBase != NULL);
+
+	TUint32 *heapBuf = (TUint32 *)User::Alloc(benchBytes);
+
+	TUint fbwr = 0;
+	TUint fbrd = 0;
+	TUint heapwr = 0;
+	TUint heaprd = 0;
+	TUint vramrd = 0;
+	TUint copy = 0;
+
+	// 1) fbwr: sequential 32-bit word writes to screen buffer
+	if (fbOk)
+		{
+		TUint iters = 0;
+		const TUint t0 = User::FastCounter();
+		do
+			{
+			memBenchWriteWords((TUint32 *)g_fbBase, benchWords);
+			iters++;
+			} while ((TUint)(User::FastCounter() - t0) < minTicks);
+		const TUint dt = User::FastCounter() - t0;
+		fbwr = calcMbPerSec((TUint64)iters * benchBytes, dt, freq);
+		}
+
+	// 2) fbrd: sequential 32-bit word reads from screen buffer
+	if (fbOk)
+		{
+		TUint iters = 0;
+		const TUint t0 = User::FastCounter();
+		do
+			{
+			g_memBenchSink += memBenchReadWords((const TUint32 *)g_fbBase, benchWords);
+			iters++;
+			} while ((TUint)(User::FastCounter() - t0) < minTicks);
+		const TUint dt = User::FastCounter() - t0;
+		fbrd = calcMbPerSec((TUint64)iters * benchBytes, dt, freq);
+		}
+
+	// 3) heapwr: sequential 32-bit word writes to heap buffer
+	if (heapBuf)
+		{
+		TUint iters = 0;
+		const TUint t0 = User::FastCounter();
+		do
+			{
+			memBenchWriteWords(heapBuf, benchWords);
+			iters++;
+			} while ((TUint)(User::FastCounter() - t0) < minTicks);
+		const TUint dt = User::FastCounter() - t0;
+		heapwr = calcMbPerSec((TUint64)iters * benchBytes, dt, freq);
+		}
+
+	// 4) heaprd: sequential 32-bit word reads from heap buffer
+	if (heapBuf)
+		{
+		TUint iters = 0;
+		const TUint t0 = User::FastCounter();
+		do
+			{
+			g_memBenchSink += memBenchReadWords(heapBuf, benchWords);
+			iters++;
+			} while ((TUint)(User::FastCounter() - t0) < minTicks);
+		const TUint dt = User::FastCounter() - t0;
+		heaprd = calcMbPerSec((TUint64)iters * benchBytes, dt, freq);
+		}
+
+	// 5) vramrd: sequential 32-bit word reads from emulator VRAM
+	if (g_vout.vram != NULL)
+		{
+		TUint iters = 0;
+		const TUint t0 = User::FastCounter();
+		do
+			{
+			g_memBenchSink += memBenchReadWords((const TUint32 *)g_vout.vram, benchWords);
+			iters++;
+			} while ((TUint)(User::FastCounter() - t0) < minTicks);
+		const TUint dt = User::FastCounter() - t0;
+		vramrd = calcMbPerSec((TUint64)iters * benchBytes, dt, freq);
+		}
+
+	// 6) copy: Mem::Copy from heap buffer to screen buffer
+	if (fbOk && heapBuf)
+		{
+		TUint iters = 0;
+		const TUint t0 = User::FastCounter();
+		do
+			{
+			Mem::Copy(g_fbBase, heapBuf, benchBytes);
+			iters++;
+			} while ((TUint)(User::FastCounter() - t0) < minTicks);
+		const TUint dt = User::FastCounter() - t0;
+		copy = calcMbPerSec((TUint64)iters * benchBytes, dt, freq);
+		}
+
+	// The conversion loop itself, over a whole 320x240 frame, with the same row
+	// geometry the blit uses: source stride 2048 bytes in a heap buffer, target
+	// the screen buffer. Tells apart the cost of the loop from the cost of the bus.
+	TUint blitUs = 0;
+	if (fbOk && heapBuf)
+		{
+		const TInt rows = (g_fbH < 240) ? g_fbH : 240;
+		const TInt cols = (g_fbW < 320) ? g_fbW : 320;
+		TUint iters = 0;
+		const TUint t0 = User::FastCounter();
+		do
+			{
+			for (TInt y = 0; y < rows; y++)
+				blitRow8888((TUint32 *)((TUint8 *)g_fbBase + y * g_fbStrideB),
+				            (const TUint16 *)heapBuf + (y & 31) * 1024, cols);
+			iters++;
+			} while ((TUint)(User::FastCounter() - t0) < minTicks);
+		const TUint dt = User::FastCounter() - t0;
+		if (iters)
+			blitUs = (TUint)(((TUint64)dt * 1000000ULL) / ((TUint64)freq * iters));
+		}
+
+	if (heapBuf)
+		User::Free(heapBuf);
+
+	snprintf(aOut, (size_t)aOutLen,
+		"fbwr=%u fbrd=%u heapwr=%u heaprd=%u vramrd=%u copy=%u blitus=%u",
+		fbwr, fbrd, heapwr, heaprd, vramrd, copy, blitUs);
 	}
 
 // --- Wrappers for libpcsxcore -----------------------------------------------

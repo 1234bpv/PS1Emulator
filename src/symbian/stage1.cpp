@@ -315,6 +315,10 @@ void voutSymbianPresent(void);
 int voutSymbianFinish(int holdMs);
 void voutSymbianGpuStats(unsigned *data, unsigned *dataMem, unsigned *dma, unsigned *status);
 void voutSymbianBlitSplit(unsigned *fillMs, unsigned *presentMs);
+void voutSymbianMemBench(char *aOut, int aOutLen);
+int voutSymbianFbPixBytes(void);
+int voutSymbianFbStrideB(void);
+void voutSymbianRowStats(unsigned *box, unsigned *plain, unsigned *other);
 void voutSymbianSetDsa(int on);
 int voutSymbianDsaActive(void);
 void voutSymbianSetGl(int on);
@@ -488,6 +492,7 @@ static TInt g_gpuFrameskip;
 
 // Probes for measurements (command line only, not present in menu).
 static TBool g_hackNoStalls;
+static TBool g_memBench;
 // Frame of the first screenshot; 3300 - track, lower values hit game menu,
 // where it runs in 640x480 and scaling behavior is visible.
 static TInt g_dumpAt = 3300;
@@ -1264,6 +1269,9 @@ static void parseCommandLine(TInt &aFrames, TBool &aUseBios, TBool &aGpuTest, TB
 	voutSymbianSetDsa(cmd.FindF(KDsaArgC) != KErrNotFound ? 1 : 0);
 	_LIT(KNoDirtyArgC, "nodirty");
 	voutSymbianSetDirtyOnly(cmd.FindF(KNoDirtyArgC) != KErrNotFound ? 0 : 1);
+	_LIT(KMemBenchArgC, "membench");
+	if (cmd.FindF(KMemBenchArgC) != KErrNotFound)
+		g_memBench = ETrue;
 
 	// GL ES output (MBX): GPU scales and presents via eglSwapBuffers.
 	_LIT(KGlArg, "gl");
@@ -1566,6 +1574,13 @@ static TInt passSetup(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTes
 		voutSymbianFbInfo(&fbOk, &xpix, &ypix, &lineB, &bpp, &firstOff, &winW, &winH);
 		logEvent("fb", NULL, "%s: ok=%d hal=%dx%d line=%dB bpp=%d first=%d win=%dx%d",
 			mode, fbOk, xpix, ypix, lineB, bpp, firstOff, winW, winH);
+
+		if (g_memBench)
+			{
+			char buf[256];
+			voutSymbianMemBench(buf, sizeof(buf));
+			logEvent("membench", NULL, "%s", buf);
+			}
 		}
 
 	// Input trace must be opened BEFORE loading state: rewinding replay
@@ -2130,7 +2145,7 @@ static void passTeardown()
 	unsigned blitFillMs = 0, blitPresentMs = 0;
 	voutSymbianBlitSplit(&blitFillMs, &blitPresentMs);
 	logEvent("profile", NULL,
-		"%s: total=%ums poll=%ums(%u%%) emu=%ums(%u%%) blit=%ums(%u%%) snd=%ums(%u%%) gpuRaster=%ums(%u%% of emu) spuMix=%ums mdec=%ums(%u words) cdRead=%ums(%u reads) blitFill=%ums blitPresent=%ums frames=%u",
+		"%s: total=%ums poll=%ums(%u%%) emu=%ums(%u%%) blit=%ums(%u%%) snd=%ums(%u%%) gpuRaster=%ums(%u%% of emu) spuMix=%ums mdec=%ums(%u words) cdRead=%ums(%u reads) blitFill=%ums blitPresent=%ums shown=%u frames=%u",
 		mode, (unsigned)tTot,
 		(unsigned)tPoll, (unsigned)(tPoll * 100 / den),
 		(unsigned)tEmu,  (unsigned)(tEmu * 100 / den),
@@ -2138,9 +2153,11 @@ static void passTeardown()
 		(unsigned)tSnd,  (unsigned)(tSnd * 100 / den),
 		gpuRasterMs, (unsigned)(tEmu ? gpuRasterMs * 100 / tEmu : 0),
 		spuMixMs, mdecMs, g_mdecWords, cdReadMs, g_cdReadCount, blitFillMs, blitPresentMs,
-		(unsigned)aProduced);
-	logEvent("dsa", NULL, "%s: active=%d gl=%d fbPlatform=%d", mode,
-		voutSymbianDsaActive(), voutSymbianGlActive(), voutSymbianFbFromPlatform());
+		voutSymbianPresents(), (unsigned)aProduced);
+	unsigned rowBox = 0, rowPlain = 0, rowOther = 0;
+	voutSymbianRowStats(&rowBox, &rowPlain, &rowOther);
+	logEvent("dsa", NULL, "%s: active=%d gl=%d fbPlatform=%d pixB=%d strideB=%d rows=%u/%u/%u", mode,
+		voutSymbianDsaActive(), voutSymbianGlActive(), voutSymbianFbFromPlatform(), voutSymbianFbPixBytes(), voutSymbianFbStrideB(), rowBox, rowPlain, rowOther);
 	}
 
 	// Hold last frame (flushing audio), then tear down window and sound.
@@ -3077,6 +3094,9 @@ GLDEF_C TInt E32Main()
 		g_hackNoStalls = (cl.FindF(KNoStallsArg) != KErrNotFound);
 		_LIT(KNoUpdateArg, "noupdate");
 		voutSymbianSetNoUpdate(cl.FindF(KNoUpdateArg) != KErrNotFound ? 1 : 0);
+		_LIT(KMemBenchArg, "membench");
+		if (cl.FindF(KMemBenchArg) != KErrNotFound)
+			g_memBench = ETrue;
 		_LIT(KNoSmoothArg, "nosmooth");
 		voutSymbianSetSmooth(cl.FindF(KNoSmoothArg) != KErrNotFound ? 0 : 1);
 		// Antialiasing prototype: "fxaa" uses lower threshold 3, "fxaa6" - six.

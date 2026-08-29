@@ -94,6 +94,9 @@ if ($Gpu) {
   Build-Step "call `"$PSScriptRoot\gpu463-regen.cmd`"" 'gpu_unai 4.6.3'
 }
 if ($Build) {
+  # abld does not relink when only a library changed, so the previous EXE
+  # would be measured instead of the new one. Remove it and let the link run.
+  Remove-Item $Exe -Force -ErrorAction SilentlyContinue
   Build-Step "cd /d `"$Proj\configs\stage1\group`" & call bldmake bldfiles & call .\ABLD.BAT build gcce urel" 'stage1'
   $fi = [IO.FileInfo]$Exe
   Write-Host "[run] exe $($fi.Length) bytes, $($fi.LastWriteTime)"

@@ -34,7 +34,7 @@ REM rejects outright ("incompatible type for argument 1 of __builtin_va_start"
 REM in psxbios.c). Everything except stdarg/stddef still falls through to the SDK.
 set GCCINC=%NEWBIN%\..\lib\gcc\arm-none-symbianelf\4.6.3\include
 set INC=-I"%GCCINC%" -I"%PROJ%\src\compat" -I"%FORK%" -I"%FORK%\include" -I"%FORK%\libpcsxcore" -I"%FORK%\libpcsxcore\new_dynarec" -I"%ZLIB%" -I"%SDKINC%" -I"%SDKINC%\libc"
-set FLAGS=-c -O2 -march=armv6 -mtune=arm1136j-s -fno-exceptions -fshort-wchar -include "%SDKINC%\gcce\gcce.h" -include "%PROJ%\src\compat\compat_va_gcce46.h" -D__SYMBIAN32__ -D__EPOC32__ -D__GCCE__ -D__EABI__ -D__MARM__ -D__MARM_ARMV5__ -D__SERIES60_3X__ -D__SERIES60_31__ -DBASE_ADDR_DYNAMIC=1 -D__SIZEOF_POINTER__=4 -DP_HAVE_MMAP=0 -DNDEBUG
+set FLAGS=-c -O2 -march=armv6 -mtune=arm1136j-s -fno-exceptions -fshort-wchar -include "%SDKINC%\gcce\gcce.h" -include "%PROJ%\src\compat\compat_va_gcce46.h" -D__SYMBIAN32__ -D__EPOC32__ -D__GCCE__ -D__EABI__ -D__MARM__ -D__MARM_ARMV5__ -D__SERIES60_3X__ -D__SERIES60_31__ -DBASE_ADDR_DYNAMIC=1 -D__SIZEOF_POINTER__=4 -DP_HAVE_MMAP=0 -DNDEBUG -DDISABLE_MEM_LUTS=1
 
 for %%F in (cdriso cdrom cdrom-async cheat database decode_xa mdec misc plugins ppf psxbios psxcommon psxcounters psxdma psxevents psxhw psxinterpreter psxmem r3000a sio spu gpu pad gte gte_nf gte_divider) do (
   "%NEWBIN%\arm-none-symbianelf-gcc.exe" %FLAGS% %INC% -o "%TMPDIR%\%%F.o" "%FORK%\libpcsxcore\%%F.c" || exit /b 1
