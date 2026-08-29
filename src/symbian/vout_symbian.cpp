@@ -608,6 +608,10 @@ static inline TUint32 Bgr555ToXrgb8888(TUint32 aPix)
 	                   |  ((b << 3) | (b >> 2));
 	}
 
+// Probe: take the portable loop instead of the hand-written one, so the two can
+// be compared on the device within one build.
+static TBool g_blitC;
+
 // Same for 32-bit screen buffer (EColor16MU/16MA, XRGB8888).
 // Convert 2 pixels per 32-bit load and write 4-word (16-byte) blocks.
 static void __attribute__((__noinline__))
@@ -626,6 +630,8 @@ blitRow8888(TUint32 *aDst, const TUint16 *aSrc, TInt aPixels)
 		{
 		const TUint32 *s32 = (const TUint32 *)aSrc;
 #ifdef __GCCE__
+		if (!g_blitC)
+			{
 		// Hand-written because both compilers spill the four accumulators to the
 		// stack here and split the four-word store; the spilling cost more than
 		// the conversion itself. Pinned registers keep the store one stm, and the
@@ -692,7 +698,10 @@ blitRow8888(TUint32 *aDst, const TUint16 *aSrc, TInt aPixels)
 		  [w0] "=&r" (w0), [w1] "=&r" (w1), [w2] "=&r" (w2), [w3] "=&r" (w3)
 		:
 		: "cc", "memory");
-#else
+			}
+		else
+#endif
+			{
 		TUint32 m5 = 0x1fu;
 		do
 			{
@@ -723,7 +732,7 @@ blitRow8888(TUint32 *aDst, const TUint16 *aSrc, TInt aPixels)
 			aDst[0] = w0; aDst[1] = w1; aDst[2] = w2; aDst[3] = w3;
 			aDst += 4;
 			} while (--blocks);
-#endif
+			}
 		aSrc = (const TUint16 *)s32;
 		aPixels &= 3;
 		}
@@ -1494,7 +1503,7 @@ static TBool g_smoothDown = ETrue;   // box filter downscaling (see blitCurrent)
 // Which row loop the frame conversion actually took: counted to keep the fast
 // paths honest, because a guard that never matches looks exactly like a change
 // that does not help.
-static TUint g_rowBox, g_rowPlain, g_rowOther;
+static TUint g_rowBox, g_rowPlain, g_rowScale, g_rowRgb24, g_rowOther;
 static TInt  g_fxaaThr;              // lower FXAA threshold in green steps; 0 - disabled
 static TInt  g_fxaaMax = 31;         // upper: above this untouched (UI text)
 
@@ -1711,6 +1720,7 @@ static void blitCurrent()
 		TUint sxf = 0;
 		if (rgb24)
 			{
+			g_rowRgb24++;
 			// RGB24: 3 bytes per pixel (R, G, B) from VRAM.
 			const TUint8 *srow = vbytes + startByte + ssy * 2048;
 			if (pixB == 4)
@@ -1807,6 +1817,7 @@ static void blitCurrent()
 					{ g_rowPlain++; blitRow8888(d32, srow, dstW); }
 				else
 					{
+					g_rowScale++;
 					for (TInt dx = 0; dx < dstW; dx++)
 						{
 						d32[dx] = Bgr555ToXrgb8888(srow[sxf >> 16]);
@@ -2405,12 +2416,20 @@ extern "C" int voutSymbianFbStrideB(void)
 	return g_fbStrideB;
 	}
 
+// Probe switch for the frame conversion loop (see g_blitC).
+extern "C" void voutSymbianSetBlitC(int aOn)
+	{
+	g_blitC = aOn ? ETrue : EFalse;
+	}
+
 // How many rows each conversion loop converted over the run.
-extern "C" void voutSymbianRowStats(unsigned *aBox,
-	unsigned *aPlain, unsigned *aOther)
+extern "C" void voutSymbianRowStats(unsigned *aBox, unsigned *aPlain,
+	unsigned *aScale, unsigned *aRgb24, unsigned *aOther)
 	{
 	if (aBox)     *aBox     = g_rowBox;
 	if (aPlain)   *aPlain   = g_rowPlain;
+	if (aScale)   *aScale   = g_rowScale;
+	if (aRgb24)   *aRgb24   = g_rowRgb24;
 	if (aOther)   *aOther   = g_rowOther;
 	}
 

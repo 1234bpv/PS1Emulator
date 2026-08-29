@@ -159,9 +159,30 @@ function Save-Png {
 }
 
 foreach ($f in $Shots) {
+  # What the software path actually put on the screen. This is the only dump the
+  # non-GL run writes; ps1_gl<frame>.bin is left over from GL runs and comparing
+  # it silently compares two stale files.
+  $sc = "$RunDir\ps1_scr$f.bin"
+  try { Invoke-Net ($link + @('-GetFile', "E:\PS1\logs\ps1_scr$f.bin", '-OutFile', $sc)) | Out-Null } catch { }
+  if (Test-Path $sc) {
+    $b = [IO.File]::ReadAllBytes($sc)
+    $p = [regex]::Match($log, "pixB=(\d+) strideB=(\d+)")
+    $pix = if ($p.Success) { [int]$p.Groups[1].Value } else { 4 }
+    $str = if ($p.Success) { [int]$p.Groups[2].Value } else { 1280 }
+    $w = [int]($str / $pix)
+    $h = 240
+    # The dump carries a short header, same as the VRAM one.
+    $off = $b.Length - $str * $h
+    Save-Png $b $off $w $h ($str / $pix) ($pix -eq 4) $false "$RunDir\scr$f.png"
+    Write-Host "[run] scr$f.png ${w}x${h} pixB=$pix"
+  }
   # What the GL renderer actually put on screen: RGBA, bottom-up, screen sized.
   $gl = "$RunDir\ps1_gl$f.bin"
+  # Only under GL: otherwise the device still holds this file from an older GL
+  # run, and pulling it hands back a picture this run never drew.
+  if ($log -match "gl=1") {
   try { Invoke-Net ($link + @('-GetFile', "E:\PS1\logs\ps1_gl$f.bin", '-OutFile', $gl)) | Out-Null } catch { }
+  }
   if (Test-Path $gl) {
     $m = [regex]::Match($log, "ps1_gl$f\.bin (\d+)x(\d+)")
     $w = if ($m.Success) { [int]$m.Groups[1].Value } else { 320 }

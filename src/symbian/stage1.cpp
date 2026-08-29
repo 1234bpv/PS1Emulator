@@ -318,7 +318,8 @@ void voutSymbianBlitSplit(unsigned *fillMs, unsigned *presentMs);
 void voutSymbianMemBench(char *aOut, int aOutLen);
 int voutSymbianFbPixBytes(void);
 int voutSymbianFbStrideB(void);
-void voutSymbianRowStats(unsigned *box, unsigned *plain, unsigned *other);
+void voutSymbianSetBlitC(int on);
+void voutSymbianRowStats(unsigned *box, unsigned *plain, unsigned *scale, unsigned *rgb24, unsigned *other);
 void voutSymbianSetDsa(int on);
 int voutSymbianDsaActive(void);
 void voutSymbianSetGl(int on);
@@ -2154,10 +2155,10 @@ static void passTeardown()
 		gpuRasterMs, (unsigned)(tEmu ? gpuRasterMs * 100 / tEmu : 0),
 		spuMixMs, mdecMs, g_mdecWords, cdReadMs, g_cdReadCount, blitFillMs, blitPresentMs,
 		voutSymbianPresents(), (unsigned)aProduced);
-	unsigned rowBox = 0, rowPlain = 0, rowOther = 0;
-	voutSymbianRowStats(&rowBox, &rowPlain, &rowOther);
-	logEvent("dsa", NULL, "%s: active=%d gl=%d fbPlatform=%d pixB=%d strideB=%d rows=%u/%u/%u", mode,
-		voutSymbianDsaActive(), voutSymbianGlActive(), voutSymbianFbFromPlatform(), voutSymbianFbPixBytes(), voutSymbianFbStrideB(), rowBox, rowPlain, rowOther);
+	unsigned rowBox = 0, rowPlain = 0, rowScale = 0, rowRgb24 = 0, rowOther = 0;
+	voutSymbianRowStats(&rowBox, &rowPlain, &rowScale, &rowRgb24, &rowOther);
+	logEvent("dsa", NULL, "%s: active=%d gl=%d fbPlatform=%d pixB=%d strideB=%d rows=%u/%u/%u/%u/%u", mode,
+		voutSymbianDsaActive(), voutSymbianGlActive(), voutSymbianFbFromPlatform(), voutSymbianFbPixBytes(), voutSymbianFbStrideB(), rowBox, rowPlain, rowScale, rowRgb24, rowOther);
 	}
 
 	// Hold last frame (flushing audio), then tear down window and sound.
@@ -3092,6 +3093,8 @@ GLDEF_C TInt E32Main()
 		// Benchmark probes: no pipeline stall emulation / no screen Update().
 		_LIT(KNoStallsArg, "nostalls");
 		g_hackNoStalls = (cl.FindF(KNoStallsArg) != KErrNotFound);
+		_LIT(KBlitCArg, "blitc");
+		voutSymbianSetBlitC(cl.FindF(KBlitCArg) != KErrNotFound ? 1 : 0);
 		_LIT(KNoUpdateArg, "noupdate");
 		voutSymbianSetNoUpdate(cl.FindF(KNoUpdateArg) != KErrNotFound ? 1 : 0);
 		_LIT(KMemBenchArg, "membench");
