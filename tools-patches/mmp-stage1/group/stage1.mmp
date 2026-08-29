@@ -9,8 +9,10 @@ UID             0 0xE0001002
 SECUREID        0xE0001002
 VENDORID        0
 
-// File operations for the JSONL log; nothing else is needed.
-CAPABILITY      None
+// The JSONL log needs nothing, but the performance-counter probe opens the
+// dvfs and patcher channels, which check PowerMgmt and WriteDeviceData. The
+// device runs this binary by registered hash, so the set costs no signing.
+CAPABILITY      PowerMgmt WriteDeviceData ReadDeviceData ReadUserData WriteUserData ProtServ
 
 // Standard stack. It is sufficient for the recompiler only because struct
 // compile_state (64 KB for MAXBLOCK arrays) was moved off the stack in the fork.
@@ -50,6 +52,9 @@ SOURCE          app_symbian.cpp
 SOURCE          i18n.cpp
 // Accelerometer through the ROM sensor library; absent from the SDK.
 SOURCE          accel.cpp
+// ARM1136 performance counters. They need kernel mode, so this pulls in the
+// overclock engine of the neighbouring project, which already has the way in.
+SOURCE          pmu_symbian.cpp
 // Sound glue: ps1Spu* wrappers over dfsound + out-driver (separate from plugins.h).
 SOURCE          snd_symbian.cpp
 // Platform replacement of mmap(PROT_EXEC)/__clear_cache for the dynarec.
@@ -96,6 +101,11 @@ TARGETPATH      \private\10003a3f\import\apps
 END
 
 // ESTLIB lacks snprintf/vsnprintf (C99); in the SDK they are not in any .dso.
+// The overclock engine of the neighbouring project already knows how to run
+// a blob in kernel mode on this device, which is what CP15 access needs.
+SOURCEPATH      ..\..\..\..\SymbianOverclock\src
+SOURCE          ocengine.cpp
+
 SOURCEPATH      ..\..\..\src\compat
 SOURCE          compat_snprintf.c
 // __aeabi_idiv/__aeabi_uidiv: needed by objects from GCCE 4.6.3, the system does not
@@ -103,6 +113,7 @@ SOURCE          compat_snprintf.c
 SOURCE          compat_aeabi.c
 
 USERINCLUDE     ..\..\..\src\compat
+USERINCLUDE     ..\..\..\..\SymbianOverclock\src
 USERINCLUDE     ..\..\..\src\lzma
 // zlib: DEFLATE when building .pbp and INFLATE when reading .zip.
 USERINCLUDE     ..\..\..\pcsx_rearmed\deps\libchdr\deps\zlib-1.3.1

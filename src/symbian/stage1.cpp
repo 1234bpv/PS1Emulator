@@ -321,6 +321,10 @@ int voutSymbianFbStrideB(void);
 void voutSymbianSetBlitC(int on);
 void gpuUnaiDrawStats(unsigned *out, int n);
 void gpuUnaiSetSpanOff(int on);
+int pmuSymbianStart(int evt0, int evt1, unsigned *diag);
+int pmuSymbianRead(unsigned *ccnt, unsigned *pmn0, unsigned *pmn1, unsigned *direct);
+void pmuSymbianStop(void);
+unsigned pmuSymbianHello(unsigned *sram);
 void voutSymbianRowStats(unsigned *box, unsigned *plain, unsigned *scale, unsigned *rgb24, unsigned *other);
 void voutSymbianSetDsa(int on);
 int voutSymbianDsaActive(void);
@@ -496,6 +500,11 @@ static TInt g_gpuFrameskip;
 // Probes for measurements (command line only, not present in menu).
 static TBool g_hackNoStalls;
 static TBool g_memBench;
+// Hardware counter pair to run over the pass, as two event numbers; -1 is off.
+// Snapshotting patches kernel code, so it happens twice per pass and never
+// inside the frame loop.
+static TInt g_pmuEvt0 = -1, g_pmuEvt1 = -1;
+static unsigned g_pmuBase[3];
 // Frame of the first screenshot; 3300 - track, lower values hit game menu,
 // where it runs in 640x480 and scaling behavior is visible.
 static TInt g_dumpAt = 3300;
@@ -1620,6 +1629,19 @@ static TInt passSetup(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTes
 	g_fpsWinTick = g_pass.tStart;
 	g_fpsWinFrame = g_pass.i;
 	g_fpsWinShown = voutSymbianPresents();   // counter persists across passes
+	if (g_pmuEvt0 >= 0)
+		{
+		unsigned diag[5] = { 0, 0, 0, 0, 0 }, d = 0;
+		const TInt rc = pmuSymbianStart(g_pmuEvt0, g_pmuEvt1, diag);
+		unsigned sram = 0;
+		const unsigned hello = pmuSymbianHello(&sram);
+		pmuSymbianRead(&g_pmuBase[0], &g_pmuBase[1], &g_pmuBase[2], &d);
+		logEvent("pmustart", rc ? "PMU_FAIL" : NULL,
+			"%s: rc=%d setup=%08x hello=%08x sram=%08x diag=%08x,%d,%d,%d evt=%02x,%02x base=%u,%u,%u",
+			mode, rc, diag[0], hello, sram, diag[1], (int)diag[2], (int)diag[3], (int)diag[4],
+			(unsigned)g_pmuEvt0, (unsigned)g_pmuEvt1,
+			g_pmuBase[0], g_pmuBase[1], g_pmuBase[2]);
+		}
 	return KErrNone;
 	}
 
@@ -2157,6 +2179,20 @@ static void passTeardown()
 		gpuRasterMs, (unsigned)(tEmu ? gpuRasterMs * 100 / tEmu : 0),
 		spuMixMs, mdecMs, g_mdecWords, cdReadMs, g_cdReadCount, blitFillMs, blitPresentMs,
 		voutSymbianPresents(), (unsigned)aProduced);
+	if (g_pmuEvt0 >= 0)
+		{
+		unsigned c[3] = { 0, 0, 0 };
+		unsigned d = 0;
+		const TInt rc = pmuSymbianRead(&c[0], &c[1], &c[2], &d);
+		const unsigned hello = pmuSymbianHello(NULL);
+		// CCNT counts every 64th cycle: an undivided one wraps in ten seconds.
+		logEvent("pmu", (rc || hello != 0x5a5a0001u) ? "PMU_FAIL" : NULL,
+			"%s: rc=%d hello=%08x evt=%02x,%02x cyc64=%u pmn0=%u pmn1=%u frames=%u raw=%u,%u,%u direct=%u",
+			mode, rc, hello, (unsigned)g_pmuEvt0, (unsigned)g_pmuEvt1,
+			c[0] - g_pmuBase[0], c[1] - g_pmuBase[1], c[2] - g_pmuBase[2],
+			(unsigned)aProduced, c[0], c[1], c[2], d);
+		pmuSymbianStop();
+		}
 	unsigned rowBox = 0, rowPlain = 0, rowScale = 0, rowRgb24 = 0, rowOther = 0;
 	voutSymbianRowStats(&rowBox, &rowPlain, &rowScale, &rowRgb24, &rowOther);
 	logEvent("dsa", NULL, "%s: active=%d gl=%d fbPlatform=%d pixB=%d strideB=%d rows=%u/%u/%u/%u/%u", mode,
@@ -3122,6 +3158,19 @@ GLDEF_C TInt E32Main()
 		voutSymbianSetBlitC(cl.FindF(KBlitCArg) != KErrNotFound ? 1 : 0);
 		_LIT(KNoUpdateArg, "noupdate");
 		voutSymbianSetNoUpdate(cl.FindF(KNoUpdateArg) != KErrNotFound ? 1 : 0);
+		// "pmu0b07": two ARM1136 event numbers as two hex digits each, the first
+		// going to PMN0. 0x0b is a D-cache miss, 0x07 an executed instruction.
+		_LIT(KPmuArg, "pmu");
+		{
+		const TInt pp = cl.FindF(KPmuArg);
+		if (pp != KErrNotFound)
+			{
+			TLex lex(cl.Mid(pp + 3, 4));
+			TUint v = 0;
+			if (lex.Val(v, EHex) == KErrNone)
+				{ g_pmuEvt0 = (TInt)((v >> 8) & 0xff); g_pmuEvt1 = (TInt)(v & 0xff); }
+			}
+		}
 		_LIT(KMemBenchArg, "membench");
 		if (cl.FindF(KMemBenchArg) != KErrNotFound)
 			g_memBench = ETrue;
