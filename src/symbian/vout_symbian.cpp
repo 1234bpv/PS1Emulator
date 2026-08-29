@@ -2819,6 +2819,46 @@ static TUint calcMbPerSec(TUint64 aTotalBytes, TUint aTicks, TUint aFreq)
 	return (TUint)((aTotalBytes * (TUint64)aFreq) / ((TUint64)aTicks * 1048576ULL));
 	}
 
+// Dependent-read walk: latency against working-set size. The rasteriser spends
+// 33 cycles per pixel outside modulation on a handful of instructions, and the
+// question is whether it is waiting on memory. Each read here takes its address
+// from the previous one, so nothing can be overlapped, and the stride is one
+// cache line. The knees in the resulting curve are the caches themselves.
+static void memBenchWalk(char *aOut, int aLen, TUint aFreq, TUint aMinTicks)
+	{
+	static const TInt KSizes[6] = { 4096, 16384, 65536, 262144, 524288, 1048576 };
+	char *p = aOut;
+	int left = aLen;
+	for (TInt si = 0; si < 6; si++)
+		{
+		const TInt bytes = KSizes[si];
+		TUint32 *buf = (TUint32 *)User::Alloc(bytes);
+		if (!buf)
+			continue;
+		const TInt words = bytes / 4;
+		const TInt step = 8;              // 32 bytes: one line per step
+		for (TInt i = 0; i < words; i += step)
+			buf[i] = (TUint32)((i + step) % words);
+		TUint32 idx = 0;
+		TUint reps = 0;
+		const TUint t0 = User::FastCounter();
+		do
+			{
+			for (TInt k = 0; k < 1024; k++)
+				idx = buf[idx];
+			reps++;
+			} while ((TUint)(User::FastCounter() - t0) < aMinTicks / 4);
+		const TUint dt = User::FastCounter() - t0;
+		g_memBenchSink += idx;
+		User::Free(buf);
+		const TUint ns = reps ? (TUint)(((TUint64)dt * 1000000000ULL) /
+		                                ((TUint64)aFreq * reps * 1024)) : 0;
+		const int n = snprintf(p, left, " walk%dk=%u", (int)(bytes / 1024), ns);
+		if (n > 0 && n < left) { p += n; left -= n; }
+		}
+	}
+
+
 extern "C" void voutSymbianMemBench(char *aOut, int aOutLen)
 	{
 	if (!aOut || aOutLen <= 0)
@@ -2950,9 +2990,11 @@ extern "C" void voutSymbianMemBench(char *aOut, int aOutLen)
 	if (heapBuf)
 		User::Free(heapBuf);
 
-	snprintf(aOut, (size_t)aOutLen,
+	int _used = snprintf(aOut, (size_t)aOutLen,
 		"fbwr=%u fbrd=%u heapwr=%u heaprd=%u vramrd=%u copy=%u blitus=%u",
 		fbwr, fbrd, heapwr, heaprd, vramrd, copy, blitUs);
+	if (_used < 0) _used = 0;
+	memBenchWalk(aOut + _used, aOutLen - _used, freq, minTicks);
 	}
 
 // --- Wrappers for libpcsxcore -----------------------------------------------
