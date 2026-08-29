@@ -319,6 +319,8 @@ void voutSymbianMemBench(char *aOut, int aOutLen);
 int voutSymbianFbPixBytes(void);
 int voutSymbianFbStrideB(void);
 void voutSymbianSetBlitC(int on);
+void gpuUnaiDrawStats(unsigned *out, int n);
+void gpuUnaiSetSpanOff(int on);
 void voutSymbianRowStats(unsigned *box, unsigned *plain, unsigned *scale, unsigned *rgb24, unsigned *other);
 void voutSymbianSetDsa(int on);
 int voutSymbianDsaActive(void);
@@ -2159,6 +2161,17 @@ static void passTeardown()
 	voutSymbianRowStats(&rowBox, &rowPlain, &rowScale, &rowRgb24, &rowOther);
 	logEvent("dsa", NULL, "%s: active=%d gl=%d fbPlatform=%d pixB=%d strideB=%d rows=%u/%u/%u/%u/%u", mode,
 		voutSymbianDsaActive(), voutSymbianGlActive(), voutSymbianFbFromPlatform(), voutSymbianFbPixBytes(), voutSymbianFbStrideB(), rowBox, rowPlain, rowScale, rowRgb24, rowOther);
+	{
+	// Rasteriser workload by kind: without pixel counts its time cannot be
+	// turned into bytes per pixel, and memory and arithmetic need opposite fixes.
+	unsigned dc[12];
+	Mem::FillZ(dc, sizeof(dc));
+	gpuUnaiDrawStats(dc, 12);
+	logEvent("drawstats", NULL,
+		"%s: polySpans=%u polyPix=%u polyTex=%u polyLit=%u polyBlend=%u"
+		" spriteCalls=%u spritePix=%u spriteTex=%u tileCalls=%u tilePix=%u polyPrims=%u polyRows=%u",
+		mode, dc[0], dc[1], dc[2], dc[3], dc[8], dc[4], dc[5], dc[9], dc[6], dc[7], dc[10], dc[11]);
+	}
 	}
 
 	// Hold last frame (flushing audio), then tear down window and sound.
@@ -3093,6 +3106,18 @@ GLDEF_C TInt E32Main()
 		// Benchmark probes: no pipeline stall emulation / no screen Update().
 		_LIT(KNoStallsArg, "nostalls");
 		g_hackNoStalls = (cl.FindF(KNoStallsArg) != KErrNotFound);
+		_LIT(KSpanOffArg, "spanoff");
+		{
+		const TInt sop = cl.FindF(KSpanOffArg);
+		TInt sov = 0;
+		if (sop != KErrNotFound)
+			{
+			TLex lex(cl.Mid(sop + 7));
+			TInt n = 0;
+			sov = (lex.Val(n) == KErrNone && n > 0) ? n : 1;
+			}
+		gpuUnaiSetSpanOff(sov);
+		}
 		_LIT(KBlitCArg, "blitc");
 		voutSymbianSetBlitC(cl.FindF(KBlitCArg) != KErrNotFound ? 1 : 0);
 		_LIT(KNoUpdateArg, "noupdate");

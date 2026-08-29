@@ -37,7 +37,11 @@ REM "gpu463-regen.cmd primstats" adds primitive/pixel counters (primstats event 
 REM the log). They cost one add per span, so the build used for rasteriser timing
 REM must not have them - hence the separate switch.
 if /i "%~1"=="primstats" set GPU_PRIMSTATS=1
+if /i "%~1"=="drawstats" set GPU_DRAWSTATS=1
 if defined GPU_PRIMSTATS set FLAGS=%FLAGS% -DGPU_UNAI_PRIMSTATS
+rem Draw counters and the rasteriser cut-off probes: they cost 1.2 s per run,
+rem so they stay out of a build meant for measuring anything else.
+if defined GPU_DRAWSTATS set FLAGS=%FLAGS% -DUNAI_DRAWSTATS
 
 "%NEWBIN%\arm-none-symbianelf-gcc.exe" %FLAGS% %INC% -o "%TMPDIR%\gpu.o"       "%FORK%\plugins\gpulib\gpu.c"  || exit /b 1
 "%NEWBIN%\arm-none-symbianelf-gcc.exe" %FLAGS% %INC% -o "%TMPDIR%\prim.o"      "%FORK%\plugins\gpulib\prim.c" || exit /b 1
