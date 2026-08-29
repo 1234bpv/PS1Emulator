@@ -321,6 +321,8 @@ int voutSymbianFbStrideB(void);
 void voutSymbianSetBlitC(int on);
 void gpuUnaiDrawStats(unsigned *out, int n);
 void gpuUnaiSetSpanOff(int on);
+void gpuUnaiSetTexFlat(int on);
+void gpuUnaiSetDstFlat(int on);
 int pmuSymbianStart(int evt0, int evt1, unsigned *diag);
 int pmuSymbianRead(unsigned *ccnt, unsigned *pmn0, unsigned *pmn1, unsigned *direct);
 void pmuSymbianStop(void);
@@ -3154,6 +3156,12 @@ GLDEF_C TInt E32Main()
 			}
 		gpuUnaiSetSpanOff(sov);
 		}
+		// Every texel read from the page base: the picture breaks, but the miss
+		// counter then says how much of the cost is the texel fetch itself.
+		_LIT(KTexFlatArg, "texflat");
+		gpuUnaiSetTexFlat(cl.FindF(KTexFlatArg) != KErrNotFound ? 1 : 0);
+		_LIT(KDstFlatArg, "dstflat");
+		gpuUnaiSetDstFlat(cl.FindF(KDstFlatArg) != KErrNotFound ? 1 : 0);
 		_LIT(KBlitCArg, "blitc");
 		voutSymbianSetBlitC(cl.FindF(KBlitCArg) != KErrNotFound ? 1 : 0);
 		_LIT(KNoUpdateArg, "noupdate");
