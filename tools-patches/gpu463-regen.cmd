@@ -29,9 +29,16 @@ if not exist "%TMPDIR%" mkdir "%TMPDIR%"
 del /q "%TMPDIR%\*.o" 2>nul
 
 set INC=-I"%PROJ%\src\compat" -I"%FORK%" -I"%FORK%\include" -I"%FORK%\libpcsxcore" -I"%FORK%\plugins\gpulib" -I"%FORK%\plugins\gpu_unai" -I"%SDKINC%" -I"%SDKINC%\libc"
+REM -fno-caller-saves: the row loop calls the span driver, and saving the
+REM caller-saved registers around that call cost more than letting the allocator
+REM use callee-saved ones. Measured with the above: 1025.5M accesses down to 1009.9M.
+REM -fsched-pressure: the row loops of gpuDrawPoly* have more live values than
+REM ARM has registers, and the default scheduler reorders without counting that.
+REM Measured 2026-08-30 on the N95: 1045.1M data cache accesses down to 1025.5M,
+REM rasteriser 10452 ms down to 10340, frame byte identical.
 REM gcce.h is the prelude abld force-includes; without it the Symbian libc
 REM headers do not even parse (IMPORT_C is undefined).
-set FLAGS=-c -O2 -march=armv6 -mtune=arm1136j-s -fno-exceptions -fno-rtti -fpermissive -fshort-wchar -include "%SDKINC%\gcce\gcce.h" -D__SYMBIAN32__ -D__EPOC32__ -D__GCCE__ -D__EABI__ -D__MARM__ -D__MARM_ARMV5__ -D__SERIES60_3X__ -D__SERIES60_31__ -DREARMED -DUSE_GPULIB=1 -D__SIZEOF_POINTER__=4 -DP_HAVE_MMAP=0 -DNDEBUG -DGPU_UNAI_NO_OLD -DGPU_UNAI_USE_YDIV_TABLE
+set FLAGS=-c -O2 -march=armv6 -mtune=arm1136j-s -fno-exceptions -fno-rtti -fpermissive -fshort-wchar -include "%SDKINC%\gcce\gcce.h" -D__SYMBIAN32__ -D__EPOC32__ -D__GCCE__ -D__EABI__ -D__MARM__ -D__MARM_ARMV5__ -D__SERIES60_3X__ -D__SERIES60_31__ -DREARMED -DUSE_GPULIB=1 -D__SIZEOF_POINTER__=4 -DP_HAVE_MMAP=0 -DNDEBUG -DGPU_UNAI_NO_OLD -DGPU_UNAI_USE_YDIV_TABLE -fsched-pressure -fno-caller-saves
 
 REM "gpu463-regen.cmd primstats" adds primitive/pixel counters (primstats event in
 REM the log). They cost one add per span, so the build used for rasteriser timing
@@ -42,6 +49,10 @@ if defined GPU_PRIMSTATS set FLAGS=%FLAGS% -DGPU_UNAI_PRIMSTATS
 rem Draw counters and the rasteriser cut-off probes: they cost 1.2 s per run,
 rem so they stay out of a build meant for measuring anything else.
 if defined GPU_DRAWSTATS set FLAGS=%FLAGS% -DUNAI_DRAWSTATS
+
+REM GPU_EXTRA passes compiler flags through for A/B experiments, e.g.
+REM   set GPU_EXTRA=-fsched-pressure
+if defined GPU_EXTRA set FLAGS=%FLAGS% %GPU_EXTRA%
 
 "%NEWBIN%\arm-none-symbianelf-gcc.exe" %FLAGS% %INC% -o "%TMPDIR%\gpu.o"       "%FORK%\plugins\gpulib\gpu.c"  || exit /b 1
 "%NEWBIN%\arm-none-symbianelf-gcc.exe" %FLAGS% %INC% -o "%TMPDIR%\prim.o"      "%FORK%\plugins\gpulib\prim.c" || exit /b 1
