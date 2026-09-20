@@ -199,9 +199,18 @@ if ($Build) {
       Replace("MACRO           PS1_BENCH", "// MACRO           PS1_BENCH").
       Replace("SOURCE          pmu_symbian.cpp", "// SOURCE          pmu_symbian.cpp").
       Replace("SOURCEPATH      ..\..\..\..\SymbianOverclock\src", "// SOURCEPATH      ..\..\..\..\SymbianOverclock\src").
-      Replace("SOURCE          ocengine.cpp", "// SOURCE          ocengine.cpp").
-      Replace("CAPABILITY      PowerMgmt WriteDeviceData ReadDeviceData ReadUserData WriteUserData ProtServ",
-              "CAPABILITY      None")
+      Replace("SOURCE          ocengine.cpp", "// SOURCE          ocengine.cpp")
+    # Match the capability line by shape, not by its exact text: it was a literal
+    # string here until adding SwEvent for the side keys made the match fail
+    # silently, which would have shipped a release EXE with every capability the
+    # harness build needs - and C5-00.2 refuses exactly that with ERR create -46.
+    $patched = [regex]::Replace($patched, '(?m)^CAPABILITY\s+.*$', 'CAPABILITY      None')
+    foreach ($must in @('CAPABILITY      None', '// MACRO           PS1_BENCH',
+                        '// SOURCE          pmu_symbian.cpp')) {
+      if ($patched -notmatch [regex]::Escape($must)) {
+        throw "the release rewrite did not take: '$must' is missing from the patched mmp"
+      }
+    }
     [IO.File]::WriteAllText($MmpPath, $patched)
   }
   try {
