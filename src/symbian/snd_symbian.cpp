@@ -13,6 +13,9 @@
 #include <mda/common/audio.h>
 #include <mdaaudiooutputstream.h>
 
+#include <stdio.h>
+#include "compat_stdio.h"
+
 extern "C" {
 // Genuine dfsound exports (spu.c/registers.c/dma.c).
 long SPUinit(void);
@@ -449,3 +452,84 @@ void ps1SndCloseOutput(void)
 	}
 
 } // extern "C"
+
+// --- WSOLA benchmark probe --------------------------------------------------
+#ifdef PS1_BENCH
+static volatile TInt g_wsolaBenchSink;
+#endif
+
+extern "C" void sndSymbianWsolaBench(char *aOut, int aOutLen)
+	{
+#ifdef PS1_BENCH
+	if (!aOut || aOutLen <= 0)
+		return;
+
+	const TUint f = ndrc_symbian_fastfreq();
+	const TUint freq = f ? f : 1;
+	const TUint minTicks = (TUint)(((TUint64)freq * 200ULL) / 1000ULL);
+
+	const TInt KWinFrames = 882;
+	const TInt KOffsets   = 882;
+	const TInt KTotalFrames = KOffsets + KWinFrames + KWinFrames;
+	const TInt KTotalSamples = KTotalFrames * 2;
+	const TInt KTotalBytes = KTotalSamples * (TInt)sizeof(TInt16);
+	const TInt KWinSamples = KWinFrames * 2;
+
+	TInt16 *buf = (TInt16 *)User::Alloc(KTotalBytes);
+	if (!buf)
+		{
+		snprintf(aOut, (size_t)aOutLen, "wsola: alloc failed");
+		return;
+		}
+
+	// Pseudo-random samples keep correlation non-trivial across offsets.
+	TUint32 seed = 0x12345678;
+	for (TInt i = 0; i < KTotalSamples; i++)
+		{
+		seed = seed * 1103515245u + 12345u;
+		buf[i] = (TInt16)(seed >> 16);
+		}
+
+	const TInt16 *searchBuf = buf;
+	const TInt16 *win = buf + (KOffsets + KWinFrames) * 2;
+
+	TUint iters = 0;
+	const TUint t0 = ndrc_symbian_fastcount();
+	do
+		{
+		TInt bestOff = -1;
+		TInt64 bestSum = 0;
+		for (TInt off = 0; off < KOffsets; off++)
+			{
+			const TInt16 *cand = searchBuf + off * 2;
+			TInt64 sum = 0;
+			for (TInt i = 0; i < KWinSamples; i++)
+				{
+				sum += (TInt64)win[i] * cand[i];
+				}
+			if (off == 0 || sum > bestSum)
+				{
+				bestSum = sum;
+				bestOff = off;
+				}
+			}
+		g_wsolaBenchSink += bestOff;
+		iters++;
+		} while ((TUint)(ndrc_symbian_fastcount() - t0) < minTicks);
+	const TUint dt = (TUint)(ndrc_symbian_fastcount() - t0);
+	const TUint totalDt = dt ? dt : 1;
+
+	User::Free(buf);
+
+	const TUint totalMs = (TUint)(((TUint64)totalDt * 1000ULL) / freq);
+	const TUint perSearchUs = (TUint)(((TUint64)totalDt * 1000000ULL) / ((TUint64)freq * iters));
+	const TUint msPerAudioSec = (TUint)(((TUint64)totalDt * 50000ULL) / ((TUint64)freq * iters));
+
+	snprintf(aOut, (size_t)aOutLen,
+		"wsola: searches=%d totalMs=%u perSearchUs=%u msPerAudioSec=%u",
+		(int)iters, totalMs, perSearchUs, msPerAudioSec);
+#else
+	if (aOut && aOutLen > 0)
+		aOut[0] = 0;
+#endif
+	}

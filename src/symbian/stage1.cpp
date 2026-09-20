@@ -318,6 +318,7 @@ int voutSymbianFinish(int holdMs);
 void voutSymbianGpuStats(unsigned *data, unsigned *dataMem, unsigned *dma, unsigned *status);
 void voutSymbianBlitSplit(unsigned *fillMs, unsigned *presentMs);
 void voutSymbianMemBench(char *aOut, int aOutLen);
+void sndSymbianWsolaBench(char *aOut, int aOutLen);
 int voutSymbianFbPixBytes(void);
 int voutSymbianFbStrideB(void);
 void voutSymbianSetBlitC(int on);
@@ -508,6 +509,7 @@ static TInt g_gpuFrameskip;
 // Probes for measurements (command line only, not present in menu).
 static TBool g_hackNoStalls;
 static TBool g_memBench;
+static TBool g_sndBench;
 #ifdef PS1_BENCH
 // Hardware counter pair to run over the pass, as two event numbers; -1 is off.
 // Snapshotting patches kernel code, so it happens twice per pass and never
@@ -1602,6 +1604,13 @@ static TInt passSetup(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTes
 			char buf[256];
 			voutSymbianMemBench(buf, sizeof(buf));
 			logEvent("membench", NULL, "%s", buf);
+			}
+
+		if (g_sndBench)
+			{
+			char buf[256];
+			sndSymbianWsolaBench(buf, sizeof(buf));
+			logEvent("wsolabench", NULL, "%s", buf);
 			}
 		}
 
@@ -3207,6 +3216,9 @@ GLDEF_C TInt E32Main()
 		_LIT(KMemBenchArg, "membench");
 		if (cl.FindF(KMemBenchArg) != KErrNotFound)
 			g_memBench = ETrue;
+		_LIT(KSndBenchArg, "sndbench");
+		if (cl.FindF(KSndBenchArg) != KErrNotFound)
+			g_sndBench = ETrue;
 #endif
 		_LIT(KNoSmoothArg, "nosmooth");
 		voutSymbianSetSmooth(cl.FindF(KNoSmoothArg) != KErrNotFound ? 0 : 1);
