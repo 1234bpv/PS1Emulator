@@ -26,7 +26,10 @@ done
 
 for round in 1 2 3; do
   for cc in csl343 gcce463; do
-    timeout 300 pwsh -NoProfile -File $D -Ip $IP -PutFile "$S/cc/ps1stage1-$cc.exe" -Remote "$REMOTE" > "$S/cc/push_${cc}_$round.txt" 2>&1
+    # -HashRemote is not optional here: an executable on the card is refused with
+    # "child: create failed -46" until C:\sys\hash holds the new SHA-1.
+    timeout 300 pwsh -NoProfile -File $D -Ip $IP -PutFile "$S/cc/ps1stage1-$cc.exe" -Remote "$REMOTE" \
+      -HashRemote 'C:\sys\hash\ps1stage1.exe' > "$S/cc/push_${cc}_$round.txt" 2>&1
     if [ $? -ne 0 ]; then echo "$cc r$round: PUSH FAILED"; continue; fi
     # Delete the log before the run, not after. It survives a failed run, and a
     # stale drc: total= line from the PREVIOUS compiler reads as a valid result
