@@ -11,7 +11,11 @@ IP=192.168.3.22
 REMOTE='E:\sys\bin\ps1stage1.exe'
 OCLOG='E:\ocprobe.log'
 RUNLOG='E:\PS1\logs\ps1_stage1.jsonl'
-CMD='EXEC 300000 E:\sys\bin\ocprobe.exe patcher clocks mult=86 mpu=2 l3=4 dss=6 sec=90 child=ps1 args:gui play nosnd frames8300 light blend dsa loadstate7700 imggt.pbp'
+# No dsa in the line: on the N95 the direct-screen path currently kills the run
+# at frame 7702 with EXIT -1059 WSERV (see work/state.md, belongs to F9). Both
+# compilers are measured on the window path, which makes them comparable with
+# each other - the only thing this experiment asks.
+CMD='EXEC 300000 E:\sys\bin\ocprobe.exe patcher clocks mult=86 mpu=2 l3=4 dss=6 sec=150 child=ps1 args:gui play nosnd frames8300 light blend loadstate7700 imggt.pbp'
 
 for cc in csl343 gcce463; do
   if [ ! -s "$S/cc/ps1stage1-$cc.exe" ]; then
