@@ -12,7 +12,7 @@ VENDORID        0
 // The JSONL log needs nothing, but the performance-counter probe opens the
 // dvfs and patcher channels, which check PowerMgmt and WriteDeviceData. The
 // device runs this binary by registered hash, so the set costs no signing.
-CAPABILITY      PowerMgmt WriteDeviceData ReadDeviceData ReadUserData WriteUserData ProtServ
+CAPABILITY      PowerMgmt WriteDeviceData ReadDeviceData ReadUserData WriteUserData ProtServ SwEvent
 
 // Standard stack. It is sufficient for the recompiler only because struct
 // compile_state (64 KB for MAXBLOCK arrays) was moved off the stack in the fork.
