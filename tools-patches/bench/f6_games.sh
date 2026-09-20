@@ -47,8 +47,12 @@ n=0
 while IFS='|' read -r tag file; do
   [ -z "$tag" ] && continue
   n=$((n+1))
-  sed "s|^game=.*|game=$file|" "$S/f6/settings_original.txt" > "$S/f6/settings_$tag.txt"
-  grep -q "^game=" "$S/f6/settings_$tag.txt" || printf 'game=%s\n' "$file" >> "$S/f6/settings_$tag.txt"
+  # NOT sed here: the replacement text is a Windows path, and sed reads its
+  # backslashes as escapes - E:\PS1\games\X arrived as E:PS1gamesX, the disc
+  # never loaded, and a whole five-game sweep was wasted.
+  { grep -v '^game=' "$S/f6/settings_original.txt"
+    printf 'game=%s\n' "$file"
+  } > "$S/f6/settings_$tag.txt"
   # < /dev/null on every child: otherwise it eats list.txt from the loop's stdin
   # and the sweep silently stops after the first game.
   timeout 300 pwsh -NoProfile -File $D $LINK -PutFile "$S/f6/settings_$tag.txt" \
