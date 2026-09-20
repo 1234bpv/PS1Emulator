@@ -14,7 +14,10 @@
 # ---------------------------------------------------------------------------
 param(
   [string]$OutDir = '',
-  [int]$LimitSec = 120
+  [int]$LimitSec = 120,
+  # Package a harness build on purpose - for trying the installer itself, never
+  # for a release.
+  [switch]$AllowBench
 )
 
 $ErrorActionPreference = 'Stop'
@@ -32,6 +35,16 @@ if (-not (Test-Path $Exe)) { throw "no EXE to package: $Exe" }
 foreach ($f in @($Cer, $Key)) { if (-not (Test-Path $f)) { throw "no signing material: $f" } }
 $exeInfo = [IO.FileInfo]$Exe
 Write-Host "[pack] EXE $($exeInfo.Length) bytes, $($exeInfo.LastWriteTime)"
+
+# The whole point of the PS1_BENCH flag is that the shipped binary carries no
+# measurement harness, and nothing else downstream would notice a bench EXE in
+# a release package. run.ps1 leaves the flavour of the last build here.
+$FlavourFile = "$Proj\configs\stage1\group\.flavour"
+$flavour = if (Test-Path $FlavourFile) { (Get-Content $FlavourFile -Raw).Trim() } else { '' }
+if ($flavour -ne 'release' -and -not $AllowBench) {
+  throw "the SDK tree holds a '$flavour' build, not a release one: run 'run.ps1 -Release' first, or pass -AllowBench to package it anyway"
+}
+Write-Host "[pack] flavour $flavour"
 
 function Invoke-Step {
   param([string]$File, [string[]]$ArgList, [string]$What)
