@@ -2376,6 +2376,9 @@ private:
 	CIdle *iIdle;
 	TBool iStarted;
 	TBool iInTick;
+	// Capture handles held for the whole run by the keyprobe: released at once
+	// on the way out. 0 = that key was not captured.
+	TInt32 iKeyProbeCap[8];
 	};
 
 void CPs1AppUi::AttachOutput()
@@ -2408,31 +2411,22 @@ void CPs1AppUi::ConstructL()
 
 	if (ps1KeyProbeCli())
 		{
+		// The captures are kept for the whole run, not taken and given straight
+		// back: the question is what the device actually sends when the key is
+		// pressed, and an uncaptured key never reaches this application at all.
+		static const TInt KProbeKey[8] =
+			{
+			EStdKeyIncVolume, EStdKeyDecVolume, EStdKeyDevice6, EStdKeyDevice7,
+			EStdKeyApplication2, EStdKeyApplication3, EStdKeyApplication4,
+			EStdKeyApplication5
+			};
 		RWindowGroup &root = iCoeEnv->RootWin();
-		const TInt32 rVolUp = root.CaptureKeyUpAndDowns(EStdKeyIncVolume, 0, 0);
-		const TInt32 rVolDown = root.CaptureKeyUpAndDowns(EStdKeyDecVolume, 0, 0);
-		const TInt32 rDev6 = root.CaptureKeyUpAndDowns(EStdKeyDevice6, 0, 0);
-		const TInt32 rDev7 = root.CaptureKeyUpAndDowns(EStdKeyDevice7, 0, 0);
-		const TInt32 rApp2 = root.CaptureKeyUpAndDowns(EStdKeyApplication2, 0, 0);
-		const TInt32 rApp3 = root.CaptureKeyUpAndDowns(EStdKeyApplication3, 0, 0);
-		const TInt32 rApp4 = root.CaptureKeyUpAndDowns(EStdKeyApplication4, 0, 0);
-		const TInt32 rApp5 = root.CaptureKeyUpAndDowns(EStdKeyApplication5, 0, 0);
-
-		ps1LogFmt("keyprobe", "volup=%d vdown=%d dev6=%d dev7=%d app2=%d app3=%d app4=%d app5=%d",
-			(int)rVolUp, (int)rVolDown, (int)rDev6, (int)rDev7,
-			(int)rApp2, (int)rApp3, (int)rApp4, (int)rApp5);
-
-		TInt released = 0;
-		if (rVolUp > 0)   { root.CancelCaptureKeyUpAndDowns(rVolUp); ++released; }
-		if (rVolDown > 0) { root.CancelCaptureKeyUpAndDowns(rVolDown); ++released; }
-		if (rDev6 > 0)    { root.CancelCaptureKeyUpAndDowns(rDev6); ++released; }
-		if (rDev7 > 0)    { root.CancelCaptureKeyUpAndDowns(rDev7); ++released; }
-		if (rApp2 > 0)    { root.CancelCaptureKeyUpAndDowns(rApp2); ++released; }
-		if (rApp3 > 0)    { root.CancelCaptureKeyUpAndDowns(rApp3); ++released; }
-		if (rApp4 > 0)    { root.CancelCaptureKeyUpAndDowns(rApp4); ++released; }
-		if (rApp5 > 0)    { root.CancelCaptureKeyUpAndDowns(rApp5); ++released; }
-
-		ps1LogInt("keyprobe", "released", released);
+		for (TInt i = 0; i < 8; i++)
+			{
+			const TInt32 h = root.CaptureKeyUpAndDowns(KProbeKey[i], 0, 0);
+			iKeyProbeCap[i] = (h > 0) ? h : 0;
+			ps1LogFmt("keyprobe", "scan=0x%02x capture=%d", (int)KProbeKey[i], (int)h);
+			}
 		}
 
 	// Lowest priority: CONE events (keys, redraws, exit) are serviced between frames,
@@ -2443,6 +2437,18 @@ void CPs1AppUi::ConstructL()
 
 CPs1AppUi::~CPs1AppUi()
 	{
+	// Give the side keys back to the system, or volume stays deaf in whatever
+	// runs next until the window group dies.
+	TInt released = 0;
+	for (TInt i = 0; i < 8; i++)
+		if (iKeyProbeCap[i])
+			{
+			iCoeEnv->RootWin().CancelCaptureKeyUpAndDowns(iKeyProbeCap[i]);
+			iKeyProbeCap[i] = 0;
+			++released;
+			}
+	if (released)
+		ps1LogInt("keyprobe", "released", released);
 	delete iIdle;
 	// Order matters: output is detached from the window BEFORE the container is destroyed.
 	ps1GuiShutdown();
