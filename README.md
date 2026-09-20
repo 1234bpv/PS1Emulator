@@ -185,7 +185,9 @@ Settings are divided into logical sections within the menu. Items marked with `*
    ```cmd
    pwsh -NoProfile -File tools-patches\pack.ps1
    ```
-   This produces two self-signed packages from whatever executable is in the SDK tree.
+   This produces two self-signed packages. It refuses a harness build: run
+   `run.ps1 -Release` first, or pass `-AllowBench` when the point is to try the
+   installer rather than to ship.
 
 Detailed build scripts, patches, and deployment instructions are documented in [tools-patches/README.md](tools-patches/README.md).
 
