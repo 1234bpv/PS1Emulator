@@ -2555,6 +2555,20 @@ static void applyFxaaLevel(TInt aLevel)
 	voutSymbianSetFxaa(KFxaaThr[(aLevel >= 0 && aLevel <= 5) ? aLevel : 0], 31);
 	}
 
+// Disc from ps1_settings.txt when the command line names no img. That argument
+// cuts the name at the first space, so eleven of the twelve images on the card
+// cannot be named on a command line at all, and without this the run silently
+// falls back to KDiscImg and reports cdra_open=-1.
+extern "C" void ps1SetDiscFromCfg(const char *aDisc)
+	{
+	if (!aDisc || !aDisc[0])
+		return;
+	TInt i = 0;
+	while (aDisc[i] && i < (TInt)sizeof(g_discPath) - 1)
+		{ g_discPath[i] = aDisc[i]; i++; }
+	g_discPath[i] = 0;
+	}
+
 // Settings from menu. Called BEFORE ps1GuiSetup, i.e. before any
 // core and rasterizer initialization - otherwise some will not take effect.
 extern "C" void ps1CfgApply(const char *aDisc, const char *aBios, int aInterp,

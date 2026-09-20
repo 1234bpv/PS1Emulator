@@ -47,6 +47,7 @@ int  voutSymbianKeyEvent(int aScanCode, int aDown);
 int  voutSymbianFinish(int aHoldMs);
 int  voutSymbianGlActive(void);
 void ps1ScreenShot(void);
+void ps1SetDiscFromCfg(const char *aDisc);
 void ps1CfgApply(const char *aDisc, const char *aBios, int aInterp, int aIlace,
 	int aLight, int aBlend, int aPixSkip, int aGteNf, int aSound, int aGl,
 	int aDirty, int aDsa, int aFps, int aGpuSkip, int aCycle, int aSmooth,
@@ -560,6 +561,16 @@ void CPs1Container::ConstructL(const TRect &aRect)
 	User::CommandLine(cl);
 	cl.Trim();
 	iCliMode = (cl.Length() != 0);
+	// A command line without img would otherwise fall back to the built-in
+	// gt.bin, so a game named in ps1_settings.txt - the only way to name one
+	// whose file name holds a space - never reached the core.
+	if (iCliMode && iGamePath.Length() && cl.FindF(_L("img")) == KErrNotFound)
+		{
+		TBuf8<256> g8;
+		g8.Copy(iGamePath.Left(255));
+		g8.ZeroTerminate();
+		ps1SetDiscFromCfg((const char *)g8.Ptr());
+		}
 	iPage = iCliMode ? EPageNone : EPageMain;
 	ActivateL();
 	}
