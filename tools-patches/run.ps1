@@ -24,6 +24,7 @@ param(
   [switch]$Build,          # relink stage1
   [switch]$Gpu,            # + gpu_unai (asm + GCCE 4.6.3); implies -Build
   [switch]$Core,           # + libpcsxcore; implies -Build
+  [string]$CoreCc = '',     # which compiler builds libpcsxcore: csl343 or gcce463
   [switch]$Release,        # relink stage1 without PS1_BENCH; implies -Build
   [int[]]$Shots = @(6000), # frames whose dumps to pull and decode
   [int]$Timeout = 900,
@@ -76,7 +77,7 @@ if ($List) {
 # --- build ----------------------------------------------------------------
 # Any library rebuild forces a stage1 relink: abld tracks only its own sources
 # and would happily leave the previous EXE in place.
-if ($Core -or $Gpu) { $Build = $true }
+if ($Core -or $Gpu -or $CoreCc) { $Build = $true }
 if ($Release) { $Build = $true }
 
 function Build-Step {
@@ -101,8 +102,50 @@ function Build-Step {
   }
 }
 
-if ($Core) {
-  Build-Step "cd /d `"$Proj\configs\core\group`" & call bldmake bldfiles & call .\ABLD.BAT build gcce urel" 'libpcsxcore'
+# Two different toolchains can produce pcsxcore.lib, and for weeks the tree held
+# one that neither of them had just built: measured 2026-09-20, the same sources
+# linked to 1379008 bytes with CSL 3.4.3, 1443880 with GCCE 4.6.3, and what was
+# actually in the tree gave 1386104. The marker records who built the library,
+# and a library newer than its marker counts as unknown, not as the default.
+$CoreMarker = "$Sdk\Epoc32\release\armv5\urel\.pcsxcore.cc"
+$CoreLib    = "$Sdk\Epoc32\release\armv5\urel\pcsxcore.lib"
+function Get-CoreCc {
+  if (-not (Test-Path $CoreLib)) { return '' }
+  if (-not (Test-Path $CoreMarker)) { return 'unknown' }
+  if ((Get-Item $CoreLib).LastWriteTime -gt (Get-Item $CoreMarker).LastWriteTime) { return 'unknown' }
+  return (Get-Content $CoreMarker -Raw).Trim()
+}
+function Build-Core {
+  param([string]$Cc)
+  # abld relinks the library only when an object changed, so a library dropped in
+  # by the other toolchain survives "abld build" untouched and the marker would
+  # then lie about it. Remove the target and check the timestamp moved.
+  Remove-Item $CoreLib -Force -ErrorAction SilentlyContinue
+  if ($Cc -eq 'gcce463') {
+    Build-Step "call `"$PSScriptRoot\core463-regen.cmd`"" 'libpcsxcore gcce463'
+  } else {
+    Build-Step "cd /d `"$Proj\configs\core\group`" & call bldmake bldfiles & call .\ABLD.BAT build gcce urel" 'libpcsxcore csl343'
+  }
+  if (-not (Test-Path $CoreLib)) { throw "libpcsxcore $Cc produced no pcsxcore.lib" }
+  Set-Content -Path $CoreMarker -Value $Cc -NoNewline
+  Write-Host "[run] pcsxcore.lib $((Get-Item $CoreLib).Length) bytes, $Cc"
+}
+
+if ($CoreCc -and $CoreCc -ne 'csl343' -and $CoreCc -ne 'gcce463') {
+  throw "-CoreCc takes csl343 or gcce463, not '$CoreCc'"
+}
+if ($Core -or $CoreCc) {
+  $want = if ($CoreCc) { $CoreCc } else { 'csl343' }
+  Build-Core $want
+} elseif ($Build) {
+  $have = Get-CoreCc
+  if ($have -eq 'unknown') {
+    Write-Host '[run] pcsxcore.lib is newer than its provenance marker - rebuilding it with csl343'
+    Build-Core 'csl343'
+  } elseif ($have -eq '') {
+    Write-Host '[run] no pcsxcore.lib - building it with csl343'
+    Build-Core 'csl343'
+  }
 }
 if ($Gpu) {
   Build-Step "call `"$PSScriptRoot\gpuasm-regen.cmd`"" 'gpu_unai asm'
