@@ -1910,6 +1910,99 @@ static const TText KStr_ko_EStrAskRestartWarn1[] = { 0x002A, 0x0020, 0xD56D, 0xB
 static const TText KStr_ko_EStrAskRestartWarn2[] = { 0xC800, 0xC7A5, 0xB418, 0xC9C0, 0x0020, 0xC54A, 0xC740, 0x0020, 0xC9C4, 0xD589, 0x0020, 0xC0C1, 0xD669, 0xC774, 0x0020, 0xC190, 0xC2E4, 0xB429, 0xB2C8, 0xB2E4, 0x002E, 0 };
 static const TText KStr_ko_EStrBiosErr[] = { 0x0042, 0x0049, 0x004F, 0x0053, 0x0020, 0xC555, 0xCD95, 0xC744, 0x0020, 0xD480, 0x0020, 0xC218, 0x0020, 0xC5C6, 0xC2B5, 0xB2C8, 0xB2E4, 0 };
 
+// --- Control presets (F3) ---
+// English and Ukrainian are translated; the other thirteen keep the English
+// text as a placeholder until a translation pass covers them.
+static const TText *const KStr_en_EStrItemPreset = _S("Control preset");
+static const TText *const KStr_en_EStrValPresetDefault = _S("Default");
+static const TText *const KStr_en_EStrValPresetRacing = _S("Racing");
+static const TText *const KStr_en_EStrValPresetFighting = _S("Fighting");
+static const TText *const KStr_en_EStrValPresetRpg = _S("RPG");
+
+static const TText KStr_uk_EStrItemPreset[] = { 0x041F, 0x0440, 0x0435, 0x0441, 0x0435, 0x0442, 0x0020, 0x043A, 0x0435, 0x0440, 0x0443, 0x0432, 0x0430, 0x043D, 0x043D, 0x044F, 0 };
+static const TText KStr_uk_EStrValPresetDefault[] = { 0x0422, 0x0438, 0x043F, 0x043E, 0x0432, 0x0430, 0 };
+static const TText KStr_uk_EStrValPresetRacing[] = { 0x041F, 0x0435, 0x0440, 0x0435, 0x0433, 0x043E, 0x043D, 0x0438, 0 };
+static const TText KStr_uk_EStrValPresetFighting[] = { 0x0424, 0x0430, 0x0439, 0x0442, 0x0438, 0x043D, 0x0433, 0 };
+static const TText KStr_uk_EStrValPresetRpg[] = { 0x0420, 0x041F, 0x0413, 0 };
+
+static const TText *const KStr_zh_EStrItemPreset = _S("Control preset");
+static const TText *const KStr_zh_EStrValPresetDefault = _S("Default");
+static const TText *const KStr_zh_EStrValPresetRacing = _S("Racing");
+static const TText *const KStr_zh_EStrValPresetFighting = _S("Fighting");
+static const TText *const KStr_zh_EStrValPresetRpg = _S("RPG");
+
+static const TText *const KStr_de_EStrItemPreset = _S("Control preset");
+static const TText *const KStr_de_EStrValPresetDefault = _S("Default");
+static const TText *const KStr_de_EStrValPresetRacing = _S("Racing");
+static const TText *const KStr_de_EStrValPresetFighting = _S("Fighting");
+static const TText *const KStr_de_EStrValPresetRpg = _S("RPG");
+
+static const TText *const KStr_fr_EStrItemPreset = _S("Control preset");
+static const TText *const KStr_fr_EStrValPresetDefault = _S("Default");
+static const TText *const KStr_fr_EStrValPresetRacing = _S("Racing");
+static const TText *const KStr_fr_EStrValPresetFighting = _S("Fighting");
+static const TText *const KStr_fr_EStrValPresetRpg = _S("RPG");
+
+static const TText *const KStr_es_EStrItemPreset = _S("Control preset");
+static const TText *const KStr_es_EStrValPresetDefault = _S("Default");
+static const TText *const KStr_es_EStrValPresetRacing = _S("Racing");
+static const TText *const KStr_es_EStrValPresetFighting = _S("Fighting");
+static const TText *const KStr_es_EStrValPresetRpg = _S("RPG");
+
+static const TText *const KStr_ru_EStrItemPreset = _S("Control preset");
+static const TText *const KStr_ru_EStrValPresetDefault = _S("Default");
+static const TText *const KStr_ru_EStrValPresetRacing = _S("Racing");
+static const TText *const KStr_ru_EStrValPresetFighting = _S("Fighting");
+static const TText *const KStr_ru_EStrValPresetRpg = _S("RPG");
+
+static const TText *const KStr_pt_EStrItemPreset = _S("Control preset");
+static const TText *const KStr_pt_EStrValPresetDefault = _S("Default");
+static const TText *const KStr_pt_EStrValPresetRacing = _S("Racing");
+static const TText *const KStr_pt_EStrValPresetFighting = _S("Fighting");
+static const TText *const KStr_pt_EStrValPresetRpg = _S("RPG");
+
+static const TText *const KStr_it_EStrItemPreset = _S("Control preset");
+static const TText *const KStr_it_EStrValPresetDefault = _S("Default");
+static const TText *const KStr_it_EStrValPresetRacing = _S("Racing");
+static const TText *const KStr_it_EStrValPresetFighting = _S("Fighting");
+static const TText *const KStr_it_EStrValPresetRpg = _S("RPG");
+
+static const TText *const KStr_pl_EStrItemPreset = _S("Control preset");
+static const TText *const KStr_pl_EStrValPresetDefault = _S("Default");
+static const TText *const KStr_pl_EStrValPresetRacing = _S("Racing");
+static const TText *const KStr_pl_EStrValPresetFighting = _S("Fighting");
+static const TText *const KStr_pl_EStrValPresetRpg = _S("RPG");
+
+static const TText *const KStr_tr_EStrItemPreset = _S("Control preset");
+static const TText *const KStr_tr_EStrValPresetDefault = _S("Default");
+static const TText *const KStr_tr_EStrValPresetRacing = _S("Racing");
+static const TText *const KStr_tr_EStrValPresetFighting = _S("Fighting");
+static const TText *const KStr_tr_EStrValPresetRpg = _S("RPG");
+
+static const TText *const KStr_ja_EStrItemPreset = _S("Control preset");
+static const TText *const KStr_ja_EStrValPresetDefault = _S("Default");
+static const TText *const KStr_ja_EStrValPresetRacing = _S("Racing");
+static const TText *const KStr_ja_EStrValPresetFighting = _S("Fighting");
+static const TText *const KStr_ja_EStrValPresetRpg = _S("RPG");
+
+static const TText *const KStr_hi_EStrItemPreset = _S("Control preset");
+static const TText *const KStr_hi_EStrValPresetDefault = _S("Default");
+static const TText *const KStr_hi_EStrValPresetRacing = _S("Racing");
+static const TText *const KStr_hi_EStrValPresetFighting = _S("Fighting");
+static const TText *const KStr_hi_EStrValPresetRpg = _S("RPG");
+
+static const TText *const KStr_ar_EStrItemPreset = _S("Control preset");
+static const TText *const KStr_ar_EStrValPresetDefault = _S("Default");
+static const TText *const KStr_ar_EStrValPresetRacing = _S("Racing");
+static const TText *const KStr_ar_EStrValPresetFighting = _S("Fighting");
+static const TText *const KStr_ar_EStrValPresetRpg = _S("RPG");
+
+static const TText *const KStr_ko_EStrItemPreset = _S("Control preset");
+static const TText *const KStr_ko_EStrValPresetDefault = _S("Default");
+static const TText *const KStr_ko_EStrValPresetRacing = _S("Racing");
+static const TText *const KStr_ko_EStrValPresetFighting = _S("Fighting");
+static const TText *const KStr_ko_EStrValPresetRpg = _S("RPG");
+
 static const TText *const KTable_en[EStrCount] =
 	{
 	KStr_en_EStrSecGame,
@@ -2036,6 +2129,11 @@ static const TText *const KTable_en[EStrCount] =
 	KStr_en_EStrAskRestartWarn1,
 	KStr_en_EStrAskRestartWarn2,
 	KStr_en_EStrBiosErr,
+	KStr_en_EStrItemPreset,
+	KStr_en_EStrValPresetDefault,
+	KStr_en_EStrValPresetRacing,
+	KStr_en_EStrValPresetFighting,
+	KStr_en_EStrValPresetRpg,
 	};
 
 static const TText *const KTable_uk[EStrCount] =
@@ -2164,6 +2262,11 @@ static const TText *const KTable_uk[EStrCount] =
 	KStr_uk_EStrAskRestartWarn1,
 	KStr_uk_EStrAskRestartWarn2,
 	KStr_uk_EStrBiosErr,
+	KStr_uk_EStrItemPreset,
+	KStr_uk_EStrValPresetDefault,
+	KStr_uk_EStrValPresetRacing,
+	KStr_uk_EStrValPresetFighting,
+	KStr_uk_EStrValPresetRpg,
 	};
 
 static const TText *const KTable_zh[EStrCount] =
@@ -2292,6 +2395,11 @@ static const TText *const KTable_zh[EStrCount] =
 	KStr_zh_EStrAskRestartWarn1,
 	KStr_zh_EStrAskRestartWarn2,
 	KStr_zh_EStrBiosErr,
+	KStr_zh_EStrItemPreset,
+	KStr_zh_EStrValPresetDefault,
+	KStr_zh_EStrValPresetRacing,
+	KStr_zh_EStrValPresetFighting,
+	KStr_zh_EStrValPresetRpg,
 	};
 
 static const TText *const KTable_de[EStrCount] =
@@ -2420,6 +2528,11 @@ static const TText *const KTable_de[EStrCount] =
 	KStr_de_EStrAskRestartWarn1,
 	KStr_de_EStrAskRestartWarn2,
 	KStr_de_EStrBiosErr,
+	KStr_de_EStrItemPreset,
+	KStr_de_EStrValPresetDefault,
+	KStr_de_EStrValPresetRacing,
+	KStr_de_EStrValPresetFighting,
+	KStr_de_EStrValPresetRpg,
 	};
 
 static const TText *const KTable_fr[EStrCount] =
@@ -2548,6 +2661,11 @@ static const TText *const KTable_fr[EStrCount] =
 	KStr_fr_EStrAskRestartWarn1,
 	KStr_fr_EStrAskRestartWarn2,
 	KStr_fr_EStrBiosErr,
+	KStr_fr_EStrItemPreset,
+	KStr_fr_EStrValPresetDefault,
+	KStr_fr_EStrValPresetRacing,
+	KStr_fr_EStrValPresetFighting,
+	KStr_fr_EStrValPresetRpg,
 	};
 
 static const TText *const KTable_es[EStrCount] =
@@ -2676,6 +2794,11 @@ static const TText *const KTable_es[EStrCount] =
 	KStr_es_EStrAskRestartWarn1,
 	KStr_es_EStrAskRestartWarn2,
 	KStr_es_EStrBiosErr,
+	KStr_es_EStrItemPreset,
+	KStr_es_EStrValPresetDefault,
+	KStr_es_EStrValPresetRacing,
+	KStr_es_EStrValPresetFighting,
+	KStr_es_EStrValPresetRpg,
 	};
 
 static const TText *const KTable_ru[EStrCount] =
@@ -2804,6 +2927,11 @@ static const TText *const KTable_ru[EStrCount] =
 	KStr_ru_EStrAskRestartWarn1,
 	KStr_ru_EStrAskRestartWarn2,
 	KStr_ru_EStrBiosErr,
+	KStr_ru_EStrItemPreset,
+	KStr_ru_EStrValPresetDefault,
+	KStr_ru_EStrValPresetRacing,
+	KStr_ru_EStrValPresetFighting,
+	KStr_ru_EStrValPresetRpg,
 	};
 
 static const TText *const KTable_pt[EStrCount] =
@@ -2932,6 +3060,11 @@ static const TText *const KTable_pt[EStrCount] =
 	KStr_pt_EStrAskRestartWarn1,
 	KStr_pt_EStrAskRestartWarn2,
 	KStr_pt_EStrBiosErr,
+	KStr_pt_EStrItemPreset,
+	KStr_pt_EStrValPresetDefault,
+	KStr_pt_EStrValPresetRacing,
+	KStr_pt_EStrValPresetFighting,
+	KStr_pt_EStrValPresetRpg,
 	};
 
 static const TText *const KTable_it[EStrCount] =
@@ -3060,6 +3193,11 @@ static const TText *const KTable_it[EStrCount] =
 	KStr_it_EStrAskRestartWarn1,
 	KStr_it_EStrAskRestartWarn2,
 	KStr_it_EStrBiosErr,
+	KStr_it_EStrItemPreset,
+	KStr_it_EStrValPresetDefault,
+	KStr_it_EStrValPresetRacing,
+	KStr_it_EStrValPresetFighting,
+	KStr_it_EStrValPresetRpg,
 	};
 
 static const TText *const KTable_pl[EStrCount] =
@@ -3188,6 +3326,11 @@ static const TText *const KTable_pl[EStrCount] =
 	KStr_pl_EStrAskRestartWarn1,
 	KStr_pl_EStrAskRestartWarn2,
 	KStr_pl_EStrBiosErr,
+	KStr_pl_EStrItemPreset,
+	KStr_pl_EStrValPresetDefault,
+	KStr_pl_EStrValPresetRacing,
+	KStr_pl_EStrValPresetFighting,
+	KStr_pl_EStrValPresetRpg,
 	};
 
 static const TText *const KTable_tr[EStrCount] =
@@ -3316,6 +3459,11 @@ static const TText *const KTable_tr[EStrCount] =
 	KStr_tr_EStrAskRestartWarn1,
 	KStr_tr_EStrAskRestartWarn2,
 	KStr_tr_EStrBiosErr,
+	KStr_tr_EStrItemPreset,
+	KStr_tr_EStrValPresetDefault,
+	KStr_tr_EStrValPresetRacing,
+	KStr_tr_EStrValPresetFighting,
+	KStr_tr_EStrValPresetRpg,
 	};
 
 static const TText *const KTable_ja[EStrCount] =
@@ -3444,6 +3592,11 @@ static const TText *const KTable_ja[EStrCount] =
 	KStr_ja_EStrAskRestartWarn1,
 	KStr_ja_EStrAskRestartWarn2,
 	KStr_ja_EStrBiosErr,
+	KStr_ja_EStrItemPreset,
+	KStr_ja_EStrValPresetDefault,
+	KStr_ja_EStrValPresetRacing,
+	KStr_ja_EStrValPresetFighting,
+	KStr_ja_EStrValPresetRpg,
 	};
 
 static const TText *const KTable_hi[EStrCount] =
@@ -3572,6 +3725,11 @@ static const TText *const KTable_hi[EStrCount] =
 	KStr_hi_EStrAskRestartWarn1,
 	KStr_hi_EStrAskRestartWarn2,
 	KStr_hi_EStrBiosErr,
+	KStr_hi_EStrItemPreset,
+	KStr_hi_EStrValPresetDefault,
+	KStr_hi_EStrValPresetRacing,
+	KStr_hi_EStrValPresetFighting,
+	KStr_hi_EStrValPresetRpg,
 	};
 
 static const TText *const KTable_ar[EStrCount] =
@@ -3700,6 +3858,11 @@ static const TText *const KTable_ar[EStrCount] =
 	KStr_ar_EStrAskRestartWarn1,
 	KStr_ar_EStrAskRestartWarn2,
 	KStr_ar_EStrBiosErr,
+	KStr_ar_EStrItemPreset,
+	KStr_ar_EStrValPresetDefault,
+	KStr_ar_EStrValPresetRacing,
+	KStr_ar_EStrValPresetFighting,
+	KStr_ar_EStrValPresetRpg,
 	};
 
 static const TText *const KTable_ko[EStrCount] =
@@ -3828,6 +3991,11 @@ static const TText *const KTable_ko[EStrCount] =
 	KStr_ko_EStrAskRestartWarn1,
 	KStr_ko_EStrAskRestartWarn2,
 	KStr_ko_EStrBiosErr,
+	KStr_ko_EStrItemPreset,
+	KStr_ko_EStrValPresetDefault,
+	KStr_ko_EStrValPresetRacing,
+	KStr_ko_EStrValPresetFighting,
+	KStr_ko_EStrValPresetRpg,
 	};
 
 static const TText *const *const KAllTables[ELangIdCount] =

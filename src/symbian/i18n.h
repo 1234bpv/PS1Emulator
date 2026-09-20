@@ -129,6 +129,11 @@ enum TStrId
 	EStrAskRestartWarn1,
 	EStrAskRestartWarn2,
 	EStrBiosErr,
+	EStrItemPreset,
+	EStrValPresetDefault,
+	EStrValPresetRacing,
+	EStrValPresetFighting,
+	EStrValPresetRpg,
 	EStrCount
 	};
 

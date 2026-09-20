@@ -93,6 +93,7 @@ enum TCfgItem
 	ECfgCpu, ECfgGteNf, ECfgGpuSkip, ECfgCycle, ECfgFps,
 	ECfgSound,
 	ECfgTilt, ECfgTiltSide, ECfgTiltPitch, ECfgTiltDead, ECfgTiltSens, ECfgKeys,
+	ECfgPreset,
 	ECfgLang,
 	ECfgReset, ECfgExit,
 	ECfgCount
@@ -114,6 +115,7 @@ static const unsigned char KItemSection[ECfgCount] =
 	ESecSpeed, ESecSpeed, ESecSpeed, ESecSpeed, ESecSpeed,
 	ESecSound,
 	ESecInput, ESecInput, ESecInput, ESecInput, ESecInput, ESecInput,
+	ESecInput,
 	ESecSystem, ESecSystem, ESecSystem
 	};
 
@@ -130,6 +132,7 @@ static const TStrId KItemLabelStrId[ECfgCount] =
 	EStrItemTilt,
 	EStrItemTiltSide, EStrItemTiltPitch, EStrItemTiltDead, EStrItemTiltSens,
 	EStrItemKeys,
+	EStrItemPreset,
 	EStrItemLang,
 	EStrItemReset, EStrItemExit
 	};
@@ -145,6 +148,7 @@ static const char *const KCfgKey[ECfgCount] =
 	"cpu", "gtenf", "gpuskip", "cycle", "fps",
 	"sound",
 	"tilt", "tiltside", "tiltpitch", "tiltdead", "tiltsens", NULL,
+	NULL,
 	"lang",
 	NULL, NULL
 	};
@@ -174,6 +178,61 @@ const TInt KCycleStep = 25;
 
 // Generous upper bound on the number of buttons reported by vout: layout is defined there.
 const TInt KPadMax = 16;
+
+// --- Control presets (F3) ---------------------------------------------------
+
+// Ready-made layouts offered from the CONTROLS menu. Default is not tabulated
+// below: it is reproduced from voutSymbianDefaultKey, the same single source
+// of truth TPs1Cfg::SetDefaults() already uses, so there is nowhere for the
+// two to drift apart.
+enum TControlPreset { EPresetDefault = 0, EPresetRacing, EPresetFighting, EPresetRpg, EPresetCount };
+
+static const TStrId KPresetNameStrId[EPresetCount] =
+	{ EStrValPresetDefault, EStrValPresetRacing, EStrValPresetFighting, EStrValPresetRpg };
+
+// Row order matches KPadBit in vout_symbian.cpp: UP DOWN LEFT RIGHT CROSS
+// CIRCLE SQUARE TRIANGLE L1 R1 L2 R2 SELECT START. Sized to the button count
+// as of this writing (14); ApplyPreset() clamps to it defensively.
+const TInt KPresetBtnCount = 14;
+
+// Racing: GT's own digital scheme is Cross = accelerate, Square = brake, so
+// those two land on the keys easiest to hold with a thumb resting on the
+// D-pad - the OK/5 pair, and the key right below it. Accelerate toggles by
+// default so a race is not held down with a finger for its whole length.
+// Steering is left on the D-pad's own Left/Right, unchanged from Default.
+static const TInt KPresetScan[EPresetCount - 1][KPresetBtnCount] =
+	{
+		{ // Racing
+		EStdKeyUpArrow, EStdKeyDownArrow, EStdKeyLeftArrow, EStdKeyRightArrow,
+		EStdKeyDevice3, '0', '2', '8',
+		'7', '9', '1', '3', '4', '6'
+		},
+		{ // Fighting: the four face buttons sit on the numeric keypad's own
+		// plus shape (2/4/6/8 around 5) - the same diamond the PS1 pad already
+		// draws them in, so one thumb rolls across it the way it would the pad.
+		EStdKeyUpArrow, EStdKeyDownArrow, EStdKeyLeftArrow, EStdKeyRightArrow,
+		'2', '6', '4', '8',
+		'7', '9', '1', '3', '0', EStdKeyDevice3
+		},
+		{ // RPG: confirm/cancel on OK and C as asked; the rest keeps Default's
+		// digits so the change from Default is only the two named keys.
+		EStdKeyUpArrow, EStdKeyDownArrow, EStdKeyLeftArrow, EStdKeyRightArrow,
+		EStdKeyDevice3, EStdKeyBackspace, '7', '9',
+		'1', '3', '4', '6', '2', '8'
+		}
+	};
+static const TInt KPresetAlt[EPresetCount - 1][KPresetBtnCount] =
+	{
+	{ -1, -1, -1, -1, '5', -1, -1, -1, -1, -1, -1, -1, -1, -1 },   // Racing
+	{ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },    // Fighting
+	{ -1, -1, -1, -1, '5', -1, -1, -1, -1, -1, -1, -1, -1, -1 }    // RPG
+	};
+static const TInt KPresetHold[EPresetCount - 1][KPresetBtnCount] =
+	{
+	{ 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 },   // Racing: accelerate toggles
+	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },   // Fighting: no holds
+	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }    // RPG: no holds
+	};
 
 // Single emulator directory. Everything it reads and writes lives under it: otherwise
 // the card root got cluttered with files, and which ones belong to which game was unclear.
@@ -406,6 +465,7 @@ private:
 	void SaveAll() const;
 	void SetGameL(const TDesC &aPath);
 	void ApplyKeyMap() const;
+	void ApplyPreset(TInt aPreset);
 	void SnapRestart();
 	TBool RestartNeeded() const;
 
@@ -424,6 +484,7 @@ private:
 	TInt iSel;                // selected item on the main page
 	TInt iBrowseSel;
 	TInt iKeySel;
+	TInt iPresetSel;          // preset highlighted on the CONTROLS list (not persisted)
 	TInt iCapture;            // button awaiting a key press (-1 = none)
 	TInt iConfirm;            // item awaiting confirmation (-1 = none)
 	TInt iStateSlot;          // state slot (1..5)
@@ -460,6 +521,7 @@ void CPs1Container::ConstructL(const TRect &aRect)
 	if (iPadCount > KPadMax) iPadCount = KPadMax;
 	iCapture = -1;
 	iConfirm = -1;
+	iPresetSel = EPresetDefault;
 	iStateSlot = 1;
 	iStatusMsg.Zero();
 
@@ -1018,6 +1080,41 @@ void CPs1Container::ApplyKeyMap() const
 	voutSymbianSetKeyMap(iCfg.iKeyScan, iCfg.iKeyAlt, iPadCount, tog);
 	}
 
+// A preset is a one-shot starting point, not a mode: it overwrites every
+// button's key, alt key and hold flag (never leaving a stale hold behind,
+// per the same reasoning as voutSymbianSetKeyMap's own g_pad reset), then
+// applies and saves exactly as leaving the CONTROLS menu already does for a
+// hand-remapped key. The user is free to re-map individual keys afterwards.
+void CPs1Container::ApplyPreset(TInt aPreset)
+	{
+	for (TInt i = 0; i < iPadCount; i++)
+		{
+		if (aPreset == EPresetDefault)
+			{
+			iCfg.iKeyScan[i] = voutSymbianDefaultKey(i, 0);
+			iCfg.iKeyAlt[i]  = voutSymbianDefaultKey(i, 1);
+			iCfg.iKeyHold[i] = 0;
+			}
+		else if (i < KPresetBtnCount)
+			{
+			const TInt p = aPreset - 1;    // KPreset* tables start at Racing
+			iCfg.iKeyScan[i] = KPresetScan[p][i];
+			iCfg.iKeyAlt[i]  = KPresetAlt[p][i];
+			iCfg.iKeyHold[i] = KPresetHold[p][i];
+			}
+		else
+			{
+			// A future button beyond this preset's table: leave it unmapped
+			// rather than read past the table's end.
+			iCfg.iKeyScan[i] = -1;
+			iCfg.iKeyAlt[i]  = -1;
+			iCfg.iKeyHold[i] = 0;
+			}
+		}
+	ApplyKeyMap();
+	SaveAll();
+	}
+
 // --- Item labels ------------------------------------------------------------
 
 void CPs1Container::ItemLabel(TInt aItem, TDes &aOut) const
@@ -1139,6 +1236,9 @@ void CPs1Container::ItemValue(TInt aItem, TDes &aOut) const
 
 		case ECfgKeys:
 			aOut.Copy(Tr(EStrValPressOk));
+			break;
+		case ECfgPreset:
+			aOut.Copy(Tr(KPresetNameStrId[iPresetSel]));
 			break;
 		case ECfgLang:
 			aOut.Copy(I18nLanguageName(c.iLang));
@@ -1758,6 +1858,13 @@ TKeyResponse CPs1Container::MainKeyL(TInt aScan)
 				v = (v + d + count) % count;
 				I18nSetLanguage(v);
 				}
+			else if (iSel == ECfgPreset)
+				{
+				// Only highlights a name here; OK applies it (see below) - unlike
+				// language, applying a preset overwrites fourteen keys at once and
+				// should not happen on every arrow press while browsing the list.
+				iPresetSel = (iPresetSel + d + EPresetCount) % EPresetCount;
+				}
 			else
 				v = v ? 0 : 1;
 			iStatusMsg.Zero();
@@ -1832,6 +1939,9 @@ TKeyResponse CPs1Container::MainKeyL(TInt aScan)
 				iKeySel = 0;
 				iCapture = -1;
 				iPage = EPageKeys;
+				break;
+			case ECfgPreset:
+				ApplyPreset(iPresetSel);
 				break;
 			case ECfgReset:
 				// Two presses required: the key bindings and tuned speed hacks are too
