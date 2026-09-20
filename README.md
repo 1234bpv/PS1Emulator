@@ -181,9 +181,20 @@ Settings are divided into logical sections within the menu. Items marked with `*
    bldmake bldfiles
    call .\ABLD.BAT build gcce urel
    ```
-6. Package and sign the SIS installer using an RSA + SHA-1 certificate (`signsis`).
+6. Package and sign the SIS installer in one step:
+   ```cmd
+   pwsh -NoProfile -File tools-patches\pack.ps1
+   ```
+   This produces two self-signed packages from whatever executable is in the SDK tree.
 
 Detailed build scripts, patches, and deployment instructions are documented in [tools-patches/README.md](tools-patches/README.md).
+
+### Installing on a Phone
+
+Both packages are self-signed, so the phone must be hacked to accept them: `Dr Web RomPatcher plus light` with the `Open4all`, `universal` and `Install server` patches on S60v3 up to FP1, and `SafeManager` followed by `RomPatcher+` on Symbian Belle FP2, where the antivirus route no longer works.
+
+- `ps1emu_min.sis` carries the executable and its registration resource. Use it on a phone that already holds `\resource\apps\ps1stage1.rsc` — every phone the deploy daemon has set up does.
+- `ps1emu_full.sis` carries the application resource as well. Use it on a phone that has never had this application: without that resource the launch panics with `USER 23`.
 
 ## 8. Known Limitations
 

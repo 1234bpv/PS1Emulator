@@ -20,6 +20,10 @@
 // sat at pc+8. These arrays are the ones the SymbianOverclock probe proved on
 // this device.
 
+// Bench-only instrumentation: nothing here is called outside PS1_BENCH, and
+// a release build without the flag compiles this file down to nothing.
+#ifdef PS1_BENCH
+
 #include <e32std.h>
 #include "ocengine.h"
 
@@ -202,3 +206,5 @@ extern "C" void pmuSymbianStop(void)
 	{
 	engineClose();
 	}
+
+#endif // PS1_BENCH

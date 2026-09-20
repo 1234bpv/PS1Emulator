@@ -445,6 +445,15 @@ static TBool dsaCoversScreen()
 	        r.Width() >= g_scr.iWidth && r.Height() >= g_scr.iHeight);
 	}
 
+// Restart() (below) already reports success (active=1) before WS necessarily hands
+// back a full-screen region - blitCurrent retries the same StartL() sparsely until
+// dsaCoversScreen() agrees, instead of settling for the window BitBlt for the rest
+// of the run.
+static TUint g_dsaLostTick;      // NTickCount() when region stopped covering the screen, 0 = covered
+static TInt  g_dsaRecoverFrames; // presented frames since the last retry
+static TInt  g_dsaRecoverTries;  // retries attempted so far (this run)
+const TInt   KDsaRecoverPeriod = 30;
+
 static void dsaStartL()
 	{
 	g_dsa->StartL();
@@ -1097,9 +1106,11 @@ static void glPresentFrame(const TUint8 *vbytes, TInt startByte,
 	// must not be judged against depths left from a frame it knows nothing about.
 	glDisable(GL_DEPTH_TEST);
 	glDepthMask(GL_FALSE);
+#ifdef PS1_BENCH
 	// The same two counters as on bitmap path so the numbers are comparable:
 	// "fill" = conversion + texture upload, "present" = drawing + swap.
 	const TUint _gc0 = User::FastCounter();
+#endif
 	TInt hf = field ? srcRows : sh;
 	if (hf > KGlTexH) hf = KGlTexH;
 	TInt w = sw; if (w > KGlTexW) w = KGlTexW;
@@ -1123,8 +1134,10 @@ static void glPresentFrame(const TUint8 *vbytes, TInt startByte,
 	// twiddled texture is a read-modify-write of entire level.
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, potW, potH, 0,
 		GL_RGB, GL_UNSIGNED_SHORT_5_6_5, g_glBuf);
+#ifdef PS1_BENCH
 	const TUint _gc1 = User::FastCounter();
 	g_blitFillTicks += (unsigned)(_gc1 - _gc0);
+#endif
 
 	// Target is 4:3 regardless of source size - same rule as on blit path
 	// (PS1 pixels are not square).
@@ -1145,7 +1158,9 @@ static void glPresentFrame(const TUint8 *vbytes, TInt startByte,
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 	if (aOwnFrame)
 		eglSwapBuffers(g_eglDpy, g_eglSurf);
+#ifdef PS1_BENCH
 	g_blitPresentTicks += (unsigned)(User::FastCounter() - _gc1);
+#endif
 
 	// Once after first frame: GL error here means texture upload
 	// or drawing failed, even though initialization succeeded.
@@ -1318,6 +1333,7 @@ static void glBenchVerts(GLfloat *aStrip, GLfloat *aStripT, GLfloat *aList,
 
 extern "C" int voutSymbianGlBench(int aFrames)
 	{
+#ifdef PS1_BENCH
 	if (!g_glReady)
 		{
 		ps1LogFmt("glbench", "GL is not up - the run needs the gl flag");
@@ -1464,6 +1480,10 @@ extern "C" int voutSymbianGlBench(int aFrames)
 	User::Free(listT); User::Free(listS); User::Free(texbuf);
 	ps1LogFmt("glbench", "done");
 	return 0;
+#else
+	(void)aFrames;
+	return 0;
+#endif
 	}
 
 // --- Frame counter overlay --------------------------------------------------
@@ -1607,8 +1627,46 @@ static void blitCurrent()
 	// will not arrive at all - game remains running, but unresponsive.
 	if (g_pumpAo && g_useDsa && CActiveScheduler::Current())
 		{ TInt _e; while (CActiveScheduler::RunIfReady(_e, CActive::EPriorityIdle)) { } }
+
+	// See g_dsaLostTick above: a region not covering the screen can still heal itself
+	// once whatever shrank it (dialog, softkeys) is gone, so keep polling instead of
+	// giving up on direct write for the rest of the run.
+	TBool dsaCovered = dsaCoversScreen();
+	if (g_useDsa && g_dsaActive)
+		{
+		if (!dsaCovered)
+			{
+			if (g_dsaLostTick == 0)
+				g_dsaLostTick = User::NTickCount();
+			if (++g_dsaRecoverFrames >= KDsaRecoverPeriod)
+				{
+				g_dsaRecoverFrames = 0;
+				if (g_dsa)
+					{
+					g_dsaRecoverTries++;
+					// Unlike Restart(), do NOT clear g_dsaActive first: a StartL that
+					// leaves would then park the run on the window path for good, since
+					// this retry only runs while DSA is active.
+					TInt re;
+					TRAP(re, dsaStartL());
+					}
+				dsaCovered = dsaCoversScreen();
+				}
+			}
+		if (dsaCovered && g_dsaLostTick != 0)
+			{
+			ps1LogFmt("dsa", "recovered tries=%d ms=%u", (int)g_dsaRecoverTries,
+				(unsigned)(User::NTickCount() - g_dsaLostTick));
+			g_dsaLostTick = 0;
+			}
+		}
+	else
+		{
+		g_dsaLostTick = 0;
+		g_dsaRecoverFrames = 0;
+		}
 	const TBool directFb = (g_useDsa && g_dsaActive && g_fbOk && !g_useRowCopy &&
-	                        dsaCoversScreen());
+	                        dsaCovered);
 
 	// Fit source into screen preserving aspect ratio. Do NOT rotate orientation
 	// ourselves: device handles window auto-rotation via accelerometer. In directFb target
@@ -1641,7 +1699,9 @@ static void blitCurrent()
 	const TInt ox = (SW - dstW) / 2;
 	const TInt oy = (SH - dstH) / 2;
 
+#ifdef PS1_BENCH
 	const TUint _fc0 = User::FastCounter();
+#endif
 	// Address rows in BYTES: screen buffer may be 32-bit (measured:
 	// EColor16MU, stride 1280B at 320 pixels), while our bitmap is 16-bit.
 	TUint8 *dstB;
@@ -1856,8 +1916,10 @@ static void blitCurrent()
 	drawOverlay(dstB, dstStrideB, pixB, SW, SH);
 	if (!directFb)
 		g_bmp->UnlockHeap();
+#ifdef PS1_BENCH
 	const TUint _fc1 = User::FastCounter();
 	g_blitFillTicks += (unsigned)(_fc1 - _fc0);
+#endif
 
 	if (directFb)
 		{
@@ -1876,7 +1938,7 @@ static void blitCurrent()
 	// On this device screen is 32-bit, so path is inactive - remains as fallback
 	// for devices with 16-bit buffer.
 	else if (g_useRowCopy && g_dsaActive && g_fbOk && g_fbPixBytes == 2 &&
-	         dsaCoversScreen())
+	         dsaCovered)
 		{
 		// Row-by-row copy of bitmap into screen buffer. Measured that client-server
 		// WS mechanics cost ~zero (our own bitgdi blit without IPC turned out MORE EXPENSIVE
@@ -1920,7 +1982,9 @@ static void blitCurrent()
 		g_gc->Deactivate();
 		g_wsp->Flush();
 		}
+#ifdef PS1_BENCH
 	g_blitPresentTicks += (unsigned)(User::FastCounter() - _fc1);
+#endif
 	}
 
 // Init/Present/Finish wrapped in TRAP: display failure should not crash the run
@@ -2566,6 +2630,39 @@ extern "C" int voutSymbianDsaActive(void)
 	return (g_useDsa && g_dsaActive) ? 1 : 0;
 	}
 
+// F9 diagnostics: which of covered/fbOk/rowCopy blocks direct write, the drawing
+// region WS actually gave (three rectangles collapse into one in the common case,
+// but a split region also means "not covered"), and retries made so far.
+extern "C" void voutSymbianDsaDiag(int *aCovered, int *aFbOk, int *aRowCopy,
+	int *aRgnCount, int *aRgnX, int *aRgnY, int *aRgnW, int *aRgnH,
+	int *aScrW, int *aScrH, int *aRecoverTries)
+	{
+	if (aCovered) *aCovered = dsaCoversScreen() ? 1 : 0;
+	if (aFbOk)    *aFbOk    = g_fbOk ? 1 : 0;
+	if (aRowCopy) *aRowCopy = g_useRowCopy ? 1 : 0;
+	if (aRgnCount) *aRgnCount = 0;
+	if (aRgnX)     *aRgnX     = 0;
+	if (aRgnY)     *aRgnY     = 0;
+	if (aRgnW)     *aRgnW     = 0;
+	if (aRgnH)     *aRgnH     = 0;
+	if (g_dsa)
+		{
+		const RRegion *rgn = g_dsa->DrawingRegion();
+		if (rgn && !rgn->CheckError())
+			{
+			if (aRgnCount) *aRgnCount = rgn->Count();
+			const TRect r = rgn->BoundingRect();
+			if (aRgnX) *aRgnX = r.iTl.iX;
+			if (aRgnY) *aRgnY = r.iTl.iY;
+			if (aRgnW) *aRgnW = r.Width();
+			if (aRgnH) *aRgnH = r.Height();
+			}
+		}
+	if (aScrW) *aScrW = g_scr.iWidth;
+	if (aScrH) *aScrH = g_scr.iHeight;
+	if (aRecoverTries) *aRecoverTries = g_dsaRecoverTries;
+	}
+
 // Diagnostic test pattern directly into LCD buffer: blue background, white borders, multi-colored
 // corners (RED=TL, GREEN=TR, bright-BLUE=BL, YELLOW=BR) and diagonal. What is visible identifies
 // direct-FB issue precisely: offset=stride, empty=double buffer, mirrored=orientation.
@@ -2861,6 +2958,7 @@ static void memBenchWalk(char *aOut, int aLen, TUint aFreq, TUint aMinTicks)
 
 extern "C" void voutSymbianMemBench(char *aOut, int aOutLen)
 	{
+#ifdef PS1_BENCH
 	if (!aOut || aOutLen <= 0)
 		return;
 
@@ -2995,6 +3093,10 @@ extern "C" void voutSymbianMemBench(char *aOut, int aOutLen)
 		fbwr, fbrd, heapwr, heaprd, vramrd, copy, blitUs);
 	if (_used < 0) _used = 0;
 	memBenchWalk(aOut + _used, aOutLen - _used, freq, minTicks);
+#else
+	if (aOut && aOutLen > 0)
+		aOut[0] = 0;
+#endif
 	}
 
 // --- Wrappers for libpcsxcore -----------------------------------------------

@@ -42,6 +42,11 @@ OPTION GCCE     -march=armv6 -mtune=arm1136j-s -fomit-frame-pointer -D__SIZEOF_P
 // Must match pcsxcore.mmp: dynarec headers read this macro.
 MACRO           BASE_ADDR_DYNAMIC=1
 
+// Bench instrumentation gate: PMU counters (pmu_symbian.cpp), per-phase timers
+// in vout_symbian.cpp, and the stand-only argument parsing in stage1.cpp all sit
+// behind this. Without it the build is the plain playable release. See run.ps1 -Release.
+MACRO           PS1_BENCH
+
 SOURCEPATH      ..\..\..\src\symbian
 SOURCE          stage1.cpp
 SOURCE          vout_symbian.cpp
@@ -134,6 +139,7 @@ STATICLIBRARY   gpuasm.lib
 STATICLIBRARY   pcsxcore.lib
 LIBRARY         euser.lib
 LIBRARY         hal.lib
+LIBRARY         sysutil.lib
 LIBRARY         estlib.lib
 // Frame display on screen (Stage 2): window server + FBS bitmap.
 LIBRARY         ws32.lib

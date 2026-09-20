@@ -5,6 +5,7 @@
 #   run.ps1 -Dev n95 -RunArgs "gui play nosnd frames6100 light blend imggt.pbp"
 #   run.ps1 -Dev e90 -Name ctl            # same EXE over Bluetooth
 #   run.ps1 -List                         # what is reachable right now
+#   run.ps1 -Dev c5 -Release -NoRun       # release EXE, no PS1_BENCH, push only
 #
 # Why this exists: every measurement used to be six manual steps (three builds,
 # a push, a run, a pull) plus a hand-written pixel loop to look at the frame.
@@ -23,9 +24,11 @@ param(
   [switch]$Build,          # relink stage1
   [switch]$Gpu,            # + gpu_unai (asm + GCCE 4.6.3); implies -Build
   [switch]$Core,           # + libpcsxcore; implies -Build
+  [switch]$Release,        # relink stage1 without PS1_BENCH; implies -Build
   [int[]]$Shots = @(6000), # frames whose dumps to pull and decode
   [int]$Timeout = 900,
   [switch]$NoRun,          # build and push only
+  [switch]$NoPush,         # build only; no phone needed
   [switch]$List,           # probe every transport and exit
   [string]$Ip,             # override the WiFi address
   [string]$Com             # override the Bluetooth port
@@ -74,11 +77,23 @@ if ($List) {
 # Any library rebuild forces a stage1 relink: abld tracks only its own sources
 # and would happily leave the previous EXE in place.
 if ($Core -or $Gpu) { $Build = $true }
+if ($Release) { $Build = $true }
 
 function Build-Step {
-  param([string]$Cmd, [string]$What)
+  param([string]$Cmd, [string]$What, [int]$LimitSec = 1200)
   Write-Host "[run] === $What ==="
-  $out = cmd /c "call `"$EnvCmd`" >nul & $Cmd" 2>&1
+  # A build that hangs looks exactly like a build that is slow, and an
+  # unattended cycle then waits for it forever.
+  $job = Start-Job -ScriptBlock {
+    param($c, $e)
+    cmd /c "call `"$e`" >nul & $c" 2>&1
+  } -ArgumentList $Cmd, $EnvCmd
+  if (-not (Wait-Job $job -Timeout $LimitSec)) {
+    Stop-Job $job; Remove-Job $job -Force
+    throw "$What exceeded its ${LimitSec}s limit"
+  }
+  $out = Receive-Job $job
+  Remove-Job $job
   $bad = $out | Select-String -Pattern 'rror|undefined reference|No such file'
   if ($bad) {
     $bad | Select-Object -First 10 | ForEach-Object { Write-Host $_ }
@@ -96,11 +111,73 @@ if ($Gpu) {
 if ($Build) {
   # abld does not relink when only a library changed, so the previous EXE
   # would be measured instead of the new one. Remove it and let the link run.
+  $started = Get-Date
   Remove-Item $Exe -Force -ErrorAction SilentlyContinue
-  Build-Step "cd /d `"$Proj\configs\stage1\group`" & call bldmake bldfiles & call .\ABLD.BAT build gcce urel" 'stage1'
+
+  # -Release: build the same stage1.mmp with the bench-only sources and
+  # capabilities stripped, so this link is what a real device install would
+  # carry (CAPABILITY None is also what lets it install on C5, which refuses
+  # the bench build's capability set with ERR create -46). Only stage1.mmp is
+  # touched - libpcsxcore and gpu_unai do not read PS1_BENCH. A real on-disk
+  # backup is kept, and finally restores it even if the build throws: a
+  # release run must never leave the tree stuck without PS1_BENCH.
+  $MmpPath = "$Proj\configs\stage1\group\stage1.mmp"
+  $MmpBackup = "$MmpPath.bak"
+
+  # Turning PS1_BENCH on or off changes how every stage1 object is compiled, but
+  # abld decides what to recompile by source timestamp alone: without a clean it
+  # relinks the previous flavour's objects. Measured 2026-09-19: the first
+  # -Release build failed with six "undefined reference to pmuSymbian*" because
+  # stage1.o still carried the macro while pmu_symbian.cpp had been dropped. The
+  # marker records which flavour the object tree currently holds.
+  $Flavour = if ($Release) { 'release' } else { 'bench' }
+  $FlavourFile = "$Proj\configs\stage1\group\.flavour"
+  $prevFlavour = if (Test-Path $FlavourFile) { (Get-Content $FlavourFile -Raw).Trim() } else { '' }
+  # A build run by hand (plain abld, as a subagent may do) leaves objects the
+  # marker knows nothing about. Anything newer than the marker means the tree
+  # holds an unknown flavour, so clean rather than trust it.
+  $objDir = "$Sdk\Epoc32\build\VsCodeProjects\SymbianProjects\PS1Emulator\configs\stage1\group"
+  if ($prevFlavour -and (Test-Path $objDir)) {
+    $markT = (Get-Item $FlavourFile).LastWriteTime
+    $newer = Get-ChildItem -Path $objDir -Recurse -Filter *.o -ErrorAction SilentlyContinue |
+             Where-Object { $_.LastWriteTime -gt $markT } | Select-Object -First 1
+    if ($newer) {
+      Write-Host "[run] objects newer than the flavour marker ($($newer.Name)) - flavour unknown"
+      $prevFlavour = ""
+    }
+  }
+  if ($prevFlavour -ne $Flavour) {
+    Build-Step "cd /d `"$Proj\configs\stage1\group`" & call bldmake bldfiles & call .\ABLD.BAT clean gcce urel" 'stage1 clean'
+  }
+
+  if ($Release) {
+    Copy-Item $MmpPath $MmpBackup -Force
+    $patched = [IO.File]::ReadAllText($MmpPath).
+      Replace("MACRO           PS1_BENCH", "// MACRO           PS1_BENCH").
+      Replace("SOURCE          pmu_symbian.cpp", "// SOURCE          pmu_symbian.cpp").
+      Replace("SOURCEPATH      ..\..\..\..\SymbianOverclock\src", "// SOURCEPATH      ..\..\..\..\SymbianOverclock\src").
+      Replace("SOURCE          ocengine.cpp", "// SOURCE          ocengine.cpp").
+      Replace("CAPABILITY      PowerMgmt WriteDeviceData ReadDeviceData ReadUserData WriteUserData ProtServ",
+              "CAPABILITY      None")
+    [IO.File]::WriteAllText($MmpPath, $patched)
+  }
+  try {
+    Build-Step "cd /d `"$Proj\configs\stage1\group`" & call bldmake bldfiles & call .\ABLD.BAT build gcce urel" 'stage1'
+  } finally {
+    if ($Release) {
+      Copy-Item $MmpBackup $MmpPath -Force
+      Remove-Item $MmpBackup -Force -ErrorAction SilentlyContinue
+    }
+  }
+  # A link that quietly produced nothing leaves the tree looking built.
+  if (-not (Test-Path $Exe)) { throw "stage1 produced no EXE" }
   $fi = [IO.FileInfo]$Exe
+  if ($fi.LastWriteTime -lt $started) { throw "stage1 EXE is older than this build" }
   Write-Host "[run] exe $($fi.Length) bytes, $($fi.LastWriteTime)"
+  Set-Content -Path $FlavourFile -Value $Flavour -NoNewline
 }
+
+if ($NoPush) { Write-Host "[run] built only"; exit 0 }
 
 # --- push and run ---------------------------------------------------------
 $link = Get-Link $Dev

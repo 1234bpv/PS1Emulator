@@ -323,10 +323,12 @@ void gpuUnaiDrawStats(unsigned *out, int n);
 void gpuUnaiSetSpanOff(int on);
 void gpuUnaiSetTexFlat(int on);
 void gpuUnaiSetDstFlat(int on);
+#ifdef PS1_BENCH
 int pmuSymbianStart(int evt0, int evt1, unsigned *diag);
 int pmuSymbianRead(unsigned *ccnt, unsigned *pmn0, unsigned *pmn1, unsigned *direct);
 void pmuSymbianStop(void);
 unsigned pmuSymbianHello(unsigned *sram);
+#endif
 void voutSymbianRowStats(unsigned *box, unsigned *plain, unsigned *scale, unsigned *rgb24, unsigned *other);
 void voutSymbianSetDsa(int on);
 int voutSymbianDsaActive(void);
@@ -342,6 +344,8 @@ void voutSymbianGeom(int *srcW, int *srcH, int *dstW, int *dstH, int *ox, int *o
 void voutSymbianDbgState(int *fbDirty, int *fbDirtyArea, int *status, int *srcX,
 	int *srcY, int *scrW, int *scrH, int *voutOffset, int *stale);
 void voutSymbianScreenLayout(int *bits, int *stride, int *w, int *h, int *mode, int *rotation, int *halBase);
+void voutSymbianDsaDiag(int *covered, int *fbOk, int *rowCopy, int *rgnCount, int *rgnX,
+	int *rgnY, int *rgnW, int *rgnH, int *scrW, int *scrH, int *recoverTries);
 int voutSymbianReadBack(int mode, int *match, int *total, int *firstBad);
 void voutSymbianFbPages(int *changes, int *seen, int *b0, int *b1);
 int voutSymbianHalDump(const char *path);
@@ -502,11 +506,13 @@ static TInt g_gpuFrameskip;
 // Probes for measurements (command line only, not present in menu).
 static TBool g_hackNoStalls;
 static TBool g_memBench;
+#ifdef PS1_BENCH
 // Hardware counter pair to run over the pass, as two event numbers; -1 is off.
 // Snapshotting patches kernel code, so it happens twice per pass and never
 // inside the frame loop.
 static TInt g_pmuEvt0 = -1, g_pmuEvt1 = -1;
 static unsigned g_pmuBase[3];
+#endif
 // Frame of the first screenshot; 3300 - track, lower values hit game menu,
 // where it runs in 640x480 and scaling behavior is visible.
 static TInt g_dumpAt = 3300;
@@ -1631,6 +1637,7 @@ static TInt passSetup(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTes
 	g_fpsWinTick = g_pass.tStart;
 	g_fpsWinFrame = g_pass.i;
 	g_fpsWinShown = voutSymbianPresents();   // counter persists across passes
+#ifdef PS1_BENCH
 	if (g_pmuEvt0 >= 0)
 		{
 		unsigned diag[5] = { 0, 0, 0, 0, 0 }, d = 0;
@@ -1644,6 +1651,7 @@ static TInt passSetup(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTes
 			(unsigned)g_pmuEvt0, (unsigned)g_pmuEvt1,
 			g_pmuBase[0], g_pmuBase[1], g_pmuBase[2]);
 		}
+#endif
 	return KErrNone;
 	}
 
@@ -2068,7 +2076,9 @@ static void passTeardown()
 	const TBool aShowScreen = g_pass.showScreen;
 	g_pass.ticks = User::NTickCount() - g_pass.tStart;
 	g_pass.produced = frame_counter - g_pass.framesAtStart;
+#ifdef PS1_BENCH
 	TUint &tPoll = g_pass.tPoll, &tEmu = g_pass.tEmu, &tBlit = g_pass.tBlit, &tSnd = g_pass.tSnd;
+#endif
 	const TUint aTicks = g_pass.ticks;
 	const u32 aProduced = g_pass.produced;
 	const TBool stalled = g_pass.stalled;
@@ -2160,6 +2170,7 @@ static void passTeardown()
 	// Pipeline profile: cumulative time per stage + share of total. Shows
 	// what to optimize - emulation (drc) or presentation (blit)/sound.
 	{
+#ifdef PS1_BENCH
 	const TUint tTot = tPoll + tEmu + tBlit + tSnd;
 	const TUint den = tTot ? tTot : 1;
 	// gpuRaster - emu portion spent on gpu_unai rasterization (ticks->ms). Rest of
@@ -2195,10 +2206,19 @@ static void passTeardown()
 			(unsigned)aProduced, c[0], c[1], c[2], d);
 		pmuSymbianStop();
 		}
+#endif
 	unsigned rowBox = 0, rowPlain = 0, rowScale = 0, rowRgb24 = 0, rowOther = 0;
 	voutSymbianRowStats(&rowBox, &rowPlain, &rowScale, &rowRgb24, &rowOther);
-	logEvent("dsa", NULL, "%s: active=%d gl=%d fbPlatform=%d pixB=%d strideB=%d rows=%u/%u/%u/%u/%u", mode,
-		voutSymbianDsaActive(), voutSymbianGlActive(), voutSymbianFbFromPlatform(), voutSymbianFbPixBytes(), voutSymbianFbStrideB(), rowBox, rowPlain, rowScale, rowRgb24, rowOther);
+	// covered/fbOk/rowCopy separate the three things that can block direct write
+	// (F9), and rgn/scr show exactly what region WS handed back when it didn't.
+	int dsaCovered = 0, dsaFbOk = 0, dsaRowCopy = 0, dsaRgnCount = 0, dsaRgnX = 0,
+	    dsaRgnY = 0, dsaRgnW = 0, dsaRgnH = 0, dsaScrW = 0, dsaScrH = 0, dsaTries = 0;
+	voutSymbianDsaDiag(&dsaCovered, &dsaFbOk, &dsaRowCopy, &dsaRgnCount, &dsaRgnX,
+		&dsaRgnY, &dsaRgnW, &dsaRgnH, &dsaScrW, &dsaScrH, &dsaTries);
+	logEvent("dsa", NULL, "%s: active=%d gl=%d fbPlatform=%d pixB=%d strideB=%d rows=%u/%u/%u/%u/%u "
+		"covered=%d fbOk=%d rowCopy=%d rgn=%d,%d,%d,%d,%d scr=%d,%d tries=%d", mode,
+		voutSymbianDsaActive(), voutSymbianGlActive(), voutSymbianFbFromPlatform(), voutSymbianFbPixBytes(), voutSymbianFbStrideB(), rowBox, rowPlain, rowScale, rowRgb24, rowOther,
+		dsaCovered, dsaFbOk, dsaRowCopy, dsaRgnCount, dsaRgnX, dsaRgnY, dsaRgnW, dsaRgnH, dsaScrW, dsaScrH, dsaTries);
 	{
 	// Rasteriser workload by kind: without pixel counts its time cannot be
 	// turned into bytes per pixel, and memory and arithmetic need opposite fixes.
@@ -3156,16 +3176,19 @@ GLDEF_C TInt E32Main()
 			}
 		gpuUnaiSetSpanOff(sov);
 		}
+#ifdef PS1_BENCH
 		// Every texel read from the page base: the picture breaks, but the miss
 		// counter then says how much of the cost is the texel fetch itself.
 		_LIT(KTexFlatArg, "texflat");
 		gpuUnaiSetTexFlat(cl.FindF(KTexFlatArg) != KErrNotFound ? 1 : 0);
 		_LIT(KDstFlatArg, "dstflat");
 		gpuUnaiSetDstFlat(cl.FindF(KDstFlatArg) != KErrNotFound ? 1 : 0);
+#endif
 		_LIT(KBlitCArg, "blitc");
 		voutSymbianSetBlitC(cl.FindF(KBlitCArg) != KErrNotFound ? 1 : 0);
 		_LIT(KNoUpdateArg, "noupdate");
 		voutSymbianSetNoUpdate(cl.FindF(KNoUpdateArg) != KErrNotFound ? 1 : 0);
+#ifdef PS1_BENCH
 		// "pmu0b07": two ARM1136 event numbers as two hex digits each, the first
 		// going to PMN0. 0x0b is a D-cache miss, 0x07 an executed instruction.
 		_LIT(KPmuArg, "pmu");
@@ -3182,6 +3205,7 @@ GLDEF_C TInt E32Main()
 		_LIT(KMemBenchArg, "membench");
 		if (cl.FindF(KMemBenchArg) != KErrNotFound)
 			g_memBench = ETrue;
+#endif
 		_LIT(KNoSmoothArg, "nosmooth");
 		voutSymbianSetSmooth(cl.FindF(KNoSmoothArg) != KErrNotFound ? 0 : 1);
 		// Antialiasing prototype: "fxaa" uses lower threshold 3, "fxaa6" - six.
@@ -3204,6 +3228,8 @@ GLDEF_C TInt E32Main()
 			TInt n = 0;
 			voutSymbianSetFxaa((lex.Val(n) == KErrNone && n > 0) ? n : 3, fxMax);
 			}
+		// Stand arguments stay in the release build: the acceptance check dumps
+		// VRAM at a frame number, and the C5 only runs the release flavour.
 		_LIT(KDumpAtArg, "dumpat");
 		const TInt dap = cl.FindF(KDumpAtArg);
 		if (dap != KErrNotFound)
