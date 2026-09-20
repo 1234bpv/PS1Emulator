@@ -305,6 +305,8 @@ int voutSymbianInit(void);
 unsigned short voutSymbianPollPad(void);
 static int g_tiltCli;
 extern "C" int ps1TiltCli(void) { return g_tiltCli; }
+static int g_keyProbeCli;
+extern "C" int ps1KeyProbeCli(void) { return g_keyProbeCli; }
 extern "C" void voutSymbianSetTilt(int aOn);
 extern "C" int voutSymbianTiltActive(void);
 extern "C" int voutSymbianTiltStats(int *aX, int *aY, int *aZeroX, int *aZeroY, int *aPad);
@@ -3208,6 +3210,9 @@ GLDEF_C TInt E32Main()
 #endif
 		_LIT(KNoSmoothArg, "nosmooth");
 		voutSymbianSetSmooth(cl.FindF(KNoSmoothArg) != KErrNotFound ? 0 : 1);
+		_LIT(KKeyProbeArg, "keyprobe");
+		if (cl.FindF(KKeyProbeArg) != KErrNotFound)
+			g_keyProbeCli = 1;
 		// Antialiasing prototype: "fxaa" uses lower threshold 3, "fxaa6" - six.
 		// "fxmax14" sets upper threshold to avoid blurring high-contrast text. Disabled by default.
 		_LIT(KFxMaxArg, "fxmax");

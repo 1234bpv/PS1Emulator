@@ -59,6 +59,7 @@ extern "C" void voutSymbianSetTilt(int aOn);
 extern "C" void voutSymbianSetTiltMap(int aSide, int aPitch, int aDead, int aSensPct);
 extern "C" int voutSymbianTiltActive(void);
 extern "C" int ps1TiltCli(void);
+extern "C" int ps1KeyProbeCli(void);
 void voutSymbianSetKeyMap(const int *aScan, const int *aAlt, int aCount,
 	unsigned int aToggle);
 int  voutSymbianPadButtons(void);
@@ -2404,6 +2405,35 @@ void CPs1AppUi::ConstructL()
 	// is silent, and without this line "gl gave no speedup" is indistinguishable from
 	// "gl did not activate".
 	ps1LogInt("gui", "window attached, gl=", voutSymbianGlActive());
+
+	if (ps1KeyProbeCli())
+		{
+		RWindowGroup &root = iCoeEnv->RootWin();
+		const TInt32 rVolUp = root.CaptureKeyUpAndDowns(EStdKeyIncVolume, 0, 0);
+		const TInt32 rVolDown = root.CaptureKeyUpAndDowns(EStdKeyDecVolume, 0, 0);
+		const TInt32 rDev6 = root.CaptureKeyUpAndDowns(EStdKeyDevice6, 0, 0);
+		const TInt32 rDev7 = root.CaptureKeyUpAndDowns(EStdKeyDevice7, 0, 0);
+		const TInt32 rApp2 = root.CaptureKeyUpAndDowns(EStdKeyApplication2, 0, 0);
+		const TInt32 rApp3 = root.CaptureKeyUpAndDowns(EStdKeyApplication3, 0, 0);
+		const TInt32 rApp4 = root.CaptureKeyUpAndDowns(EStdKeyApplication4, 0, 0);
+		const TInt32 rApp5 = root.CaptureKeyUpAndDowns(EStdKeyApplication5, 0, 0);
+
+		ps1LogFmt("keyprobe", "volup=%d vdown=%d dev6=%d dev7=%d app2=%d app3=%d app4=%d app5=%d",
+			(int)rVolUp, (int)rVolDown, (int)rDev6, (int)rDev7,
+			(int)rApp2, (int)rApp3, (int)rApp4, (int)rApp5);
+
+		TInt released = 0;
+		if (rVolUp > 0)   { root.CancelCaptureKeyUpAndDowns(rVolUp); ++released; }
+		if (rVolDown > 0) { root.CancelCaptureKeyUpAndDowns(rVolDown); ++released; }
+		if (rDev6 > 0)    { root.CancelCaptureKeyUpAndDowns(rDev6); ++released; }
+		if (rDev7 > 0)    { root.CancelCaptureKeyUpAndDowns(rDev7); ++released; }
+		if (rApp2 > 0)    { root.CancelCaptureKeyUpAndDowns(rApp2); ++released; }
+		if (rApp3 > 0)    { root.CancelCaptureKeyUpAndDowns(rApp3); ++released; }
+		if (rApp4 > 0)    { root.CancelCaptureKeyUpAndDowns(rApp4); ++released; }
+		if (rApp5 > 0)    { root.CancelCaptureKeyUpAndDowns(rApp5); ++released; }
+
+		ps1LogInt("keyprobe", "released", released);
+		}
 
 	// Lowest priority: CONE events (keys, redraws, exit) are serviced between frames,
 	// not after the session ends.

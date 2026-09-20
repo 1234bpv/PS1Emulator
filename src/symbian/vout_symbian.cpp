@@ -539,6 +539,9 @@ static TInt aliasScan(TInt aScan)
 	return aScan;
 	}
 
+static TInt g_unmappedSeen;
+const TInt KUnmappedLog = 12;
+
 // Mask of PS1 buttons mapped to this code. Multiple buttons per single code
 // are intentionally allowed: so one key presses, say, both "up" and throttle.
 static unsigned short maskForScan(TInt aScan)
@@ -2127,6 +2130,14 @@ extern "C" unsigned short voutSymbianPollPad(void)
 			const unsigned short m = maskForScan(ev.Key()->iScanCode);
 			if (m)
 				padApply(m, t == EEventKeyDown);
+			// What the device actually sends is the question F8 asks; the docs answer
+			// a different one. Capped so an unmapped key held down cannot flood the log.
+			if (!m && t == EEventKeyDown && g_unmappedSeen < KUnmappedLog)
+				{
+				g_unmappedSeen++;
+				ps1LogFmt("key", "unmapped scan=0x%02x code=0x%04x", (int)ev.Key()->iScanCode,
+					(int)ev.Key()->iCode);
+				}
 			}
 		g_ws.EventReady(&g_evStat);
 		}
