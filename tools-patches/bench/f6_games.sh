@@ -9,7 +9,9 @@ set -u
 # the environment to point it somewhere that outlives it.
 S="${S:-C:/Users/7931~1/AppData/Local/Temp/claude/D--VsCodeProjects-SymbianProjects-PS1Emulator/f4f7c4be-10eb-42f7-826f-af82b9a69b11/scratchpad}"
 D=/d/VsCodeProjects/SymbianProjects/SymbianDeployDaemon/tools/deploy_net.ps1
-IP=192.168.3.22
+# Transport: "-Ip 192.168.3.22" for the N95 over WiFi, "-Com COM12" for the C5
+# over Bluetooth. The games live on the C5 card, so that is the default here.
+LINK="${LINK:--Com COM12}"
 CFG='E:\PS1\cfg\ps1_settings.txt'
 RUNLOG='E:\PS1\logs\ps1_stage1.jsonl'
 mkdir -p "$S/f6"
@@ -23,9 +25,9 @@ fi
 # Putting the original file back must survive the script being killed, which is
 # the way it would actually get lost: the loop below can hang on the daemon.
 restore() {
-  timeout 300 pwsh -NoProfile -File $D -Ip $IP -PutFile "$S/f6/settings_original.txt" \
+  timeout 300 pwsh -NoProfile -File $D $LINK -PutFile "$S/f6/settings_original.txt" \
     -Remote "$CFG" < /dev/null > /dev/null 2>&1
-  timeout 300 pwsh -NoProfile -File $D -Ip $IP -GetFile "$CFG" \
+  timeout 300 pwsh -NoProfile -File $D $LINK -GetFile "$CFG" \
     -OutFile "$S/f6/settings_readback.txt" < /dev/null > /dev/null 2>&1
   if cmp -s "$S/f6/settings_original.txt" "$S/f6/settings_readback.txt"; then
     echo "original settings restored and verified byte for byte"
@@ -35,7 +37,7 @@ restore() {
   fi
 }
 
-timeout 300 pwsh -NoProfile -File $D -Ip $IP -GetFile "$CFG" \
+timeout 300 pwsh -NoProfile -File $D $LINK -GetFile "$CFG" \
   -OutFile "$S/f6/settings_original.txt" < /dev/null > /dev/null 2>&1
 if [ ! -s "$S/f6/settings_original.txt" ]; then echo "ABORT: no original settings file pulled"; exit 1; fi
 echo "original settings saved, $(wc -c < "$S/f6/settings_original.txt") bytes"
@@ -49,11 +51,11 @@ while IFS='|' read -r tag file; do
   grep -q "^game=" "$S/f6/settings_$tag.txt" || printf 'game=%s\n' "$file" >> "$S/f6/settings_$tag.txt"
   # < /dev/null on every child: otherwise it eats list.txt from the loop's stdin
   # and the sweep silently stops after the first game.
-  timeout 300 pwsh -NoProfile -File $D -Ip $IP -PutFile "$S/f6/settings_$tag.txt" \
+  timeout 300 pwsh -NoProfile -File $D $LINK -PutFile "$S/f6/settings_$tag.txt" \
     -Remote "$CFG" < /dev/null > /dev/null 2>&1
-  timeout 600 pwsh -NoProfile -File $D -Ip $IP -Cmd 'EXEC 180000 E:\sys\bin\ps1stage1.exe gui play nosnd frames1200 light blend dsa' \
+  timeout 600 pwsh -NoProfile -File $D $LINK -Cmd 'EXEC 180000 E:\sys\bin\ps1stage1.exe gui play nosnd frames1200 light blend dsa' \
     < /dev/null > "$S/f6/run_$tag.txt" 2>&1
-  timeout 300 pwsh -NoProfile -File $D -Ip $IP -GetFile "$RUNLOG" \
+  timeout 300 pwsh -NoProfile -File $D $LINK -GetFile "$RUNLOG" \
     -OutFile "$S/f6/log_$tag.jsonl" < /dev/null > /dev/null 2>&1
   if [ ! -s "$S/f6/log_$tag.jsonl" ]; then
     echo "$tag NO LOG PULLED - treat as a failed run, not as a silent pass"
