@@ -465,7 +465,8 @@ private:
 	void SaveCfg(const TDesC &aPath, TBool aWithGame) const;
 	void SaveAll() const;
 	void SetGameL(const TDesC &aPath);
-	void ApplyKeyMap() const;
+	void ApplyKeyMap();
+	void SyncSideKeyCaptures(TBool aAll = EFalse);
 	void ApplyPreset(TInt aPreset);
 	void SnapRestart();
 	TBool RestartNeeded() const;
@@ -500,6 +501,7 @@ private:
 	TInt iInterpAtStart, iGteNfAtStart, iSoundAtStart, iGlAtStart, iDsaAtStart;
 	TBool iCliMode;           // launched with arguments: do not touch the in-game menu
 	TPs1Cfg iCfg;
+	TInt32 iSideKeyCap[8];
 	};
 
 CPs1Container *CPs1Container::NewL(const TRect &aRect)
@@ -525,6 +527,8 @@ void CPs1Container::ConstructL(const TRect &aRect)
 	iPresetSel = EPresetDefault;
 	iStateSlot = 1;
 	iStatusMsg.Zero();
+	for (TInt i = 0; i < 8; i++)
+		iSideKeyCap[i] = 0;
 
 	MigrateOldLayout();
 	iCfg.SetDefaults();
@@ -562,6 +566,12 @@ void CPs1Container::ConstructL(const TRect &aRect)
 
 CPs1Container::~CPs1Container()
 	{
+	for (TInt i = 0; i < 8; i++)
+		if (iSideKeyCap[i])
+			{
+			iCoeEnv->RootWin().CancelCaptureKeyUpAndDowns(iSideKeyCap[i]);
+			iSideKeyCap[i] = 0;
+			}
 	ConvCancel();
 	ConvRelease();
 	delete iBrowse;
@@ -1068,7 +1078,7 @@ void CPs1Container::SaveAll() const
 		}
 	}
 
-void CPs1Container::ApplyKeyMap() const
+void CPs1Container::ApplyKeyMap()
 	{
 	unsigned int tog = 0;
 	for (TInt i = 0; i < iPadCount; i++)
@@ -1079,6 +1089,43 @@ void CPs1Container::ApplyKeyMap() const
 				tog |= (1u << bit);
 			}
 	voutSymbianSetKeyMap(iCfg.iKeyScan, iCfg.iKeyAlt, iPadCount, tog);
+	SyncSideKeyCaptures();
+	}
+
+// Side keys are captured only while bound so system retains volume and camera otherwise.
+void CPs1Container::SyncSideKeyCaptures(TBool aAll)
+	{
+	static const TInt KSideKey[8] =
+		{
+		EStdKeyIncVolume, EStdKeyDecVolume, EStdKeyDevice6, EStdKeyDevice7,
+		EStdKeyApplication2, EStdKeyApplication3, EStdKeyApplication4,
+		EStdKeyApplication5
+		};
+	TBool inUse[8];
+	for (TInt k = 0; k < 8; k++)
+		inUse[k] = aAll;
+	for (TInt i = 0; i < iPadCount; i++)
+		{
+		const TInt sc = iCfg.iKeyScan[i];
+		const TInt alt = iCfg.iKeyAlt[i];
+		for (TInt k = 0; k < 8; k++)
+			if (sc == KSideKey[k] || alt == KSideKey[k])
+				inUse[k] = ETrue;
+		}
+	RWindowGroup &root = iCoeEnv->RootWin();
+	for (TInt i = 0; i < 8; i++)
+		{
+		if (inUse[i] && !iSideKeyCap[i])
+			{
+			const TInt32 h = root.CaptureKeyUpAndDowns(KSideKey[i], 0, 0);
+			iSideKeyCap[i] = (h > 0) ? h : 0;
+			}
+		else if (!inUse[i] && iSideKeyCap[i])
+			{
+			root.CancelCaptureKeyUpAndDowns(iSideKeyCap[i]);
+			iSideKeyCap[i] = 0;
+			}
+		}
 	}
 
 // A preset is a one-shot starting point, not a mode: it overwrites every
@@ -1939,6 +1986,10 @@ TKeyResponse CPs1Container::MainKeyL(TInt aScan)
 			case ECfgKeys:
 				iKeySel = 0;
 				iCapture = -1;
+				// A key the application never receives cannot be assigned, so all the
+				// side keys are held while this page is open; leaving it calls
+				// ApplyKeyMap, which trims them back to the ones actually bound.
+				SyncSideKeyCaptures(ETrue);
 				iPage = EPageKeys;
 				break;
 			case ECfgPreset:
