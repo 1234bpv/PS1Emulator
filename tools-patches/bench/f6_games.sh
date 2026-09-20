@@ -14,6 +14,7 @@ D=/d/VsCodeProjects/SymbianProjects/SymbianDeployDaemon/tools/deploy_net.ps1
 LINK="${LINK:--Com COM12}"
 CFG='E:\PS1\cfg\ps1_settings.txt'
 RUNLOG='E:\PS1\logs\ps1_stage1.jsonl'
+ALTLOG='E:\PS1\logs\ps1_stage1_alt.jsonl'
 mkdir -p "$S/f6"
 
 if [ ! -s "$S/f6/list.txt" ]; then
@@ -61,10 +62,23 @@ while IFS='|' read -r tag file; do
   # a harness build with ERR create -46 - and the previous game's log then reads
   # as this one's result.
   timeout 120 pwsh -NoProfile -File $D $LINK -DelFile "$RUNLOG" < /dev/null > /dev/null 2>&1
+  timeout 120 pwsh -NoProfile -File $D $LINK -DelFile "$ALTLOG" < /dev/null > /dev/null 2>&1
   timeout 600 pwsh -NoProfile -File $D $LINK -Cmd 'EXEC 180000 E:\sys\bin\ps1stage1.exe gui play nosnd frames1200 light blend dsa' \
     < /dev/null > "$S/f6/run_$tag.txt" 2>&1
+  # And remove the local copy too: a failed GetFile leaves the previous game's
+  # file sitting there, which is how five identical results once got reported.
+  rm -f "$S/f6/log_$tag.jsonl"
   timeout 300 pwsh -NoProfile -File $D $LINK -GetFile "$RUNLOG" \
     -OutFile "$S/f6/log_$tag.jsonl" < /dev/null > /dev/null 2>&1
+  # Always try the alternate too, and prefer it. A stuck previous instance keeps
+  # the primary file in place AND locked, so the primary pull succeeds and hands
+  # back that instance's stale content - which is exactly the trap this guards.
+  rm -f "$S/f6/alt_$tag.jsonl"
+  timeout 300 pwsh -NoProfile -File $D $LINK -GetFile "$ALTLOG" \
+    -OutFile "$S/f6/alt_$tag.jsonl" < /dev/null > /dev/null 2>&1
+  if [ -s "$S/f6/alt_$tag.jsonl" ]; then
+    mv -f "$S/f6/alt_$tag.jsonl" "$S/f6/log_$tag.jsonl"
+  fi
   if [ ! -s "$S/f6/log_$tag.jsonl" ]; then
     echo "$tag NO LOG PULLED - treat as a failed run, not as a silent pass"
     continue

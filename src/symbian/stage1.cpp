@@ -1230,6 +1230,11 @@ static void openLog()
 	rotateLog(KLogPath, KLogPrev);
 	// E: is mounted memory card, i.e. host folder: log is visible outside emulator.
 	g_log = fopen("E:\\PS1\\logs\\ps1_stage1.jsonl", "w");
+	// A previous instance that never died still holds that file, and the run
+	// would then write no log at all - which from outside reads exactly like a
+	// run that never started.
+	if (!g_log)
+		g_log = fopen("E:\\PS1\\logs\\ps1_stage1_alt.jsonl", "w");
 	if (!g_log)
 		g_log = fopen("C:\\ps1_stage1.jsonl", "w");
 	}
