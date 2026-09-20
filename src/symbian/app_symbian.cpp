@@ -1119,6 +1119,11 @@ void CPs1Container::SyncSideKeyCaptures(TBool aAll)
 			{
 			const TInt32 h = root.CaptureKeyUpAndDowns(KSideKey[i], 0, 0);
 			iSideKeyCap[i] = (h > 0) ? h : 0;
+			// A refusal here is -46, the SwEvent capability the release build does
+			// not carry. Without this line the key would simply do nothing and the
+			// cause would be invisible.
+			if (h <= 0)
+				ps1LogFmt("key", "capture refused scan=0x%02x err=%d", (int)KSideKey[i], (int)h);
 			}
 		else if (!inUse[i] && iSideKeyCap[i])
 			{
