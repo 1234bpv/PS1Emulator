@@ -57,6 +57,10 @@ while IFS='|' read -r tag file; do
   # and the sweep silently stops after the first game.
   timeout 300 pwsh -NoProfile -File $D $LINK -PutFile "$S/f6/settings_$tag.txt" \
     -Remote "$CFG" < /dev/null > /dev/null 2>&1
+  # Delete the log first. It survives a run that never started - the C5 refuses
+  # a harness build with ERR create -46 - and the previous game's log then reads
+  # as this one's result.
+  timeout 120 pwsh -NoProfile -File $D $LINK -DelFile "$RUNLOG" < /dev/null > /dev/null 2>&1
   timeout 600 pwsh -NoProfile -File $D $LINK -Cmd 'EXEC 180000 E:\sys\bin\ps1stage1.exe gui play nosnd frames1200 light blend dsa' \
     < /dev/null > "$S/f6/run_$tag.txt" 2>&1
   timeout 300 pwsh -NoProfile -File $D $LINK -GetFile "$RUNLOG" \
