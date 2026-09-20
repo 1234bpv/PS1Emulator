@@ -452,6 +452,9 @@ static TBool dsaCoversScreen()
 static TUint g_dsaLostTick;      // NTickCount() when region stopped covering the screen, 0 = covered
 static TInt  g_dsaRecoverFrames; // presented frames since the last retry
 static TInt  g_dsaRecoverTries;  // retries attempted so far (this run)
+// Last code from a failed retry. Logged only when it changes: the retry runs
+// twice a second, and an unconditional line would bury the rest of the log.
+static TInt  g_dsaRecoverErr;
 const TInt   KDsaRecoverPeriod = 30;
 
 static void dsaStartL()
@@ -1652,6 +1655,12 @@ static void blitCurrent()
 					// this retry only runs while DSA is active.
 					TInt re;
 					TRAP(re, dsaStartL());
+					if (re != g_dsaRecoverErr)
+						{
+						g_dsaRecoverErr = re;
+						ps1LogFmt("dsa", "retry err=%d tries=%d", (int)re,
+							(int)g_dsaRecoverTries);
+						}
 					}
 				dsaCovered = dsaCoversScreen();
 				}
