@@ -10,6 +10,7 @@
 // active objects are serviced non-blocking via CActiveScheduler::RunIfReady.
 
 #include <e32base.h>
+#include <f32file.h>
 #include <mda/common/audio.h>
 #include <mdaaudiooutputstream.h>
 
@@ -232,10 +233,87 @@ void CSymSnd::MaoscBufferCopied(TInt /*aError*/, const TDesC8 & /*aBuffer*/)
 
 void CSymSnd::MaoscPlayComplete(TInt /*aError*/) { }
 
+#ifdef PS1_BENCH
+// Bench-only raw PCM dump of the samples actually pushed to the playback ring, i.e.
+// after whichever time-scale path (linear resample or WSOLA) the run selected, so a
+// dump made with and without "wsola" is directly comparable pitch-for-pitch on a PC.
+// Rate and layout match the output stream (KSndRate, 16-bit signed stereo). Capped to
+// a few seconds so the run cannot fill the card, and buffered through RFile::Write in
+// KSndDumpBufFrames chunks so posting one sample at a time does not tax the frame budget.
+extern "C" void ps1LogFmt(const char *aType, const char *aFmt, ...);
+
+static const TInt KSndDumpSecs      = 6;
+static const TInt KSndDumpMaxFrames = KSndDumpSecs * KSndRate;
+static const TInt KSndDumpBufFrames = KSndChunk / 4;
+
+static TBool g_sndDumpWanted;
+static TBool g_sndDumpOpen;
+static TBool g_sndDumpDone;
+static RFs   g_sndDumpFs;
+static RFile g_sndDumpFile;
+static TInt16 g_sndDumpBuf[KSndDumpBufFrames * 2];
+static TInt  g_sndDumpBufLen;
+static TInt  g_sndDumpFramesLeft;
+
+_LIT(KSndDumpPath, "E:\\PS1\\logs\\ps1_snd_dump.pcm");
+
+static void SndDumpFlush()
+	{
+	if (g_sndDumpBufLen <= 0)
+		return;
+	TPtrC8 p((const TUint8 *)g_sndDumpBuf, g_sndDumpBufLen * 4);
+	g_sndDumpFile.Write(p);
+	g_sndDumpBufLen = 0;
+	}
+
+static void SndDumpClose()
+	{
+	SndDumpFlush();
+	g_sndDumpFile.Close();
+	g_sndDumpFs.Close();
+	g_sndDumpDone = ETrue;
+	ps1LogFmt("snddump", "closed frames=%d", (int)(KSndDumpMaxFrames - g_sndDumpFramesLeft));
+	}
+
+static void SndDumpFrame(TInt aL, TInt aR)
+	{
+	if (g_sndDumpDone || !g_sndDumpWanted)
+		return;
+	if (!g_sndDumpOpen)
+		{
+		if (g_sndDumpFs.Connect() != KErrNone)
+			{ g_sndDumpDone = ETrue; return; }
+		const TInt rc = g_sndDumpFile.Replace(g_sndDumpFs, KSndDumpPath, EFileWrite | EFileShareAny);
+		if (rc != KErrNone)
+			{
+			g_sndDumpFs.Close();
+			g_sndDumpDone = ETrue;
+			ps1LogFmt("snddump", "open failed rc=%d", (int)rc);
+			return;
+			}
+		g_sndDumpOpen = ETrue;
+		g_sndDumpFramesLeft = KSndDumpMaxFrames;
+		ps1LogFmt("snddump", "opened rate=%d", (int)KSndRate);
+		}
+	TInt16 *p = g_sndDumpBuf + g_sndDumpBufLen * 2;
+	p[0] = (TInt16)aL;
+	p[1] = (TInt16)aR;
+	g_sndDumpBufLen++;
+	g_sndDumpFramesLeft--;
+	if (g_sndDumpBufLen >= KSndDumpBufFrames)
+		SndDumpFlush();
+	if (g_sndDumpFramesLeft <= 0)
+		SndDumpClose();
+	}
+#endif // PS1_BENCH
+
 // Frame is 4 bytes, iCap and KSndChunk are multiples of 4, so frames never cross the ring
 // boundary and split-copying is not required.
 void CSymSnd::PushFrame(TInt aL, TInt aR)
 	{
+#ifdef PS1_BENCH
+	SndDumpFrame(aL, aR);
+#endif
 	TInt next = iHead + 4;
 	if (next == iCap) next = 0;
 	if (next == iTail)
@@ -583,6 +661,15 @@ void ps1SndSetWsola(int aOn)
 	{
 	g_wsola = aOn ? ETrue : EFalse;
 	}
+
+// Bench-only: arm/disarm the raw PCM dump (see SndDumpFrame above). Declared and
+// called only under PS1_BENCH (stage1.cpp), so a normal build carries none of it.
+#ifdef PS1_BENCH
+void ps1SndSetDump(int aOn)
+	{
+	g_sndDumpWanted = aOn ? ETrue : EFalse;
+	}
+#endif
 
 // Service active objects and refill next buffer. Call every frame.
 void ps1SndPump(void)

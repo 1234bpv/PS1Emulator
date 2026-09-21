@@ -13,6 +13,7 @@
 #include <hal.h>
 #include <gles/egl.h>
 #include <gles/gl.h>
+#include <coemain.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -248,6 +249,16 @@ static TBool g_useDsa;
 // run. Separates "drawing through DSA after a restart kills us" from "restarting
 // kills us" without swapping builds between the two runs.
 static TBool g_dsaNoResume;
+#ifdef PS1_BENCH
+// Bench only: interrupt the run without a human at the phone. Sending our own
+// window group to the back makes WS abort the DSA the same way another
+// application coming forward does, and bringing it back triggers Restart. The
+// daemon cannot do this from the PC: while a full-screen DSA run holds the
+// screen, the phone answers nothing on the network until the run ends.
+static TInt g_selfIntAt;            // present number to go to the background at
+static TInt g_selfIntFor = 90;      // how many presents to stay there
+static TInt g_selfIntDone;          // 0 none, 1 backgrounded, 2 returned
+#endif
 static CDirectScreenAccess *g_dsa;
 static CFbsBitGc *g_dsaGc;
 static TBool g_dsaActive;
@@ -1550,6 +1561,38 @@ static TInt g_ovlFpsX10 = -1;
 static TInt g_ovlMsX10;
 static unsigned int g_presents;   // frames actually presented to screen
 
+#ifdef PS1_BENCH
+// See g_selfIntAt: drives the bench-only interruption from the frame path, the
+// only place that keeps running while the application sits in the background.
+static void selfInterruptTick()
+	{
+	if (g_selfIntAt <= 0 || g_selfIntDone == 2)
+		return;
+	CCoeEnv *env = CCoeEnv::Static();
+	if (!env)
+		return;
+	if (g_selfIntDone == 0 && (TInt)g_presents >= g_selfIntAt)
+		{
+		env->RootWin().SetOrdinalPosition(-1);
+		g_selfIntDone = 1;
+		ps1LogFmt("selfint", "background at=%u", g_presents);
+		}
+	else if (g_selfIntDone == 1 && (TInt)g_presents >= g_selfIntAt + g_selfIntFor)
+		{
+		env->RootWin().SetOrdinalPosition(0);
+		g_selfIntDone = 2;
+		ps1LogFmt("selfint", "foreground at=%u", g_presents);
+		}
+	}
+
+extern "C" void voutSymbianSetSelfInterrupt(int aAt, int aFor)
+	{
+	g_selfIntAt = aAt;
+	if (aFor > 0)
+		g_selfIntFor = aFor;
+	}
+#endif
+
 // Show overlay. Numbers calculated by stage1 from presented frame counter
 // (voutSymbianPresents) and its own frame time.
 extern "C" void voutSymbianSetOverlay(int aOn)
@@ -2209,6 +2252,9 @@ extern "C" void voutSymbianPresent(void)
 	g_voutPending = 0;
 	g_voutStale = 0;
 	g_presents++;
+#ifdef PS1_BENCH
+	selfInterruptTick();
+#endif
 	TRAP_IGNORE(blitCurrent());
 	}
 

@@ -331,6 +331,8 @@ int pmuSymbianStart(int evt0, int evt1, unsigned *diag);
 int pmuSymbianRead(unsigned *ccnt, unsigned *pmn0, unsigned *pmn1, unsigned *direct);
 void pmuSymbianStop(void);
 unsigned pmuSymbianHello(unsigned *sram);
+void ps1SndSetDump(int aOn);
+void voutSymbianSetSelfInterrupt(int aAt, int aFor);
 #endif
 void voutSymbianRowStats(unsigned *box, unsigned *plain, unsigned *scale, unsigned *rgb24, unsigned *other);
 void voutSymbianSetDsa(int on);
@@ -3241,6 +3243,24 @@ GLDEF_C TInt E32Main()
 		_LIT(KSndBenchArg, "sndbench");
 		if (cl.FindF(KSndBenchArg) != KErrNotFound)
 			g_sndBench = ETrue;
+		// Raw PCM dump of what actually reaches the speaker (see SndDumpFrame in
+		// snd_symbian.cpp), for offline pitch/artifact comparison with and without wsola.
+		_LIT(KSndDumpArg, "snddump");
+		if (cl.FindF(KSndDumpArg) != KErrNotFound)
+			ps1SndSetDump(1);
+		// selfint<N>: go to the background at presented frame N and come back 90
+		// frames later. The only way to interrupt a run: while a full-screen DSA
+		// run holds the screen the phone answers nothing on the network, so the
+		// interruption cannot come from the PC.
+		_LIT(KSelfIntArg, "selfint");
+		const TInt sip = cl.FindF(KSelfIntArg);
+		if (sip != KErrNotFound)
+			{
+			TLex lex(cl.Mid(sip + 7));
+			TInt n = 0;
+			if (lex.Val(n) == KErrNone && n > 0)
+				voutSymbianSetSelfInterrupt(n, 0);
+			}
 #endif
 		_LIT(KNoSmoothArg, "nosmooth");
 		voutSymbianSetSmooth(cl.FindF(KNoSmoothArg) != KErrNotFound ? 0 : 1);
