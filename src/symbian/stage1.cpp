@@ -333,6 +333,7 @@ void pmuSymbianStop(void);
 unsigned pmuSymbianHello(unsigned *sram);
 void ps1SndSetDump(int aOn);
 void voutSymbianSetSelfInterrupt(int aAt, int aFor);
+void voutSymbianSelfInterruptTick(int aFrame);
 #endif
 void voutSymbianRowStats(unsigned *box, unsigned *plain, unsigned *scale, unsigned *rgb24, unsigned *other);
 void voutSymbianSetDsa(int on);
@@ -1952,6 +1953,9 @@ static TBool passStep()
 
 	g_stage = EStageIdle;
 	g_pass.i++;
+#ifdef PS1_BENCH
+	voutSymbianSelfInterruptTick((int)(g_pass.i - g_loadStateAt));
+#endif
 
 	// Metrics for overlay. fps - PRESENTED frames: emulation rate depends on
 	// PS1 cycle multiplier and increases where screen smoothness does not, meaning

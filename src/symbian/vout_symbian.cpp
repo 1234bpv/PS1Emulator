@@ -1564,24 +1564,27 @@ static unsigned int g_presents;   // frames actually presented to screen
 #ifdef PS1_BENCH
 // See g_selfIntAt: drives the bench-only interruption from the frame path, the
 // only place that keeps running while the application sits in the background.
-static void selfInterruptTick()
+// aFrame is the emulated frame, not the presented one: keying this off presents
+// put the interruption at the very end of the run, because far fewer frames reach
+// the screen than the core computes, and the return then never came at all.
+extern "C" void voutSymbianSelfInterruptTick(int aFrame)
 	{
 	if (g_selfIntAt <= 0 || g_selfIntDone == 2)
 		return;
 	CCoeEnv *env = CCoeEnv::Static();
 	if (!env)
 		return;
-	if (g_selfIntDone == 0 && (TInt)g_presents >= g_selfIntAt)
+	if (g_selfIntDone == 0 && aFrame >= g_selfIntAt)
 		{
 		env->RootWin().SetOrdinalPosition(-1);
 		g_selfIntDone = 1;
-		ps1LogFmt("selfint", "background at=%u", g_presents);
+		ps1LogFmt("selfint", "background frame=%d presents=%u", aFrame, g_presents);
 		}
-	else if (g_selfIntDone == 1 && (TInt)g_presents >= g_selfIntAt + g_selfIntFor)
+	else if (g_selfIntDone == 1 && aFrame >= g_selfIntAt + g_selfIntFor)
 		{
 		env->RootWin().SetOrdinalPosition(0);
 		g_selfIntDone = 2;
-		ps1LogFmt("selfint", "foreground at=%u", g_presents);
+		ps1LogFmt("selfint", "foreground frame=%d presents=%u", aFrame, g_presents);
 		}
 	}
 
@@ -2252,9 +2255,6 @@ extern "C" void voutSymbianPresent(void)
 	g_voutPending = 0;
 	g_voutStale = 0;
 	g_presents++;
-#ifdef PS1_BENCH
-	selfInterruptTick();
-#endif
 	TRAP_IGNORE(blitCurrent());
 	}
 
