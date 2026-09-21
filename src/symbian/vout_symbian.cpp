@@ -14,6 +14,7 @@
 #include <gles/egl.h>
 #include <gles/gl.h>
 #include <coemain.h>
+#include <apgtask.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -1576,13 +1577,23 @@ extern "C" void voutSymbianSelfInterruptTick(int aFrame)
 		return;
 	if (g_selfIntDone == 0 && aFrame >= g_selfIntAt)
 		{
-		env->RootWin().SetOrdinalPosition(-1);
+		// Not SetOrdinalPosition(-1): measured, it changes nothing WS reports - no
+		// focus event and no DSA abort. Bringing the task behind us to the front is
+		// what a user interruption actually is, and WS reacts to it.
+		TApaTaskList list(env->WsSession());
+		TApaTask other = list.FindByPos(1);
+		const TBool ok = other.Exists();
+		if (ok)
+			other.BringToForeground();
 		g_selfIntDone = 1;
-		ps1LogFmt("selfint", "background frame=%d presents=%u", aFrame, g_presents);
+		ps1LogFmt("selfint", "background frame=%d presents=%u other=%d", aFrame,
+			g_presents, (int)ok);
 		}
 	else if (g_selfIntDone == 1 && aFrame >= g_selfIntAt + g_selfIntFor)
 		{
-		env->RootWin().SetOrdinalPosition(0);
+		TApaTask self(env->WsSession());
+		self.SetWgId(env->RootWin().Identifier());
+		self.BringToForeground();
 		g_selfIntDone = 2;
 		ps1LogFmt("selfint", "foreground frame=%d presents=%u", aFrame, g_presents);
 		}
