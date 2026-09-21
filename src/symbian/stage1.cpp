@@ -385,6 +385,7 @@ int voutSymbianVisTest(int raw);
 void voutSymbianSetOverlay(int on);
 void voutSymbianSetNoUpdate(int on);
 void voutSymbianSetSmooth(int on);
+void voutSymbianSetDsaNoResume(int on);
 void voutSymbianSetFxaa(int threshold, int max);
 void voutSymbianSetStats(int fpsX10, int msX10);
 void voutSymbianSetPumpAo(int on);
@@ -810,6 +811,7 @@ int  ps1SndOpenOutput(void);
 void ps1SndPump(void);
 void ps1SndCloseOutput(void);
 void ps1SndSetPumpAo(int aOn);
+void ps1SndSetWsola(int aOn);
 }
 
 // SPU freeze is forwarded to dfsound so SaveState/LoadState do not get zero size and NULL.
@@ -2579,7 +2581,7 @@ extern "C" void ps1SetDiscFromCfg(const char *aDisc)
 extern "C" void ps1CfgApply(const char *aDisc, const char *aBios, int aInterp,
 	int aIlace, int aLight, int aBlend, int aPixSkip, int aGteNf,
 	int aSound, int aGl, int aDirty, int aDsa, int aFps, int aGpuSkip, int aCycle,
-	int aSmooth, int aFxaa, int aSwDraw)
+	int aSmooth, int aFxaa, int aSwDraw, int aWsola)
 	{
 	g_discPath[0] = 0;
 	if (aDisc && aDisc[0])
@@ -2604,6 +2606,7 @@ extern "C" void ps1CfgApply(const char *aDisc, const char *aBios, int aInterp,
 	g_hackPixelSkip  = aPixSkip;
 	g_hackGteNoFlags = aGteNf ? ETrue : EFalse;
 	g_noSound        = aSound ? EFalse : ETrue;
+	ps1SndSetWsola(aWsola);
 	voutSymbianSetGl(aGl);
 	voutSymbianSetDirtyOnly(aDirty);
 	// DSA initializes in voutSymbianAttachWindow, but menu delivers config AFTER it,
@@ -2627,12 +2630,12 @@ extern "C" void ps1CfgApply(const char *aDisc, const char *aBios, int aInterp,
 	logEvent("cfg_bios", NULL, "bios=%s", g_biosFile[0] ? g_biosFile : KBiosFile);
 	logEvent("cfg", NULL, "disc=%s interp=%d ilace=%d light=%d blend=%d "
 		"pixskip=%d gtenf=%d snd=%d gl=%d dirty=%d dsa=%d fps=%d gpuskip=%d cyclemul=%d "
-		"smooth=%d fxaa=%d swdraw=%d swoff=%d",
+		"smooth=%d fxaa=%d swdraw=%d swoff=%d wsola=%d",
 		g_discPath[0] ? g_discPath : KDiscImg, (int)aInterp,
 		(int)aIlace, (int)aLight, (int)aBlend, (int)aPixSkip, (int)aGteNf,
 		(int)aSound, (int)aGl, (int)aDirty, (int)aDsa, (int)aFps, (int)aGpuSkip,
 		(int)aCycle, (int)aSmooth, (int)aFxaa, (int)aSwDraw,
-		(int)gpu_unai_sw_off);
+		(int)gpu_unai_sw_off, (int)aWsola);
 	}
 
 // Same, but from menu opened while already in-game. Includes only settings switchable
@@ -3241,6 +3244,8 @@ GLDEF_C TInt E32Main()
 #endif
 		_LIT(KNoSmoothArg, "nosmooth");
 		voutSymbianSetSmooth(cl.FindF(KNoSmoothArg) != KErrNotFound ? 0 : 1);
+		_LIT(KDsaNoResumeArg, "dsanoresume");
+		voutSymbianSetDsaNoResume(cl.FindF(KDsaNoResumeArg) != KErrNotFound ? 1 : 0);
 		_LIT(KKeyProbeArg, "keyprobe");
 		if (cl.FindF(KKeyProbeArg) != KErrNotFound)
 			g_keyProbeCli = 1;

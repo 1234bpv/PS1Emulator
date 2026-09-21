@@ -51,7 +51,7 @@ void ps1SetDiscFromCfg(const char *aDisc);
 void ps1CfgApply(const char *aDisc, const char *aBios, int aInterp, int aIlace,
 	int aLight, int aBlend, int aPixSkip, int aGteNf, int aSound, int aGl,
 	int aDirty, int aDsa, int aFps, int aGpuSkip, int aCycle, int aSmooth,
-	int aFxaa, int aSwDraw);
+	int aFxaa, int aSwDraw, int aWsola);
 // Subset that can be toggled while in-game (menu from pause).
 void ps1CfgApplyLive(int aIlace, int aLight, int aBlend, int aPixSkip,
 	int aFps, int aGpuSkip, int aCycle, int aSmooth, int aFxaa, int aDirty,
@@ -93,8 +93,9 @@ enum TCfgItem
 	ECfgLight, ECfgBlend, ECfgIlace, ECfgPixSkip, ECfgSmooth, ECfgFxaa,
 	ECfgDirty, ECfgDsa, ECfgGl, ECfgSwDraw,
 	ECfgCpu, ECfgGteNf, ECfgGpuSkip, ECfgCycle, ECfgFps,
-	ECfgSound,
+	ECfgSound, ECfgWsola,
 	ECfgTilt, ECfgTiltSide, ECfgTiltPitch, ECfgTiltDead, ECfgTiltSens, ECfgKeys,
+	ECfgKeyBase,
 	ECfgPreset,
 	ECfgLang,
 	ECfgReset, ECfgExit,
@@ -115,9 +116,9 @@ static const unsigned char KItemSection[ECfgCount] =
 	ESecVideo, ESecVideo, ESecVideo, ESecVideo, ESecVideo, ESecVideo,
 	ESecVideo, ESecVideo, ESecVideo, ESecVideo,
 	ESecSpeed, ESecSpeed, ESecSpeed, ESecSpeed, ESecSpeed,
-	ESecSound,
+	ESecSound, ESecSound,
 	ESecInput, ESecInput, ESecInput, ESecInput, ESecInput, ESecInput,
-	ESecInput,
+	ESecInput, ESecInput,
 	ESecSystem, ESecSystem, ESecSystem
 	};
 
@@ -130,10 +131,11 @@ static const TStrId KItemLabelStrId[ECfgCount] =
 	EStrItemGl, EStrItemSwDraw,
 	EStrItemCpu, EStrItemGteNf, EStrItemGpuSkip, EStrItemCycle,
 	EStrItemFps,
-	EStrItemSound,
+	EStrItemSound, EStrItemWsola,
 	EStrItemTilt,
 	EStrItemTiltSide, EStrItemTiltPitch, EStrItemTiltDead, EStrItemTiltSens,
 	EStrItemKeys,
+	EStrItemKeyBase,
 	EStrItemPreset,
 	EStrItemLang,
 	EStrItemReset, EStrItemExit
@@ -148,8 +150,9 @@ static const char *const KCfgKey[ECfgCount] =
 	"light", "blend", "ilace", "pixskip", "smooth", "fxaa",
 	"dirty", "dsa", "gl", "swdraw",
 	"cpu", "gtenf", "gpuskip", "cycle", "fps",
-	"sound",
+	"sound", "wsola",
 	"tilt", "tiltside", "tiltpitch", "tiltdead", "tiltsens", NULL,
+	NULL,
 	NULL,
 	"lang",
 	NULL, NULL
@@ -160,7 +163,8 @@ static const char *const KCfgKey[ECfgCount] =
 static TBool restartOnly(TInt aItem)
 	{
 	return aItem == ECfgGame || aItem == ECfgBios || aItem == ECfgCpu ||
-	       aItem == ECfgGteNf || aItem == ECfgSound || aItem == ECfgGl ||
+	       aItem == ECfgGteNf || aItem == ECfgSound || aItem == ECfgWsola ||
+	       aItem == ECfgGl ||
 	       aItem == ECfgDsa;
 	}
 
@@ -236,6 +240,28 @@ static const TInt KPresetHold[EPresetCount - 1][KPresetBtnCount] =
 	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }    // RPG: no holds
 	};
 
+// Base layout for the physical keyboard, independent of the game-type preset above:
+// which keys exist differs by handset, not by game. N95 reuses the Default layout
+// verbatim (its D-pad sits on the arrow keys). C5-00.2 has no separate D-pad worth
+// relying on, so its base puts the whole scheme on the numeric keypad, the way the
+// old numpad-only Symbian PS1 emulators did: 2/4/6/8 for direction, 5 for confirm,
+// */# for Select/Start.
+enum TKeyboardBase { EBaseN95 = 0, EBaseC5, EBaseCount };
+
+static const TStrId KBaseNameStrId[EBaseCount] = { EStrValBaseN95, EStrValBaseC5 };
+
+static const TInt KBaseC5Scan[KPresetBtnCount] =
+	{
+	'8', '2', '4', '6',
+	EStdKeyDevice3, '0', '7', '9',
+	'1', '3', '5', EStdKeyBackspace, '*', '#'
+	};
+// * and # each get their named scan code as the alt: firmwares are known to send
+// either the ASCII character or the named code for these two (see the volume
+// handler in OfferKeyEventL, which checks both for the same reason).
+static const TInt KBaseC5Alt[KPresetBtnCount] =
+	{ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, EStdKeyNkpAsterisk, EStdKeyHash };
+
 // Single emulator directory. Everything it reads and writes lives under it: otherwise
 // the card root got cluttered with files, and which ones belong to which game was unclear.
 _LIT(KCfgPath, "E:\\PS1\\cfg\\ps1_settings.txt");
@@ -249,7 +275,7 @@ class TPs1Cfg
 public:
 	void SetDefaults();
 	TInt &Value(TInt aItem);
-	TInt iInterp, iIlace, iLight, iBlend, iPixSkip, iGteNf, iSound, iGl;
+	TInt iInterp, iIlace, iLight, iBlend, iPixSkip, iGteNf, iSound, iGl, iWsola;
 	TInt iDirty, iDsa, iFps, iGpuSkip, iCycle, iSmooth, iFxaa, iProfile, iSwDraw;
 	TInt iLang;
 	TInt iTilt, iTiltSide, iTiltPitch, iTiltDead, iTiltSens;
@@ -285,6 +311,9 @@ void TPs1Cfg::SetDefaults()
 	// without shading, and that is not a speedup but an artifact. Can be disabled here.
 	iLight = iBlend = 1;
 	iSound = 1;
+	// Linear stretch is the long-standing default: WSOLA costs extra CPU, and a change
+	// in emulated pitch should not appear silently for anyone not asking for it.
+	iWsola = 0;
 	iLang = I18nDetectLanguage();
 	I18nSetLanguage(iLang);
 	iBios.Zero();
@@ -316,6 +345,7 @@ TInt &TPs1Cfg::Value(TInt aItem)
 		case ECfgPixSkip: return iPixSkip;
 		case ECfgGteNf:   return iGteNf;
 		case ECfgSound:   return iSound;
+		case ECfgWsola:   return iWsola;
 		case ECfgGl:      return iGl;
 		case ECfgSwDraw:  return iSwDraw;
 		case ECfgDirty:   return iDirty;
@@ -469,6 +499,7 @@ private:
 	void ApplyKeyMap();
 	void SyncSideKeyCaptures(TBool aAll = EFalse);
 	void ApplyPreset(TInt aPreset);
+	void ApplyBase(TInt aBase);
 	void SnapRestart();
 	TBool RestartNeeded() const;
 
@@ -488,6 +519,7 @@ private:
 	TInt iBrowseSel;
 	TInt iKeySel;
 	TInt iPresetSel;          // preset highlighted on the CONTROLS list (not persisted)
+	TInt iBaseSel;            // keyboard base highlighted on the CONTROLS list (not persisted)
 	TInt iCapture;            // button awaiting a key press (-1 = none)
 	TInt iConfirm;            // item awaiting confirmation (-1 = none)
 	TInt iStateSlot;          // state slot (1..5)
@@ -499,7 +531,7 @@ private:
 	// Values of asterisked items at the moment the pass was started: the difference
 	// from the current values is the reason to restart emulation.
 	TFileName iGameAtStart, iBiosAtStart;
-	TInt iInterpAtStart, iGteNfAtStart, iSoundAtStart, iGlAtStart, iDsaAtStart;
+	TInt iInterpAtStart, iGteNfAtStart, iSoundAtStart, iGlAtStart, iDsaAtStart, iWsolaAtStart;
 	TBool iCliMode;           // launched with arguments: do not touch the in-game menu
 	TPs1Cfg iCfg;
 	TInt32 iSideKeyCap[8];
@@ -526,6 +558,7 @@ void CPs1Container::ConstructL(const TRect &aRect)
 	iCapture = -1;
 	iConfirm = -1;
 	iPresetSel = EPresetDefault;
+	iBaseSel = EBaseN95;
 	iStateSlot = 1;
 	iStatusMsg.Zero();
 	for (TInt i = 0; i < 8; i++)
@@ -1179,6 +1212,28 @@ void CPs1Container::ApplyPreset(TInt aPreset)
 	SaveAll();
 	}
 
+// A base picks the handset's keyboard, not the game type: same one-shot overwrite
+// as ApplyPreset, and left for the user to touch up afterwards the same way.
+void CPs1Container::ApplyBase(TInt aBase)
+	{
+	for (TInt i = 0; i < iPadCount; i++)
+		{
+		if (aBase == EBaseN95 || i >= KPresetBtnCount)
+			{
+			iCfg.iKeyScan[i] = voutSymbianDefaultKey(i, 0);
+			iCfg.iKeyAlt[i]  = voutSymbianDefaultKey(i, 1);
+			}
+		else
+			{
+			iCfg.iKeyScan[i] = KBaseC5Scan[i];
+			iCfg.iKeyAlt[i]  = KBaseC5Alt[i];
+			}
+		iCfg.iKeyHold[i] = 0;
+		}
+	ApplyKeyMap();
+	SaveAll();
+	}
+
 // --- Item labels ------------------------------------------------------------
 
 void CPs1Container::ItemLabel(TInt aItem, TDes &aOut) const
@@ -1300,6 +1355,9 @@ void CPs1Container::ItemValue(TInt aItem, TDes &aOut) const
 
 		case ECfgKeys:
 			aOut.Copy(Tr(EStrValPressOk));
+			break;
+		case ECfgKeyBase:
+			aOut.Copy(Tr(KBaseNameStrId[iBaseSel]));
 			break;
 		case ECfgPreset:
 			aOut.Copy(Tr(KPresetNameStrId[iPresetSel]));
@@ -1760,6 +1818,7 @@ void CPs1Container::RevertRestartSettings()
 	iCfg.iInterp = iInterpAtStart;
 	iCfg.iGteNf = iGteNfAtStart;
 	iCfg.iSound = iSoundAtStart;
+	iCfg.iWsola = iWsolaAtStart;
 	iCfg.iGl = iGlAtStart;
 	iCfg.iDsa = iDsaAtStart;
 	}
@@ -1798,7 +1857,7 @@ void CPs1Container::ApplyAndStart()
 		iCfg.iInterp, iCfg.iIlace,
 		iCfg.iLight, iCfg.iBlend, iCfg.iPixSkip, iCfg.iGteNf, iCfg.iSound, iCfg.iGl,
 		iCfg.iDirty, iCfg.iDsa, iCfg.iFps, iCfg.iGpuSkip, iCfg.iCycle, iCfg.iSmooth,
-		iCfg.iFxaa, iCfg.iSwDraw);
+		iCfg.iFxaa, iCfg.iSwDraw, iCfg.iWsola);
 	iStartedOnce = ETrue;
 	iRestartReq = EFalse;
 	SnapRestart();
@@ -1812,6 +1871,7 @@ void CPs1Container::SnapRestart()
 	iInterpAtStart = iCfg.iInterp;
 	iGteNfAtStart  = iCfg.iGteNf;
 	iSoundAtStart  = iCfg.iSound;
+	iWsolaAtStart  = iCfg.iWsola;
 	iGlAtStart     = iCfg.iGl;
 	iDsaAtStart    = iCfg.iDsa;
 	}
@@ -1822,7 +1882,7 @@ TBool CPs1Container::RestartNeeded() const
 	       iCfg.iBios.CompareF(iBiosAtStart) != 0 ||
 	       iCfg.iInterp != iInterpAtStart || iCfg.iGteNf != iGteNfAtStart ||
 	       iCfg.iSound  != iSoundAtStart  || iCfg.iGl    != iGlAtStart ||
-	       iCfg.iDsa    != iDsaAtStart;
+	       iCfg.iDsa    != iDsaAtStart    || iCfg.iWsola != iWsolaAtStart;
 	}
 
 TKeyResponse CPs1Container::MainKeyL(TInt aScan)
@@ -1929,6 +1989,11 @@ TKeyResponse CPs1Container::MainKeyL(TInt aScan)
 				// should not happen on every arrow press while browsing the list.
 				iPresetSel = (iPresetSel + d + EPresetCount) % EPresetCount;
 				}
+			else if (iSel == ECfgKeyBase)
+				{
+				// Same reasoning as ECfgPreset: highlight only, OK applies it.
+				iBaseSel = (iBaseSel + d + EBaseCount) % EBaseCount;
+				}
 			else
 				v = v ? 0 : 1;
 			iStatusMsg.Zero();
@@ -2007,6 +2072,9 @@ TKeyResponse CPs1Container::MainKeyL(TInt aScan)
 				// ApplyKeyMap, which trims them back to the ones actually bound.
 				SyncSideKeyCaptures(ETrue);
 				iPage = EPageKeys;
+				break;
+			case ECfgKeyBase:
+				ApplyBase(iBaseSel);
 				break;
 			case ECfgPreset:
 				ApplyPreset(iPresetSel);

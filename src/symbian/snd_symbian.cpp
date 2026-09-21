@@ -47,6 +47,15 @@ static const TInt KSndChunk = 4 * 1024;        // ~23ms per WriteL
 static const TInt KSndBufs  = 4;               // in-flight buffers: ~93ms headroom
 static const TInt KSndFill  = 3 * KSndChunk;   // target ring fill level (~70ms)
 
+// WSOLA time-scale constants (see CSymSnd::WsolaFeed below). A full two-channel
+// search over a ~20ms window/range costs 4964-5006ms of CPU per second of audio,
+// measured on N95 8GB - twice what the CPU has. Halving the window, correlating one
+// channel, and the two-stage search in WsolaBestOffset are what make it affordable.
+static const TInt KWsolaHop    = 220;              // synthesis/analysis half-window, frames (~5ms)
+static const TInt KWsolaWin    = KWsolaHop * 2;    // full window cut per hop, frames (~10ms)
+static const TInt KWsolaRange  = 441;              // search span, frames (~10ms)
+static const TInt KWsolaBufCap = 4096;             // input staging capacity, frames
+
 extern "C" unsigned int ndrc_symbian_fastcount(void);
 extern "C" unsigned int ndrc_symbian_fastfreq(void);
 
@@ -59,6 +68,49 @@ static unsigned g_sndUnder;
 static const TInt KVolSteps   = 10;
 static const TInt KVolDefault = 2;          // at full volume the device speaker overloads
 static TInt g_volStep = KVolDefault;
+
+// Time-scale algorithm: EFalse (default) keeps the linear stretch below, which is
+// simplest but bends pitch by exactly the stretch ratio. ETrue switches to WSOLA,
+// which resamples at the natural rate and hides the same time gap in overlap-add
+// instead, at extra CPU cost. Set from the menu (restart-only, see ps1SndSetWsola);
+// read into a new CSymSnd's iWsola at construction.
+static TBool g_wsola;
+
+// Two-stage single-channel correlation search used by WSOLA below: a coarse pass
+// over every 4th offset across [0, aRange), then a refinement at full resolution
+// within +-4 of the best coarse offset. Left channel only (stride 2) - correlating
+// both channels at full resolution is the naive search sndSymbianWsolaBench measures,
+// and it is twice too slow on its own. Samples are shifted right by 6 bits before
+// multiplying so a KWsolaHop-long 32-bit accumulation cannot overflow.
+static TInt WsolaBestOffset(const TInt16 *aTmpl, const TInt16 *aSearch, TInt aLen, TInt aRange)
+	{
+	TInt bestOff = 0;
+	TInt32 bestSum = 0;
+	TBool have = EFalse;
+	for (TInt off = 0; off < aRange; off += 4)
+		{
+		const TInt16 *cand = aSearch + off * 2;
+		TInt32 sum = 0;
+		for (TInt i = 0; i < aLen; i++)
+			sum += (TInt32)(aTmpl[i * 2] >> 6) * (TInt32)(cand[i * 2] >> 6);
+		if (!have || sum > bestSum)
+			{ bestSum = sum; bestOff = off; have = ETrue; }
+		}
+	TInt lo = bestOff - 4; if (lo < 0) lo = 0;
+	TInt hi = bestOff + 4; if (hi > aRange - 1) hi = aRange - 1;
+	for (TInt off = lo; off <= hi; off++)
+		{
+		if ((off & 3) == 0)
+			continue;              // already scored in the coarse pass
+		const TInt16 *cand = aSearch + off * 2;
+		TInt32 sum = 0;
+		for (TInt i = 0; i < aLen; i++)
+			sum += (TInt32)(aTmpl[i * 2] >> 6) * (TInt32)(cand[i * 2] >> 6);
+		if (sum > bestSum)
+			{ bestSum = sum; bestOff = off; }
+		}
+	return bestOff;
+	}
 
 class CSymSnd : public CBase, public MMdaAudioOutputStreamCallback
 	{
@@ -75,6 +127,7 @@ private:
 	void Refill();
 	void PushFrame(TInt aL, TInt aR);
 	void UpdateRate(TInt aInFrames);
+	void WsolaFeed(const TInt16 *aSrc, TInt aFrames);
 	void MaoscOpenComplete(TInt aError);
 	void MaoscBufferCopied(TInt aError, const TDesC8 &aBuffer);
 	void MaoscPlayComplete(TInt aError);
@@ -95,6 +148,19 @@ private:
 	TInt iPrevL, iPrevR;
 	TInt iRateFrames;          // input frames since start of measurement window
 	TUint iRateT0;
+	// WSOLA state (used instead of iPos/iPrev* above when iWsola is set). Incoming
+	// frames accumulate in iWsBuf until a full search window is available, then hops
+	// are cut off the front and the remainder compacted down, so index 0 always holds
+	// the next nominal analysis position. iWsAnaFrac carries the fractional part of
+	// the analysis hop (KWsolaHop*iStep, 16.16) the same way iPos carries fractional
+	// position above. iWsTail holds the second half of the last emitted window, kept
+	// for the next hop's overlap-add and waveform-similarity search.
+	TBool iWsola;
+	TInt16 *iWsBuf;
+	TInt iWsLen;
+	TInt iWsAnaFrac;
+	TBool iWsPrimed;
+	TInt16 iWsTail[KWsolaHop * 2];
 	};
 
 CSymSnd *CSymSnd::NewL()
@@ -113,6 +179,8 @@ void CSymSnd::ConstructL()
 	for (TInt i = 0; i < KSndBufs; i++)
 		iSend[i].CreateL(KSndChunk);
 	iStep = 1 << 16;
+	iWsola = g_wsola;
+	iWsBuf = (TInt16 *)User::AllocL(KWsolaBufCap * 2 * sizeof(TInt16));
 	iRateT0 = ndrc_symbian_fastcount();
 	iStream = CMdaAudioOutputStream::NewL(*this, EMdaPriorityNormal);
 	iStream->Open(NULL);   // asynchronous -> MaoscOpenComplete
@@ -124,6 +192,7 @@ CSymSnd::~CSymSnd()
 	for (TInt i = 0; i < KSndBufs; i++)
 		iSend[i].Close();
 	User::Free(iRing);
+	User::Free(iWsBuf);
 	}
 
 void CSymSnd::MaoscOpenComplete(TInt aError)
@@ -212,22 +281,101 @@ void CSymSnd::Feed(const void *aBuf, TInt aBytes)
 	const TInt n = aBytes / 4;
 	if (n <= 0)
 		return;
-	while ((iPos >> 16) < n)
+	if (iWsola)
 		{
-		const TInt i = iPos >> 16;
-		// 14-bit fraction: sample difference takes 17 signed bits, and with a full
-		// 16-bit fraction the product overflows 32-bit signed integer.
-		const TInt f = (iPos >> 2) & 0x3FFF;
-		const TInt aL = i ? src[(i - 1) * 2]     : iPrevL;
-		const TInt aR = i ? src[(i - 1) * 2 + 1] : iPrevR;
-		PushFrame(aL + (((src[i * 2]     - aL) * f) >> 14),
-		          aR + (((src[i * 2 + 1] - aR) * f) >> 14));
-		iPos += iStep;
+		WsolaFeed(src, n);
 		}
-	iPos -= n << 16;
-	iPrevL = src[(n - 1) * 2];
-	iPrevR = src[(n - 1) * 2 + 1];
+	else
+		{
+		while ((iPos >> 16) < n)
+			{
+			const TInt i = iPos >> 16;
+			// 14-bit fraction: sample difference takes 17 signed bits, and with a full
+			// 16-bit fraction the product overflows 32-bit signed integer.
+			const TInt f = (iPos >> 2) & 0x3FFF;
+			const TInt aL = i ? src[(i - 1) * 2]     : iPrevL;
+			const TInt aR = i ? src[(i - 1) * 2 + 1] : iPrevR;
+			PushFrame(aL + (((src[i * 2]     - aL) * f) >> 14),
+			          aR + (((src[i * 2 + 1] - aR) * f) >> 14));
+			iPos += iStep;
+			}
+		iPos -= n << 16;
+		iPrevL = src[(n - 1) * 2];
+		iPrevR = src[(n - 1) * 2 + 1];
+		}
 	UpdateRate(n);
+	}
+
+// Time-scale stretch that keeps pitch. Unlike the linear resampler above, the input
+// is never resampled point-by-point: it is read at its natural rate, cut into
+// KWsolaWin-frame windows, and overlap-added at a fixed KWsolaHop synthesis stride.
+// The nominal analysis position drifts from the synthesis position by exactly the
+// ratio iStep already carries (a hop of KWsolaHop output frames consumes
+// KWsolaHop*iStep input frames, the same 16.16 accounting iPos does above), so the
+// average time-scale ratio - and with it the fix for the pitch bug - comes from the
+// same measured iStep as the linear path. WsolaBestOffset then looks up to
+// KWsolaRange frames ahead of that nominal position for the offset whose left
+// channel best continues the waveform saved in iWsTail, so successive windows
+// overlap-add without a click; the offset perturbs only where the window is read
+// from, never how far the nominal position advances, so it cannot drift the rate.
+void CSymSnd::WsolaFeed(const TInt16 *aSrc, TInt aFrames)
+	{
+	if (iWsLen + aFrames > KWsolaBufCap)
+		{
+		// Should not happen at normal chunk sizes and stretch ratios; keep the most
+		// recent input rather than overflow the staging buffer.
+		TInt drop = iWsLen + aFrames - KWsolaBufCap;
+		if (drop > iWsLen) drop = iWsLen;
+		Mem::Move(iWsBuf, iWsBuf + drop * 2, (iWsLen - drop) * 2 * sizeof(TInt16));
+		iWsLen -= drop;
+		}
+	Mem::Copy(iWsBuf + iWsLen * 2, aSrc, aFrames * 2 * sizeof(TInt16));
+	iWsLen += aFrames;
+
+	for (;;)
+		{
+		if (!iWsPrimed)
+			{
+			if (iWsLen < KWsolaWin)
+				break;
+			// First window ever: there is nothing to crossfade against yet, so its
+			// first half goes straight to output and its second half seeds iWsTail.
+			for (TInt i = 0; i < KWsolaHop; i++)
+				PushFrame(iWsBuf[i * 2], iWsBuf[i * 2 + 1]);
+			Mem::Copy(iWsTail, iWsBuf + KWsolaHop * 2, KWsolaHop * 2 * sizeof(TInt16));
+			Mem::Move(iWsBuf, iWsBuf + KWsolaWin * 2, (iWsLen - KWsolaWin) * 2 * sizeof(TInt16));
+			iWsLen -= KWsolaWin;
+			iWsPrimed = ETrue;
+			continue;
+			}
+
+		// Tentative advance: only committed to iWsAnaFrac once the hop below actually
+		// runs, so a break here (not enough lookahead yet) loses nothing and the same
+		// hop is retried whole on the next call once more input has arrived.
+		const TInt frac = iWsAnaFrac + KWsolaHop * iStep;
+		const TInt ss = frac >> 16;
+		if (iWsLen < ss + KWsolaWin + KWsolaRange)
+			break;
+		iWsAnaFrac = frac - (ss << 16);
+
+		const TInt16 *search = iWsBuf + ss * 2;
+		const TInt off = WsolaBestOffset(iWsTail, search, KWsolaHop, KWsolaRange);
+		const TInt16 *win = search + off * 2;
+
+		// Overlap-add: crossfade the saved tail with the first half of the new window
+		// on a linear ramp, emit it, and save the window's second half as the next tail.
+		for (TInt i = 0; i < KWsolaHop; i++)
+			{
+			const TInt wL = win[i * 2], wR = win[i * 2 + 1];
+			const TInt tL = iWsTail[i * 2], tR = iWsTail[i * 2 + 1];
+			PushFrame(tL + ((wL - tL) * i) / KWsolaHop,
+			          tR + ((wR - tR) * i) / KWsolaHop);
+			}
+		Mem::Copy(iWsTail, win + KWsolaHop * 2, KWsolaHop * 2 * sizeof(TInt16));
+
+		Mem::Move(iWsBuf, iWsBuf + ss * 2, (iWsLen - ss) * 2 * sizeof(TInt16));
+		iWsLen -= ss;
+		}
 	}
 
 // Keep KSndBufs buffers in-flight rather than just one: with a single buffer the entire pipeline
@@ -429,6 +577,13 @@ void ps1SndSetPumpAo(int aOn)
 	g_pumpAo = aOn ? ETrue : EFalse;
 	}
 
+// Restart-only (see ECfgWsola in app_symbian.cpp): read into iWsola when the next
+// CSymSnd is constructed, same as the stream itself only opening on (re)start.
+void ps1SndSetWsola(int aOn)
+	{
+	g_wsola = aOn ? ETrue : EFalse;
+	}
+
 // Service active objects and refill next buffer. Call every frame.
 void ps1SndPump(void)
 	{
@@ -525,9 +680,56 @@ extern "C" void sndSymbianWsolaBench(char *aOut, int aOutLen)
 	const TUint perSearchUs = (TUint)(((TUint64)totalDt * 1000000ULL) / ((TUint64)freq * iters));
 	const TUint msPerAudioSec = (TUint)(((TUint64)totalDt * 50000ULL) / ((TUint64)freq * iters));
 
-	snprintf(aOut, (size_t)aOutLen,
+	const int len1 = snprintf(aOut, (size_t)aOutLen,
 		"wsola: searches=%d totalMs=%u perSearchUs=%u msPerAudioSec=%u",
 		(int)iters, totalMs, perSearchUs, msPerAudioSec);
+
+	// Second measurement: the actual two-stage single-channel search WsolaFeed uses,
+	// at its real window/range (KWsolaHop/KWsolaRange), same method and units as
+	// above so the two lines can be placed side by side. One search happens per
+	// synthesis hop of KWsolaHop output frames, hence the KSndRate/KWsolaHop scaling
+	// below instead of the fixed 50/s the naive search above assumes.
+	if (len1 >= 0 && len1 < aOutLen)
+		{
+		const TInt KBenchTotalFrames2 = KWsolaRange + KWsolaHop + KWsolaHop;
+		const TInt KBenchTotalSamples2 = KBenchTotalFrames2 * 2;
+		const TInt KBenchTotalBytes2 = KBenchTotalSamples2 * (TInt)sizeof(TInt16);
+
+		TInt16 *buf2 = (TInt16 *)User::Alloc(KBenchTotalBytes2);
+		if (buf2)
+			{
+			TUint32 seed2 = 0x87654321u;
+			for (TInt i = 0; i < KBenchTotalSamples2; i++)
+				{
+				seed2 = seed2 * 1103515245u + 12345u;
+				buf2[i] = (TInt16)(seed2 >> 16);
+				}
+
+			const TInt16 *searchBuf2 = buf2;
+			const TInt16 *tmpl2 = buf2 + (KWsolaRange + KWsolaHop) * 2;
+
+			TUint iters2 = 0;
+			const TUint t0b = ndrc_symbian_fastcount();
+			do
+				{
+				g_wsolaBenchSink += WsolaBestOffset(tmpl2, searchBuf2, KWsolaHop, KWsolaRange);
+				iters2++;
+				} while ((TUint)(ndrc_symbian_fastcount() - t0b) < minTicks);
+			const TUint dt2 = (TUint)(ndrc_symbian_fastcount() - t0b);
+			const TUint totalDt2 = dt2 ? dt2 : 1;
+
+			User::Free(buf2);
+
+			const TUint totalMs2 = (TUint)(((TUint64)totalDt2 * 1000ULL) / freq);
+			const TUint perSearchUs2 = (TUint)(((TUint64)totalDt2 * 1000000ULL) / ((TUint64)freq * iters2));
+			const TUint msPerAudioSec2 = (TUint)(((TUint64)totalDt2 * 1000ULL * (TUint64)KSndRate) /
+				((TUint64)freq * iters2 * (TUint64)KWsolaHop));
+
+			snprintf(aOut + len1, (size_t)(aOutLen - len1),
+				"\nwsola2: searches=%d totalMs=%u perSearchUs=%u msPerAudioSec=%u",
+				(int)iters2, totalMs2, perSearchUs2, msPerAudioSec2);
+			}
+		}
 #else
 	if (aOut && aOutLen > 0)
 		aOut[0] = 0;

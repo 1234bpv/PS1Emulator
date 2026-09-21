@@ -134,6 +134,10 @@ enum TStrId
 	EStrValPresetRacing,
 	EStrValPresetFighting,
 	EStrValPresetRpg,
+	EStrItemKeyBase,
+	EStrValBaseN95,
+	EStrValBaseC5,
+	EStrItemWsola,
 	EStrCount
 	};
 

@@ -1918,90 +1918,150 @@ static const TText *const KStr_en_EStrValPresetDefault = _S("Default");
 static const TText *const KStr_en_EStrValPresetRacing = _S("Racing");
 static const TText *const KStr_en_EStrValPresetFighting = _S("Fighting");
 static const TText *const KStr_en_EStrValPresetRpg = _S("RPG");
+static const TText *const KStr_en_EStrItemKeyBase = _S("Keyboard");
+static const TText *const KStr_en_EStrValBaseN95 = _S("N95");
+static const TText *const KStr_en_EStrValBaseC5 = _S("C5");
+static const TText *const KStr_en_EStrItemWsola = _S("Preserve pitch");
 
 static const TText KStr_uk_EStrItemPreset[] = { 0x041F, 0x0440, 0x0435, 0x0441, 0x0435, 0x0442, 0x0020, 0x043A, 0x0435, 0x0440, 0x0443, 0x0432, 0x0430, 0x043D, 0x043D, 0x044F, 0 };
 static const TText KStr_uk_EStrValPresetDefault[] = { 0x0422, 0x0438, 0x043F, 0x043E, 0x0432, 0x0430, 0 };
 static const TText KStr_uk_EStrValPresetRacing[] = { 0x041F, 0x0435, 0x0440, 0x0435, 0x0433, 0x043E, 0x043D, 0x0438, 0 };
 static const TText KStr_uk_EStrValPresetFighting[] = { 0x0424, 0x0430, 0x0439, 0x0442, 0x0438, 0x043D, 0x0433, 0 };
 static const TText KStr_uk_EStrValPresetRpg[] = { 0x0420, 0x041F, 0x0413, 0 };
+static const TText KStr_uk_EStrItemKeyBase[] = { 0x041A, 0x043B, 0x0430, 0x0432, 0x0456, 0x0430, 0x0442, 0x0443, 0x0440, 0x0430, 0 };
+static const TText KStr_uk_EStrValBaseN95[] = { 0x004E, 0x0039, 0x0035, 0 };
+static const TText KStr_uk_EStrValBaseC5[] = { 0x0043, 0x0035, 0 };
+static const TText KStr_uk_EStrItemWsola[] = { 0x0417, 0x0431, 0x0435, 0x0440, 0x0456, 0x0433, 0x0430, 0x0442, 0x0438, 0x0020, 0x0442, 0x043E, 0x043D, 0 };
 
 static const TText *const KStr_zh_EStrItemPreset = _S("Control preset");
 static const TText *const KStr_zh_EStrValPresetDefault = _S("Default");
 static const TText *const KStr_zh_EStrValPresetRacing = _S("Racing");
 static const TText *const KStr_zh_EStrValPresetFighting = _S("Fighting");
 static const TText *const KStr_zh_EStrValPresetRpg = _S("RPG");
+static const TText *const KStr_zh_EStrItemKeyBase = _S("Keyboard");
+static const TText *const KStr_zh_EStrValBaseN95 = _S("N95");
+static const TText *const KStr_zh_EStrValBaseC5 = _S("C5");
+static const TText *const KStr_zh_EStrItemWsola = _S("Preserve pitch");
 
 static const TText *const KStr_de_EStrItemPreset = _S("Control preset");
 static const TText *const KStr_de_EStrValPresetDefault = _S("Default");
 static const TText *const KStr_de_EStrValPresetRacing = _S("Racing");
 static const TText *const KStr_de_EStrValPresetFighting = _S("Fighting");
 static const TText *const KStr_de_EStrValPresetRpg = _S("RPG");
+static const TText *const KStr_de_EStrItemKeyBase = _S("Keyboard");
+static const TText *const KStr_de_EStrValBaseN95 = _S("N95");
+static const TText *const KStr_de_EStrValBaseC5 = _S("C5");
+static const TText *const KStr_de_EStrItemWsola = _S("Preserve pitch");
 
 static const TText *const KStr_fr_EStrItemPreset = _S("Control preset");
 static const TText *const KStr_fr_EStrValPresetDefault = _S("Default");
 static const TText *const KStr_fr_EStrValPresetRacing = _S("Racing");
 static const TText *const KStr_fr_EStrValPresetFighting = _S("Fighting");
 static const TText *const KStr_fr_EStrValPresetRpg = _S("RPG");
+static const TText *const KStr_fr_EStrItemKeyBase = _S("Keyboard");
+static const TText *const KStr_fr_EStrValBaseN95 = _S("N95");
+static const TText *const KStr_fr_EStrValBaseC5 = _S("C5");
+static const TText *const KStr_fr_EStrItemWsola = _S("Preserve pitch");
 
 static const TText *const KStr_es_EStrItemPreset = _S("Control preset");
 static const TText *const KStr_es_EStrValPresetDefault = _S("Default");
 static const TText *const KStr_es_EStrValPresetRacing = _S("Racing");
 static const TText *const KStr_es_EStrValPresetFighting = _S("Fighting");
 static const TText *const KStr_es_EStrValPresetRpg = _S("RPG");
+static const TText *const KStr_es_EStrItemKeyBase = _S("Keyboard");
+static const TText *const KStr_es_EStrValBaseN95 = _S("N95");
+static const TText *const KStr_es_EStrValBaseC5 = _S("C5");
+static const TText *const KStr_es_EStrItemWsola = _S("Preserve pitch");
 
 static const TText *const KStr_ru_EStrItemPreset = _S("Control preset");
 static const TText *const KStr_ru_EStrValPresetDefault = _S("Default");
 static const TText *const KStr_ru_EStrValPresetRacing = _S("Racing");
 static const TText *const KStr_ru_EStrValPresetFighting = _S("Fighting");
 static const TText *const KStr_ru_EStrValPresetRpg = _S("RPG");
+static const TText *const KStr_ru_EStrItemKeyBase = _S("Keyboard");
+static const TText *const KStr_ru_EStrValBaseN95 = _S("N95");
+static const TText *const KStr_ru_EStrValBaseC5 = _S("C5");
+static const TText *const KStr_ru_EStrItemWsola = _S("Preserve pitch");
 
 static const TText *const KStr_pt_EStrItemPreset = _S("Control preset");
 static const TText *const KStr_pt_EStrValPresetDefault = _S("Default");
 static const TText *const KStr_pt_EStrValPresetRacing = _S("Racing");
 static const TText *const KStr_pt_EStrValPresetFighting = _S("Fighting");
 static const TText *const KStr_pt_EStrValPresetRpg = _S("RPG");
+static const TText *const KStr_pt_EStrItemKeyBase = _S("Keyboard");
+static const TText *const KStr_pt_EStrValBaseN95 = _S("N95");
+static const TText *const KStr_pt_EStrValBaseC5 = _S("C5");
+static const TText *const KStr_pt_EStrItemWsola = _S("Preserve pitch");
 
 static const TText *const KStr_it_EStrItemPreset = _S("Control preset");
 static const TText *const KStr_it_EStrValPresetDefault = _S("Default");
 static const TText *const KStr_it_EStrValPresetRacing = _S("Racing");
 static const TText *const KStr_it_EStrValPresetFighting = _S("Fighting");
 static const TText *const KStr_it_EStrValPresetRpg = _S("RPG");
+static const TText *const KStr_it_EStrItemKeyBase = _S("Keyboard");
+static const TText *const KStr_it_EStrValBaseN95 = _S("N95");
+static const TText *const KStr_it_EStrValBaseC5 = _S("C5");
+static const TText *const KStr_it_EStrItemWsola = _S("Preserve pitch");
 
 static const TText *const KStr_pl_EStrItemPreset = _S("Control preset");
 static const TText *const KStr_pl_EStrValPresetDefault = _S("Default");
 static const TText *const KStr_pl_EStrValPresetRacing = _S("Racing");
 static const TText *const KStr_pl_EStrValPresetFighting = _S("Fighting");
 static const TText *const KStr_pl_EStrValPresetRpg = _S("RPG");
+static const TText *const KStr_pl_EStrItemKeyBase = _S("Keyboard");
+static const TText *const KStr_pl_EStrValBaseN95 = _S("N95");
+static const TText *const KStr_pl_EStrValBaseC5 = _S("C5");
+static const TText *const KStr_pl_EStrItemWsola = _S("Preserve pitch");
 
 static const TText *const KStr_tr_EStrItemPreset = _S("Control preset");
 static const TText *const KStr_tr_EStrValPresetDefault = _S("Default");
 static const TText *const KStr_tr_EStrValPresetRacing = _S("Racing");
 static const TText *const KStr_tr_EStrValPresetFighting = _S("Fighting");
 static const TText *const KStr_tr_EStrValPresetRpg = _S("RPG");
+static const TText *const KStr_tr_EStrItemKeyBase = _S("Keyboard");
+static const TText *const KStr_tr_EStrValBaseN95 = _S("N95");
+static const TText *const KStr_tr_EStrValBaseC5 = _S("C5");
+static const TText *const KStr_tr_EStrItemWsola = _S("Preserve pitch");
 
 static const TText *const KStr_ja_EStrItemPreset = _S("Control preset");
 static const TText *const KStr_ja_EStrValPresetDefault = _S("Default");
 static const TText *const KStr_ja_EStrValPresetRacing = _S("Racing");
 static const TText *const KStr_ja_EStrValPresetFighting = _S("Fighting");
 static const TText *const KStr_ja_EStrValPresetRpg = _S("RPG");
+static const TText *const KStr_ja_EStrItemKeyBase = _S("Keyboard");
+static const TText *const KStr_ja_EStrValBaseN95 = _S("N95");
+static const TText *const KStr_ja_EStrValBaseC5 = _S("C5");
+static const TText *const KStr_ja_EStrItemWsola = _S("Preserve pitch");
 
 static const TText *const KStr_hi_EStrItemPreset = _S("Control preset");
 static const TText *const KStr_hi_EStrValPresetDefault = _S("Default");
 static const TText *const KStr_hi_EStrValPresetRacing = _S("Racing");
 static const TText *const KStr_hi_EStrValPresetFighting = _S("Fighting");
 static const TText *const KStr_hi_EStrValPresetRpg = _S("RPG");
+static const TText *const KStr_hi_EStrItemKeyBase = _S("Keyboard");
+static const TText *const KStr_hi_EStrValBaseN95 = _S("N95");
+static const TText *const KStr_hi_EStrValBaseC5 = _S("C5");
+static const TText *const KStr_hi_EStrItemWsola = _S("Preserve pitch");
 
 static const TText *const KStr_ar_EStrItemPreset = _S("Control preset");
 static const TText *const KStr_ar_EStrValPresetDefault = _S("Default");
 static const TText *const KStr_ar_EStrValPresetRacing = _S("Racing");
 static const TText *const KStr_ar_EStrValPresetFighting = _S("Fighting");
 static const TText *const KStr_ar_EStrValPresetRpg = _S("RPG");
+static const TText *const KStr_ar_EStrItemKeyBase = _S("Keyboard");
+static const TText *const KStr_ar_EStrValBaseN95 = _S("N95");
+static const TText *const KStr_ar_EStrValBaseC5 = _S("C5");
+static const TText *const KStr_ar_EStrItemWsola = _S("Preserve pitch");
 
 static const TText *const KStr_ko_EStrItemPreset = _S("Control preset");
 static const TText *const KStr_ko_EStrValPresetDefault = _S("Default");
 static const TText *const KStr_ko_EStrValPresetRacing = _S("Racing");
 static const TText *const KStr_ko_EStrValPresetFighting = _S("Fighting");
 static const TText *const KStr_ko_EStrValPresetRpg = _S("RPG");
+static const TText *const KStr_ko_EStrItemKeyBase = _S("Keyboard");
+static const TText *const KStr_ko_EStrValBaseN95 = _S("N95");
+static const TText *const KStr_ko_EStrValBaseC5 = _S("C5");
+static const TText *const KStr_ko_EStrItemWsola = _S("Preserve pitch");
 
 static const TText *const KTable_en[EStrCount] =
 	{
@@ -2134,6 +2194,10 @@ static const TText *const KTable_en[EStrCount] =
 	KStr_en_EStrValPresetRacing,
 	KStr_en_EStrValPresetFighting,
 	KStr_en_EStrValPresetRpg,
+	KStr_en_EStrItemKeyBase,
+	KStr_en_EStrValBaseN95,
+	KStr_en_EStrValBaseC5,
+	KStr_en_EStrItemWsola,
 	};
 
 static const TText *const KTable_uk[EStrCount] =
@@ -2267,6 +2331,10 @@ static const TText *const KTable_uk[EStrCount] =
 	KStr_uk_EStrValPresetRacing,
 	KStr_uk_EStrValPresetFighting,
 	KStr_uk_EStrValPresetRpg,
+	KStr_uk_EStrItemKeyBase,
+	KStr_uk_EStrValBaseN95,
+	KStr_uk_EStrValBaseC5,
+	KStr_uk_EStrItemWsola,
 	};
 
 static const TText *const KTable_zh[EStrCount] =
@@ -2400,6 +2468,10 @@ static const TText *const KTable_zh[EStrCount] =
 	KStr_zh_EStrValPresetRacing,
 	KStr_zh_EStrValPresetFighting,
 	KStr_zh_EStrValPresetRpg,
+	KStr_zh_EStrItemKeyBase,
+	KStr_zh_EStrValBaseN95,
+	KStr_zh_EStrValBaseC5,
+	KStr_zh_EStrItemWsola,
 	};
 
 static const TText *const KTable_de[EStrCount] =
@@ -2533,6 +2605,10 @@ static const TText *const KTable_de[EStrCount] =
 	KStr_de_EStrValPresetRacing,
 	KStr_de_EStrValPresetFighting,
 	KStr_de_EStrValPresetRpg,
+	KStr_de_EStrItemKeyBase,
+	KStr_de_EStrValBaseN95,
+	KStr_de_EStrValBaseC5,
+	KStr_de_EStrItemWsola,
 	};
 
 static const TText *const KTable_fr[EStrCount] =
@@ -2666,6 +2742,10 @@ static const TText *const KTable_fr[EStrCount] =
 	KStr_fr_EStrValPresetRacing,
 	KStr_fr_EStrValPresetFighting,
 	KStr_fr_EStrValPresetRpg,
+	KStr_fr_EStrItemKeyBase,
+	KStr_fr_EStrValBaseN95,
+	KStr_fr_EStrValBaseC5,
+	KStr_fr_EStrItemWsola,
 	};
 
 static const TText *const KTable_es[EStrCount] =
@@ -2799,6 +2879,10 @@ static const TText *const KTable_es[EStrCount] =
 	KStr_es_EStrValPresetRacing,
 	KStr_es_EStrValPresetFighting,
 	KStr_es_EStrValPresetRpg,
+	KStr_es_EStrItemKeyBase,
+	KStr_es_EStrValBaseN95,
+	KStr_es_EStrValBaseC5,
+	KStr_es_EStrItemWsola,
 	};
 
 static const TText *const KTable_ru[EStrCount] =
@@ -2932,6 +3016,10 @@ static const TText *const KTable_ru[EStrCount] =
 	KStr_ru_EStrValPresetRacing,
 	KStr_ru_EStrValPresetFighting,
 	KStr_ru_EStrValPresetRpg,
+	KStr_ru_EStrItemKeyBase,
+	KStr_ru_EStrValBaseN95,
+	KStr_ru_EStrValBaseC5,
+	KStr_ru_EStrItemWsola,
 	};
 
 static const TText *const KTable_pt[EStrCount] =
@@ -3065,6 +3153,10 @@ static const TText *const KTable_pt[EStrCount] =
 	KStr_pt_EStrValPresetRacing,
 	KStr_pt_EStrValPresetFighting,
 	KStr_pt_EStrValPresetRpg,
+	KStr_pt_EStrItemKeyBase,
+	KStr_pt_EStrValBaseN95,
+	KStr_pt_EStrValBaseC5,
+	KStr_pt_EStrItemWsola,
 	};
 
 static const TText *const KTable_it[EStrCount] =
@@ -3198,6 +3290,10 @@ static const TText *const KTable_it[EStrCount] =
 	KStr_it_EStrValPresetRacing,
 	KStr_it_EStrValPresetFighting,
 	KStr_it_EStrValPresetRpg,
+	KStr_it_EStrItemKeyBase,
+	KStr_it_EStrValBaseN95,
+	KStr_it_EStrValBaseC5,
+	KStr_it_EStrItemWsola,
 	};
 
 static const TText *const KTable_pl[EStrCount] =
@@ -3331,6 +3427,10 @@ static const TText *const KTable_pl[EStrCount] =
 	KStr_pl_EStrValPresetRacing,
 	KStr_pl_EStrValPresetFighting,
 	KStr_pl_EStrValPresetRpg,
+	KStr_pl_EStrItemKeyBase,
+	KStr_pl_EStrValBaseN95,
+	KStr_pl_EStrValBaseC5,
+	KStr_pl_EStrItemWsola,
 	};
 
 static const TText *const KTable_tr[EStrCount] =
@@ -3464,6 +3564,10 @@ static const TText *const KTable_tr[EStrCount] =
 	KStr_tr_EStrValPresetRacing,
 	KStr_tr_EStrValPresetFighting,
 	KStr_tr_EStrValPresetRpg,
+	KStr_tr_EStrItemKeyBase,
+	KStr_tr_EStrValBaseN95,
+	KStr_tr_EStrValBaseC5,
+	KStr_tr_EStrItemWsola,
 	};
 
 static const TText *const KTable_ja[EStrCount] =
@@ -3597,6 +3701,10 @@ static const TText *const KTable_ja[EStrCount] =
 	KStr_ja_EStrValPresetRacing,
 	KStr_ja_EStrValPresetFighting,
 	KStr_ja_EStrValPresetRpg,
+	KStr_ja_EStrItemKeyBase,
+	KStr_ja_EStrValBaseN95,
+	KStr_ja_EStrValBaseC5,
+	KStr_ja_EStrItemWsola,
 	};
 
 static const TText *const KTable_hi[EStrCount] =
@@ -3730,6 +3838,10 @@ static const TText *const KTable_hi[EStrCount] =
 	KStr_hi_EStrValPresetRacing,
 	KStr_hi_EStrValPresetFighting,
 	KStr_hi_EStrValPresetRpg,
+	KStr_hi_EStrItemKeyBase,
+	KStr_hi_EStrValBaseN95,
+	KStr_hi_EStrValBaseC5,
+	KStr_hi_EStrItemWsola,
 	};
 
 static const TText *const KTable_ar[EStrCount] =
@@ -3863,6 +3975,10 @@ static const TText *const KTable_ar[EStrCount] =
 	KStr_ar_EStrValPresetRacing,
 	KStr_ar_EStrValPresetFighting,
 	KStr_ar_EStrValPresetRpg,
+	KStr_ar_EStrItemKeyBase,
+	KStr_ar_EStrValBaseN95,
+	KStr_ar_EStrValBaseC5,
+	KStr_ar_EStrItemWsola,
 	};
 
 static const TText *const KTable_ko[EStrCount] =
@@ -3996,6 +4112,10 @@ static const TText *const KTable_ko[EStrCount] =
 	KStr_ko_EStrValPresetRacing,
 	KStr_ko_EStrValPresetFighting,
 	KStr_ko_EStrValPresetRpg,
+	KStr_ko_EStrItemKeyBase,
+	KStr_ko_EStrValBaseN95,
+	KStr_ko_EStrValBaseC5,
+	KStr_ko_EStrItemWsola,
 	};
 
 static const TText *const *const KAllTables[ELangIdCount] =
