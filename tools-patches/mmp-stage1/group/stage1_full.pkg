@@ -1,0 +1,17 @@
+; Stage 1 package that also carries the application resource. The proven
+; stage1.pkg ships only the EXE and the registration resource, because the
+; app resource used to be delivered by the deploy daemon; a phone that has
+; never seen the daemon needs it in the package or the launch panics USER 23.
+; ASCII only, CRLF only: makesis misparses UTF-8 and LF line endings.
+&EN
+
+#{"PS1Emulator alpha 1.2"},(0xE0001002),1,2,0
+
+%{"PS1Emulator"}
+:"PS1Emulator"
+
+[0x101F7961],0,0,0,{"Series60ProductID"}
+
+"\VsCodeProjects\SymbianProjects\S60_3rd_FP1\Epoc32\release\gcce\urel\ps1stage1.exe"-"!:\sys\bin\ps1stage1.exe"
+"\VsCodeProjects\SymbianProjects\S60_3rd_FP1\Epoc32\data\z\private\10003a3f\import\apps\ps1stage1_reg.RSC"-"!:\private\10003a3f\import\apps\ps1stage1_reg.rsc"
+"\VsCodeProjects\SymbianProjects\S60_3rd_FP1\Epoc32\data\z\resource\apps\ps1stage1.RSC"-"!:\resource\apps\ps1stage1.rsc"

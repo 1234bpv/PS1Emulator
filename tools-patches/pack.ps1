@@ -32,7 +32,24 @@ if (-not $OutDir) { $OutDir = $Proj }
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
 
 if (-not (Test-Path $Exe)) { throw "no EXE to package: $Exe" }
-foreach ($f in @($Cer, $Key)) { if (-not (Test-Path $f)) { throw "no signing material: $f" } }
+# configs\ is not in the repository, so a clean clone has neither the package
+# descriptions nor the signing pair. Both are recoverable: tools-patches carries
+# the descriptions, and a self-signed pair can be generated. A generated pair is
+# a different identity from the recorded one, so a phone that already holds an
+# install signed with the old certificate has to have it removed first.
+$SignPass = 'ps1emu'
+if (-not ((Test-Path $Cer) -and (Test-Path $Key))) {
+  Write-Host "[pack] no signing pair in configs\sign - generating a self-signed one"
+  New-Item -ItemType Directory -Force -Path (Split-Path -Parent $Cer) | Out-Null
+  & "$Tools\makekeys.exe" -cert -password $SignPass -len 1024 `
+    -dname "CN=PS1Emulator OR=none CO=UA" $Key $Cer | Out-Null
+  foreach ($f in @($Cer, $Key)) { if (-not (Test-Path $f)) { throw "makekeys produced no $f" } }
+  Set-Content -Path "$Proj\configs\sign\passphrase.txt" -Value $SignPass -NoNewline
+}
+# The recorded pair has no passphrase; a generated one does, and signsis takes it
+# as a fourth argument. The file written above is what tells them apart.
+$PassFile = "$Proj\configs\sign\passphrase.txt"
+$SignTail = if (Test-Path $PassFile) { @((Get-Content $PassFile -Raw).Trim()) } else { @() }
 $exeInfo = [IO.FileInfo]$Exe
 Write-Host "[pack] EXE $($exeInfo.Length) bytes, $($exeInfo.LastWriteTime)"
 
@@ -66,12 +83,13 @@ $made = @()
 foreach ($v in @(@{ Pkg = 'stage1.pkg'; Name = 'ps1emu_min' },
                  @{ Pkg = 'stage1_full.pkg'; Name = 'ps1emu_full' })) {
   $pkg = "$Proj\configs\stage1\group\$($v.Pkg)"
-  if (-not (Test-Path $pkg)) { throw "no package description: $pkg" }
+  if (-not (Test-Path $pkg)) { $pkg = "$Proj\tools-patches\mmp-stage1\group\$($v.Pkg)" }
+  if (-not (Test-Path $pkg)) { throw "no package description: $($v.Pkg)" }
   $unsigned = "$OutDir\$($v.Name)_unsigned.sis"
   $signed   = "$OutDir\$($v.Name).sis"
   Remove-Item $unsigned, $signed -Force -ErrorAction SilentlyContinue
   Invoke-Step "$Tools\makesis.exe" @($pkg, $unsigned) "makesis $($v.Pkg)"
-  Invoke-Step "$Tools\signsis.exe" @($unsigned, $signed, $Cer, $Key) "signsis $($v.Name)"
+  Invoke-Step "$Tools\signsis.exe" (@($unsigned, $signed, $Cer, $Key) + $SignTail) "signsis $($v.Name)"
   Remove-Item $unsigned -Force -ErrorAction SilentlyContinue
   # A signsis that writes nothing still exits zero on some SDK builds.
   if (-not (Test-Path $signed)) { throw "$($v.Name): no signed package produced" }

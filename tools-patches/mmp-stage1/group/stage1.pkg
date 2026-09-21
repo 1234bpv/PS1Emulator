@@ -1,4 +1,4 @@
-; Stage 1: PlayStation core with the ari64 dynarec. Self-signed, CAPABILITY None.
+; Stage 1: PlayStation core with the ari64 dynarec. Self-signed, CAPABILITY SwEvent (needed by CaptureKey for the side keys).
 ; ASCII only, CRLF only: makesis misparses UTF-8 and LF line endings.
 ; Shaped like daemon.pkg, the one package this phone does install - executable
 ; plus registration resource only. The app resource is delivered by the deploy

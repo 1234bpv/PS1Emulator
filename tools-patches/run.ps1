@@ -203,9 +203,13 @@ if ($Build) {
     # Match the capability line by shape, not by its exact text: it was a literal
     # string here until adding SwEvent for the side keys made the match fail
     # silently, which would have shipped a release EXE with every capability the
-    # harness build needs - and C5-00.2 refuses exactly that with ERR create -46.
-    $patched = [regex]::Replace($patched, '(?m)^CAPABILITY\s+.*$', 'CAPABILITY      None')
-    foreach ($must in @('CAPABILITY      None', '// MACRO           PS1_BENCH',
+    # harness build needs.
+    # SwEvent is the one that stays. Without it CaptureKey answers -46 and no side
+    # key reaches the game, so stripping it would ship the feature dead. The -46
+    # that once looked like a capability refusal on C5-00.2 turned out to be the
+    # missing SHA-1 in the sys hash directory, so that reason no longer holds.
+    $patched = [regex]::Replace($patched, '(?m)^CAPABILITY\s+.*$', 'CAPABILITY      SwEvent')
+    foreach ($must in @('CAPABILITY      SwEvent', '// MACRO           PS1_BENCH',
                         '// SOURCE          pmu_symbian.cpp')) {
       if ($patched -notmatch [regex]::Escape($must)) {
         throw "the release rewrite did not take: '$must' is missing from the patched mmp"
