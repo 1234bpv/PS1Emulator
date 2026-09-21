@@ -23,6 +23,16 @@ if [ ! -s "$S/f6/list.txt" ]; then
   exit 1
 fi
 
+# A bare file name in list.txt costs a whole sweep: the emulator opens no disc,
+# logs CDRA_FAIL, and still runs 1200 frames of nothing, so every game reports a
+# plausible time and none of them is that game.
+if grep -qv '|.*[\]' "$S/f6/list.txt"; then
+  echo "ABORT: a line in list.txt names no directory - the disc path must be the"
+  echo "       full device path, e.g. 'tag|E:\PS1\games\Name (USA).pbp'"
+  grep -nv '|.*[\]' "$S/f6/list.txt"
+  exit 1
+fi
+
 # Putting the original file back must survive the script being killed, which is
 # the way it would actually get lost: the loop below can hang on the daemon.
 restore() {
