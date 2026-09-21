@@ -198,6 +198,8 @@ Both packages are self-signed, so the phone must be hacked to accept them: `Dr W
 - `ps1emu_min.sis` carries the executable and its registration resource. Use it on a phone that already holds `\resource\apps\ps1stage1.rsc` — every phone the deploy daemon has set up does.
 - `ps1emu_full.sis` carries the application resource as well. Use it on a phone that has never had this application: without that resource the launch panics with `USER 23`.
 
+Both are built in one step by `tools-patches\pack.ps1`, which refuses a harness build unless you pass `-AllowBench`. On a clean clone there is no signing pair in `configs\sign`, so it generates a self-signed one and writes the passphrase next to it. That is a different identity from the one used before, so remove any earlier install from the phone first.
+
 ## 8. Known Limitations
 
 - **No ARM NEON Instructions**: The target ARMv6 architecture (ARM1136, BCM2763) does not support NEON SIMD extensions. All NEON code paths are excluded from compilation.
