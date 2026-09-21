@@ -1575,27 +1575,41 @@ extern "C" void voutSymbianSelfInterruptTick(int aFrame)
 	CCoeEnv *env = CCoeEnv::Static();
 	if (!env)
 		return;
+	RWsSession &ws = env->WsSession();
+	const TInt mine = env->RootWin().Identifier();
 	if (g_selfIntDone == 0 && aFrame >= g_selfIntAt)
 		{
-		// Not SetOrdinalPosition(-1): measured, it changes nothing WS reports - no
-		// focus event and no DSA abort. Bringing the task behind us to the front is
-		// what a user interruption actually is, and WS reacts to it.
-		TApaTaskList list(env->WsSession());
-		TApaTask other = list.FindByPos(1);
-		const TBool ok = other.Exists();
-		if (ok)
-			other.BringToForeground();
+		// Two mechanisms already measured as doing nothing WS reports:
+		// SetOrdinalPosition(-1) on our own group, and BringToForeground on the task
+		// behind us. The menu key is the one a human has already been seen to
+		// interrupt a run with, and we may send it ourselves - the build has SwEvent.
+		const TInt before = ws.GetFocusWindowGroup();
+		TRawEvent d; d.Set(TRawEvent::EKeyDown, EStdKeyApplication0); ws.SimulateRawEvent(d);
+		TRawEvent u; u.Set(TRawEvent::EKeyUp, EStdKeyApplication0);   ws.SimulateRawEvent(u);
+		ws.Flush();
 		g_selfIntDone = 1;
-		ps1LogFmt("selfint", "background frame=%d presents=%u other=%d", aFrame,
-			g_presents, (int)ok);
+		ps1LogFmt("selfint", "background frame=%d presents=%u mine=%d focus=%d",
+			aFrame, g_presents, mine, before);
+		}
+	else if (g_selfIntDone == 1 && aFrame == g_selfIntAt + 10)
+		{
+		// The switch is not instant: ask who holds focus a few frames later, so a
+		// run that reports no focus event can still be told apart from one where
+		// focus never moved at all.
+		ps1LogFmt("selfint", "check frame=%d mine=%d focus=%d", aFrame, mine,
+			(int)ws.GetFocusWindowGroup());
 		}
 	else if (g_selfIntDone == 1 && aFrame >= g_selfIntAt + g_selfIntFor)
 		{
-		TApaTask self(env->WsSession());
-		self.SetWgId(env->RootWin().Identifier());
+		const TInt before = ws.GetFocusWindowGroup();
+		TApaTask self(ws);
+		self.SetWgId(mine);
 		self.BringToForeground();
+		ws.Flush();
 		g_selfIntDone = 2;
-		ps1LogFmt("selfint", "foreground frame=%d presents=%u", aFrame, g_presents);
+		ps1LogFmt("selfint", "foreground frame=%d presents=%u mine=%d focusWas=%d"
+			" focusNow=%d", aFrame, g_presents, mine, before,
+			(int)ws.GetFocusWindowGroup());
 		}
 	}
 
