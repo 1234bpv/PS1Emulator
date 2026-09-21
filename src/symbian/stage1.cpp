@@ -3246,6 +3246,11 @@ GLDEF_C TInt E32Main()
 		voutSymbianSetSmooth(cl.FindF(KNoSmoothArg) != KErrNotFound ? 0 : 1);
 		_LIT(KDsaNoResumeArg, "dsanoresume");
 		voutSymbianSetDsaNoResume(cl.FindF(KDsaNoResumeArg) != KErrNotFound ? 1 : 0);
+		// A command line does not apply the settings file, so the menu switch for
+		// pitch preservation cannot be measured on the bench without its own argument.
+		_LIT(KWsolaArg, "wsola");
+		if (cl.FindF(KWsolaArg) != KErrNotFound)
+			ps1SndSetWsola(1);
 		_LIT(KKeyProbeArg, "keyprobe");
 		if (cl.FindF(KKeyProbeArg) != KErrNotFound)
 			g_keyProbeCli = 1;
