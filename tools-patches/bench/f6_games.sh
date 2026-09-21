@@ -71,6 +71,10 @@ while IFS='|' read -r tag file; do
   # Delete the log first. It survives a run that never started - the C5 refuses
   # a harness build with ERR create -46 - and the previous game's log then reads
   # as this one's result.
+  # A leftover instance makes the next launch exit at once through the
+  # single-instance guard, and the daemon still reports EXIT 0 - from outside
+  # that reads exactly like a run that measured something.
+  timeout 120 pwsh -NoProfile -File $D $LINK -Cmd "KILL ps1stage1" < /dev/null > /dev/null 2>&1
   timeout 120 pwsh -NoProfile -File $D $LINK -DelFile "$RUNLOG" < /dev/null > /dev/null 2>&1
   timeout 120 pwsh -NoProfile -File $D $LINK -DelFile "$ALTLOG" < /dev/null > /dev/null 2>&1
   timeout 600 pwsh -NoProfile -File $D $LINK -Cmd 'EXEC 180000 E:\sys\bin\ps1stage1.exe gui play nosnd frames1200 light blend dsa' \
