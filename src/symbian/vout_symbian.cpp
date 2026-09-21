@@ -244,6 +244,10 @@ extern "C" unsigned int ndrc_symbian_fastfreq(void);
 //
 // Direct write to LCD buffer (direct-FB) is supported for both 16-bit and 24-bit frames.
 static TBool g_useDsa;
+// Bench only: after the first abort, stay on the window path for the rest of the
+// run. Separates "drawing through DSA after a restart kills us" from "restarting
+// kills us" without swapping builds between the two runs.
+static TBool g_dsaNoResume;
 static CDirectScreenAccess *g_dsa;
 static CFbsBitGc *g_dsaGc;
 static TBool g_dsaActive;
@@ -435,7 +439,9 @@ static void queryFramebuffer();
 // pops up on top, region shrinks, and without this check we would draw over it.
 static TBool dsaCoversScreen()
 	{
-	if (!g_dsa)
+	// DrawingRegion() on a session that WS has aborted is a call out of order, and
+	// the window server answers that with a panic, not an error code.
+	if (!g_dsa || !g_dsaActive)
 		return EFalse;
 	const RRegion *rgn = g_dsa->DrawingRegion();
 	if (!rgn || rgn->Count() != 1)
@@ -482,6 +488,12 @@ public:
 	void Restart(RDirectScreenAccess::TTerminationReasons aR)
 		{
 		g_dsaActive = EFalse;
+		if (g_dsaNoResume)
+			{
+			g_useDsa = EFalse;
+			ps1LogFmt("dsa", "noresume reason=%d", (int)aR);
+			return;
+			}
 		TInt e = KErrNotReady;
 		if (g_dsa) { TRAP(e, dsaStartL()); }
 		ps1LogFmt("dsa", "restart reason=%d err=%d active=%d", (int)aR, (int)e,
@@ -1638,7 +1650,7 @@ static void blitCurrent()
 	// once whatever shrank it (dialog, softkeys) is gone, so keep polling instead of
 	// giving up on direct write for the rest of the run.
 	TBool dsaCovered = dsaCoversScreen();
-	if (g_useDsa && g_dsaActive)
+	if (g_useDsa && g_dsa && (g_dsaActive || g_dsaLostTick != 0))
 		{
 		if (!dsaCovered)
 			{
@@ -1650,9 +1662,10 @@ static void blitCurrent()
 				if (g_dsa)
 					{
 					g_dsaRecoverTries++;
-					// Unlike Restart(), do NOT clear g_dsaActive first: a StartL that
-					// leaves would then park the run on the window path for good, since
-					// this retry only runs while DSA is active.
+					// StartL on a session that is already started is exactly what
+					// WSERV panic 59 calls the wrong order, so end it first.
+					if (g_dsaActive)
+						{ g_dsa->Cancel(); g_dsaActive = EFalse; }
 					TInt re;
 					TRAP(re, dsaStartL());
 					if (re != g_dsaRecoverErr)
@@ -2441,6 +2454,11 @@ extern "C" unsigned short voutSymbianTiltPadBits(void)
 extern "C" void voutSymbianSetSmooth(int aOn)
 	{
 	g_smoothDown = aOn ? ETrue : EFalse;
+	}
+
+extern "C" void voutSymbianSetDsaNoResume(int aOn)
+	{
+	g_dsaNoResume = aOn ? ETrue : EFalse;
 	}
 
 // Enable DSA (direct screen access) for present. Call BEFORE voutSymbianInit.
