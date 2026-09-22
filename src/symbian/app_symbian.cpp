@@ -1142,11 +1142,13 @@ void CPs1Container::ApplyKeyMap()
 // Side keys are captured only while bound so system retains volume and camera otherwise.
 void CPs1Container::SyncSideKeyCaptures(TBool aAll)
 	{
+	// The first six are what an N95 8GB actually sends, read from the keyprobe log
+	// on 2026-09-22; the guessed Application2..5 never appeared and are gone. The
+	// last two are kept unmeasured for handsets nobody has probed yet.
 	static const TInt KSideKey[8] =
 		{
-		EStdKeyIncVolume, EStdKeyDecVolume, EStdKeyDevice6, EStdKeyDevice7,
-		EStdKeyApplication2, EStdKeyApplication3, EStdKeyApplication4,
-		EStdKeyApplication5
+		EStdKeyIncVolume, EStdKeyDecVolume, EStdKeyDevice5, EStdKeyDevice8,
+		EStdKeyApplication19, EStdKeyApplication1D, EStdKeyDevice6, EStdKeyDevice7
 		};
 	TBool inUse[8];
 	for (TInt k = 0; k < 8; k++)
@@ -2559,13 +2561,14 @@ void CPs1AppUi::ConstructL()
 	if (ps1KeyProbeCli())
 		{
 		// The captures are kept for the whole run, not taken and given straight
-		// back: the question is what the device actually sends when the key is
-		// pressed, and an uncaptured key never reaches this application at all.
+		// back. The claim they once carried - that an uncaptured key never reaches
+		// this application - is false: on 2026-09-22 four side scan codes arrived
+		// here without ever being in the list. Capture is about taking the key away
+		// from the system, not about receiving it.
 		static const TInt KProbeKey[8] =
 			{
-			EStdKeyIncVolume, EStdKeyDecVolume, EStdKeyDevice6, EStdKeyDevice7,
-			EStdKeyApplication2, EStdKeyApplication3, EStdKeyApplication4,
-			EStdKeyApplication5
+			EStdKeyIncVolume, EStdKeyDecVolume, EStdKeyDevice5, EStdKeyDevice8,
+			EStdKeyApplication19, EStdKeyApplication1D, EStdKeyDevice6, EStdKeyDevice7
 			};
 		RWindowGroup &root = iCoeEnv->RootWin();
 		for (TInt i = 0; i < 8; i++)
