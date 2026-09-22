@@ -1223,8 +1223,12 @@ extern "C" int glrEndFrame(void)
 			// behind, so ours has to be set again before the scene.
 			glMatrixMode(GL_PROJECTION);
 			glLoadIdentity();
-			glOrthof((GLfloat)g_clip[0], (GLfloat)g_clip[2],
-			         (GLfloat)g_clip[3], (GLfloat)g_clip[1], -1, 1);
+			if (zOn)
+				glOrthof((GLfloat)g_clip[0], (GLfloat)g_clip[2],
+				         (GLfloat)g_clip[3], (GLfloat)g_clip[1], 1.0f, (GLfloat)(KMaxPrims + 1));
+			else
+				glOrthof((GLfloat)g_clip[0], (GLfloat)g_clip[2],
+				         (GLfloat)g_clip[3], (GLfloat)g_clip[1], -1, 1);
 			glMatrixMode(GL_MODELVIEW);
 			glLoadIdentity();
 			if (g_depth)
