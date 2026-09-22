@@ -533,6 +533,9 @@ private:
 	TFileName iGameAtStart, iBiosAtStart;
 	TInt iInterpAtStart, iGteNfAtStart, iSoundAtStart, iGlAtStart, iDsaAtStart, iWsolaAtStart;
 	TBool iCliMode;           // launched with arguments: do not touch the in-game menu
+	// keyprobe only: how many arriving keys have already been logged, so a held
+	// side key cannot flood the log.
+	TInt iKeyProbeSeen;
 	TPs1Cfg iCfg;
 	TInt32 iSideKeyCap[8];
 	};
@@ -2412,6 +2415,15 @@ TKeyResponse CPs1Container::KeysKeyL(TInt aScan)
 // went deaf after exiting the menu. We trap here rather than hoping nothing below leaves.
 TKeyResponse CPs1Container::OfferKeyEventL(const TKeyEvent &aKeyEvent, TEventCode aType)
 	{
+	// The keyprobe asks whether the side key reaches the application, and in the
+	// GUI branch voutSymbianPollPad cannot answer it: CONE dispatches the events
+	// there, so that loop returns before it ever looks at one.
+	if (ps1KeyProbeCli() && aType == EEventKeyDown && iKeyProbeSeen < 32)
+		{
+		++iKeyProbeSeen;
+		ps1LogFmt("keyprobe", "arrived scan=0x%02x code=0x%04x", (int)aKeyEvent.iScanCode,
+			(int)aKeyEvent.iCode);
+		}
 	TKeyResponse r = EKeyWasNotConsumed;
 	TRAPD(e, r = DispatchKeyL(aKeyEvent, aType));
 	if (e != KErrNone)
