@@ -403,6 +403,10 @@ extern unsigned int g_gpulibStatusLast;
 extern unsigned long long g_gpulibRenderTicks;
 // SPU mixing time (FastCounter ticks) - separates sound from CPU inside "emu".
 extern unsigned long long g_spuMixTicks;
+#ifdef PS1_BENCH
+extern unsigned long long g_spuCoreTicks;
+extern unsigned int g_spuCoreCalls, g_spuCoreActive, g_spuCoreSamples;
+#endif
 // Sector read time from image (FastCounter ticks) including decompression if
 // image is compressed, and read count - cost of image format inside "emu".
 extern unsigned long long g_cdReadTicks;
@@ -1446,6 +1450,10 @@ static TInt passSetup(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTes
 	g_gpulibStatusLast = 0;
 	g_gpulibRenderTicks = 0;
 	g_spuMixTicks = 0;
+#ifdef PS1_BENCH
+	g_spuCoreTicks = 0;
+	g_spuCoreCalls = g_spuCoreActive = g_spuCoreSamples = 0;
+#endif
 	g_cdReadTicks = 0;
 	g_cdReadCount = 0;
 	g_mdecDecodeTicks = 0;
@@ -2224,6 +2232,9 @@ static void passTeardown()
 		gpuRasterMs, (unsigned)(tEmu ? gpuRasterMs * 100 / tEmu : 0),
 		spuMixMs, mdecMs, g_mdecWords, cdReadMs, g_cdReadCount, blitFillMs, blitPresentMs,
 		voutSymbianPresents(), (unsigned)aProduced);
+	const unsigned spuCoreMs = (unsigned)(g_spuCoreTicks * 1000ULL / (freq ? freq : 1));
+	logEvent("spucore", NULL, "%s: doSamples=%ums calls=%u active=%u samples=%u asyncInclusive=%ums",
+		mode, spuCoreMs, g_spuCoreCalls, g_spuCoreActive, g_spuCoreSamples, spuMixMs);
 	if (g_pmuEvt0 >= 0)
 		{
 		unsigned c[3] = { 0, 0, 0 };
