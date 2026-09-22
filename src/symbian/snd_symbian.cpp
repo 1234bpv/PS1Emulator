@@ -31,6 +31,10 @@ void SPUreadDMAMem(unsigned short *, int, unsigned int);
 void SPUasync(unsigned int, unsigned int);
 void SPUregisterCallback(void (*cb)(int));
 void SPUregisterScheduleCb(void (*cb)(unsigned int));
+struct xa_decode;
+void SPUplayADPCMchannel(struct xa_decode *, unsigned int, int);
+int SPUplayCDDAchannel(short *, int, unsigned int, int);
+void SPUsetCDvol(unsigned char, unsigned char, unsigned char, unsigned char, unsigned int);
 
 #include "../../pcsx_rearmed/plugins/dfsound/spu_config.h"   // SPUConfig, spu_config
 #include "../../pcsx_rearmed/plugins/dfsound/out.h"          // out_driver, out_current
@@ -556,7 +560,17 @@ static struct out_driver g_symOut = { "symbian", symOutInit, symOutFinish, symOu
 // --- Shell wrappers (unique names, avoiding typedef conflicts) -------------
 extern "C" {
 
-long ps1SpuInit(void)      { return SPUinit(); }
+#ifdef PS1_BENCH
+static unsigned g_xaCalls, g_cddaCalls, g_cdVolCalls;
+#endif
+
+long ps1SpuInit(void)
+	{
+#ifdef PS1_BENCH
+	g_xaCalls = g_cddaCalls = g_cdVolCalls = 0;
+#endif
+	return SPUinit();
+	}
 long ps1SpuShutdown(void)  { return SPUshutdown(); }
 long ps1SpuOpen(void)      { return SPUopen(); }
 long ps1SpuClose(void)     { return SPUclose(); }
@@ -579,6 +593,36 @@ void ps1SpuAsync(unsigned int a, unsigned int b)
 	}
 void ps1SpuRegisterCallback(void (*cb)(int))                    { SPUregisterCallback(cb); }
 void ps1SpuRegisterScheduleCb(void (*cb)(unsigned int))         { SPUregisterScheduleCb(cb); }
+void ps1SpuPlayADPCMchannel(struct xa_decode *xa, unsigned int cycle, int isStart)
+	{
+#ifdef PS1_BENCH
+	g_xaCalls++;
+#endif
+	SPUplayADPCMchannel(xa, cycle, isStart);
+	}
+int ps1SpuPlayCDDAchannel(short *pcm, int bytes, unsigned int cycle, int unused)
+	{
+#ifdef PS1_BENCH
+	g_cddaCalls++;
+#endif
+	return SPUplayCDDAchannel(pcm, bytes, cycle, unused);
+	}
+void ps1SpuSetCDvol(unsigned char ll, unsigned char lr, unsigned char rl,
+	unsigned char rr, unsigned int cycle)
+	{
+#ifdef PS1_BENCH
+	g_cdVolCalls++;
+#endif
+	SPUsetCDvol(ll, lr, rl, rr, cycle);
+	}
+#ifdef PS1_BENCH
+void ps1SpuCdStats(unsigned *xa, unsigned *cdda, unsigned *vol)
+	{
+	if (xa) *xa = g_xaCalls;
+	if (cdda) *cdda = g_cddaCalls;
+	if (vol) *vol = g_cdVolCalls;
+	}
+#endif
 
 // dfsound config before ps1SpuInit (SPUinit reads iVolume). Threadless - generated
 // synchronously in frame loop; reverb/interpolation disabled (excess CPU on ARM11).

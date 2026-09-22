@@ -806,6 +806,12 @@ void ps1SpuReadDMAMem(unsigned short *, int, unsigned int);
 void ps1SpuAsync(unsigned int, unsigned int);
 void ps1SpuRegisterCallback(void (*cb)(int));
 void ps1SpuRegisterScheduleCb(void (*cb)(unsigned int));
+void ps1SpuPlayADPCMchannel(xa_decode_t *, unsigned int, int);
+int ps1SpuPlayCDDAchannel(short *, int, unsigned int, int);
+void ps1SpuSetCDvol(unsigned char, unsigned char, unsigned char, unsigned char, unsigned int);
+#ifdef PS1_BENCH
+void ps1SpuCdStats(unsigned *xa, unsigned *cdda, unsigned *vol);
+#endif
 void ps1SndConfigure(void);
 void ps1SndSelectOutput(void);
 void ps1SndStats(unsigned *feeds, unsigned *samples, int *maxAmp,
@@ -820,14 +826,10 @@ void ps1SndSetWsola(int aOn);
 // SPU freeze is forwarded to dfsound so SaveState/LoadState do not get zero size and NULL.
 extern "C" long DoFreeze(int, SPUFreeze_t *, unsigned short **, void *, unsigned int);
 
-// XA/CD audio are not needed - left as stubs.
-static void CALLBACK spuPlayADPCMchannel(xa_decode_t *, unsigned int, int)    { }
 static long CALLBACK spuFreeze(int aMode, SPUFreeze_t *aHdr, unsigned short **aRam, void *aP2, unsigned int aCycles)
 	{
 	return DoFreeze(aMode, aHdr, aRam, aP2, aCycles);
 	}
-static int  CALLBACK spuPlayCDDAchannel(short *, int, unsigned int, int)      { return 0; }
-static void CALLBACK spuSetCDvol(unsigned char, unsigned char, unsigned char, unsigned char, unsigned int) { }
 
 // --- Save and load state via native RFile (uncompressed) ---
 
@@ -1183,10 +1185,10 @@ static void bindStubPlugins()
 	SPU_async            = ps1SpuAsync;
 	SPU_registerCallback = ps1SpuRegisterCallback;
 	SPU_registerScheduleCb = ps1SpuRegisterScheduleCb;
-	SPU_playADPCMchannel = spuPlayADPCMchannel;
+	SPU_playADPCMchannel = ps1SpuPlayADPCMchannel;
 	SPU_freeze           = spuFreeze;
-	SPU_playCDDAchannel  = spuPlayCDDAchannel;
-	SPU_setCDvol         = spuSetCDvol;
+	SPU_playCDDAchannel  = ps1SpuPlayCDDAchannel;
+	SPU_setCDvol         = ps1SpuSetCDvol;
 
 	// Custom state save path on top of RFile (uncompressed).
 	if (g_saveFuncsOverride)
@@ -2182,6 +2184,12 @@ static void passTeardown()
 	// for actual emulation speed (65536 = 1.0, lower = emulation lagging).
 	logEvent("sndstats", NULL, "%s: feeds=%u samples=%u maxAmp=%d under=%u step=%d", mode,
 		sndFeeds, sndSamples, sndMax, sndUnder, sndStep);
+#ifdef PS1_BENCH
+	unsigned xaCalls = 0, cddaCalls = 0, cdVolCalls = 0;
+	ps1SpuCdStats(&xaCalls, &cddaCalls, &cdVolCalls);
+	logEvent("cdsndstats", NULL, "%s: xa=%u cdda=%u volume=%u", mode,
+		xaCalls, cddaCalls, cdVolCalls);
+#endif
 
 	if (voutSymbianTiltActive())
 		{
