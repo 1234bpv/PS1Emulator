@@ -330,6 +330,7 @@ int gpuUnaiCfEnabled(void);
 void gpuUnaiCfReset(void);
 int gpuUnaiCfGet(unsigned cf, int route, unsigned *out);
 #ifdef PS1_BENCH
+extern unsigned int g_ndrcLuiEmitted, g_ndrcLuiWouldLiteral, g_ndrcLuiTwoByte;
 int pmuSymbianStart(int evt0, int evt1, unsigned *diag);
 int pmuSymbianRead(unsigned *ccnt, unsigned *pmn0, unsigned *pmn1, unsigned *direct);
 void pmuSymbianStop(void);
@@ -1456,6 +1457,7 @@ static TInt passSetup(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTes
 #ifdef PS1_BENCH
 	g_spuCoreTicks = 0;
 	g_spuCoreCalls = g_spuCoreActive = g_spuCoreSamples = 0;
+	g_ndrcLuiEmitted = g_ndrcLuiWouldLiteral = g_ndrcLuiTwoByte = 0;
 #endif
 	g_cdReadTicks = 0;
 	g_cdReadCount = 0;
@@ -2248,6 +2250,8 @@ static void passTeardown()
 	const unsigned spuCoreMs = (unsigned)(g_spuCoreTicks * 1000ULL / (freq ? freq : 1));
 	logEvent("spucore", NULL, "%s: doSamples=%ums calls=%u active=%u samples=%u asyncInclusive=%ums",
 		mode, spuCoreMs, g_spuCoreCalls, g_spuCoreActive, g_spuCoreSamples, spuMixMs);
+	logEvent("luiemit", NULL, "%s: emitted=%u wouldLiteral=%u twoByte=%u",
+		mode, g_ndrcLuiEmitted, g_ndrcLuiWouldLiteral, g_ndrcLuiTwoByte);
 	if (g_pmuEvt0 >= 0)
 		{
 		unsigned c[3] = { 0, 0, 0 };
