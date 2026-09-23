@@ -329,6 +329,11 @@ void gpuUnaiSetDstFlat(int on);
 int gpuUnaiCfEnabled(void);
 void gpuUnaiCfReset(void);
 int gpuUnaiCfGet(unsigned cf, int route, unsigned *out);
+int gpuUnaiCfTimeEnabled(void);
+void gpuUnaiCfTimeReset(void);
+int gpuUnaiCfTimeGet(unsigned cf, unsigned long long *ticks,
+	unsigned *primitives, unsigned *sampled);
+void gpuUnaiCfTimeCalibration(unsigned long long *ticks, unsigned *calls);
 #ifdef PS1_BENCH
 extern unsigned int g_ndrcLuiEmitted, g_ndrcLuiWouldLiteral, g_ndrcLuiTwoByte;
 int pmuSymbianStart(int evt0, int evt1, unsigned *diag);
@@ -1464,6 +1469,7 @@ static TInt passSetup(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTes
 	g_mdecDecodeTicks = 0;
 	g_mdecWords = 0;
 	gpuUnaiCfReset();
+	gpuUnaiCfTimeReset();
 
 	// Minimal equivalent of emu_core_preinit() from frontend/main.c:435.
 	memset(&Config, 0, sizeof(Config));
@@ -2305,6 +2311,37 @@ static void passTeardown()
 		logEvent("cfsummary", NULL, "%s: rows=%u cpp=%u,%u asm=%u,%u",
 			mode, rows, routeCalls[0], routePixels[0], routeCalls[1], routePixels[1]);
 		}
+#ifdef PS1_BENCH
+	if (gpuUnaiCfTimeEnabled())
+		{
+		const unsigned targets[] = { 0x000, 0x02b, 0x033, 0x04b, 0x0a3, 0x0c1 };
+		const unsigned freq = ndrc_symbian_fastfreq();
+		unsigned long long emptyTicks = 0, sumEstTicks = 0;
+		unsigned emptyCalls = 0;
+		gpuUnaiCfTimeCalibration(&emptyTicks, &emptyCalls);
+		logEvent("cfcal", NULL, "%s: emptyTicks=%u emptyCalls=%u freq=%u",
+			mode, (unsigned)emptyTicks, emptyCalls, freq);
+		for (unsigned i = 0; i < sizeof(targets) / sizeof(targets[0]); i++)
+			{
+			unsigned long long ticks = 0;
+			unsigned primitives = 0, sampled = 0;
+			if (!gpuUnaiCfTimeGet(targets[i], &ticks, &primitives, &sampled) || !sampled)
+				continue;
+			const unsigned long long overhead = emptyCalls ?
+				(emptyTicks * sampled + emptyCalls / 2) / emptyCalls : 0;
+			const unsigned long long corrected = ticks > overhead ? ticks - overhead : 0;
+			const unsigned long long estimated = corrected * primitives / sampled;
+			sumEstTicks += estimated;
+			logEvent("cfprim", NULL,
+				"%s: cf=%03x prims=%u sampled=%u raw=%ums estimated=%ums",
+				mode, targets[i], primitives, sampled,
+				(unsigned)(ticks * 1000ULL / (freq ? freq : 1)),
+				(unsigned)(estimated * 1000ULL / (freq ? freq : 1)));
+			}
+		logEvent("cftime", NULL, "%s: selectedEstimated=%ums freq=%u",
+			mode, (unsigned)(sumEstTicks * 1000ULL / (freq ? freq : 1)), freq);
+		}
+#endif
 	logEvent("drawstats", NULL,
 		"%s: polySpans=%u polyPix=%u polyTex=%u polyLit=%u polyBlend=%u"
 		" spriteCalls=%u spritePix=%u spriteTex=%u tileCalls=%u tilePix=%u polyPrims=%u polyRows=%u",

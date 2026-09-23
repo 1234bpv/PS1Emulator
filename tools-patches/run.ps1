@@ -27,6 +27,7 @@ param(
   [string]$CoreCc = '',     # which compiler builds libpcsxcore: csl343 or gcce463
   [switch]$Release,        # relink stage1 without PS1_BENCH; implies -Build
   [switch]$CfProfile,      # per-CF span/length histogram in GPU; bench only
+  [switch]$CfTime,         # selected-CF primitive raster timing; bench only
   [int[]]$Shots = @(6000), # frames whose dumps to pull and decode
   [int]$Timeout = 900,
   [switch]$NoRun,          # build and push only
@@ -78,11 +79,12 @@ if ($List) {
 # --- build ----------------------------------------------------------------
 # Any library rebuild forces a stage1 relink: abld tracks only its own sources
 # and would happily leave the previous EXE in place.
-if ($Core -or $Gpu -or $CoreCc -or $CfProfile) { $Build = $true }
+if ($Core -or $Gpu -or $CoreCc -or $CfProfile -or $CfTime) { $Build = $true }
 if ($Release) { $Build = $true }
-if ($CfProfile -and $Release) { throw '-CfProfile is a diagnostic GPU build, not a release build' }
+if (($CfProfile -or $CfTime) -and $Release) { throw 'CF diagnostics are bench-only' }
+if ($CfProfile -and $CfTime) { throw '-CfProfile and -CfTime must be measured separately' }
 $Flavour = if ($Release) { 'release' } else { 'bench' }
-$GpuProfile = if ($CfProfile) { 'bench-cf' } else { $Flavour }
+$GpuProfile = if ($CfProfile) { 'bench-cf' } elseif ($CfTime) { 'bench-cftime' } else { $Flavour }
 
 function Build-Step {
   param([string]$Cmd, [string]$What, [int]$LimitSec = 1200)
@@ -189,6 +191,7 @@ if ($Build -and ((-not (Test-Path $GpuLib)) -or (-not (Test-Path $GpuProfileMark
 if ($Gpu) {
   $env:PS1_NO_DIAG = if ($Flavour -eq 'release') { '1' } else { '0' }
   $env:GPU_CF_PROFILE = if ($CfProfile) { '1' } else { '0' }
+  $env:GPU_CF_TIME = if ($CfTime) { '1' } else { '0' }
   Build-Step "call `"$PSScriptRoot\gpuasm-regen.cmd`"" 'gpu_unai asm'
   Build-Step "call `"$PSScriptRoot\gpu463-regen.cmd`"" 'gpu_unai 4.6.3'
   if (-not (Test-Path $GpuLib)) { throw 'gpu_unai produced no gpuunai.lib' }
