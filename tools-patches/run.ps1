@@ -26,6 +26,7 @@ param(
   [switch]$Core,           # + libpcsxcore; implies -Build
   [string]$CoreCc = '',     # which compiler builds libpcsxcore: csl343 or gcce463
   [switch]$Release,        # relink stage1 without PS1_BENCH; implies -Build
+  [switch]$CfProfile,      # per-CF span/length histogram in GPU; bench only
   [int[]]$Shots = @(6000), # frames whose dumps to pull and decode
   [int]$Timeout = 900,
   [switch]$NoRun,          # build and push only
@@ -77,9 +78,11 @@ if ($List) {
 # --- build ----------------------------------------------------------------
 # Any library rebuild forces a stage1 relink: abld tracks only its own sources
 # and would happily leave the previous EXE in place.
-if ($Core -or $Gpu -or $CoreCc) { $Build = $true }
+if ($Core -or $Gpu -or $CoreCc -or $CfProfile) { $Build = $true }
 if ($Release) { $Build = $true }
+if ($CfProfile -and $Release) { throw '-CfProfile is a diagnostic GPU build, not a release build' }
 $Flavour = if ($Release) { 'release' } else { 'bench' }
+$GpuProfile = if ($CfProfile) { 'bench-cf' } else { $Flavour }
 
 function Build-Step {
   param([string]$Cmd, [string]$What, [int]$LimitSec = 1200)
@@ -179,16 +182,17 @@ $GpuLib = "$Sdk\Epoc32\release\armv5\urel\gpuunai.lib"
 $GpuProfileMarker = "$Sdk\Epoc32\release\armv5\urel\.gpuunai.profile"
 if ($Build -and ((-not (Test-Path $GpuLib)) -or (-not (Test-Path $GpuProfileMarker)) -or
     ((Get-Item $GpuLib).LastWriteTime -gt (Get-Item $GpuProfileMarker).LastWriteTime) -or
-    ((Get-Content $GpuProfileMarker -Raw).Trim() -ne $Flavour))) {
-  Write-Host "[run] gpuunai.lib profile unknown or different - rebuilding for $Flavour"
+    ((Get-Content $GpuProfileMarker -Raw).Trim() -ne $GpuProfile))) {
+  Write-Host "[run] gpuunai.lib profile unknown or different - rebuilding for $GpuProfile"
   $Gpu = $true
 }
 if ($Gpu) {
   $env:PS1_NO_DIAG = if ($Flavour -eq 'release') { '1' } else { '0' }
+  $env:GPU_CF_PROFILE = if ($CfProfile) { '1' } else { '0' }
   Build-Step "call `"$PSScriptRoot\gpuasm-regen.cmd`"" 'gpu_unai asm'
   Build-Step "call `"$PSScriptRoot\gpu463-regen.cmd`"" 'gpu_unai 4.6.3'
   if (-not (Test-Path $GpuLib)) { throw 'gpu_unai produced no gpuunai.lib' }
-  Set-Content -Path $GpuProfileMarker -Value $Flavour -NoNewline
+  Set-Content -Path $GpuProfileMarker -Value $GpuProfile -NoNewline
 }
 if ($Build) {
   # abld does not relink when only a library changed, so the previous EXE

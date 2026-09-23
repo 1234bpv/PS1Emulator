@@ -326,6 +326,9 @@ void gpuUnaiDrawStats(unsigned *out, int n);
 void gpuUnaiSetSpanOff(int on);
 void gpuUnaiSetTexFlat(int on);
 void gpuUnaiSetDstFlat(int on);
+int gpuUnaiCfEnabled(void);
+void gpuUnaiCfReset(void);
+int gpuUnaiCfGet(unsigned cf, int route, unsigned *out);
 #ifdef PS1_BENCH
 int pmuSymbianStart(int evt0, int evt1, unsigned *diag);
 int pmuSymbianRead(unsigned *ccnt, unsigned *pmn0, unsigned *pmn1, unsigned *direct);
@@ -1458,6 +1461,7 @@ static TInt passSetup(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTes
 	g_cdReadCount = 0;
 	g_mdecDecodeTicks = 0;
 	g_mdecWords = 0;
+	gpuUnaiCfReset();
 
 	// Minimal equivalent of emu_core_preinit() from frontend/main.c:435.
 	memset(&Config, 0, sizeof(Config));
@@ -2277,6 +2281,26 @@ static void passTeardown()
 	unsigned dc[12];
 	Mem::FillZ(dc, sizeof(dc));
 	gpuUnaiDrawStats(dc, 12);
+	if (gpuUnaiCfEnabled())
+		{
+		unsigned routeCalls[2] = { 0, 0 }, routePixels[2] = { 0, 0 };
+		unsigned rows = 0;
+		for (int route = 0; route < 2; route++)
+			for (unsigned cf = 0; cf < 1024; cf++)
+				{
+				unsigned v[7] = { 0 };
+				if (!gpuUnaiCfGet(cf, route, v) || !v[0]) continue;
+				logEvent("cfspan", NULL,
+					"%s: cf=%03x route=%s calls=%u pixels=%u len=%u,%u,%u,%u,%u",
+					mode, cf, route ? "asm" : "cpp", v[0], v[1],
+					v[2], v[3], v[4], v[5], v[6]);
+				routeCalls[route] += v[0];
+				routePixels[route] += v[1];
+				rows++;
+				}
+		logEvent("cfsummary", NULL, "%s: rows=%u cpp=%u,%u asm=%u,%u",
+			mode, rows, routeCalls[0], routePixels[0], routeCalls[1], routePixels[1]);
+		}
 	logEvent("drawstats", NULL,
 		"%s: polySpans=%u polyPix=%u polyTex=%u polyLit=%u polyBlend=%u"
 		" spriteCalls=%u spritePix=%u spriteTex=%u tileCalls=%u tilePix=%u polyPrims=%u polyRows=%u",
@@ -3188,7 +3212,7 @@ GLDEF_C TInt E32Main()
 		_LIT(KNoSndArg, "nosnd");
 		if (cl.FindF(KNoSndArg) != KErrNotFound)
 			g_noSound = ETrue;
-		// Disc image for run: "img<file>" takes E:\<file> instead of KDiscImg.
+		// Disc image for run: img<file> or img"file with spaces" under E:\PS1\games.
 		// Menu does not reach here (ps1CfgApply is not called in console branch), and
 		// comparing image formats with identical input trace is impossible otherwise.
 		_LIT(KImgArg, "img");
@@ -3196,12 +3220,20 @@ GLDEF_C TInt E32Main()
 		if (imp != KErrNotFound)
 			{
 			TPtrC nm = cl.Mid(imp + 3);
-			const TInt sp = nm.Locate(' ');
-			if (sp >= 0)
-				nm.Set(nm.Left(sp));
-			TBuf<64> p(_L("E:\\PS1\\games\\"));
+			if (nm.Length() && nm[0] == '"')
+				{
+				nm.Set(nm.Mid(1));
+				const TInt end = nm.Locate('"');
+				if (end >= 0) nm.Set(nm.Left(end));
+				}
+			else
+				{
+				const TInt sp = nm.Locate(' ');
+				if (sp >= 0) nm.Set(nm.Left(sp));
+				}
+			TBuf<256> p(_L("E:\\PS1\\games\\"));
 			p.Append(nm.Left(p.MaxLength() - p.Length()));
-			TBuf8<64> p8;
+			TBuf8<256> p8;
 			p8.Copy(p);
 			const TInt n = p8.Length();
 			for (TInt i = 0; i < n; i++)
