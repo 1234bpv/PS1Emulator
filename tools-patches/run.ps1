@@ -79,6 +79,7 @@ if ($List) {
 # and would happily leave the previous EXE in place.
 if ($Core -or $Gpu -or $CoreCc) { $Build = $true }
 if ($Release) { $Build = $true }
+$Flavour = if ($Release) { 'release' } else { 'bench' }
 
 function Build-Step {
   param([string]$Cmd, [string]$What, [int]$LimitSec = 1200)
@@ -108,6 +109,7 @@ function Build-Step {
 # actually in the tree gave 1386104. The marker records who built the library,
 # and a library newer than its marker counts as unknown, not as the default.
 $CoreMarker = "$Sdk\Epoc32\release\armv5\urel\.pcsxcore.cc"
+$CoreProfileMarker = "$Sdk\Epoc32\release\armv5\urel\.pcsxcore.profile"
 $CoreLib    = "$Sdk\Epoc32\release\armv5\urel\pcsxcore.lib"
 function Get-CoreCc {
   if (-not (Test-Path $CoreLib)) { return '' }
@@ -115,8 +117,16 @@ function Get-CoreCc {
   if ((Get-Item $CoreLib).LastWriteTime -gt (Get-Item $CoreMarker).LastWriteTime) { return 'unknown' }
   return (Get-Content $CoreMarker -Raw).Trim()
 }
+function Get-CoreProfile {
+  if (-not (Test-Path $CoreLib)) { return '' }
+  if (-not (Test-Path $CoreProfileMarker)) { return 'unknown' }
+  if ((Get-Item $CoreLib).LastWriteTime -gt (Get-Item $CoreProfileMarker).LastWriteTime) { return 'unknown' }
+  return (Get-Content $CoreProfileMarker -Raw).Trim()
+}
 function Build-Core {
-  param([string]$Cc)
+  param([string]$Cc, [string]$Profile)
+  $oldProfile = Get-CoreProfile
+  $env:PS1_NO_DIAG = if ($Profile -eq 'release') { '1' } else { '0' }
   # abld relinks the library only when an object changed, so a library dropped in
   # by the other toolchain survives "abld build" untouched and the marker would
   # then lie about it. Remove the target and check the timestamp moved.
@@ -124,11 +134,28 @@ function Build-Core {
   if ($Cc -eq 'gcce463') {
     Build-Step "call `"$PSScriptRoot\core463-regen.cmd`"" 'libpcsxcore gcce463'
   } else {
-    Build-Step "cd /d `"$Proj\configs\core\group`" & call bldmake bldfiles & call .\ABLD.BAT build gcce urel" 'libpcsxcore csl343'
+    $coreMmp = "$Proj\configs\core\group\pcsxcore.mmp"
+    $coreBackup = "$coreMmp.profile.bak"
+    if ($Profile -eq 'release') {
+      Copy-Item $coreMmp $coreBackup -Force
+      [IO.File]::AppendAllText($coreMmp, "`r`nMACRO           PS1_NO_DIAG`r`n")
+    }
+    try {
+      if ($oldProfile -ne $Profile) {
+        Build-Step "cd /d `"$Proj\configs\core\group`" & call bldmake bldfiles & call .\ABLD.BAT clean gcce urel" 'libpcsxcore clean'
+      }
+      Build-Step "cd /d `"$Proj\configs\core\group`" & call bldmake bldfiles & call .\ABLD.BAT build gcce urel" 'libpcsxcore csl343'
+    } finally {
+      if ($Profile -eq 'release') {
+        Copy-Item $coreBackup $coreMmp -Force
+        Remove-Item $coreBackup -Force
+      }
+    }
   }
   if (-not (Test-Path $CoreLib)) { throw "libpcsxcore $Cc produced no pcsxcore.lib" }
   Set-Content -Path $CoreMarker -Value $Cc -NoNewline
-  Write-Host "[run] pcsxcore.lib $((Get-Item $CoreLib).Length) bytes, $Cc"
+  Set-Content -Path $CoreProfileMarker -Value $Profile -NoNewline
+  Write-Host "[run] pcsxcore.lib $((Get-Item $CoreLib).Length) bytes, $Cc $Profile"
 }
 
 if ($CoreCc -and $CoreCc -ne 'csl343' -and $CoreCc -ne 'gcce463') {
@@ -136,20 +163,32 @@ if ($CoreCc -and $CoreCc -ne 'csl343' -and $CoreCc -ne 'gcce463') {
 }
 if ($Core -or $CoreCc) {
   $want = if ($CoreCc) { $CoreCc } else { 'csl343' }
-  Build-Core $want
+  Build-Core $want $Flavour
 } elseif ($Build) {
   $have = Get-CoreCc
-  if ($have -eq 'unknown') {
-    Write-Host '[run] pcsxcore.lib is newer than its provenance marker - rebuilding it with csl343'
-    Build-Core 'csl343'
-  } elseif ($have -eq '') {
-    Write-Host '[run] no pcsxcore.lib - building it with csl343'
-    Build-Core 'csl343'
+  $haveProfile = Get-CoreProfile
+  if ($have -eq 'unknown' -or $have -eq '') {
+    Write-Host '[run] pcsxcore.lib provenance unknown - rebuilding with csl343'
+    Build-Core 'csl343' $Flavour
+  } elseif ($haveProfile -ne $Flavour) {
+    Write-Host "[run] pcsxcore.lib profile $haveProfile -> $Flavour"
+    Build-Core $have $Flavour
   }
 }
+$GpuLib = "$Sdk\Epoc32\release\armv5\urel\gpuunai.lib"
+$GpuProfileMarker = "$Sdk\Epoc32\release\armv5\urel\.gpuunai.profile"
+if ($Build -and ((-not (Test-Path $GpuLib)) -or (-not (Test-Path $GpuProfileMarker)) -or
+    ((Get-Item $GpuLib).LastWriteTime -gt (Get-Item $GpuProfileMarker).LastWriteTime) -or
+    ((Get-Content $GpuProfileMarker -Raw).Trim() -ne $Flavour))) {
+  Write-Host "[run] gpuunai.lib profile unknown or different - rebuilding for $Flavour"
+  $Gpu = $true
+}
 if ($Gpu) {
+  $env:PS1_NO_DIAG = if ($Flavour -eq 'release') { '1' } else { '0' }
   Build-Step "call `"$PSScriptRoot\gpuasm-regen.cmd`"" 'gpu_unai asm'
   Build-Step "call `"$PSScriptRoot\gpu463-regen.cmd`"" 'gpu_unai 4.6.3'
+  if (-not (Test-Path $GpuLib)) { throw 'gpu_unai produced no gpuunai.lib' }
+  Set-Content -Path $GpuProfileMarker -Value $Flavour -NoNewline
 }
 if ($Build) {
   # abld does not relink when only a library changed, so the previous EXE
@@ -158,10 +197,9 @@ if ($Build) {
   Remove-Item $Exe -Force -ErrorAction SilentlyContinue
 
   # -Release: build the same stage1.mmp with the bench-only sources and
-  # capabilities stripped, so this link is what a real device install would
-  # carry (CAPABILITY None is also what lets it install on C5, which refuses
-  # the bench build's capability set with ERR create -46). Only stage1.mmp is
-  # touched - libpcsxcore and gpu_unai do not read PS1_BENCH. A real on-disk
+  # bench-only sources stripped, so this link is what a real device install
+  # would carry. SwEvent remains for side-key capture. Only stage1.mmp is
+  # touched - core and GPU carry their own matching profile markers. A real on-disk
   # backup is kept, and finally restores it even if the build throws: a
   # release run must never leave the tree stuck without PS1_BENCH.
   $MmpPath = "$Proj\configs\stage1\group\stage1.mmp"
@@ -173,7 +211,6 @@ if ($Build) {
   # -Release build failed with six "undefined reference to pmuSymbian*" because
   # stage1.o still carried the macro while pmu_symbian.cpp had been dropped. The
   # marker records which flavour the object tree currently holds.
-  $Flavour = if ($Release) { 'release' } else { 'bench' }
   $FlavourFile = "$Proj\configs\stage1\group\.flavour"
   $prevFlavour = if (Test-Path $FlavourFile) { (Get-Content $FlavourFile -Raw).Trim() } else { '' }
   # A build run by hand (plain abld, as a subagent may do) leaves objects the

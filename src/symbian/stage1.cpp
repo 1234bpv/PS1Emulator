@@ -2091,13 +2091,18 @@ static TBool passStep()
 		// double buffering, so writes to cached address miss the panel.
 		int fbChg = 0, fbSeen = 0, fbB0 = 0, fbB1 = 0;
 		voutSymbianFbPages(&fbChg, &fbSeen, &fbB0, &fbB1);
+		unsigned gp0Count = g_gpulibWriteData, dmaCount = g_gpulibDmaChain;
+#ifndef PS1_BENCH
+		unsigned dm = 0, stCount = 0;
+		voutSymbianGpuStats(&gp0Count, &dm, &dmaCount, &stCount);
+#endif
 		logEvent("vout_geom", NULL,
 			"frame=%d upd=%d gpulibUpd=%d src=%dx%d dst=%dx%d off=%d,%d "
 			"gp0=%u dma=%u fbDirty=%d fbDirtyArea=%d status=0x%x scr=%dx%d src=%d,%d "
 			"voutOff=%d stale=%d fbPages=%d/%d fb0=0x%x fb1=0x%x",
 			g_pass.i, voutSymbianUpdates(), voutSymbianGpulibUpdates(),
 			srcW, srcH, dstW, dstH, ox, oy,
-			g_gpulibWriteData, g_gpulibDmaChain, fbd, fbda, (unsigned)st,
+			gp0Count, dmaCount, fbd, fbda, (unsigned)st,
 			sw, sh, sx, sy, voff, stale, fbChg, fbSeen, (unsigned)fbB0, (unsigned)fbB1);
 		}
 	return ETrue;
@@ -2144,10 +2149,14 @@ static void passTeardown()
 
 	// Ground truth from gpulib: if also zeros here - BIOS does not draw (stuck earlier);
 	// if non-zero, but VRAM is empty - problem is in gpu_unai rasterization.
+	#ifdef PS1_BENCH
 	logEvent("gpulibstats", NULL,
 		"%s: wData=%u wDataMem=%u dmaChain=%u dmaWords=%u wStatus=%u rStatus=%u statusLast=%08x",
 		mode, g_gpulibWriteData, g_gpulibWriteDataMem, g_gpulibDmaChain,
 		g_gpulibDmaWords, g_gpulibWriteStatus, g_gpulibReadStatus, g_gpulibStatusLast);
+	#else
+	logEvent("gpulibstats", NULL, "%s: disabled in release; gpustats remains active", mode);
+	#endif
 
 	// What game asks to draw: pixels and counts per primitive class.
 	// Needed to compare gpu_unai against MBX hardware rasterizer, whose

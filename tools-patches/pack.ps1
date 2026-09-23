@@ -61,6 +61,25 @@ $flavour = if (Test-Path $FlavourFile) { (Get-Content $FlavourFile -Raw).Trim() 
 if ($flavour -ne 'release' -and -not $AllowBench) {
   throw "the SDK tree holds a '$flavour' build, not a release one: run 'run.ps1 -Release' first, or pass -AllowBench to package it anyway"
 }
+if (-not $AllowBench) {
+  foreach ($libName in @('pcsxcore', 'gpuunai')) {
+    $lib = "$Sdk\Epoc32\release\armv5\urel\$libName.lib"
+    $marker = "$Sdk\Epoc32\release\armv5\urel\.$libName.profile"
+    if (-not ((Test-Path $lib) -and (Test-Path $marker))) {
+      throw "$libName has no verified release profile: run 'run.ps1 -Release -NoPush'"
+    }
+    $profile = (Get-Content $marker -Raw).Trim()
+    if ($profile -ne 'release' -or (Get-Item $lib).LastWriteTime -gt (Get-Item $marker).LastWriteTime) {
+      throw "$libName profile is '$profile' or stale: rebuild the release EXE before packaging"
+    }
+    if ($exeInfo.LastWriteTime -lt (Get-Item $lib).LastWriteTime) {
+      throw "EXE is older than $libName.lib: relink the release EXE before packaging"
+    }
+  }
+  if ((Get-Item $FlavourFile).LastWriteTime -lt $exeInfo.LastWriteTime) {
+    throw 'EXE is newer than its flavour marker: rebuild through run.ps1 before packaging'
+  }
+}
 Write-Host "[pack] flavour $flavour"
 
 function Invoke-Step {

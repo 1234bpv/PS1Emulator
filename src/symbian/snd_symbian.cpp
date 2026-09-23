@@ -543,15 +543,17 @@ static int  symOutBusy(void)   { return 0; }          // 0 = empty: generate mor
 static void symOutFeed(void *buf, int bytes)
 	{
 	g_sndFeeds++;
-	const short *s = (const short *)buf;
 	const int n = bytes / 2;
 	g_sndSamples += (unsigned)n;
+#ifdef PS1_BENCH
+	const short *s = (const short *)buf;
 	for (int i = 0; i < n; i++)
 		{
 		int v = s[i];
 		if (v < 0) v = -v;
 		if (v > g_sndMax) g_sndMax = v;
 		}
+#endif
 	if (g_snd)
 		g_snd->Feed(buf, bytes);
 	}
@@ -587,9 +589,13 @@ unsigned long long g_spuMixTicks;
 
 void ps1SpuAsync(unsigned int a, unsigned int b)
 	{
+#ifdef PS1_BENCH
 	const unsigned int t0 = ndrc_symbian_fastcount();
+#endif
 	SPUasync(a, b);
+#ifdef PS1_BENCH
 	g_spuMixTicks += (unsigned int)(ndrc_symbian_fastcount() - t0);
+#endif
 	}
 void ps1SpuRegisterCallback(void (*cb)(int))                    { SPUregisterCallback(cb); }
 void ps1SpuRegisterScheduleCb(void (*cb)(unsigned int))         { SPUregisterScheduleCb(cb); }
@@ -648,7 +654,14 @@ void ps1SndStats(unsigned *aFeeds, unsigned *aSamples, int *aMaxAmp,
 	{
 	if (aFeeds)   *aFeeds = g_sndFeeds;
 	if (aSamples) *aSamples = g_sndSamples;
-	if (aMaxAmp)  *aMaxAmp = g_sndMax;
+	if (aMaxAmp)
+		{
+#ifdef PS1_BENCH
+		*aMaxAmp = g_sndMax;
+#else
+		*aMaxAmp = -1; // peak scan is disabled in release
+#endif
+		}
 	if (aUnder)   *aUnder = g_sndUnder;
 	if (aStepQ16) *aStepQ16 = g_snd ? g_snd->Step() : 0;
 	}
