@@ -34,7 +34,7 @@ N95 8GB — апаратний двійник E90 (той самий OMAP 2420/A
 ## 3. Стек і toolchain (Windows-native)
 
 - **Компілятор:** первинний — **CSL Arm Toolchain** (GCCE 2005q1 = GCC 3.4.3), бандл SDK, `..\toolchain\CSL_Arm_Toolchain\`. Резерв — GCCE 4.6.3 у `..\toolchain\gcce\arm-2012.03\` (кращий кодоген, потребує патчів). Асемблерні `.S` у синтаксисі **GAS**, тому лише GCCE; RVCT/armasm НЕ підходять.
-- **SDK:** S60 3rd Edition **FP1** SDK — `D:\VsCodeProjects\SymbianProjects\S60_3rd_FP1\` (epoc32-дерево, WINSCW-емулятор, `bldmake`/`abld`). `EPOCROOT=\VsCodeProjects\SymbianProjects\S60_3rd_FP1\`, складати з диска D:. Після встановлення застосувати vista-патч (`cl_bpabi.pm`). Точні шляхи/env — `..\toolchain\SETUP.md`.
+- **SDK:** S60 3rd Edition **FP1** SDK — сусідній каталог `..\S60_3rd_FP1\` відносно кореня репозиторію (наприклад, на поточному робочому середовищі `H:\VsCodeProjects\SymbianProjects\S60_3rd_FP1\`), epoc32-дерево, WINSCW-емулятор, `bldmake`/`abld`. `EPOCROOT=\VsCodeProjects\SymbianProjects\S60_3rd_FP1\`, складати з диска з відповідним SDK (наприклад, H:). Після встановлення застосувати vista-патч (`cl_bpabi.pm`). Точні шляхи/env — `..\toolchain\SETUP.md`.
 - **Складання:** файл опису `.mmp` (ядро + `gpu_unai` + `dfsound` + asm-модулі) → `bldmake bldfiles` → `abld build gcce urel`. Для WINSCW-цілі динарек **вимикати** (ARM не емулюється, x86-збірка).
 - **zlib** — наявна у складі PIPS/Open C; окремо не тягнути.
 
