@@ -2,7 +2,7 @@
 
 **Дата:** 2026-09-28  
 **Апарати:** Nokia N95 8GB (OMAP 2420, 330.24 МГц), Nokia E90 (OMAP 2420, 330.24 МГц), Nokia C5-00.2 (ARM11, COM5 SPP).  
-**Прийнятий коміт ядра:** [`cb47fc6cc5acabab56f4c88ebeb10167439170c8`](file:///H:/VsCodeProjects/SymbianProjects/PS1Emulator/pcsx_rearmed) (`perf(gpu): avoid stack spill in gpuLightingTXTGouraudARM`).  
+**Прийнятий коміт ядра:** `cb47fc6cc5acabab56f4c88ebeb10167439170c8` у `pcsx_rearmed/` (`perf(gpu): avoid stack spill in gpuLightingTXTGouraudARM`).
 **Релізний бінарник:** `ps1stage1.exe` (1 345 764 байти, SHA256: `39e20e8e380742787c0e03cd215e1cc981483c6d57492c436837f86d22b860ad`).
 
 ---
