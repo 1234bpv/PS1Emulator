@@ -2,11 +2,31 @@
 
 Without this, the build is **impossible to reproduce** on another machine. Project docs and configs are local (CLAUDE.md §8), so the most critical items are collected here.
 
+## Current build entry point
+
+`run.ps1`, `pack.ps1` and the regeneration scripts locate `S60_3rd_FP1`,
+`toolchain` and `SymbianDeployDaemon` beside the project. The September 2026
+desktop uses `H:\VsCodeProjects\SymbianProjects`; historical D: paths below
+refer to the laptop. The SDK and project must share a drive; the existing
+package descriptions still require the `\VsCodeProjects\SymbianProjects`
+directory layout. Do not reuse laptop Bluetooth COM numbers on another PC.
+
+From the project root, build without contacting a phone:
+
+```powershell
+powershell -NoProfile -File tools-patches/run.ps1 -Core -Gpu -Release -NoPush
+powershell -NoProfile -File tools-patches/pack.ps1 -OutDir .\plans\release
+```
+
+`-NoRun` still uploads the EXE; use `-NoPush` for a local build. `Build-Step`
+checks the native exit code as well as compiler diagnostics. Release packaging
+checks the core/GPU profile markers before accepting the EXE.
+
 ## Contents
 
 | File | Purpose |
 |---|---|
-| `symbian-env.cmd` | build environment: `EPOCROOT`, `PATH`, drive D: |
+| `symbian-env.cmd` | build environment: `EPOCROOT`, `PATH`, SDK drive |
 | `deploy.cmd` | build → sign → copy to device → collect logs (single command) |
 | `cl_bpabi.pm.patch` | SDK fix: vista patch without hardcoded path to CSL |
 | `makdeps.pm.patch` | SDK fix: preprocessor for dependency scanning |

@@ -2,7 +2,7 @@
 # pack.ps1 - build the two signed packages in one step.
 #
 #   pack.ps1                 # both packages from whatever EXE is in the SDK tree
-#   pack.ps1 -OutDir D:\out  # somewhere other than the project root
+#   pack.ps1 -OutDir .\out  # somewhere other than the project root
 #
 # min  - EXE plus the registration resource. Enough for a phone that already
 #        carries the application resource (every phone the deploy daemon set up).
@@ -22,7 +22,8 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $Proj = Split-Path -Parent $PSScriptRoot
-$Sdk  = 'D:\VsCodeProjects\SymbianProjects\S60_3rd_FP1'
+$Shared = Split-Path -Parent $Proj
+$Sdk  = Join-Path $Shared 'S60_3rd_FP1'
 $Tools = "$Sdk\Epoc32\tools"
 $Exe  = "$Sdk\Epoc32\release\gcce\urel\ps1stage1.exe"
 $Cer  = "$Proj\configs\sign\sha1.cer"
@@ -30,6 +31,7 @@ $Key  = "$Proj\configs\sign\sha1.key"
 if (-not $OutDir) { $OutDir = $Proj }
 # makesis reports only "file I/O fault" when the output directory is missing.
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
+$OutDir = (Resolve-Path -LiteralPath $OutDir).Path
 
 if (-not (Test-Path $Exe)) { throw "no EXE to package: $Exe" }
 # configs\ is not in the repository, so a clean clone has neither the package
@@ -84,7 +86,12 @@ Write-Host "[pack] flavour $flavour"
 
 function Invoke-Step {
   param([string]$File, [string[]]$ArgList, [string]$What)
-  $job = Start-Job -ScriptBlock { param($f, $a) & $f @a 2>&1; $LASTEXITCODE } -ArgumentList $File, $ArgList
+  $job = Start-Job -ScriptBlock {
+    param($f, $a, $cwd)
+    Set-Location -LiteralPath $cwd
+    & $f @a 2>&1
+    $LASTEXITCODE
+  } -ArgumentList $File, $ArgList, $Proj
   if (-not (Wait-Job $job -Timeout $LimitSec)) {
     Stop-Job $job; Remove-Job $job -Force
     throw "$What exceeded its ${LimitSec}s limit"

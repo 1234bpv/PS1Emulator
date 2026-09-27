@@ -16,12 +16,13 @@ REM generated once by configs\core\asm\regen.cmd.
 REM ---------------------------------------------------------------------------
 setlocal EnableDelayedExpansion
 
-set PROJ=%~dp0..
+for %%I in ("%~dp0..") do set "PROJ=%%~fI"
+for %%I in ("%PROJ%\..") do set "SYMBIANROOT=%%~fI"
 set FORK=%PROJ%\pcsx_rearmed
-set NEWBIN=D:\VsCodeProjects\SymbianProjects\toolchain\gcce\arm-2012.03\bin
-set OLDBIN=D:\VsCodeProjects\SymbianProjects\toolchain\CSL_Arm_Toolchain\bin
-set SDKINC=D:\VsCodeProjects\SymbianProjects\S60_3rd_FP1\Epoc32\include
-set OUTLIB=D:\VsCodeProjects\SymbianProjects\S60_3rd_FP1\Epoc32\release\armv5\urel
+set NEWBIN=%SYMBIANROOT%\toolchain\gcce\arm-2012.03\bin
+set OLDBIN=%SYMBIANROOT%\toolchain\CSL_Arm_Toolchain\bin
+set SDKINC=%SYMBIANROOT%\S60_3rd_FP1\Epoc32\include
+set OUTLIB=%SYMBIANROOT%\S60_3rd_FP1\Epoc32\release\armv5\urel
 set TMPDIR=%PROJ%\configs\core\obj463
 set ZLIB=%FORK%\deps\libchdr\deps\zlib-1.3.1
 

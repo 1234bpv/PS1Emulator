@@ -33,11 +33,12 @@ REM   2. signsis without -s returns 0 and produces an UNSIGNED file.
 REM   3. a stale EXE on the phone makes a correct fix look ineffective.
 REM ---------------------------------------------------------------------------
 
-set PROJ=%~dp0..
+for %%I in ("%~dp0..") do set "PROJ=%%~fI"
+for %%I in ("%PROJ%\..") do set "SYMBIANROOT=%%~fI"
 set CONFIGS=%PROJ%\configs
 set SIGNDIR=%CONFIGS%\sign
-set RELDIR=D:\VsCodeProjects\SymbianProjects\S60_3rd_FP1\Epoc32\release\gcce\urel
-set LIBDIR=D:\VsCodeProjects\SymbianProjects\S60_3rd_FP1\Epoc32\release\armv5\urel
+set RELDIR=%SYMBIANROOT%\S60_3rd_FP1\Epoc32\release\gcce\urel
+set LIBDIR=%SYMBIANROOT%\S60_3rd_FP1\Epoc32\release\armv5\urel
 set OPENSSL=C:\Program Files\Git\usr\bin\openssl.exe
 
 set TARGET=%~1

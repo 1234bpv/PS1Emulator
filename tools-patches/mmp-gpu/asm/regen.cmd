@@ -8,8 +8,9 @@ REM
 REM Rerun this after updating the pcsx_rearmed fork.
 
 setlocal
-set PR=D:\VsCodeProjects\SymbianProjects\PS1Emulator\pcsx_rearmed
-set CSL=D:\VsCodeProjects\SymbianProjects\toolchain\CSL_Arm_Toolchain\bin
+for %%I in ("%~dp0..\..\..") do set "PROJ=%%~fI"
+set "PR=%PROJ%\pcsx_rearmed"
+set "CSL=%PROJ%\..\toolchain\CSL_Arm_Toolchain\bin"
 set OUT=%~dp0
 
 "%CSL%\arm-none-symbianelf-gcc.exe" -E -x assembler-with-cpp -march=armv6 ^

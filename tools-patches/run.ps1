@@ -39,9 +39,10 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $Proj = Split-Path -Parent $PSScriptRoot
-$Sdk  = 'D:\VsCodeProjects\SymbianProjects\S60_3rd_FP1'
+$Shared = Split-Path -Parent $Proj
+$Sdk  = Join-Path $Shared 'S60_3rd_FP1'
 $Exe  = "$Sdk\Epoc32\release\gcce\urel\ps1stage1.exe"
-$Net  = 'D:\VsCodeProjects\SymbianProjects\SymbianDeployDaemon\tools\deploy_net.ps1'
+$Net  = Join-Path $Shared 'SymbianDeployDaemon\tools\deploy_net.ps1'
 $EnvCmd = "$PSScriptRoot\symbian-env.cmd"
 
 # Transport per device. COM ports come from Bluetooth pairing and survive
@@ -93,18 +94,21 @@ function Build-Step {
   # unattended cycle then waits for it forever.
   $job = Start-Job -ScriptBlock {
     param($c, $e)
-    cmd /c "call `"$e`" >nul & $c" 2>&1
+    cmd /c "call `"$e`" >nul && $c" 2>&1
+    $LASTEXITCODE
   } -ArgumentList $Cmd, $EnvCmd
   if (-not (Wait-Job $job -Timeout $LimitSec)) {
     Stop-Job $job; Remove-Job $job -Force
     throw "$What exceeded its ${LimitSec}s limit"
   }
-  $out = Receive-Job $job
+  $out = @(Receive-Job $job)
   Remove-Job $job
+  $rc = $out[-1]
+  $out = @($out | Select-Object -SkipLast 1)
   $bad = $out | Select-String -Pattern 'rror|undefined reference|No such file'
-  if ($bad) {
-    $bad | Select-Object -First 10 | ForEach-Object { Write-Host $_ }
-    throw "$What failed"
+  if ($rc -ne 0 -or $bad) {
+    $out | Select-Object -Last 10 | ForEach-Object { Write-Host $_ }
+    throw "$What failed with exit code $rc"
   }
 }
 
@@ -147,9 +151,9 @@ function Build-Core {
     }
     try {
       if ($oldProfile -ne $Profile) {
-        Build-Step "cd /d `"$Proj\configs\core\group`" & call bldmake bldfiles & call .\ABLD.BAT clean gcce urel" 'libpcsxcore clean'
+        Build-Step "cd /d `"$Proj\configs\core\group`" && call bldmake bldfiles && call .\ABLD.BAT clean gcce urel" 'libpcsxcore clean'
       }
-      Build-Step "cd /d `"$Proj\configs\core\group`" & call bldmake bldfiles & call .\ABLD.BAT build gcce urel" 'libpcsxcore csl343'
+      Build-Step "cd /d `"$Proj\configs\core\group`" && call bldmake bldfiles && call .\ABLD.BAT build gcce urel" 'libpcsxcore csl343'
     } finally {
       if ($Profile -eq 'release') {
         Copy-Item $coreBackup $coreMmp -Force
@@ -223,7 +227,8 @@ if ($Build) {
   # A build run by hand (plain abld, as a subagent may do) leaves objects the
   # marker knows nothing about. Anything newer than the marker means the tree
   # holds an unknown flavour, so clean rather than trust it.
-  $objDir = "$Sdk\Epoc32\build\VsCodeProjects\SymbianProjects\PS1Emulator\configs\stage1\group"
+  $projectTree = $Proj.Substring([IO.Path]::GetPathRoot($Proj).Length)
+  $objDir = "$Sdk\Epoc32\build\$projectTree\configs\stage1\group"
   if ($prevFlavour -and (Test-Path $objDir)) {
     $markT = (Get-Item $FlavourFile).LastWriteTime
     $newer = Get-ChildItem -Path $objDir -Recurse -Filter *.o -ErrorAction SilentlyContinue |
@@ -234,7 +239,7 @@ if ($Build) {
     }
   }
   if ($prevFlavour -ne $Flavour) {
-    Build-Step "cd /d `"$Proj\configs\stage1\group`" & call bldmake bldfiles & call .\ABLD.BAT clean gcce urel" 'stage1 clean'
+    Build-Step "cd /d `"$Proj\configs\stage1\group`" && call bldmake bldfiles && call .\ABLD.BAT clean gcce urel" 'stage1 clean'
   }
 
   if ($Release) {
@@ -262,7 +267,7 @@ if ($Build) {
     [IO.File]::WriteAllText($MmpPath, $patched)
   }
   try {
-    Build-Step "cd /d `"$Proj\configs\stage1\group`" & call bldmake bldfiles & call .\ABLD.BAT build gcce urel" 'stage1'
+    Build-Step "cd /d `"$Proj\configs\stage1\group`" && call bldmake bldfiles && call .\ABLD.BAT build gcce urel" 'stage1'
   } finally {
     if ($Release) {
       Copy-Item $MmpBackup $MmpPath -Force

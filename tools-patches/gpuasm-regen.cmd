@@ -15,14 +15,15 @@ REM Run once after checkout, and again whenever gpu_arm.S changes.
 REM ---------------------------------------------------------------------------
 setlocal
 
-set PROJ=%~dp0..
+for %%I in ("%~dp0..") do set "PROJ=%%~fI"
+for %%I in ("%PROJ%\..") do set "SYMBIANROOT=%%~fI"
 set FORK=%PROJ%\pcsx_rearmed
-set NEWBIN=D:\VsCodeProjects\SymbianProjects\toolchain\gcce\arm-2012.03\bin
+set NEWBIN=%SYMBIANROOT%\toolchain\gcce\arm-2012.03\bin
 REM The archive must be packed by the OLD ar: the CSL 3.4.3 linker cannot read an
 REM index written by binutils 2.21 at all - it reports "File format not
 REM recognized". The .o itself is ordinary ELF and links without complaint.
-set OLDBIN=D:\VsCodeProjects\SymbianProjects\toolchain\CSL_Arm_Toolchain\bin
-set OUTLIB=D:\VsCodeProjects\SymbianProjects\S60_3rd_FP1\Epoc32\release\armv5\urel
+set OLDBIN=%SYMBIANROOT%\toolchain\CSL_Arm_Toolchain\bin
+set OUTLIB=%SYMBIANROOT%\S60_3rd_FP1\Epoc32\release\armv5\urel
 set TMPDIR=%PROJ%\configs\gpu\asm
 
 if not exist "%NEWBIN%\arm-none-symbianelf-gcc.exe" (

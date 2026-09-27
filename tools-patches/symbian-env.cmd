@@ -8,13 +8,14 @@ REM   - must be set, spelled in CAPITALS
 REM   - must NOT contain a drive letter
 REM   - must start with a backslash and END with a backslash
 REM   - must not be a UNC path
-REM Because the drive letter is absent, the build must run from drive D:.
+REM Because the drive letter is absent, the build must run from the SDK drive.
 REM ---------------------------------------------------------------------------
 
-set SDKROOT=D:\VsCodeProjects\SymbianProjects\S60_3rd_FP1
-set TCROOT=D:\VsCodeProjects\SymbianProjects\toolchain
+for %%I in ("%~dp0..\..") do set "SYMBIANROOT=%%~fI"
+set "SDKROOT=%SYMBIANROOT%\S60_3rd_FP1"
+set "TCROOT=%SYMBIANROOT%\toolchain"
 
-set EPOCROOT=\VsCodeProjects\SymbianProjects\S60_3rd_FP1\
+set "EPOCROOT=%SDKROOT:~2%\"
 
 REM Perl 5.20 (portable). Must be < 5.22: E32Plat.pm:289,387 use defined(%hash),
 REM which is a fatal error from Perl 5.22 onwards.
@@ -30,7 +31,7 @@ set CPPSHIM=%TCROOT%\cppshim\gcc\bin
 
 path=%PERLBIN%;%SDKROOT%\Epoc32\tools;%CPPSHIM%;%CSLBIN%;%SDKROOT%\Epoc32\gcc\bin;%PATH%
 
-D:
+%SDKROOT:~0,2%
 
 echo [symbian-env] EPOCROOT=%EPOCROOT%
 echo [symbian-env] perl    : & perl -e "print $^V" & echo.
