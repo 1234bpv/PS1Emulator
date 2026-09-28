@@ -335,6 +335,11 @@ int gpuUnaiCfTimeGet(unsigned cf, unsigned long long *ticks,
 	unsigned *primitives, unsigned *sampled);
 void gpuUnaiCfTimeCalibration(unsigned long long *ticks, unsigned *calls);
 #ifdef PS1_BENCH
+int spuStageProfileEnabled(void);
+void spuStageProfileReset(void);
+int spuStageProfileGet(unsigned int stage, unsigned long long *ticks,
+	unsigned int *calls, unsigned int *sampled, unsigned int *samples);
+void spuStageProfileCalibration(unsigned long long *ticks, unsigned int *calls);
 extern unsigned int g_ndrcLuiEmitted, g_ndrcLuiWouldLiteral, g_ndrcLuiTwoByte;
 int pmuSymbianStart(int evt0, int evt1, unsigned *diag);
 int pmuSymbianRead(unsigned *ccnt, unsigned *pmn0, unsigned *pmn1, unsigned *direct);
@@ -1470,6 +1475,9 @@ static TInt passSetup(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTes
 	g_mdecWords = 0;
 	gpuUnaiCfReset();
 	gpuUnaiCfTimeReset();
+#ifdef PS1_BENCH
+	spuStageProfileReset();
+#endif
 
 	// Minimal equivalent of emu_core_preinit() from frontend/main.c:435.
 	memset(&Config, 0, sizeof(Config));
@@ -2256,6 +2264,35 @@ static void passTeardown()
 	const unsigned spuCoreMs = (unsigned)(g_spuCoreTicks * 1000ULL / (freq ? freq : 1));
 	logEvent("spucore", NULL, "%s: doSamples=%ums calls=%u active=%u samples=%u asyncInclusive=%ums",
 		mode, spuCoreMs, g_spuCoreCalls, g_spuCoreActive, g_spuCoreSamples, spuMixMs);
+	if (spuStageProfileEnabled())
+		{
+		const char *stageNames[6] = { "dec_adpcm", "dec_noise", "adsr", "mix_plain", "mix_rvb", "reverb" };
+		unsigned long long emptyTicks = 0, sumEstTicks = 0;
+		unsigned int emptyCalls = 0;
+		spuStageProfileCalibration(&emptyTicks, &emptyCalls);
+		logEvent("spucal", NULL, "%s: emptyTicks=%u emptyCalls=%u freq=%u",
+			mode, (unsigned)emptyTicks, emptyCalls, freq);
+		for (unsigned int s = 0; s < 6; s++)
+			{
+			unsigned long long ticks = 0;
+			unsigned int calls = 0, sampled = 0, samples = 0;
+			if (!spuStageProfileGet(s, &ticks, &calls, &sampled, &samples) || !calls)
+				continue;
+			const unsigned long long overhead = (emptyCalls && sampled) ?
+				(emptyTicks * sampled + emptyCalls / 2) / emptyCalls : 0;
+			const unsigned long long corrected = ticks > overhead ? ticks - overhead : 0;
+			const unsigned long long estimated = sampled ? (corrected * calls / sampled) : 0;
+			sumEstTicks += estimated;
+			logEvent("spustage", NULL,
+				"%s: stage=%s calls=%u sampled=%u samples=%u rawTicks=%u rawMs=%ums estMs=%ums",
+				mode, stageNames[s], calls, sampled, samples,
+				(unsigned)ticks,
+				(unsigned)(ticks * 1000ULL / (freq ? freq : 1)),
+				(unsigned)(estimated * 1000ULL / (freq ? freq : 1)));
+			}
+		logEvent("spustagesum", NULL, "%s: estTotalMs=%ums freq=%u",
+			mode, (unsigned)(sumEstTicks * 1000ULL / (freq ? freq : 1)), freq);
+		}
 	logEvent("luiemit", NULL, "%s: emitted=%u wouldLiteral=%u twoByte=%u",
 		mode, g_ndrcLuiEmitted, g_ndrcLuiWouldLiteral, g_ndrcLuiTwoByte);
 	if (g_pmuEvt0 >= 0)

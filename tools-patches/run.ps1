@@ -28,6 +28,7 @@ param(
   [switch]$Release,        # relink stage1 without PS1_BENCH; implies -Build
   [switch]$CfProfile,      # per-CF span/length histogram in GPU; bench only
   [switch]$CfTime,         # selected-CF primitive raster timing; bench only
+  [switch]$SpuStageProfile,# per-stage timing in SPU; bench only
   [int[]]$Shots = @(6000), # frames whose dumps to pull and decode
   [int]$Timeout = 900,
   [switch]$NoRun,          # build and push only
@@ -80,12 +81,12 @@ if ($List) {
 # --- build ----------------------------------------------------------------
 # Any library rebuild forces a stage1 relink: abld tracks only its own sources
 # and would happily leave the previous EXE in place.
-if ($Core -or $Gpu -or $CoreCc -or $CfProfile -or $CfTime) { $Build = $true }
+if ($Core -or $Gpu -or $CoreCc -or $CfProfile -or $CfTime -or $SpuStageProfile) { $Build = $true }
 if ($Release) { $Build = $true }
-if (($CfProfile -or $CfTime) -and $Release) { throw 'CF diagnostics are bench-only' }
+if (($CfProfile -or $CfTime -or $SpuStageProfile) -and $Release) { throw 'CF/Stage diagnostics are bench-only' }
 if ($CfProfile -and $CfTime) { throw '-CfProfile and -CfTime must be measured separately' }
-$Flavour = if ($Release) { 'release' } else { 'bench' }
-$GpuProfile = if ($CfProfile) { 'bench-cf' } elseif ($CfTime) { 'bench-cftime' } else { $Flavour }
+$Flavour = if ($Release) { 'release' } elseif ($SpuStageProfile) { 'bench-spustage' } else { 'bench' }
+$GpuProfile = if ($CfProfile) { 'bench-cf' } elseif ($CfTime) { 'bench-cftime' } else { if ($Release) { 'release' } else { 'bench' } }
 
 function Build-Step {
   param([string]$Cmd, [string]$What, [int]$LimitSec = 1200)
@@ -136,6 +137,7 @@ function Build-Core {
   param([string]$Cc, [string]$Profile)
   $oldProfile = Get-CoreProfile
   $env:PS1_NO_DIAG = if ($Profile -eq 'release') { '1' } else { '0' }
+  $env:PS1_SPU_STAGE_PROFILE = if ($Profile -eq 'bench-spustage') { '1' } else { '0' }
   # abld relinks the library only when an object changed, so a library dropped in
   # by the other toolchain survives "abld build" untouched and the marker would
   # then lie about it. Remove the target and check the timestamp moved.
@@ -148,6 +150,9 @@ function Build-Core {
     if ($Profile -eq 'release') {
       Copy-Item $coreMmp $coreBackup -Force
       [IO.File]::AppendAllText($coreMmp, "`r`nMACRO           PS1_NO_DIAG`r`n")
+    } elseif ($Profile -eq 'bench-spustage') {
+      Copy-Item $coreMmp $coreBackup -Force
+      [IO.File]::AppendAllText($coreMmp, "`r`nMACRO           PS1_SPU_STAGE_PROFILE`r`n")
     }
     try {
       if ($oldProfile -ne $Profile) {
@@ -155,7 +160,7 @@ function Build-Core {
       }
       Build-Step "cd /d `"$Proj\configs\core\group`" && call bldmake bldfiles && call .\ABLD.BAT build gcce urel" 'libpcsxcore csl343'
     } finally {
-      if ($Profile -eq 'release') {
+      if ($Profile -eq 'release' -or $Profile -eq 'bench-spustage') {
         Copy-Item $coreBackup $coreMmp -Force
         Remove-Item $coreBackup -Force
       }
@@ -242,34 +247,40 @@ if ($Build) {
     Build-Step "cd /d `"$Proj\configs\stage1\group`" && call bldmake bldfiles && call .\ABLD.BAT clean gcce urel" 'stage1 clean'
   }
 
-  if ($Release) {
+  if ($Release -or $SpuStageProfile) {
     Copy-Item $MmpPath $MmpBackup -Force
-    $patched = [IO.File]::ReadAllText($MmpPath).
-      Replace("MACRO           PS1_BENCH", "// MACRO           PS1_BENCH").
-      Replace("SOURCE          pmu_symbian.cpp", "// SOURCE          pmu_symbian.cpp").
-      Replace("SOURCEPATH      ..\..\..\..\SymbianOverclock\src", "// SOURCEPATH      ..\..\..\..\SymbianOverclock\src").
-      Replace("SOURCE          ocengine.cpp", "// SOURCE          ocengine.cpp")
-    # Match the capability line by shape, not by its exact text: it was a literal
-    # string here until adding SwEvent for the side keys made the match fail
-    # silently, which would have shipped a release EXE with every capability the
-    # harness build needs.
-    # SwEvent is the one that stays. Without it CaptureKey answers -46 and no side
-    # key reaches the game, so stripping it would ship the feature dead. The -46
-    # that once looked like a capability refusal on C5-00.2 turned out to be the
-    # missing SHA-1 in the sys hash directory, so that reason no longer holds.
-    $patched = [regex]::Replace($patched, '(?m)^CAPABILITY\s+.*$', 'CAPABILITY      SwEvent')
-    foreach ($must in @('CAPABILITY      SwEvent', '// MACRO           PS1_BENCH',
-                        '// SOURCE          pmu_symbian.cpp')) {
-      if ($patched -notmatch [regex]::Escape($must)) {
-        throw "the release rewrite did not take: '$must' is missing from the patched mmp"
+    $patched = [IO.File]::ReadAllText($MmpPath)
+    if ($Release) {
+      $patched = $patched.
+        Replace("MACRO           PS1_BENCH", "// MACRO           PS1_BENCH").
+        Replace("SOURCE          pmu_symbian.cpp", "// SOURCE          pmu_symbian.cpp").
+        Replace("SOURCEPATH      ..\..\..\..\SymbianOverclock\src", "// SOURCEPATH      ..\..\..\..\SymbianOverclock\src").
+        Replace("SOURCE          ocengine.cpp", "// SOURCE          ocengine.cpp")
+      # Match the capability line by shape, not by its exact text: it was a literal
+      # string here until adding SwEvent for the side keys made the match fail
+      # silently, which would have shipped a release EXE with every capability the
+      # harness build needs.
+      # SwEvent is the one that stays. Without it CaptureKey answers -46 and no side
+      # key reaches the game, so stripping it would ship the feature dead. The -46
+      # that once looked like a capability refusal on C5-00.2 turned out to be the
+      # missing SHA-1 in the sys hash directory, so that reason no longer holds.
+      $patched = [regex]::Replace($patched, '(?m)^CAPABILITY\s+.*$', 'CAPABILITY      SwEvent')
+      foreach ($must in @('CAPABILITY      SwEvent', '// MACRO           PS1_BENCH',
+                          '// SOURCE          pmu_symbian.cpp')) {
+        if ($patched -notmatch [regex]::Escape($must)) {
+          throw "the release rewrite did not take: '$must' is missing from the patched mmp"
+        }
       }
+    }
+    if ($SpuStageProfile) {
+      $patched = $patched + "`r`nMACRO           PS1_SPU_STAGE_PROFILE`r`n"
     }
     [IO.File]::WriteAllText($MmpPath, $patched)
   }
   try {
     Build-Step "cd /d `"$Proj\configs\stage1\group`" && call bldmake bldfiles && call .\ABLD.BAT build gcce urel" 'stage1'
   } finally {
-    if ($Release) {
+    if ($Release -or $SpuStageProfile) {
       Copy-Item $MmpBackup $MmpPath -Force
       Remove-Item $MmpBackup -Force -ErrorAction SilentlyContinue
     }
