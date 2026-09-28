@@ -66,8 +66,16 @@ extern "C" unsigned int ndrc_symbian_fastcount(void)
 
 extern "C" unsigned int ndrc_symbian_fastfreq(void)
     {
+    static unsigned int s_fastFreq = 0;
+    if (s_fastFreq)
+        return s_fastFreq;
+
     TInt f = 0;
-    if (HAL::Get(HALData::EFastCounterFrequency, f) != KErrNone || f < 1)
-        f = 1000000;
-    return (unsigned int)f;
+    if (HAL::Get(HALData::EFastCounterFrequency, f) == KErrNone && f >= 1)
+        {
+        s_fastFreq = (unsigned int)f;
+        return s_fastFreq;
+        }
+
+    return 1000000;
     }
