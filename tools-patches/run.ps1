@@ -400,7 +400,11 @@ foreach ($f in $Shots) {
 }
 
 # --- summary --------------------------------------------------------------
-foreach ($pat in @('"event":"boot"', '"event":"glr"', '"event":"profile"')) {
+# What makes two runs comparable: the binary that was pushed, the clocks at the start
+# and end of the pass, the output path (dsa/fb events), and the pass result itself.
+Write-Host "[run] exe sha256 $((Get-FileHash -Algorithm SHA256 $Exe).Hash) $((Get-Item $Exe).Length) bytes, flavour $Flavour"
+foreach ($pat in @('"event":"boot"', '"event":"exeid"', '"event":"clocks"', '"event":"fb"',
+                   '"event":"dsa"', '"event":"pass"', '"event":"glr"', '"event":"profile"')) {
   Select-String -Path "$RunDir\ps1_stage1.jsonl" -SimpleMatch $pat |
     ForEach-Object { Write-Host $_.Line }
 }

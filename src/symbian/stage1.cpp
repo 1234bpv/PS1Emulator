@@ -32,6 +32,9 @@ int LoadState(const char *file);
 
 // Outside extern "C": import interface is C++ (classes, references).
 #include "imgconv.h"
+#ifdef PS1_BENCH
+#include "ocengine.h"
+#endif
 
 // How many frames to compute. Overridden by the first command-line argument:
 // EKA2L1 passes it via --run "<exe>" "<args>". Log reaches host only
@@ -98,6 +101,112 @@ static void logEvent(const char *type, const char *errType, const char *fmt, ...
 		errType ? "\"" : "null", errType ? errType : "", errType ? "\"" : "",
 		esc);
 	fflush(g_log);
+	}
+
+// Run conditions without which two timings cannot be compared. Clocks are read from the
+// PRCM registers (HAL reports a wrong core speed) and the governor may sit at either OPP,
+// so the pass logs them at its start and at its end. Release has no engine: says so.
+static void logClocks(const char *aWhen)
+	{
+#ifdef PS1_BENCH
+	const TOcProfile *prof = ProfileForThisDevice();
+	if (!prof)
+		{
+		logEvent("clocks", "NO_PROFILE", "%s: known=0 reason=unknown-device", aWhen);
+		return;
+		}
+	COcEngine *e = NULL;
+	TRAPD(err, e = COcEngine::NewL());
+	if (err != KErrNone || !e)
+		{
+		logEvent("clocks", "CLOCKS_FAIL", "%s: known=0 reason=engine-alloc rc=%d", aWhen, (int)err);
+		return;
+		}
+	e->SetProfile(*prof);
+	const TUint32 regs[4] = { KRegClkSel1Pll, KRegClkSel2Pll, KRegClkSelMpu, KRegClkSel1Core };
+	TUint32 v[4] = { 0, 0, 0, 0 };
+	TInt rc = e->Prepare();
+	const TInt step = (TInt)e->FailedAt();
+	if (rc == KErrNone)
+		rc = e->ReadRegs(regs, v, 4);
+	delete e;
+	if (rc != KErrNone)
+		{
+		logEvent("clocks", "CLOCKS_FAIL", "%s: known=0 reason=read rc=%d step=%d", aWhen, (int)rc, (int)step);
+		return;
+		}
+	TOcClocks c;
+	c.Decode(v[0], v[1], v[2], v[3]);
+	logEvent("clocks", NULL,
+		"%s: known=1 sel1=%08x sel2=%08x mpu=%08x core=%08x mult=%d l3div=%d dss1div=%d coreKhz=%u mpuKhz=%u busKhz=%u",
+		aWhen, (unsigned)v[0], (unsigned)v[1], (unsigned)v[2], (unsigned)v[3],
+		(int)c.iMult, (int)c.iL3Div, (int)c.iDss1Div,
+		(unsigned)c.CoreKhz(), (unsigned)c.MpuKhz(), (unsigned)c.L3Khz());
+#else
+	logEvent("clocks", NULL, "%s: known=0 reason=release-build", aWhen);
+#endif
+	}
+
+static TUint32 crc32Update(TUint32 aCrc, const TUint8 *aData, TInt aLen)
+	{
+	// Nibble table: 16 entries instead of 256, the cost is irrelevant at startup.
+	static const TUint32 KTab[16] =
+		{
+		0x00000000u, 0x1db71064u, 0x3b6e20c8u, 0x26d930acu, 0x76dc4190u, 0x6b6b51f4u,
+		0x4db26158u, 0x5005713cu, 0xedb88320u, 0xf00f9344u, 0xd6d6a3e8u, 0xcb61b38cu,
+		0x9b64c2b0u, 0x86d3d2d4u, 0xa00ae278u, 0xbdbdf21cu
+		};
+	for (TInt i = 0; i < aLen; i++)
+		{
+		aCrc ^= aData[i];
+		aCrc = (aCrc >> 4) ^ KTab[aCrc & 15];
+		aCrc = (aCrc >> 4) ^ KTab[aCrc & 15];
+		}
+	return aCrc;
+	}
+
+// Which binary produced the numbers: size and CRC-32 of the EXE file. The system directory is closed
+// to a process without AllFiles, so on refusal the loaded code is hashed instead (src=code);
+// the SHA-256 of the pushed file is printed on the PC side by run.ps1.
+static void logExeId()
+	{
+	TFileName name = RProcess().FileName();
+	TBuf8<256> name8;
+	name8.Copy(name.Left(name8.MaxLength() - 1));
+	TUint32 crc = 0xffffffffu;
+	TInt size = 0;
+	RFs fs;
+	RFile f;
+	TInt err = fs.Connect();
+	if (err == KErrNone)
+		{
+		err = f.Open(fs, name, EFileRead | EFileShareAny);
+		if (err == KErrNone)
+			{
+			TBuf8<1024> buf;
+			while (f.Read(buf) == KErrNone && buf.Length() > 0)
+				{
+				crc = crc32Update(crc, buf.Ptr(), buf.Length());
+				size += buf.Length();
+				}
+			f.Close();
+			}
+		fs.Close();
+		}
+	if (err == KErrNone)
+		{
+		logEvent("exeid", NULL, "src=file path=%s size=%d crc32=%08x",
+			(const char *)name8.PtrZ(), (int)size, (unsigned)(crc ^ 0xffffffffu));
+		return;
+		}
+	TModuleMemoryInfo mi;
+	const TInt mr = RProcess().GetMemoryInfo(mi);
+	if (mr == KErrNone)
+		crc = crc32Update(crc, (const TUint8 *)mi.iCodeBase, (TInt)mi.iCodeSize);
+	logEvent("exeid", mr == KErrNone ? NULL : "EXEID_FAIL",
+		"src=code path=%s fileErr=%d size=%u crc32=%08x", (const char *)name8.PtrZ(),
+		(int)err, (unsigned)(mr == KErrNone ? mi.iCodeSize : 0),
+		(unsigned)(mr == KErrNone ? crc ^ 0xffffffffu : 0));
 	}
 
 // --- Contract that libpcsxcore expects from frontend -----------------------
@@ -1696,6 +1805,8 @@ static TInt passSetup(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTes
 		g_wdThread.Resume();
 		}
 
+	// Before tStart, so the engine start-up (driver load, kernel patch) is not in the pass time.
+	logClocks("start");
 	g_pass.framesAtStart = frame_counter;
 	// Pipeline profiling: cumulative time (ms) for each stage across entire pass.
 	// NTickCount is ~1ms here; per-frame error averages out over hundreds of frames.
@@ -2159,6 +2270,9 @@ static void passTeardown()
 	const TUint aTicks = g_pass.ticks;
 	const u32 aProduced = g_pass.produced;
 	const TBool stalled = g_pass.stalled;
+
+	// After the ticks are taken; the processor is still loaded, so the OPP read is the working one.
+	logClocks("end");
 
 	inputTraceClose();
 
@@ -3060,6 +3174,9 @@ GLDEF_C TInt E32Main()
 	const TBool gui = (cl.Length() == 0) || (cl.FindF(KGuiArg) != KErrNotFound);
 	logEvent("boot", NULL, "stage1 starting, mode=%s args=\"%s\"",
 		gui ? "gui" : "console", (const char *)cl8.PtrZ());
+	// Hashing the 1.3 MB binary is for comparing stand runs, not for every player launch.
+	if (cl.Length() != 0)
+		logExeId();
 
 	_LIT(KGpuSpeedArg, "gpuspeed");
 	const TInt gspd = cl.FindF(KGpuSpeedArg);

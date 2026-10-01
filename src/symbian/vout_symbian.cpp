@@ -828,6 +828,83 @@ static inline TUint16 Avg555(TUint16 aA, TUint16 aB)
 	return (TUint16)((aA & aB) + (((aA ^ aB) & 0x7bde) >> 1));
 	}
 
+// BOX-KERNEL-BEGIN (plans/bench/box-equiv extracts this block verbatim)
+// Same value as Avg555, in a full register: the result never exceeds 16 bits, so the
+// 16-bit truncation Avg555 performs is two instructions per call for nothing. The mask
+// (0x7bde) arrives in a register: GCCE 3.4.3 builds it from two BICs and a shift pair.
+static inline TUint32 Avg555w(TUint32 aA, TUint32 aB, TUint32 aMask)
+	{
+	return (aA & aB) + (((aA ^ aB) & aMask) >> 1);
+	}
+
+// Channels spread to bytes (R at 19, G at 11, B at 3), then the three high bits of
+// each 5-bit value are copied under it: (v << 3) | (v >> 2) for all three at once.
+// Bit 15 of the input is ignored by the masks, as in Bgr555ToXrgb8888. aLow = 0x070707.
+static inline TUint32 Bgr555ToXrgb8888w(TUint32 aPix, TUint32 aLow)
+	{
+	const TUint32 w = ((aPix & 0x1fu) << 19) | ((aPix & 0x3e0u) << 6) | ((aPix & 0x7c00u) >> 7);
+	return 0xff000000u | w | ((w >> 5) & aLow);
+	}
+
+static inline TUint32 Bgr555ToRgb565w(TUint32 aPix)
+	{
+	return ((aPix & 0x1fu) << 11) | ((aPix << 1) & 0x7c0u) | ((aPix >> 4) & 0x20u)
+	     | ((aPix >> 10) & 0x1fu);
+	}
+
+// One output row of the box filter. M = 0: pair of neighbouring pixels in the row;
+// 1: same pixel in this row and the next; 2: both. In mode 0 the old code averaged the
+// row with itself, and Avg555(x, x) == x, so that second pair is simply dropped.
+template <TInt M, TBool K32>
+static inline void BoxRowT(void *aDst, const TUint16 *aRow, const TUint16 *aRow2,
+                           TInt aPixels, TUint aStep)
+	{
+	TUint32 cAvg = 0x7bdeu, cLow = 0x070707u;
+	__asm__ __volatile__ ("" : "+r"(cAvg), "+r"(cLow));
+	TUint32 *d32 = (TUint32 *)aDst;
+	TUint16 *d16 = (TUint16 *)aDst;
+	TUint sxf = 0;
+	do
+		{
+		const TUint sx = sxf >> 16;
+		const TUint16 *a = aRow + sx;
+		TUint32 v;
+		if (M == 0)
+			v = Avg555w(a[0], a[1], cAvg);
+		else if (M == 1)
+			v = Avg555w(a[0], aRow2[sx], cAvg);
+		else
+			v = Avg555w(Avg555w(a[0], a[1], cAvg),
+			            Avg555w(aRow2[sx], aRow2[sx + 1], cAvg), cAvg);
+		if (K32)
+			*d32++ = Bgr555ToXrgb8888w(v, cLow);
+		else
+			*d16++ = (TUint16)Bgr555ToRgb565w(v);
+		sxf += aStep;
+		} while (--aPixels);
+	}
+
+// Separate function for the same reason as blitRow565: inside blitCurrent the
+// register allocator runs out of room. aPixels must be >= 1.
+static void __attribute__((__noinline__))
+blitRowBox(void *aDst, TInt aPixB, const TUint16 *aRow, const TUint16 *aRow2,
+           TInt aMode, TInt aPixels, TUint aStep)
+	{
+	if (aPixB == 4)
+		{
+		if (aMode == 0)      BoxRowT<0, 1>(aDst, aRow, aRow2, aPixels, aStep);
+		else if (aMode == 1) BoxRowT<1, 1>(aDst, aRow, aRow2, aPixels, aStep);
+		else                 BoxRowT<2, 1>(aDst, aRow, aRow2, aPixels, aStep);
+		}
+	else
+		{
+		if (aMode == 0)      BoxRowT<0, 0>(aDst, aRow, aRow2, aPixels, aStep);
+		else if (aMode == 1) BoxRowT<1, 0>(aDst, aRow, aRow2, aPixels, aStep);
+		else                 BoxRowT<2, 0>(aDst, aRow, aRow2, aPixels, aStep);
+		}
+	}
+// BOX-KERNEL-END
+
 // FXAA-lite for 1:1 scale. Luminance taken as green channel: in BGR555 this is two
 // cycles, and green gives ~60% of luminance - full conversion would cost
 // 10x more per each of five samples. Blur only where gradient
@@ -1855,7 +1932,6 @@ static void blitCurrent()
 	// odd lines, so they contain leftovers from previous frames.
 	const TBool hAvg = g_smoothDown && !rgb24 && sxStep > 0x18000u;
 	const TBool vAvg = g_smoothDown && !rgb24 && field && !g_ilaceOut;
-	const TInt  hOff = hAvg ? 1 : 0;
 	// FXAA makes sense only at 1:1: there every source pixel maps to its screen pixel,
 	// and aliasing is visible as-is. Where downscaling occurs, box filter already smooths.
 	const TBool fxaa = g_fxaaThr > 0 && !rgb24 && sxStep == 0x10000u && !vAvg && dstW > 2;
@@ -1952,28 +2028,10 @@ static void blitCurrent()
 				// The averaged pair must stay inside the display area, as in the fxaa branch.
 				const TUint16 *s2 = (vAvg && ssy + 1 < sh) ? srow + 1024 : srow;
 				if (pixB == 4)
-					{
-					TUint32 *d32 = (TUint32 *)drow;
 					g_rowBox++;
-					for (TInt dx = 0; dx < dstW; dx++, sxf += sxStep)
-						{
-						const TInt sx = (TInt)(sxf >> 16);
-						d32[dx] = Bgr555ToXrgb8888(Avg555(
-							Avg555(srow[sx], srow[sx + hOff]),
-							Avg555(s2[sx],   s2[sx + hOff])));
-						}
-					}
 				else
-					{
 					g_rowOther++;
-					for (TInt dx = 0; dx < dstW; dx++, sxf += sxStep)
-						{
-						const TInt sx = (TInt)(sxf >> 16);
-						drow[dx] = Bgr555ToRgb565(Avg555(
-							Avg555(srow[sx], srow[sx + hOff]),
-							Avg555(s2[sx],   s2[sx + hOff])));
-						}
-					}
+				blitRowBox(drow, pixB, srow, s2, hAvg ? (vAvg ? 2 : 0) : 1, dstW, sxStep);
 			}
 			// 32-bit screen buffer: convert directly to XRGB8888, without intermediate
 			// 16-bit bitmap and without 565->8888 conversion in bitgdi.
