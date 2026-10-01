@@ -24,6 +24,8 @@
 #include <f32file.h>
 #include <badesca.h>
 #include <gdi.h>
+#include <utf.h>
+#include <hal.h>
 
 #include "imgconv.h"
 #include "i18n.h"
@@ -86,21 +88,23 @@ static const TUid KUidPs1App = { 0xE0001002 };
 //
 // Item order = display order. The item's section is given by KItemSection, so
 // items can only be reordered together with it.
+// Sections form an accordion: a header row, the everyday rows, then a "More..." row that
+// opens the rarely needed ones. Only the open section's rows are visible (ItemVisible).
 enum TCfgItem
 	{
 	// There is intentionally no DISPLAY skip ("Show every") here: it renders the
 	// frame and discards it, i.e. pays for the expensive part. Measured -4.3% vs
 	// -22.5% for ECfgGpuSkip. Kept as a command-line probe "showskip".
-	ECfgStart = 0, ECfgGame, ECfgSaveState, ECfgLoadState, ECfgAdd, ECfgBios, ECfgProfile,
-	ECfgLight, ECfgBlend, ECfgIlace, ECfgPixSkip, ECfgSmooth, ECfgFxaa,
-	ECfgDirty, ECfgDsa, ECfgGl, ECfgSwDraw,
-	ECfgCpu, ECfgGteNf, ECfgGpuSkip, ECfgCycle, ECfgFps,
-	ECfgSound, ECfgWsola,
-	ECfgTilt, ECfgTiltSide, ECfgTiltPitch, ECfgTiltDead, ECfgTiltSens, ECfgKeys,
-	ECfgKeyBase,
-	ECfgPreset,
-	ECfgLang,
-	ECfgReset, ECfgExit,
+	ECfgStart = 0,
+	ECfgHdrGame, ECfgGame, ECfgSaveState, ECfgLoadState, ECfgAdd,
+	ECfgHdrVideo, ECfgSmooth, ECfgFxaa, ECfgFps, ECfgMoreVideo,
+	ECfgLight, ECfgBlend, ECfgDirty, ECfgDsa, ECfgGl, ECfgSwDraw, ECfgIlace, ECfgPixSkip,
+	ECfgHdrSpeed, ECfgGpuSkip, ECfgMoreSpeed, ECfgCpu, ECfgGteNf, ECfgCycle,
+	ECfgHdrSound, ECfgSound, ECfgWsola,
+	ECfgHdrInput, ECfgPreset, ECfgKeyBase, ECfgKeys, ECfgMoreInput,
+	ECfgTilt, ECfgTiltSide, ECfgTiltPitch, ECfgTiltDead, ECfgTiltSens,
+	ECfgHdrSystem, ECfgLang, ECfgBios, ECfgProfile, ECfgMoreSystem, ECfgReset,
+	ECfgHelp, ECfgExit,
 	ECfgCount
 	};
 
@@ -112,35 +116,44 @@ enum TCfgSection
 static const TStrId KSecStrId[ESecCount] =
 	{ EStrSecGame, EStrSecVideo, EStrSecSpeed, EStrSecSound, EStrSecControls, EStrSecSystem };
 
+// A section's header row, and the row that opens its rarely needed part (ECfgCount
+// where it has none). The rows after the "More..." row are that part.
+static const unsigned char KSecHdr[ESecCount] =
+	{ ECfgHdrGame, ECfgHdrVideo, ECfgHdrSpeed, ECfgHdrSound, ECfgHdrInput, ECfgHdrSystem };
+static const unsigned char KSecMore[ESecCount] =
+	{ ECfgCount, ECfgMoreVideo, ECfgMoreSpeed, ECfgCount, ECfgMoreInput, ECfgMoreSystem };
+
+// ESecCount in the table means no section: Start, Help and Exit stay on the top level.
 static const unsigned char KItemSection[ECfgCount] =
 	{
-	ESecGame, ESecGame, ESecGame, ESecGame, ESecGame, ESecGame, ESecGame,
+	ESecCount,
+	ESecGame, ESecGame, ESecGame, ESecGame, ESecGame,
+	ESecVideo, ESecVideo, ESecVideo, ESecVideo, ESecVideo, ESecVideo, ESecVideo,
 	ESecVideo, ESecVideo, ESecVideo, ESecVideo, ESecVideo, ESecVideo,
-	ESecVideo, ESecVideo, ESecVideo, ESecVideo,
-	ESecSpeed, ESecSpeed, ESecSpeed, ESecSpeed, ESecSpeed,
-	ESecSound, ESecSound,
-	ESecInput, ESecInput, ESecInput, ESecInput, ESecInput, ESecInput,
-	ESecInput, ESecInput,
-	ESecSystem, ESecSystem, ESecSystem
+	ESecSpeed, ESecSpeed, ESecSpeed, ESecSpeed, ESecSpeed, ESecSpeed,
+	ESecSound, ESecSound, ESecSound,
+	ESecInput, ESecInput, ESecInput, ESecInput, ESecInput, ESecInput, ESecInput,
+	ESecInput, ESecInput, ESecInput,
+	ESecSystem, ESecSystem, ESecSystem, ESecSystem, ESecSystem, ESecSystem,
+	ESecCount, ESecCount
 	};
 
 static const TStrId KItemLabelStrId[ECfgCount] =
 	{
-	EStrItemStart, EStrItemGame, EStrItemSaveState, EStrItemLoadState,
-	EStrItemAdd, EStrItemBios, EStrItemProfile,
-	EStrItemLight, EStrItemBlend, EStrItemIlace, EStrItemPixSkip,
-	EStrItemSmooth, EStrItemFxaa, EStrItemDirty, EStrItemDsa,
-	EStrItemGl, EStrItemSwDraw,
-	EStrItemCpu, EStrItemGteNf, EStrItemGpuSkip, EStrItemCycle,
-	EStrItemFps,
-	EStrItemSound, EStrItemWsola,
-	EStrItemTilt,
-	EStrItemTiltSide, EStrItemTiltPitch, EStrItemTiltDead, EStrItemTiltSens,
-	EStrItemKeys,
-	EStrItemKeyBase,
-	EStrItemPreset,
-	EStrItemLang,
-	EStrItemReset, EStrItemExit
+	EStrItemStart,
+	EStrSecGame, EStrItemGame, EStrItemSaveState, EStrItemLoadState, EStrItemAdd,
+	EStrSecVideo, EStrItemSmooth, EStrItemFxaa, EStrItemFps, EStrItemMore,
+	EStrItemLight, EStrItemBlend, EStrItemDirty, EStrItemDsa, EStrItemGl,
+	EStrItemSwDraw, EStrItemIlace, EStrItemPixSkip,
+	EStrSecSpeed, EStrItemGpuSkip, EStrItemMore, EStrItemCpu, EStrItemGteNf,
+	EStrItemCycle,
+	EStrSecSound, EStrItemSound, EStrItemWsola,
+	EStrSecControls, EStrItemPreset, EStrItemKeyBase, EStrItemKeys, EStrItemMore,
+	EStrItemTilt, EStrItemTiltSide, EStrItemTiltPitch, EStrItemTiltDead,
+	EStrItemTiltSens,
+	EStrSecSystem, EStrItemLang, EStrItemBios, EStrItemProfile, EStrItemMore,
+	EStrItemReset,
+	EStrItemHelp, EStrItemExit
 	};
 
 // Key names in the settings file. NULL means a command item with no value.
@@ -148,16 +161,32 @@ static const TStrId KItemLabelStrId[ECfgCount] =
 // the old file remains valid, missing keys get their default value.
 static const char *const KCfgKey[ECfgCount] =
 	{
-	NULL, NULL, NULL, NULL, NULL, NULL, "profile",
-	"light", "blend", "ilace", "pixskip", "smooth", "fxaa",
-	"dirty", "dsa", "gl", "swdraw",
-	"cpu", "gtenf", "gpuskip", "cycle", "fps",
-	"sound", "wsola",
-	"tilt", "tiltside", "tiltpitch", "tiltdead", "tiltsens", NULL,
 	NULL,
-	NULL,
-	"lang",
+	NULL, NULL, NULL, NULL, NULL,
+	NULL, "smooth", "fxaa", "fps", NULL, "light", "blend", "dirty", "dsa", "gl",
+	"swdraw", "ilace", "pixskip",
+	NULL, "gpuskip", NULL, "cpu", "gtenf", "cycle",
+	NULL, "sound", "wsola",
+	NULL, NULL, NULL, NULL, NULL, "tilt", "tiltside", "tiltpitch", "tiltdead",
+	"tiltsens",
+	NULL, "lang", NULL, "profile", NULL, NULL,
 	NULL, NULL
+	};
+
+// Stable ids of the rows in the help files ("hint.<id>"): they do not move with the
+// order of the rows, so a translated file stays valid when the menu is rearranged.
+static const char *const KItemHelpId[ECfgCount] =
+	{
+	"start",
+	"sec.game", "game", "savestate", "loadstate", "add",
+	"sec.video", "smooth", "fxaa", "fps", "more.video", "light", "blend", "dirty",
+	"dsa", "gl", "swdraw", "ilace", "pixskip",
+	"sec.speed", "gpuskip", "more.speed", "cpu", "gtenf", "cycle",
+	"sec.sound", "sound", "wsola",
+	"sec.input", "preset", "keybase", "keys", "more.input", "tilt", "tiltside",
+	"tiltpitch", "tiltdead", "tiltsens",
+	"sec.system", "lang", "bios", "profile", "more.system", "reset",
+	"help", "exit"
 	};
 
 // Require re-initialization of the core or output: do not take effect from
@@ -170,11 +199,32 @@ static TBool restartOnly(TInt aItem)
 	       aItem == ECfgDsa;
 	}
 
+static TBool isHeader(TInt aItem)
+	{
+	return aItem == ECfgHdrGame || aItem == ECfgHdrVideo || aItem == ECfgHdrSpeed ||
+		   aItem == ECfgHdrSound || aItem == ECfgHdrInput || aItem == ECfgHdrSystem;
+	}
+
+static TBool isMore(TInt aItem)
+	{
+	return aItem == ECfgMoreVideo || aItem == ECfgMoreSpeed || aItem == ECfgMoreInput ||
+		   aItem == ECfgMoreSystem;
+	}
+
+// A row of the part that the section's "More..." row opens.
+static TBool isExtra(TInt aItem)
+	{
+	const TInt s = KItemSection[aItem];
+	return s < ESecCount && !isHeader(aItem) && !isMore(aItem) &&
+		   KSecMore[s] < ECfgCount && aItem > KSecMore[s];
+	}
+
 static TBool isCommand(TInt aItem)
 	{
 	return aItem == ECfgStart || aItem == ECfgGame || aItem == ECfgSaveState ||
-	       aItem == ECfgLoadState || aItem == ECfgAdd || aItem == ECfgBios ||
-	       aItem == ECfgKeys || aItem == ECfgReset || aItem == ECfgExit;
+		   aItem == ECfgLoadState || aItem == ECfgAdd || aItem == ECfgBios ||
+		   aItem == ECfgKeys || aItem == ECfgReset || aItem == ECfgHelp ||
+		   aItem == ECfgExit || isHeader(aItem) || isMore(aItem);
 	}
 
 // PS1 cycle multiplier. Upstream default is CYCLE_MULT_DEFAULT (175); higher means
@@ -254,9 +304,9 @@ static const TStrId KBaseNameStrId[EBaseCount] = { EStrValBaseN95, EStrValBaseC5
 
 static const TInt KBaseC5Scan[KPresetBtnCount] =
 	{
-	'8', '2', '4', '6',
-	EStdKeyDevice3, '0', '7', '9',
-	'1', '3', '5', EStdKeyBackspace, '*', '#'
+	'2', '8', '4', '6',
+	'5', '0', '7', '9',
+	'1', '3', EStdKeyDevice3, EStdKeyBackspace, '*', '#'
 	};
 // * and # each get their named scan code as the alt: firmwares are known to send
 // either the ASCII character or the named code for these two (see the volume
@@ -271,6 +321,9 @@ _LIT(KProfDir, "E:\\PS1\\cfg\\");
 _LIT(KImgDir,  "E:\\PS1\\games\\");
 _LIT(KBiosDir, "E:\\PS1\\bios\\");
 _LIT(KSavesDir, "E:\\PS1\\saves\\");
+_LIT(KHelpDir, "E:\\PS1\\help\\");
+// The dump stage1.cpp falls back to when the profile names none.
+_LIT(KBiosDefault, "scph7502.bin");
 
 class TPs1Cfg
 	{
@@ -281,6 +334,9 @@ public:
 	TInt iInterp, iIlace, iLight, iBlend, iPixSkip, iGteNf, iSound, iGl, iWsola;
 	TInt iDirty, iDsa, iFps, iGpuSkip, iCycle, iSmooth, iFxaa, iProfile, iSwDraw;
 	TInt iLang;
+	// First-run marker, kept in the global file only (intro=1): the setup page opens
+	// at start until it is set. Not part of SetDefaults, so a reset does not clear it.
+	TInt iIntro;
 	TInt iTilt, iTiltSide, iTiltPitch, iTiltDead, iTiltSens;
 	TInt iKeyScan[KPadMax], iKeyAlt[KPadMax], iKeyHold[KPadMax];
 	// BIOS dump name in E:\PS1\bios (without path). Empty means default scph7502.bin.
@@ -295,6 +351,7 @@ void TPs1Cfg::SetDefaults()
 	iInterp = iIlace = iPixSkip = iGteNf = iGl = iFps = iSwDraw = 0;
 	iGpuSkip = 0;
 	iDummy = 0;
+	iIntro = 0;
 	iCycle = KCycleDefault;
 	// Averaging during downscale is ON by default: without it in 640x* modes
 	// the decimation eats thin font strokes, and that is an artifact, not a speedup.
@@ -418,6 +475,152 @@ static void keyName(TInt aScan, TDes &aOut)
 		aOut.Format(_L("k%d"), aScan);
 	}
 
+// --- Text helpers -----------------------------------------------------------
+
+// Next line of aText that fits aWidth: breaks at the last space that fits, or inside a
+// word wider than the line. Every '\n' ends a paragraph, and an empty paragraph comes
+// out as an empty line.
+static TBool wrapNext(const CFont *aFont, const TDesC &aText, TInt aWidth, TInt &aPos,
+					  TPtrC &aLine)
+	{
+	if (aPos >= aText.Length())
+		return EFalse;
+	const TPtrC rest = aText.Mid(aPos);
+	const TInt nl = rest.Locate('\n');
+	const TPtrC para = (nl < 0) ? rest : rest.Left(nl);
+	TInt take = para.Length();
+	if (aFont->TextWidthInPixels(para) > aWidth)
+		{
+		take = aFont->TextCount(para, aWidth);
+		if (take < 1)
+			take = 1;
+		if (take < para.Length() && para[take] != ' ')
+			{
+			const TInt sp = para.Left(take).LocateReverse(' ');
+			if (sp > 0)
+				take = sp;
+			}
+		}
+	aLine.Set(para.Left(take));
+	aPos += take;
+	while (aPos < aText.Length() && aText[aPos] == ' ')
+		aPos++;
+	if (aPos < aText.Length() && aText[aPos] == '\n')
+		aPos++;
+	return ETrue;
+	}
+
+// Walks a help buffer. A section starts with "[key]" at the start of a line; aInline is
+// the rest of that line (a title or a hint), aBody the lines up to the next section.
+static TBool nextSection(const TDesC &aBuf, TInt &aPos, TPtrC &aKey, TPtrC &aInline,
+						 TPtrC &aBody)
+	{
+	const TInt n = aBuf.Length();
+	TInt p = aPos;
+	for (;;)
+		{
+		while (p < n && aBuf[p] != '[')
+			{
+			const TInt nl = aBuf.Mid(p).Locate('\n');
+			if (nl < 0)
+				return EFalse;
+			p += nl + 1;
+			}
+		if (p >= n)
+			return EFalse;
+		const TPtrC line = aBuf.Mid(p);
+		const TInt eol = line.Locate('\n');
+		const TInt close = line.Locate(']');
+		if (close > 1 && (eol < 0 || close < eol))
+			{
+			const TInt lineEnd = (eol < 0) ? line.Length() : eol;
+			aKey.Set(line.Mid(1, close - 1));
+			TPtrC inl(line.Mid(close + 1, lineEnd - close - 1));
+			while (inl.Length() && inl[0] == ' ')
+				inl.Set(inl.Mid(1));
+			while (inl.Length() && inl[inl.Length() - 1] == ' ')
+				inl.Set(inl.Left(inl.Length() - 1));
+			aInline.Set(inl);
+			const TInt bodyStart = (eol < 0) ? n : p + eol + 1;
+			TInt q = bodyStart;
+			while (q < n && aBuf[q] != '[')
+				{
+				const TInt nl = aBuf.Mid(q).Locate('\n');
+				if (nl < 0)
+					{
+					q = n;
+					break;
+					}
+				q += nl + 1;
+				}
+			TPtrC body(aBuf.Mid(bodyStart, q - bodyStart));
+			while (body.Length() && (body[body.Length() - 1] == '\n' ||
+									 body[body.Length() - 1] == ' '))
+				body.Set(body.Left(body.Length() - 1));
+			aBody.Set(body);
+			aPos = q;
+			return ETrue;
+			}
+		p++;
+		}
+	}
+
+// Help texts live on the card, not in the EXE: long text in fifteen languages does not
+// fit the hex-array scheme of i18n.cpp, and a translation then needs no rebuild.
+const TInt KHelpMax = 96 * 1024;
+
+static const char *const KHelpCode[ELangIdCount] =
+	{ "en", "uk", "zh", "de", "fr", "es", "ru", "pt", "it", "pl", "tr", "ja", "hi", "ar", "ko" };
+
+// UTF-8 file to UTF-16 with the CRs removed, so the parser only ever sees LF.
+static HBufC *loadHelpFile(TInt aLang)
+	{
+	TFileName path(KHelpDir);
+	TBuf<4> code;
+	code.Copy(TPtrC8((const TUint8 *)KHelpCode[aLang]));
+	path.Append(code);
+	path.Append(_L(".txt"));
+	RFs fs;
+	if (fs.Connect() != KErrNone)
+		return NULL;
+	HBufC *out = NULL;
+	RFile f;
+	TInt size = 0;
+	if (f.Open(fs, path, EFileRead | EFileShareAny) == KErrNone)
+		{
+		if (f.Size(size) == KErrNone && size > 0 && size <= KHelpMax)
+			{
+			HBufC8 *raw = HBufC8::New(size);
+			HBufC *uni = HBufC::New(size);
+			if (raw && uni)
+				{
+				TPtr8 rp(raw->Des());
+				if (f.Read(rp) == KErrNone && rp.Length() == size)
+					{
+					const TInt skip = (size >= 3 && rp[0] == 0xEF && rp[1] == 0xBB &&
+									   rp[2] == 0xBF) ? 3 : 0;
+					TPtr up(uni->Des());
+					if (CnvUtfConverter::ConvertToUnicodeFromUtf8(up, rp.Mid(skip)) >= 0)
+						{
+						TInt w = 0;
+						for (TInt r = 0; r < up.Length(); r++)
+							if (up[r] != '\r')
+								up[w++] = up[r];
+						up.SetLength(w);
+						out = uni;
+						uni = NULL;
+						}
+					}
+				}
+			delete raw;
+			delete uni;
+			}
+		f.Close();
+		}
+	fs.Close();
+	return out;
+	}
+
 // --- Container: window for the frame + menu + keys ---------------------------
 
 enum TMenuPage
@@ -427,7 +630,9 @@ enum TMenuPage
 	EPageBios,        // BIOS dump selection (including from archives)
 	EPageAsk,         // yes/no question before a long operation
 	EPageProgress,
-	EPageError
+	EPageError,
+	EPageHelp,        // topic list and topic text, from the help files on the card
+	EPageSetup        // first-run checklist
 	};
 
 // What to show in the browser. The browser is one, but the consumers differ:
@@ -435,7 +640,23 @@ enum TMenuPage
 enum TScanMode { EScanGames = 0, EScanImport, EScanBios };
 
 // Question awaiting an answer on EPageAsk.
-enum TAskWhat { EAskNone = 0, EAskMode, EAskDelete, EAskRestart };
+enum TAskWhat { EAskNone = 0, EAskMode, EAskDelete, EAskRestart,
+                EAskNoGame, EAskNoBios };    // the last two guard Start
+
+enum TRowStyle { ERowNormal = 0, ERowHeader, ERowWarn };
+
+enum TSetupRow { ESetLang = 0, ESetKeys, ESetBios, ESetGames, ESetPreset, ESetStart,
+                 ESetHelp, ESetCount };
+
+static const TStrId KSetupLabel[ESetCount] =
+	{ EStrItemLang, EStrItemKeyBase, EStrItemBios, EStrItemGames, EStrItemPreset,
+	  EStrItemStart, EStrItemHelp };
+
+// Ticks of the menu loop (50 ms each): a long hint waits at its ends, then moves.
+const TInt KHintHold = 24;
+const TInt KHintStep = 4;
+
+_LIT(KTopicSetup, "topic.setup");
 
 class CPs1Container : public CCoeControl
 	{
@@ -470,8 +691,15 @@ private:
 	void DrawError(CWindowGc &gc, const TRect &aBody) const;
 	TBool RunningGamePicked() const;
 	void DrawProgress(CWindowGc &gc, const TRect &aBody) const;
+	void DrawHelp(CWindowGc &gc, const TRect &aBody) const;
+	void DrawSetup(CWindowGc &gc, const TRect &aBody) const;
 	void DrawRow(CWindowGc &gc, const TRect &aBody, TInt aY, TInt aLh,
-	             const TDesC &aLeft, const TDesC &aRight, TBool aSel) const;
+	             const TDesC &aLeft, const TDesC &aRight, TBool aSel,
+	             TInt aIndent = 0, TInt aStyle = ERowNormal) const;
+	TRect BodyRect() const;
+	TInt BodyRows() const;
+	TPtrC HintText() const;
+	void HintTick();
 	void ItemLabel(TInt aItem, TDes &aOut) const;
 	void ItemValue(TInt aItem, TDes &aOut) const;
 	TBool ItemVisible(TInt aItem) const;
@@ -485,10 +713,31 @@ private:
 	TKeyResponse AskKeyL(TInt aScan);
 	TKeyResponse ProgressKeyL(TInt aScan);
 	TKeyResponse ErrorKeyL(TInt aScan);
+	TKeyResponse HelpKeyL(TInt aScan);
+	TKeyResponse SetupKeyL(TInt aScan);
 	void OpenMenu();
 	void CloseMenu();
 	void DoCloseMenu(TBool aWithRestart);
 	void RevertRestartSettings();
+	void FixSel();
+	TInt VisibleSel() const;
+	void DoStart();
+	TBool BiosThere() const;
+	void LeaveBrowse();
+	void OpenGameBrowse();
+	void OpenImport();
+	void OpenBiosBrowse();
+
+	// help files and the pages built on them
+	void LoadHelp();
+	TBool HelpFind(const TDesC &aKey, TPtrC &aInline, TPtrC &aBody) const;
+	TBool TopicAt(TInt aIdx, TPtrC &aKey) const;
+	TInt TopicCount() const;
+	TInt LayoutHelp(CWindowGc *aGc, const TRect &aBody, TInt aFrom) const;
+	void OpenHelp(TInt aFrom);
+	void OpenTopic(TInt aIdx);
+	void OpenSetup(TInt aBack);
+	void RefreshSetup();
 
 	// state save / load
 	void StatePath(TDes &aOut, TInt aSlot) const;
@@ -536,6 +785,16 @@ private:
 	TFileName iGamePath;
 	TInt iPage;
 	TInt iSel;                // selected item on the main page
+	TInt iOpenSec;            // section open on the main page (ESecCount = all closed)
+	TBool iOpenMore;          // ... and its "More..." part
+	TInt iHintOff, iHintTick; // scroll of a hint wider than the status line
+	TInt iBackPage;           // where the file browsers return: main or the setup page
+	HBufC *iHelp;             // help file of the interface language (UTF-16), NULL = none
+	HBufC *iHelpEn;           // English fallback; NULL = none, or the language is English
+	TInt iHelpFrom;           // page the help returns to
+	TInt iHelpSel, iHelpTopic, iHelpScroll, iHelpLines;   // iHelpTopic -1 = topic list
+	TInt iSetupBack, iSetupSel, iSetupGames;
+	TBool iSetupBios;
 	TInt iBrowseSel;
 	TInt iKeySel;
 	TInt iPresetSel;          // preset highlighted on the CONTROLS list (not persisted)
@@ -590,6 +849,10 @@ void CPs1Container::ConstructL(const TRect &aRect)
 	iPresetSel = EPresetDefault;
 	iBaseSel = EBaseN95;
 	iStateSlot = 1;
+	iOpenSec = ESecCount;
+	iBackPage = EPageMain;
+	iHelpTopic = -1;
+	iSetupBack = EPageMain;
 	iStatusMsg.Zero();
 	for (TInt i = 0; i < 8; i++)
 		iSideKeyCap[i] = 0;
@@ -606,6 +869,7 @@ void CPs1Container::ConstructL(const TRect &aRect)
 		}
 	if (!iGamePath.Length())
 		AutoPickGameL();
+	LoadHelp();
 	if (ps1TiltCli())
 		iCfg.iTilt = 1;
 	ApplyKeyMap();
@@ -634,7 +898,18 @@ void CPs1Container::ConstructL(const TRect &aRect)
 		g8.ZeroTerminate();
 		ps1SetDiscFromCfg((const char *)g8.Ptr());
 		}
-	iPage = iCliMode ? EPageNone : EPageMain;
+	if (iCliMode)
+		iPage = EPageNone;
+	else if (iCfg.iIntro)
+		iPage = EPageMain;
+	else
+		OpenSetup(EPageMain);
+	// One line per start, so the row budget of the main page can be read off a device:
+	// the machine UID is for telling the handsets apart (keyboard autodetect needs it).
+	TInt mach = 0;
+	HAL::Get(HAL::EMachineUid, mach);
+	const TInt lh = iCoeEnv->NormalFont()->HeightInPixels() + 3;
+	ps1LogFmt("menu", "geometry lh=%d rows=%d machine=0x%08x", (int)lh, (int)BodyRows(), (int)mach);
 	ActivateL();
 	}
 
@@ -650,6 +925,8 @@ CPs1Container::~CPs1Container()
 	ConvRelease();
 	delete iBrowse;
 	delete iPicked;
+	delete iHelp;
+	delete iHelpEn;
 	}
 
 void CPs1Container::ShowError()
@@ -662,6 +939,15 @@ void CPs1Container::ShowError()
 
 TBool CPs1Container::ItemVisible(TInt aItem) const
 	{
+	// Only the open section shows its rows, and its "More..." part only once opened.
+	const TInt sec = KItemSection[aItem];
+	if (sec < ESecCount && !isHeader(aItem))
+		{
+		if (sec != iOpenSec)
+			return EFalse;
+		if (isExtra(aItem) && !iOpenMore)
+			return EFalse;
+		}
 	// Slots are named after iGamePath, which already points at the next game while the
 	// core still runs the old one.
 	if (aItem == ECfgSaveState || aItem == ECfgLoadState)
@@ -671,7 +957,7 @@ TBool CPs1Container::ItemVisible(TInt aItem) const
 		return iCfg.iGl;
 	// Tuning rows for a sensor that is switched off would be four dead lines.
 	if (aItem == ECfgTiltSide || aItem == ECfgTiltPitch ||
-	    aItem == ECfgTiltDead || aItem == ECfgTiltSens)
+		aItem == ECfgTiltDead || aItem == ECfgTiltSens)
 		return iCfg.iTilt;
 	return ETrue;
 	}
@@ -715,6 +1001,9 @@ void CPs1Container::MigrateOldLayout()
 	RFs fs;
 	if (fs.Connect() != KErrNone)
 		return;
+	// RFs::Rename does not create the destination directory.
+	fs.MkDirAll(KProfDir);
+	fs.MkDirAll(KBiosDir);
 	TEntry e;
 	if (fs.Entry(KCfgPath, e) != KErrNone)
 		fs.Rename(_L("E:\\ps1_settings.txt"), KCfgPath);
@@ -899,11 +1188,12 @@ void CPs1Container::BrowseEnterL()
 	TFileName full = iBrowsePath;
 	full.Append(n);
 	SetGameL(full);
-	iPage = EPageMain;
 	// Cursor on the first item: the disc has been selected, and the next thing
 	// the user wants is to launch it. Leaving the cursor on "Game" would mean
 	// that OK opens the file browser again, with no obvious way to apply the choice.
-	iSel = ECfgStart;
+	if (iBackPage == EPageMain)
+		iSel = ECfgStart;
+	LeaveBrowse();
 	}
 
 // Changing the game with profiles enabled: first save the previous game's settings,
@@ -1076,6 +1366,15 @@ void CPs1Container::ParseCfg(const TDesC8 &aTxt, TBool aWithGame)
 			iCfg.iBios.Copy(val.Left(iCfg.iBios.MaxLength()));
 			continue;
 			}
+		// Older builds skip a key they do not know, so the file stays readable by them.
+		if (key == _L8("intro"))
+			{
+			TLex8 li(val);
+			TInt v = 0;
+			if (aWithGame && li.Val(v) == KErrNone)
+				iCfg.iIntro = v ? 1 : 0;
+			continue;
+			}
 		if (key.Length() > 3 && key.Left(3) == _L8("btn"))
 			{
 			TLex8 lk(key.Mid(3));
@@ -1141,6 +1440,10 @@ void CPs1Container::SaveCfg(const TDesC &aPath, TBool aWithGame) const
 			g.Copy(iGamePath);
 			line.Format(_L8("game=%S\n"), &g);
 			if (werr == KErrNone) werr = f.Write(line);
+			}
+		if (aWithGame && iCfg.iIntro)
+			{
+			if (werr == KErrNone) werr = f.Write(_L8("intro=1\n"));
 			}
 		// BIOS is written to both files: in the profile it is per-game, in the
 		// global file it is the default for games that have no profile yet.
@@ -1311,6 +1614,14 @@ void CPs1Container::ItemLabel(TInt aItem, TDes &aOut) const
 			: RestartNeeded() ? EStrItemRestart : EStrItemResume));
 		return;
 		}
+	if (isHeader(aItem) || isMore(aItem))
+		{
+		const TBool open = (iOpenSec == KItemSection[aItem]) &&
+						   (isHeader(aItem) || iOpenMore);
+		aOut.Copy(open ? _L("- ") : _L("+ "));
+		aOut.Append(Tr(KItemLabelStrId[aItem]));
+		return;
+		}
 	aOut.Copy(Tr(KItemLabelStrId[aItem]));
 	// Asterisk only in-game: before the start everything takes effect, and the mark
 	// would be misleading.
@@ -1325,7 +1636,20 @@ void CPs1Container::ItemValue(TInt aItem, TDes &aOut) const
 	switch (aItem)
 		{
 		case ECfgStart:
+		case ECfgHdrVideo:
+		case ECfgHdrSpeed:
+		case ECfgHdrInput:
+		case ECfgHdrSystem:
+		case ECfgMoreVideo:
+		case ECfgMoreSpeed:
+		case ECfgMoreInput:
+		case ECfgMoreSystem:
+		case ECfgHelp:
 			break;
+		case ECfgHdrSound:
+			aOut.Copy(Tr(c.iSound ? EStrValOn : EStrValOff));
+			break;
+		case ECfgHdrGame:
 		case ECfgGame:
 			if (iGamePath.Length())
 				{
@@ -1342,14 +1666,8 @@ void CPs1Container::ItemValue(TInt aItem, TDes &aOut) const
 			// A symbol rather than a word: the marker needs no translation.
 			TFileName p;
 			StatePath(p, iStateSlot);
-			RFs fs;
-			TBool have = EFalse;
-			if (fs.Connect() == KErrNone)
-				{
-				TEntry e;
-				have = (fs.Entry(p, e) == KErrNone);
-				fs.Close();
-				}
+			TEntry e;
+			const TBool have = (iCoeEnv->FsSession().Entry(p, e) == KErrNone);
 			aOut.Append(have ? _L(" [*]") : _L(" [ ]"));
 			}
 			break;
@@ -1357,7 +1675,7 @@ void CPs1Container::ItemValue(TInt aItem, TDes &aOut) const
 			aOut.Copy(Tr(EStrValPressOk));
 			break;
 		case ECfgBios:
-			aOut.Copy(c.iBios.Length() ? TPtrC(c.iBios) : Tr(EStrValDefault));
+			aOut.Copy((c.iBios.Length() ? TPtrC(c.iBios) : Tr(EStrValDefault)).Left(aOut.MaxLength()));
 			break;
 		case ECfgCpu:
 			aOut.Copy(Tr(c.iInterp ? EStrValInterp : EStrValDynarec));
@@ -1441,9 +1759,24 @@ void CPs1Container::ItemValue(TInt aItem, TDes &aOut) const
 
 // --- Drawing ----------------------------------------------------------------
 
+// The list area between the title bar and the hint line.
+TRect CPs1Container::BodyRect() const
+	{
+	const TRect r = Rect();
+	const TInt lh = iCoeEnv->NormalFont()->HeightInPixels() + 3;
+	return TRect(r.iTl.iX, r.iTl.iY + lh + 8, r.iBr.iX, r.iBr.iY - lh - 4);
+	}
+
+TInt CPs1Container::BodyRows() const
+	{
+	const TInt lh = iCoeEnv->NormalFont()->HeightInPixels() + 3;
+	const TInt rows = BodyRect().Height() / lh;
+	return (rows < 1) ? 1 : rows;
+	}
+
 // Header, list body, and hint line. Returns the rectangle for the list.
 TRect CPs1Container::DrawChrome(CWindowGc &gc, const TDesC &aTitle,
-                                const TDesC &aHint) const
+								const TDesC &aHint) const
 	{
 	const TRect r = Rect();
 	const CFont *font = iCoeEnv->NormalFont();
@@ -1469,14 +1802,20 @@ TRect CPs1Container::DrawChrome(CWindowGc &gc, const TDesC &aTitle,
 	else
 		{
 		gc.SetPenColor(TRgb(0x88, 0x90, 0xa0));
-		gc.DrawText(aHint, TPoint(r.iTl.iX + 6, r.iBr.iY - 4));
+		// Cut at the screen edge on a character boundary rather than mid-glyph.
+		TPtrC hint(aHint);
+		const TInt avail = r.Width() - 12;
+		if (font->TextWidthInPixels(hint) > avail)
+			hint.Set(hint.Left(font->TextCount(hint, avail)));
+		gc.DrawText(hint, TPoint(r.iTl.iX + 6, r.iBr.iY - 4));
 		}
 
-	return TRect(r.iTl.iX, r.iTl.iY + lh + 8, r.iBr.iX, r.iBr.iY - lh - 4);
+	return BodyRect();
 	}
 
 void CPs1Container::DrawRow(CWindowGc &gc, const TRect &aBody, TInt aY, TInt aLh,
-                            const TDesC &aLeft, const TDesC &aRight, TBool aSel) const
+							const TDesC &aLeft, const TDesC &aRight, TBool aSel,
+							TInt aIndent, TInt aStyle) const
 	{
 	const CFont *font = iCoeEnv->NormalFont();
 	const TInt asc = font->AscentInPixels();
@@ -1489,19 +1828,26 @@ void CPs1Container::DrawRow(CWindowGc &gc, const TRect &aBody, TInt aY, TInt aLh
 			aY - asc - 1 + aLh));
 		gc.SetPenStyle(CGraphicsContext::ESolidPen);
 		}
-	const TInt rw = aRight.Length() ? font->TextWidthInPixels(aRight) : 0;
+	// A long value (a game file name) must not push the label out altogether.
+	TPtrC right(aRight);
+	const TInt maxRight = (aBody.Width() - 20) * 3 / 5;
+	if (font->TextWidthInPixels(right) > maxRight)
+		right.Set(right.Left(font->TextCount(right, maxRight)));
+	const TInt rw = right.Length() ? font->TextWidthInPixels(right) : 0;
 	// Translated labels are longer than the English ones and would print under the value.
-	TInt avail = aBody.Width() - 20 - (rw ? rw + 8 : 0);
+	TInt avail = aBody.Width() - 20 - aIndent - (rw ? rw + 8 : 0);
 	if (avail < 0) avail = 0;
 	TPtrC left(aLeft);
 	if (font->TextWidthInPixels(left) > avail)
 		left.Set(left.Left(font->TextCount(left, avail)));
-	gc.SetPenColor(aSel ? KRgbWhite : TRgb(0xc8, 0xc8, 0xd0));
-	gc.DrawText(left, TPoint(aBody.iTl.iX + 10, aY));
+	gc.SetPenColor(aSel ? KRgbWhite
+		: aStyle == ERowHeader ? TRgb(0x58, 0x9c, 0xe0) : TRgb(0xc8, 0xc8, 0xd0));
+	gc.DrawText(left, TPoint(aBody.iTl.iX + 10 + aIndent, aY));
 	if (rw)
 		{
-		gc.SetPenColor(aSel ? TRgb(0xff, 0xdc, 0x88) : TRgb(0x8c, 0xb0, 0xd8));
-		gc.DrawText(aRight, TPoint(aBody.iBr.iX - 10 - rw, aY));
+		gc.SetPenColor(aStyle == ERowWarn ? TRgb(0xff, 0x90, 0x90)
+			: aSel ? TRgb(0xff, 0xdc, 0x88) : TRgb(0x8c, 0xb0, 0xd8));
+		gc.DrawText(right, TPoint(aBody.iBr.iX - 10 - rw, aY));
 		}
 	}
 
@@ -1512,20 +1858,17 @@ void CPs1Container::DrawMain(CWindowGc &gc, const TRect &aBody) const
 	TInt rows = aBody.Height() / lh;
 	if (rows < 1) rows = 1;
 
-	// Section headers participate in scrolling as regular rows; count only visible items.
+	// Scrolling counts only the rows that are visible now.
+	const TInt sel = VisibleSel();
 	TInt total = 0;
 	TInt selRow = 0;
-	for (TInt sec = 0; sec < ESecCount; sec++)
+	for (TInt i = 0; i < ECfgCount; i++)
 		{
+		if (!ItemVisible(i))
+			continue;
+		if (i == sel)
+			selRow = total;
 		total++;
-		for (TInt i = 0; i < ECfgCount; i++)
-			{
-			if (KItemSection[i] != sec || !ItemVisible(i))
-				continue;
-			if (i == iSel)
-				selRow = total;
-			total++;
-			}
 		}
 
 	TInt first = selRow - rows / 2;
@@ -1534,30 +1877,24 @@ void CPs1Container::DrawMain(CWindowGc &gc, const TRect &aBody) const
 
 	TInt y = aBody.iTl.iY + font->AscentInPixels();
 	TInt row = 0;
-	for (TInt sec = 0; sec < ESecCount; sec++)
+	for (TInt i = 0; i < ECfgCount; i++)
 		{
+		if (!ItemVisible(i))
+			continue;
 		if (row >= first && row < first + rows)
 			{
-			gc.SetPenColor(TRgb(0x58, 0x9c, 0xe0));
-			gc.DrawText(Tr(KSecStrId[sec]), TPoint(aBody.iTl.iX + 4, y));
+			TBuf<64> label;
+			TBuf<64> value;
+			ItemLabel(i, label);
+			ItemValue(i, value);
+			// Rows hang under their header, and the "More..." part one step deeper.
+			const TInt indent = (KItemSection[i] == ESecCount || isHeader(i)) ? 0
+				: isExtra(i) ? 20 : 10;
+			DrawRow(gc, aBody, y, lh, label, value, i == sel, indent,
+				isHeader(i) ? ERowHeader : ERowNormal);
 			y += lh;
 			}
 		row++;
-		for (TInt i = 0; i < ECfgCount; i++)
-			{
-			if (KItemSection[i] != sec || !ItemVisible(i))
-				continue;
-			if (row >= first && row < first + rows)
-				{
-				TBuf<64> label;
-				TBuf<64> value;
-				ItemLabel(i, label);
-				ItemValue(i, value);
-				DrawRow(gc, aBody, y, lh, label, value, i == iSel);
-				y += lh;
-				}
-			row++;
-			}
 		}
 	}
 
@@ -1666,9 +2003,13 @@ void CPs1Container::DrawAsk(CWindowGc &gc, const TRect &aBody) const
 
 	const TDesC &o0 = Tr(iAsk == EAskMode ? EStrAskCompress
 		: iAsk == EAskDelete ? EStrAskDeleteYes
+		: iAsk == EAskNoGame ? EStrAskPickGame
+		: iAsk == EAskNoBios ? EStrAskContinue
 		: EStrAskRestartYes);
 	const TDesC &o1 = Tr(iAsk == EAskMode ? EStrAskStore
 		: iAsk == EAskDelete ? EStrAskDeleteNo
+		: iAsk == EAskNoGame ? EStrItemAdd
+		: iAsk == EAskNoBios ? EStrAskPickBios
 		: EStrAskRestartNo);
 	DrawRow(gc, aBody, y, lh, o0, KNullDesC, iAskSel == 0);
 	y += lh;
@@ -1690,6 +2031,18 @@ void CPs1Container::DrawAsk(CWindowGc &gc, const TRect &aBody) const
 		n.Format(Tr(EStrAskFilesFmt), iPicked->Count());
 		gc.DrawText(n, TPoint(aBody.iTl.iX + 10, y));
 		y += lh;
+		}
+	else if (iAsk == EAskNoGame || iAsk == EAskNoBios)
+		{
+		const TDesC &msg = Tr(iAsk == EAskNoGame ? EStrAskNoGameWarn : EStrAskNoBiosWarn);
+		gc.SetPenColor(TRgb(0xff, 0xdc, 0x88));
+		TInt pos = 0;
+		TPtrC line;
+		while (wrapNext(font, msg, aBody.Width() - 20, pos, line))
+			{
+			gc.DrawText(line, TPoint(aBody.iTl.iX + 10, y));
+			y += lh;
+			}
 		}
 	else if (iAsk == EAskRestart)
 		{
@@ -1775,6 +2128,104 @@ void CPs1Container::DrawProgress(CWindowGc &gc, const TRect &aBody) const
 		}
 	}
 
+void CPs1Container::DrawHelp(CWindowGc &gc, const TRect &aBody) const
+	{
+	const CFont *font = iCoeEnv->NormalFont();
+	const TInt lh = font->HeightInPixels() + 3;
+	const TInt rows = BodyRows();
+	TInt y = aBody.iTl.iY + font->AscentInPixels();
+	if (iHelpTopic < 0)
+		{
+		const TInt n = TopicCount();
+		if (!n)
+			{
+			gc.SetPenColor(TRgb(0x90, 0x90, 0x98));
+			gc.DrawText(Tr(EStrEmpty), TPoint(aBody.iTl.iX + 10, y));
+			return;
+			}
+		TInt first = iHelpSel - rows / 2;
+		if (first > n - rows) first = n - rows;
+		if (first < 0) first = 0;
+		for (TInt i = first; i < first + rows && i < n; i++)
+			{
+			TPtrC key, inl, text;
+			TPtrC title;
+			if (TopicAt(i, key))
+				title.Set(HelpFind(key, inl, text) ? inl : key);
+			DrawRow(gc, aBody, y, lh, title, KNullDesC, i == iHelpSel);
+			y += lh;
+			}
+		return;
+		}
+	gc.SetPenColor(TRgb(0xc8, 0xc8, 0xd0));
+	const TInt total = LayoutHelp(&gc, aBody, iHelpScroll);
+	if (total > rows)
+		{
+		const TInt th = aBody.Height();
+		TInt bh = th * rows / total;
+		if (bh < 6) bh = 6;
+		const TInt by = aBody.iTl.iY + (th - bh) * iHelpScroll / (total - rows);
+		gc.SetBrushStyle(CGraphicsContext::ESolidBrush);
+		gc.SetPenStyle(CGraphicsContext::ENullPen);
+		gc.SetBrushColor(TRgb(0x20, 0x24, 0x30));
+		gc.DrawRect(TRect(aBody.iBr.iX - 5, aBody.iTl.iY, aBody.iBr.iX - 2, aBody.iBr.iY));
+		gc.SetBrushColor(TRgb(0x58, 0x9c, 0xe0));
+		gc.DrawRect(TRect(aBody.iBr.iX - 5, by, aBody.iBr.iX - 2, by + bh));
+		gc.SetPenStyle(CGraphicsContext::ESolidPen);
+		}
+	}
+
+void CPs1Container::DrawSetup(CWindowGc &gc, const TRect &aBody) const
+	{
+	const CFont *font = iCoeEnv->NormalFont();
+	const TInt lh = font->HeightInPixels() + 3;
+	TInt y = aBody.iTl.iY + font->AscentInPixels();
+	for (TInt i = 0; i < ESetCount; i++)
+		{
+		TBuf<64> value;
+		TInt style = ERowNormal;
+		switch (i)
+			{
+			case ESetLang:
+				value.Format(_L("< %S >"), &I18nLanguageName(iCfg.iLang));
+				break;
+			case ESetKeys:
+				value.Format(_L("< %S >"), &Tr(KBaseNameStrId[iBaseSel]));
+				break;
+			case ESetBios:
+				if (iSetupBios)
+					{
+					const TPtrC nm = iCfg.iBios.Length() ? TPtrC(iCfg.iBios) : TPtrC(KBiosDefault);
+					value.Copy(Tr(EStrValFound));
+					value.Append(_L(": "));
+					value.Append(nm.Left(value.MaxLength() - value.Length()));
+					}
+				else
+					{
+					value.Copy(Tr(EStrValMissing));
+					style = ERowWarn;
+					}
+				break;
+			case ESetGames:
+				if (iSetupGames)
+					value.Format(_L("%d"), iSetupGames);
+				else
+					{
+					value.Copy(Tr(EStrValMissing));
+					style = ERowWarn;
+					}
+				break;
+			case ESetPreset:
+				value.Format(_L("< %S >"), &Tr(KPresetNameStrId[iPresetSel]));
+				break;
+			default:
+				break;
+			}
+		DrawRow(gc, aBody, y, lh, Tr(KSetupLabel[i]), value, i == iSetupSel, 0, style);
+		y += lh;
+		}
+	}
+
 // In menu mode we draw ourselves; in-game it is empty: the frame is blitted by the
 // emulator outside the BeginRedraw/EndRedraw pair, and the framework has no current frame.
 void CPs1Container::Draw(const TRect & /*aRect*/) const
@@ -1789,7 +2240,8 @@ void CPs1Container::Draw(const TRect & /*aRect*/) const
 		title.Copy(Tr(iPage == EPageImport ? EStrTitleAddGames
 			: iPage == EPageBios ? EStrTitleSelectBios
 			: EStrTitleSelectGame));
-		title.Append(iBrowsePath.Length() ? TPtrC(iBrowsePath) : Tr(EStrDrives));
+		const TPtrC where = iBrowsePath.Length() ? TPtrC(iBrowsePath) : Tr(EStrDrives);
+		title.Append(where.Left(title.MaxLength() - title.Length()));
 		const TRect body = DrawChrome(gc, title.Left(46),
 			Tr(iPage == EPageImport ? EStrHintImport : EStrHintBrowse));
 		DrawFiles(gc, body);
@@ -1799,6 +2251,8 @@ void CPs1Container::Draw(const TRect & /*aRect*/) const
 		const TRect body = DrawChrome(gc,
 			Tr(iAsk == EAskMode ? EStrTitleStore
 				: iAsk == EAskDelete ? EStrTitleDelete
+				: iAsk == EAskNoGame ? EStrTitleNoGame
+				: iAsk == EAskNoBios ? EStrTitleNoBios
 				: EStrTitleRestart),
 			Tr(EStrHintAsk));
 		DrawAsk(gc, body);
@@ -1822,15 +2276,330 @@ void CPs1Container::Draw(const TRect & /*aRect*/) const
 			Tr(iCapture >= 0 ? EStrHintCapture : EStrHintKeys));
 		DrawKeys(gc, body);
 		}
+	else if (iPage == EPageHelp)
+		{
+		TPtrC title(Tr(EStrItemHelp));
+		if (iHelpTopic >= 0)
+			{
+			TPtrC key, inl, text;
+			if (TopicAt(iHelpTopic, key) && HelpFind(key, inl, text))
+				title.Set(inl);
+			}
+		const TRect body = DrawChrome(gc, title,
+			Tr(iHelpTopic >= 0 ? EStrHintHelpText : EStrHintHelpList));
+		DrawHelp(gc, body);
+		}
+	else if (iPage == EPageSetup)
+		{
+		const TRect body = DrawChrome(gc, Tr(EStrTitleSetup), Tr(EStrHintSetup));
+		DrawSetup(gc, body);
+		}
 	else
 		{
-		const TRect body = DrawChrome(gc, _L("PS1Emulator"),
-			Tr(iGameClosed  ? EStrHintGameClosed
-			: iStartedOnce ? EStrHintMainResume
-			               : EStrHintMainStart));
+		// The selected row's own hint replaces the general one when the help file has it.
+		TPtrC hint = HintText();
+		if (hint.Length())
+			hint.Set(hint.Mid(iHintOff < hint.Length() ? iHintOff : 0));
+		else
+			hint.Set(Tr(iGameClosed  ? EStrHintGameClosed
+				: iStartedOnce ? EStrHintMainResume
+							   : EStrHintMainStart));
+		const TRect body = DrawChrome(gc, _L("PS1Emulator"), hint);
 		DrawMain(gc, body);
 		}
 	gc.DiscardFont();
+	}
+
+// --- Start checks, help and first-run page ----------------------------------
+
+// The cursor must stand on a visible row: a section can close (or a game end) under it.
+TInt CPs1Container::VisibleSel() const
+	{
+	if (iSel >= 0 && iSel < ECfgCount && ItemVisible(iSel))
+		return iSel;
+	const TInt sec = (iSel >= 0 && iSel < ECfgCount) ? KItemSection[iSel] : ESecCount;
+	return (sec < ESecCount) ? KSecHdr[sec] : ECfgStart;
+	}
+
+void CPs1Container::FixSel()
+	{
+	iSel = VisibleSel();
+	}
+
+TBool CPs1Container::BiosThere() const
+	{
+	TFileName p(KBiosDir);
+	if (iCfg.iBios.Length())
+		{
+		if (p.Length() + iCfg.iBios.Length() > p.MaxLength())
+			return EFalse;
+		p.Append(iCfg.iBios);
+		}
+	else
+		p.Append(KBiosDefault);
+	return fileThere(p);
+	}
+
+// What Start does once the checks have passed.
+void CPs1Container::DoStart()
+	{
+	if (iStartedOnce)
+		{
+		if (RestartNeeded())
+			{
+			iAsk = EAskRestart;
+			iAskSel = 0;
+			iPage = EPageAsk;
+			}
+		else
+			DoCloseMenu(EFalse);
+		}
+	else
+		ApplyAndStart();
+	}
+
+// The browsers return to the page that opened them: the main page, or the setup page.
+void CPs1Container::LeaveBrowse()
+	{
+	iPage = iBackPage;
+	iBackPage = EPageMain;
+	if (iPage == EPageSetup)
+		RefreshSetup();
+	}
+
+void CPs1Container::OpenGameBrowse()
+	{
+	// Start browsing from the current game's directory - this is the most common need.
+	// A game whose file is gone starts from the games directory instead.
+	if (iGamePath.Length() && fileThere(iGamePath))
+		{
+		const TInt s = iGamePath.LocateReverse('\\');
+		iBrowsePath = iGamePath.Left(s + 1);
+		}
+	else
+		iBrowsePath = KImgDir;
+	iScanMode = EScanGames;
+	ScanDirL();
+	iPage = EPageFiles;
+	}
+
+void CPs1Container::OpenImport()
+	{
+	// Start from the card root: what is being imported was just copied
+	// there from a PC, not placed into the emulator directory.
+	iBrowsePath = _L("E:\\");
+	iScanMode = EScanImport;
+	iPicked->Reset();
+	ScanDirL();
+	iPage = EPageImport;
+	}
+
+void CPs1Container::OpenBiosBrowse()
+	{
+	iBrowsePath = KBiosDir;
+	iScanMode = EScanBios;
+	ScanDirL();
+	iPage = EPageBios;
+	}
+
+// Only the language file is replaced on a language change: the English one never changes.
+void CPs1Container::LoadHelp()
+	{
+	TInt lang = iCfg.iLang;
+	if (lang < 0 || lang >= ELangIdCount)
+		lang = ELangIdEnglish;
+	delete iHelp;
+	iHelp = loadHelpFile(lang);
+	if (lang == ELangIdEnglish)
+		{
+		delete iHelpEn;
+		iHelpEn = NULL;
+		}
+	else if (!iHelpEn)
+		iHelpEn = loadHelpFile(ELangIdEnglish);
+	}
+
+// A key missing from the language file is taken from the English one.
+TBool CPs1Container::HelpFind(const TDesC &aKey, TPtrC &aInline, TPtrC &aBody) const
+	{
+	for (TInt pass = 0; pass < 2; pass++)
+		{
+		const HBufC *b = pass ? iHelpEn : iHelp;
+		if (!b)
+			continue;
+		TInt pos = 0;
+		TPtrC key, inl, body;
+		while (nextSection(*b, pos, key, inl, body))
+			if (key == aKey)
+				{
+				aInline.Set(inl);
+				aBody.Set(body);
+				return ETrue;
+				}
+		}
+	return EFalse;
+	}
+
+// The topic list comes from the English file, so a partly translated file still shows
+// every topic; the titles and texts are looked up per key.
+TBool CPs1Container::TopicAt(TInt aIdx, TPtrC &aKey) const
+	{
+	const HBufC *b = iHelpEn ? iHelpEn : iHelp;
+	if (!b)
+		return EFalse;
+	TInt pos = 0, n = 0;
+	TPtrC key, inl, body;
+	while (nextSection(*b, pos, key, inl, body))
+		if (key.Length() > 6 && key.Left(6) == _L("topic."))
+			{
+			if (n == aIdx)
+				{
+				aKey.Set(key);
+				return ETrue;
+				}
+			n++;
+			}
+	return EFalse;
+	}
+
+TInt CPs1Container::TopicCount() const
+	{
+	TPtrC key;
+	TInt n = 0;
+	while (TopicAt(n, key))
+		n++;
+	return n;
+	}
+
+// Lays out the open topic. Draws the lines from aFrom on when a context is given;
+// returns the number of lines in all.
+TInt CPs1Container::LayoutHelp(CWindowGc *aGc, const TRect &aBody, TInt aFrom) const
+	{
+	TPtrC key, inl, body;
+	if (!TopicAt(iHelpTopic, key) || !HelpFind(key, inl, body))
+		return 0;
+	const CFont *font = iCoeEnv->NormalFont();
+	const TInt lh = font->HeightInPixels() + 3;
+	const TInt rows = BodyRows();
+	TInt y = aBody.iTl.iY + font->AscentInPixels();
+	TInt pos = 0, n = 0;
+	TPtrC line;
+	// 8 px of margin on the left, and room on the right for the scroll bar.
+	while (wrapNext(font, body, aBody.Width() - 20, pos, line))
+		{
+		if (aGc && n >= aFrom && n < aFrom + rows)
+			{
+			aGc->DrawText(line, TPoint(aBody.iTl.iX + 8, y));
+			y += lh;
+			}
+		n++;
+		}
+	return n;
+	}
+
+void CPs1Container::OpenHelp(TInt aFrom)
+	{
+	iHelpFrom = aFrom;
+	iHelpTopic = -1;
+	iPage = EPageHelp;
+	}
+
+void CPs1Container::OpenTopic(TInt aIdx)
+	{
+	TPtrC key;
+	if (!TopicAt(aIdx, key))
+		return;
+	if (key.Compare(KTopicSetup) == 0)
+		{
+		OpenSetup(EPageHelp);
+		return;
+		}
+	iHelpTopic = aIdx;
+	iHelpScroll = 0;
+	iHelpLines = LayoutHelp(NULL, BodyRect(), 0);
+	}
+
+void CPs1Container::OpenSetup(TInt aBack)
+	{
+	iSetupBack = aBack;
+	iSetupSel = 0;
+	RefreshSetup();
+	iPage = EPageSetup;
+	}
+
+// What the setup page shows is looked up here, not on every redraw.
+void CPs1Container::RefreshSetup()
+	{
+	iSetupBios = BiosThere();
+	iSetupGames = 0;
+	RFs fs;
+	if (fs.Connect() != KErrNone)
+		return;
+	CDir *dir = NULL;
+	TFileName spec(KImgDir);
+	spec.Append('*');
+	if (fs.GetDir(spec, KEntryAttNormal, ESortNone, dir) == KErrNone && dir)
+		{
+		for (TInt i = 0; i < dir->Count(); i++)
+			if (isImageName((*dir)[i].iName))
+				iSetupGames++;
+		delete dir;
+		}
+	fs.Close();
+	}
+
+// The hint of the selected row, or empty when the help files have none.
+TPtrC CPs1Container::HintText() const
+	{
+	if (iSel < 0 || iSel >= ECfgCount)
+		return TPtrC();
+	const char *id = KItemHelpId[iSel];
+	if (iSel == ECfgStart)
+		id = iGameClosed ? "exit" : !iStartedOnce ? "start"
+			: RestartNeeded() ? "restart" : "resume";
+	TBuf<48> key(_L("hint."));
+	TBuf<32> name;
+	name.Copy(TPtrC8((const TUint8 *)id));
+	key.Append(name);
+	TPtrC inl, body;
+	if (HelpFind(key, inl, body))
+		return inl;
+	return TPtrC();
+	}
+
+// A hint wider than the status line scrolls: it waits at the start, moves two characters
+// per step, waits at the end and starts over. Driven by the menu tick.
+void CPs1Container::HintTick()
+	{
+	if (iStatusMsg.Length())
+		return;
+	const TPtrC hint = HintText();
+	const CFont *font = iCoeEnv->NormalFont();
+	const TInt avail = Rect().Width() - 12;
+	if (!hint.Length() || font->TextWidthInPixels(hint) <= avail)
+		{
+		iHintOff = 0;
+		iHintTick = 0;
+		return;
+		}
+	if (iHintOff > hint.Length())
+		iHintOff = 0;
+	++iHintTick;
+	if (font->TextWidthInPixels(hint.Mid(iHintOff)) <= avail)
+		{
+		if (iHintTick >= KHintHold)
+			{
+			iHintOff = 0;
+			iHintTick = 0;
+			DrawNow();
+			}
+		}
+	else if (iHintTick >= (iHintOff ? KHintStep : KHintHold))
+		{
+		iHintOff += 2;
+		iHintTick = 0;
+		DrawNow();
+		}
 	}
 
 // --- Menu control -----------------------------------------------------------
@@ -1842,6 +2611,7 @@ void CPs1Container::OpenMenu()
 	ps1Log("menu", "open");
 	voutSymbianSuspend(1);
 	iPage = EPageMain;
+	FixSel();
 	iConfirm = -1;
 	iStatusMsg.Zero();
 	DrawNow();
@@ -1911,6 +2681,8 @@ void CPs1Container::MenuTick()
 		DrawNow();
 		return;
 		}
+	if (iPage == EPageMain)
+		HintTick();
 	if (iPage != EPageProgress)
 		return;
 	TConvStat st;
@@ -1972,6 +2744,7 @@ TBool CPs1Container::RestartNeeded() const
 
 TKeyResponse CPs1Container::MainKeyL(TInt aScan)
 	{
+	FixSel();
 	// Exit must work from here too; otherwise there is no way to exit from the menu before start.
 	if (aScan == EStdKeyDevice1 || aScan == EStdKeyBackspace || aScan == EStdKeyEscape)
 		{
@@ -1998,11 +2771,14 @@ TKeyResponse CPs1Container::MainKeyL(TInt aScan)
 	if (aScan == EStdKeyUpArrow || aScan == EStdKeyDownArrow)
 		{
 		const TInt d = (aScan == EStdKeyUpArrow) ? -1 : 1;
+		FixSel();
 		do
 			{
 			iSel = (iSel + d + ECfgCount) % ECfgCount;
 			}
 		while (!ItemVisible(iSel));
+		iHintOff = 0;
+		iHintTick = 0;
 		iConfirm = -1;      // confirmation applies only while staying on the item
 		iStatusMsg.Zero();
 		DrawNow();
@@ -2069,6 +2845,7 @@ TKeyResponse CPs1Container::MainKeyL(TInt aScan)
 				const TInt count = I18nLanguageCount();
 				v = (v + d + count) % count;
 				I18nSetLanguage(v);
+				LoadHelp();
 				}
 			else if (iSel == ECfgPreset)
 				{
@@ -2095,44 +2872,33 @@ TKeyResponse CPs1Container::MainKeyL(TInt aScan)
 		switch (iSel)
 			{
 			case ECfgStart:
+				{
+				// Resuming a running game needs neither the disc file nor the BIOS on the
+				// card; starting or restarting one needs both, so they are checked here.
+				const TBool launching = !iStartedOnce || RestartNeeded();
 				if (iGameClosed)
 					{
 					SaveAll();
 					CEikonEnv::Static()->EikAppUi()->HandleCommandL(EEikCmdExit);
 					}
-				else if (!iGamePath.Length())
+				else if (launching && (!iGamePath.Length() || !fileThere(iGamePath)))
 					{
-					iBrowsePath = KImgDir;
-					iScanMode = EScanGames;
-					ScanDirL();
-					iPage = EPageFiles;
+					iAsk = EAskNoGame;
+					iAskSel = 0;
+					iPage = EPageAsk;
 					}
-				else if (iStartedOnce)
+				else if (launching && !BiosThere())
 					{
-					if (RestartNeeded())
-						{
-						iAsk = EAskRestart;
-						iAskSel = 0;
-						iPage = EPageAsk;
-						}
-					else
-						DoCloseMenu(EFalse);
+					iAsk = EAskNoBios;
+					iAskSel = 0;
+					iPage = EPageAsk;
 					}
 				else
-					ApplyAndStart();
+					DoStart();
+				}
 				break;
 			case ECfgGame:
-				// Start browsing from the current game's directory - this is the most common need.
-				if (iGamePath.Length())
-					{
-					const TInt s = iGamePath.LocateReverse('\\');
-					iBrowsePath = iGamePath.Left(s + 1);
-					}
-				else
-					iBrowsePath = KImgDir;
-				iScanMode = EScanGames;
-				ScanDirL();
-				iPage = EPageFiles;
+				OpenGameBrowse();
 				break;
 			case ECfgSaveState:
 				DoSaveState();
@@ -2141,19 +2907,10 @@ TKeyResponse CPs1Container::MainKeyL(TInt aScan)
 				DoLoadState();
 				break;
 			case ECfgAdd:
-				// Start from the card root: what is being imported was just copied
-				// there from a PC, not placed into the emulator directory.
-				iBrowsePath = _L("E:\\");
-				iScanMode = EScanImport;
-				iPicked->Reset();
-				ScanDirL();
-				iPage = EPageImport;
+				OpenImport();
 				break;
 			case ECfgBios:
-				iBrowsePath = KBiosDir;
-				iScanMode = EScanBios;
-				ScanDirL();
-				iPage = EPageBios;
+				OpenBiosBrowse();
 				break;
 			case ECfgKeys:
 				iKeySel = 0;
@@ -2175,7 +2932,11 @@ TKeyResponse CPs1Container::MainKeyL(TInt aScan)
 				// expensive a loss for an accidental OK.
 				if (iConfirm == ECfgReset)
 					{
+					// A reset is not a first run: the marker survives it.
+					const TInt intro = iCfg.iIntro;
 					iCfg.SetDefaults();
+					iCfg.iIntro = intro;
+					LoadHelp();
 					ApplyKeyMap();
 					iConfirm = -1;
 					}
@@ -2186,19 +2947,34 @@ TKeyResponse CPs1Container::MainKeyL(TInt aScan)
 				SaveAll();
 				CEikonEnv::Static()->EikAppUi()->HandleCommandL(EEikCmdExit);
 				return EKeyWasConsumed;
+			case ECfgHdrGame:
+			case ECfgHdrVideo:
+			case ECfgHdrSpeed:
+			case ECfgHdrSound:
+			case ECfgHdrInput:
+			case ECfgHdrSystem:
+				{
+				// One section open at a time: opening another closes this one.
+				const TInt sec = KItemSection[iSel];
+				iOpenSec = (iOpenSec == sec) ? ESecCount : sec;
+				iOpenMore = EFalse;
+				iHintOff = 0;
+				iHintTick = 0;
+				}
+				break;
+			case ECfgMoreVideo:
+			case ECfgMoreSpeed:
+			case ECfgMoreInput:
+			case ECfgMoreSystem:
+				iOpenMore = !iOpenMore;
+				break;
+			case ECfgHelp:
+				OpenHelp(EPageMain);
+				break;
 			default:
 				// A value row does not start the game: that belongs to Start alone,
 				// and OK landing on a hidden action cost a restart more than once.
-				if (iGamePath.Length())
-					{
-					const TInt s = iGamePath.LocateReverse('\\');
-					iBrowsePath = iGamePath.Left(s + 1);
-					}
-				else
-					iBrowsePath = KImgDir;
-				iScanMode = EScanGames;
-				ScanDirL();
-				iPage = EPageFiles;
+				OpenGameBrowse();
 				break;
 			}
 		DrawNow();
@@ -2212,7 +2988,7 @@ TKeyResponse CPs1Container::FilesKeyL(TInt aScan)
 	const TInt n = iBrowse->Count();
 	if (aScan == EStdKeyDevice1 || aScan == EStdKeyBackspace || aScan == EStdKeyEscape)
 		{
-		iPage = EPageMain;
+		LeaveBrowse();
 		DrawNow();
 		return EKeyWasConsumed;
 		}
@@ -2297,7 +3073,7 @@ TKeyResponse CPs1Container::ImportKeyL(TInt aScan)
 	const TInt n = iBrowse->Count();
 	if (aScan == EStdKeyDevice1 || aScan == EStdKeyBackspace || aScan == EStdKeyEscape)
 		{
-		iPage = EPageMain;
+		LeaveBrowse();
 		DrawNow();
 		return EKeyWasConsumed;
 		}
@@ -2344,7 +3120,7 @@ TKeyResponse CPs1Container::BiosKeyL(TInt aScan)
 	const TInt n = iBrowse->Count();
 	if (aScan == EStdKeyDevice1 || aScan == EStdKeyBackspace || aScan == EStdKeyEscape)
 		{
-		iPage = EPageMain;
+		LeaveBrowse();
 		DrawNow();
 		return EKeyWasConsumed;
 		}
@@ -2391,7 +3167,7 @@ TKeyResponse CPs1Container::BiosKeyL(TInt aScan)
 						ps1LogInt("bios", "pick", r);
 						}
 					}
-				iPage = EPageMain;
+				LeaveBrowse();
 				}
 			}
 		}
@@ -2403,7 +3179,7 @@ TKeyResponse CPs1Container::AskKeyL(TInt aScan)
 	{
 	if (aScan == EStdKeyDevice1 || aScan == EStdKeyBackspace || aScan == EStdKeyEscape)
 		{
-		iPage = (iAsk == EAskRestart) ? EPageMain : EPageImport;
+		iPage = (iAsk == EAskMode || iAsk == EAskDelete) ? EPageImport : EPageMain;
 		DrawNow();
 		return EKeyWasConsumed;
 		}
@@ -2434,6 +3210,20 @@ TKeyResponse CPs1Container::AskKeyL(TInt aScan)
 				RevertRestartSettings();
 				DoCloseMenu(EFalse);
 				}
+			}
+		else if (iAsk == EAskNoGame)
+			{
+			if (iAskSel == 0)
+				OpenGameBrowse();
+			else
+				OpenImport();
+			}
+		else if (iAsk == EAskNoBios)
+			{
+			if (iAskSel == 0)
+				DoStart();
+			else
+				OpenBiosBrowse();
 			}
 		}
 	DrawNow();
@@ -2475,7 +3265,7 @@ TKeyResponse CPs1Container::ProgressKeyL(TInt aScan)
 					iGamePath.Zero();
 				}
 			if (!iGamePath.Length()) AutoPickGameL();
-			iPage = EPageMain;
+			LeaveBrowse();
 			}
 		DrawNow();
 		}
@@ -2514,6 +3304,116 @@ TKeyResponse CPs1Container::KeysKeyL(TInt aScan)
 		iCfg.iKeyHold[iKeySel] = iCfg.iKeyHold[iKeySel] ? 0 : 1;
 	else if (aScan == EStdKeyDevice3 || aScan == EStdKeyEnter || aScan == EStdKeyNkpEnter)
 		iCapture = iKeySel;
+	DrawNow();
+	return EKeyWasConsumed;
+	}
+
+TKeyResponse CPs1Container::HelpKeyL(TInt aScan)
+	{
+	if (aScan == EStdKeyDevice1 || aScan == EStdKeyBackspace || aScan == EStdKeyEscape)
+		{
+		if (iHelpTopic >= 0)
+			iHelpTopic = -1;
+		else
+			iPage = iHelpFrom;
+		DrawNow();
+		return EKeyWasConsumed;
+		}
+	if (iHelpTopic < 0)
+		{
+		const TInt n = TopicCount();
+		if (aScan == EStdKeyUpArrow && n)
+			iHelpSel = (iHelpSel + n - 1) % n;
+		else if (aScan == EStdKeyDownArrow && n)
+			iHelpSel = (iHelpSel + 1) % n;
+		else if (n && (aScan == EStdKeyDevice3 || aScan == EStdKeyEnter ||
+					   aScan == EStdKeyNkpEnter))
+			OpenTopic(iHelpSel);
+		}
+	else
+		{
+		const TInt rows = BodyRows();
+		TInt maxScroll = iHelpLines - rows;
+		if (maxScroll < 0) maxScroll = 0;
+		if (aScan == EStdKeyUpArrow)
+			iHelpScroll -= 1;
+		else if (aScan == EStdKeyDownArrow)
+			iHelpScroll += 1;
+		else if (aScan == EStdKeyLeftArrow)
+			iHelpScroll -= rows - 1;
+		else if (aScan == EStdKeyRightArrow)
+			iHelpScroll += rows - 1;
+		if (iHelpScroll > maxScroll) iHelpScroll = maxScroll;
+		if (iHelpScroll < 0) iHelpScroll = 0;
+		}
+	DrawNow();
+	return EKeyWasConsumed;
+	}
+
+TKeyResponse CPs1Container::SetupKeyL(TInt aScan)
+	{
+	if (aScan == EStdKeyDevice1 || aScan == EStdKeyBackspace || aScan == EStdKeyEscape)
+		{
+		iPage = iSetupBack;
+		DrawNow();
+		return EKeyWasConsumed;
+		}
+	if (aScan == EStdKeyUpArrow)
+		iSetupSel = (iSetupSel + ESetCount - 1) % ESetCount;
+	else if (aScan == EStdKeyDownArrow)
+		iSetupSel = (iSetupSel + 1) % ESetCount;
+	else if (aScan == EStdKeyLeftArrow || aScan == EStdKeyRightArrow)
+		{
+		// All three values apply at once: a first-time user has nothing to lose, and
+		// the shown value is then always the one in force.
+		const TInt d = (aScan == EStdKeyLeftArrow) ? -1 : 1;
+		if (iSetupSel == ESetLang)
+			{
+			const TInt count = I18nLanguageCount();
+			iCfg.iLang = (iCfg.iLang + d + count) % count;
+			I18nSetLanguage(iCfg.iLang);
+			LoadHelp();
+			}
+		else if (iSetupSel == ESetKeys)
+			{
+			iBaseSel = (iBaseSel + d + EBaseCount) % EBaseCount;
+			ApplyBase(iBaseSel);
+			}
+		else if (iSetupSel == ESetPreset)
+			{
+			iPresetSel = (iPresetSel + d + EPresetCount) % EPresetCount;
+			ApplyPreset(iPresetSel);
+			}
+		}
+	else if (aScan == EStdKeyDevice3 || aScan == EStdKeyEnter || aScan == EStdKeyNkpEnter)
+		{
+		switch (iSetupSel)
+			{
+			case ESetBios:
+				iBackPage = EPageSetup;
+				OpenBiosBrowse();
+				break;
+			case ESetGames:
+				// Games present: choose one. None yet: import them.
+				iBackPage = EPageSetup;
+				if (iSetupGames)
+					OpenGameBrowse();
+				else
+					OpenImport();
+				break;
+			case ESetStart:
+				iCfg.iIntro = 1;
+				SaveAll();
+				iPage = EPageMain;
+				iSel = ECfgStart;
+				break;
+			case ESetHelp:
+				OpenHelp(EPageSetup);
+				break;
+			default:
+				break;
+			}
+		}
 	DrawNow();
 	return EKeyWasConsumed;
 	}
@@ -2564,6 +3464,8 @@ TKeyResponse CPs1Container::DispatchKeyL(const TKeyEvent &aKeyEvent, TEventCode 
 		if (iPage == EPageAsk)      return AskKeyL(sc);
 		if (iPage == EPageProgress) return ProgressKeyL(sc);
 		if (iPage == EPageError)    return ErrorKeyL(sc);
+		if (iPage == EPageHelp)     return HelpKeyL(sc);
+		if (iPage == EPageSetup)    return SetupKeyL(sc);
 		return MainKeyL(sc);
 		}
 

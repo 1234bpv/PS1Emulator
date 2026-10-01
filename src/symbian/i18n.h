@@ -138,6 +138,22 @@ enum TStrId
 	EStrValBaseN95,
 	EStrValBaseC5,
 	EStrItemWsola,
+	EStrItemMore,
+	EStrItemHelp,
+	EStrItemGames,
+	EStrTitleSetup,
+	EStrValFound,
+	EStrValMissing,
+	EStrHintSetup,
+	EStrHintHelpList,
+	EStrHintHelpText,
+	EStrTitleNoGame,
+	EStrAskNoGameWarn,
+	EStrAskPickGame,
+	EStrTitleNoBios,
+	EStrAskNoBiosWarn,
+	EStrAskContinue,
+	EStrAskPickBios,
 	EStrCount
 	};
 

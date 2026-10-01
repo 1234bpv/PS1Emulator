@@ -163,3 +163,5 @@ LIBRARY         apgrfx.lib
 LIBRARY         estor.lib
 LIBRARY         bafl.lib
 LIBRARY         gdi.lib
+// Help files on the card are UTF-8: CnvUtfConverter.
+LIBRARY         charconv.lib

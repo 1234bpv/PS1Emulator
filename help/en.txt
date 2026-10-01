@@ -1,0 +1,167 @@
+# PS1Emulator help texts, English (also the fallback for every other language). UTF-8.
+# Sections start with [key] at the start of a line.
+#   [hint.<id>] one sentence shown on the status line for the selected menu row.
+#   [topic.<id>] Title, then the text: one paragraph per line, a blank line is a gap.
+# Numbers are measurements on a Nokia N95 8GB, not promises: they depend on the game.
+
+[hint.start] Starts the selected game with the settings below. The disc image and the BIOS are checked first.
+[hint.resume] Returns to the game exactly where you left it.
+[hint.restart] Rows marked * changed: the game starts over and unsaved progress is lost. Save a state first.
+[hint.exit] Saves the settings and closes the emulator. A running game is lost unless you saved a state.
+
+[hint.sec.game] OK opens or closes the section: the game, save states and importing games.
+[hint.game] The disc image to play. OK opens the file browser. Changing it needs a game restart.
+[hint.savestate] Saves the running game into the slot shown (Left/Right: 1-5). [*] after the slot means it is used and will be overwritten, [ ] means it is empty.
+[hint.loadstate] Loads the slot shown. Progress made after that save is lost.
+[hint.add] Imports games from the card: images and zip, rar or 7z archives, optionally packed to PBP.
+
+[hint.sec.video] OK opens or closes the section: scaling, edge smoothing and the frame counter.
+[hint.smooth] Averages pixels when a 640-wide picture is scaled down. Off saved 4.6% of run time in a measured trace.
+[hint.fxaa] Smooths the jagged edges of 3D shapes; higher is stronger. Costs speed: about 17% fewer frames on a test trace.
+[hint.fps] Shows the frame rate over the picture. Useful for judging what the other switches do.
+[hint.more.video] OK shows or hides the rarely needed video settings.
+[hint.light] 3D lighting. Off is faster but the shading is lost: 5.6% fewer CPU cycles in a measured Gran Turismo scene.
+[hint.blend] Semi-transparency (glass, glows, shadows). Off is faster, but such objects look wrong.
+[hint.dirty] Does not redraw a picture the game left unchanged. Measured: 6.7 ms saved per frame, no loss of quality.
+[hint.dsa] Writes the frame straight into the screen buffer. Measured: 0.93 ms saved per frame. Needs a game restart.
+[hint.gl] Shows the picture through the phone's OpenGL ES. In one measured 320x240 scene it was slower than without it. Needs a restart.
+[hint.swdraw] Only with GL output. On: the software rasteriser draws and GL only shows the frame. Off: the graphics chip draws.
+[hint.ilace] Draws only every other line. Faster, but halves the vertical detail.
+[hint.pixskip] Skips pixels that are not visible in high horizontal resolution modes. A little faster.
+
+[hint.sec.speed] OK opens or closes the section: frame skipping and the processor settings.
+[hint.gpuskip] Does not draw some frames. Auto lets the core decide. On a racing trace 1 gave +27% emulation rate but 37% fewer shown frames.
+[hint.more.speed] OK shows or hides the processor settings. Most of them need a restart.
+[hint.cpu] Dynarec recompiles PS1 code to ARM and is the fast mode. The interpreter is the slow mode. Needs a restart.
+[hint.gtenf] Skips some flag calculation of the geometry coprocessor. In Gran Turismo it was 6% slower, because the geometry changes. Needs a restart.
+[hint.cycle] Speed of the emulated PS1 processor in percent. Lower runs lighter on the phone but can upset the game timing. Applies at once.
+
+[hint.sec.sound] OK opens or closes the section: sound output and pitch.
+[hint.sound] Sound output. Off removes the sound and saves the processor time of the audio path. Needs a game restart.
+[hint.wsola] When the game runs below full speed, stretches the sound without changing its pitch. Costs about 23% of a frame time on the N95 in a measurement. Needs a restart.
+
+[hint.sec.input] OK opens or closes the section: key layouts, key assignment and tilt control.
+[hint.preset] Replaces all key assignments with a ready layout. Left/Right choose, OK applies. Your own assignments are lost.
+[hint.keybase] The keyboard of your phone: N95 uses the D-pad, C5 uses the numeric keypad only. OK applies and replaces the assignments.
+[hint.keys] Opens the key assignment page: OK, then press the key. Left/Right turn Hold on or off for a button.
+[hint.more.input] OK shows or hides tilt control and its settings.
+[hint.tilt] Steers with the tilt of the phone (accelerometer). Only for phones that have the sensor.
+[hint.tiltside] The stick axis that follows sideways tilt (LX, LY, RX, RY; a minus reverses it). Default LX.
+[hint.tiltpitch] The stick axis that follows forward and backward tilt (LX, LY, RX, RY; a minus reverses it). Default LY.
+[hint.tiltdead] Tilt smaller than this is ignored. From 0 to 40, default 10.
+[hint.tiltsens] How strongly the stick follows the tilt: 40% to 300%, default 100%.
+
+[hint.sec.system] OK opens or closes the section: language, BIOS and per-game profiles.
+[hint.lang] The language of the menu. Changes at once. The help texts follow it; English is used where a text is missing.
+[hint.bios] The BIOS dump from E:\PS1\bios. Without it the built-in replacement (HLE) runs and compatibility is worse. Needs a restart.
+[hint.profile] On: each game keeps its own settings in E:\PS1\cfg, such as keys and speed switches. Off: one set for all games.
+[hint.more.system] OK shows or hides the reset.
+[hint.reset] Sets every setting back to its default, keys and language included. Press OK twice. Saves are not touched.
+
+[hint.help] Opens the help: first setup, controls, saving, troubleshooting and a description of every menu row.
+
+[topic.setup] First setup
+This topic opens the first setup page, the same one the emulator shows on the first launch.
+
+[topic.play] Controls in the game
+The menu keys: Up and Down move, Left and Right change a value, OK opens a row or switches it, C and the right soft key go back.
+
+In the game the right soft key opens the menu and pauses the game. The left soft key takes a screenshot. When a call arrives or you switch to another application, the game pauses and the menu opens by itself.
+
+Default keys: the D-pad moves; OK or 5 is Cross; 0 is Circle; 7 is Square; 9 is Triangle; 1 is L1; 3 is R1; 4 is L2; 6 is R2; 2 is Select; 8 is Start.
+
+On a phone without a D-pad, such as the C5, use the Keyboard row in Controls: it moves the whole layout to the numeric keypad.
+
+Volume is changed with the side volume keys, or with # (louder) and * (quieter), unless those keys are assigned to a button.
+
+Every button can be assigned in Controls... : OK on a button, then press the key. Left and Right turn Hold on: a held button stays pressed until you press it again, which suits the accelerator in a race.
+
+Tilt control (Controls, More...) steers with the tilt of the phone. It needs a phone with an accelerometer.
+
+[topic.saves] Saving
+A save state stores the whole game at one moment. Open Game, choose Save state, pick a slot with Left and Right (1 to 5) and press OK. [*] after the slot number means the slot already holds a state, [ ] means it is empty. Load state restores it.
+
+Save state and Load state appear only while a game is running and is the selected one.
+
+The state files are in E:\PS1\saves, named after the game and the slot. The memory cards of the game, card1.mcd and card2.mcd, are in the same folder: they hold the saves that the game itself writes. A state and a memory card are independent of each other.
+
+Rows marked * need a game restart. Unsaved progress is lost, so save a state before you change them.
+
+[topic.slow] If the game is slow
+Change one thing at a time and watch the FPS meter (Video).
+
+First the cheap ones. Direct draw and Skip same frames should stay on: they cost no quality. Smooth scale off saved 4.6% of run time in a measured trace and only softens fine lines.
+
+Then Frameskip. Auto is the gentlest. A fixed value of 1 gave 27% more emulation speed in a measured race, but 37% fewer frames were shown.
+
+Then the ones that cost the picture: Edge smooth off, 3D lighting off (5.6% fewer CPU cycles in a measured scene), Transparency off, Interlace hack, Pixel skip. Lower PS1 CPU speed lightens the load but can upset the timing of the game.
+
+Do not expect help from these: GTE fast mode was 6% slower in Gran Turismo; GL output was slower than the software path in a measured 320x240 scene. Keep CPU on dynarec: the interpreter is the slow mode.
+
+[topic.nosound] No sound or no picture
+No sound: check that Sound (in the Sound section) is on and that the game was restarted after changing it. Raise the volume with the side keys, # or *. If Preserve pitch is on, try turning it off.
+
+No picture or a black screen: press the right soft key and check the error page. Disc image or BIOS not found means the files are missing: see Files on the card. If the picture is wrong after a change, turn off Direct draw or GL output and restart the game.
+
+No BIOS: the game then runs on the built-in replacement (HLE). Many games start, but compatibility is worse. Put a BIOS dump into E:\PS1\bios or choose one in System, BIOS.
+
+Disc images are listed in the formats bin, img, iso, pbp, cbn and cbin. A cue file is not listed in the game browser: the core derives it from the bin by name, so keep both together. Import does list cue files.
+
+[topic.files] Files on the card
+E:\PS1\games holds the disc images. Add games lets you import them from anywhere on the card.
+
+E:\PS1\bios holds the BIOS dump. The default name is scph7502.bin. A dump or a zip, rar or 7z archive with one can be chosen in System, BIOS.
+
+E:\PS1\saves holds the save states and the memory cards.
+
+E:\PS1\cfg holds ps1_settings.txt, the global settings, and one small file for each game with its own settings.
+
+E:\PS1\help holds these texts: one file per language, named by the language code (en.txt, uk.txt), in UTF-8. A missing file or a missing key falls back to English.
+
+E:\PS1\logs holds the run logs.
+
+[topic.game] Game
+Game: the disc image to play. OK opens the file browser in the folder of the current game. Choosing another disc while a game runs needs a restart.
+
+Save state and Load state: see the topic Saving.
+
+Add games...: imports games from the card. Mark files or archives with OK, start with the left soft key. You can pack them to PBP, which saves about 40% but drops the error-correction data and cannot be undone, and you can delete the originals. Importing the disc of the running game closes it.
+
+[topic.video] Video
+Smooth scale: averages pixels when a 640-wide picture is scaled down.
+
+Edge smooth: smooths the jagged edges of 3D shapes, level 1 to 5.
+
+FPS meter: shows the frame rate over the picture.
+
+More...: 3D lighting (shading of textures), Transparency (semi-transparent objects), Skip same frames (no redraw of an unchanged picture), Direct draw (writes straight into the screen buffer, needs a restart), GL output (shows the picture through OpenGL ES, needs a restart), Software draw (with GL only: which rasteriser draws), Interlace hack (every other line only) and Pixel skip (skips pixels that are not visible in high horizontal resolution modes).
+
+[topic.speed] Speed
+Frameskip: does not draw some frames. Auto lets the core decide each frame; 1 to 3 skip that many frames between drawn ones.
+
+More...: CPU (dynarec or interpreter, needs a restart), GTE fast mode (needs a restart) and PS1 CPU speed.
+
+PS1 CPU speed is shown in percent of the normal speed. Lower values give the game less work per frame and can break its timing. It applies at once.
+
+[topic.sound] Sound
+Sound: sound output on or off, needs a restart.
+
+Preserve pitch: when the game runs below full speed, the sound is stretched without a change of pitch. It costs processor time and needs a restart.
+
+[topic.input] Controls
+Control preset: Default, Racing, Fighting or RPG. OK replaces all key assignments.
+
+Keyboard: N95 (D-pad) or C5 (numeric keypad). OK replaces all key assignments.
+
+Controls...: assign each PS1 button to a key; Left and Right turn Hold on or off.
+
+More...: Tilt control and its four settings: the axis for sideways tilt, the axis for forward and backward tilt, the dead zone (0 to 40) and the sensitivity (40% to 300%).
+
+[topic.system] System
+Language: the language of the menu and of these texts, changes at once.
+
+BIOS: the BIOS dump to use, needs a restart. Default is scph7502.bin.
+
+Per-game profile: on keeps a separate settings file for each game.
+
+More...: Reset settings returns everything to the defaults; press OK twice.

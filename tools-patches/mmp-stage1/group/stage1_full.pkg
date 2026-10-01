@@ -15,3 +15,6 @@
 "\VsCodeProjects\SymbianProjects\S60_3rd_FP1\Epoc32\release\gcce\urel\ps1stage1.exe"-"!:\sys\bin\ps1stage1.exe"
 "\VsCodeProjects\SymbianProjects\S60_3rd_FP1\Epoc32\data\z\private\10003a3f\import\apps\ps1stage1_reg.RSC"-"!:\private\10003a3f\import\apps\ps1stage1_reg.rsc"
 "\VsCodeProjects\SymbianProjects\S60_3rd_FP1\Epoc32\data\z\resource\apps\ps1stage1.RSC"-"!:\resource\apps\ps1stage1.rsc"
+; Help texts and menu hints, one file per interface language (English is the fallback).
+"\VsCodeProjects\SymbianProjects\PS1Emulator\help\en.txt"-"E:\PS1\help\en.txt"
+"\VsCodeProjects\SymbianProjects\PS1Emulator\help\uk.txt"-"E:\PS1\help\uk.txt"

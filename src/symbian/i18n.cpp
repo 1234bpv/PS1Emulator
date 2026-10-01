@@ -2063,6 +2063,264 @@ static const TText *const KStr_ko_EStrValBaseN95 = _S("N95");
 static const TText *const KStr_ko_EStrValBaseC5 = _S("C5");
 static const TText *const KStr_ko_EStrItemWsola = _S("Preserve pitch");
 
+// --- First setup, help and start checks ---
+// English and Ukrainian are translated; the other thirteen keep the English
+// text as a placeholder until a translation pass covers them.
+static const TText *const KStr_en_EStrItemMore = _S("More...");
+static const TText *const KStr_en_EStrItemHelp = _S("Help");
+static const TText *const KStr_en_EStrItemGames = _S("Games");
+static const TText *const KStr_en_EStrTitleSetup = _S("First setup");
+static const TText *const KStr_en_EStrValFound = _S("found");
+static const TText *const KStr_en_EStrValMissing = _S("not found");
+static const TText *const KStr_en_EStrHintSetup = _S("L/R change, OK select, C skip");
+static const TText *const KStr_en_EStrHintHelpList = _S("OK open, C back");
+static const TText *const KStr_en_EStrHintHelpText = _S("Up/Down scroll, C back");
+static const TText *const KStr_en_EStrTitleNoGame = _S("No game");
+static const TText *const KStr_en_EStrAskNoGameWarn = _S("No disc image is selected, or its file is missing.");
+static const TText *const KStr_en_EStrAskPickGame = _S("Select game");
+static const TText *const KStr_en_EStrTitleNoBios = _S("BIOS not found");
+static const TText *const KStr_en_EStrAskNoBiosWarn = _S("The game will run on the built-in BIOS replacement (HLE); compatibility is worse.");
+static const TText *const KStr_en_EStrAskContinue = _S("Continue");
+static const TText *const KStr_en_EStrAskPickBios = _S("Select BIOS");
+
+static const TText KStr_uk_EStrItemMore[] = { 0x0414, 0x043E, 0x0434, 0x0430, 0x0442, 0x043A, 0x043E, 0x0432, 0x043E, 0x002E, 0x002E, 0x002E, 0 };
+static const TText KStr_uk_EStrItemHelp[] = { 0x0414, 0x043E, 0x0432, 0x0456, 0x0434, 0x043A, 0x0430, 0 };
+static const TText KStr_uk_EStrItemGames[] = { 0x0406, 0x0433, 0x0440, 0x0438, 0 };
+static const TText KStr_uk_EStrTitleSetup[] = { 0x041F, 0x0435, 0x0440, 0x0448, 0x0435, 0x0020, 0x043D, 0x0430, 0x043B, 0x0430, 0x0448, 0x0442, 0x0443, 0x0432, 0x0430, 0x043D, 0x043D, 0x044F, 0 };
+static const TText KStr_uk_EStrValFound[] = { 0x0437, 0x043D, 0x0430, 0x0439, 0x0434, 0x0435, 0x043D, 0x043E, 0 };
+static const TText KStr_uk_EStrValMissing[] = { 0x043D, 0x0435, 0x0020, 0x0437, 0x043D, 0x0430, 0x0439, 0x0434, 0x0435, 0x043D, 0x043E, 0 };
+static const TText KStr_uk_EStrHintSetup[] = { 0x004C, 0x002F, 0x0052, 0x0020, 0x0437, 0x043C, 0x0456, 0x043D, 0x0438, 0x0442, 0x0438, 0x002C, 0x0020, 0x004F, 0x004B, 0x0020, 0x0432, 0x0438, 0x0431, 0x0440, 0x0430, 0x0442, 0x0438, 0x002C, 0x0020, 0x0043, 0x0020, 0x043F, 0x0440, 0x043E, 0x043F, 0x0443, 0x0441, 0x0442, 0x0438, 0x0442, 0x0438, 0 };
+static const TText KStr_uk_EStrHintHelpList[] = { 0x004F, 0x004B, 0x0020, 0x0432, 0x0456, 0x0434, 0x043A, 0x0440, 0x0438, 0x0442, 0x0438, 0x002C, 0x0020, 0x0043, 0x0020, 0x043D, 0x0430, 0x0437, 0x0430, 0x0434, 0 };
+static const TText KStr_uk_EStrHintHelpText[] = { 0x0412, 0x0433, 0x043E, 0x0440, 0x0443, 0x002F, 0x0432, 0x043D, 0x0438, 0x0437, 0x0020, 0x0433, 0x043E, 0x0440, 0x0442, 0x0430, 0x0442, 0x0438, 0x002C, 0x0020, 0x0043, 0x0020, 0x043D, 0x0430, 0x0437, 0x0430, 0x0434, 0 };
+static const TText KStr_uk_EStrTitleNoGame[] = { 0x041D, 0x0435, 0x043C, 0x0430, 0x0454, 0x0020, 0x0433, 0x0440, 0x0438, 0 };
+static const TText KStr_uk_EStrAskNoGameWarn[] = { 0x041E, 0x0431, 0x0440, 0x0430, 0x0437, 0x0020, 0x0434, 0x0438, 0x0441, 0x043A, 0x0430, 0x0020, 0x043D, 0x0435, 0x0020, 0x0432, 0x0438, 0x0431, 0x0440, 0x0430, 0x043D, 0x043E, 0x002C, 0x0020, 0x0430, 0x0431, 0x043E, 0x0020, 0x0439, 0x043E, 0x0433, 0x043E, 0x0020, 0x0444, 0x0430, 0x0439, 0x043B, 0x0020, 0x0432, 0x0456, 0x0434, 0x0441, 0x0443, 0x0442, 0x043D, 0x0456, 0x0439, 0x002E, 0 };
+static const TText KStr_uk_EStrAskPickGame[] = { 0x0412, 0x0438, 0x0431, 0x0440, 0x0430, 0x0442, 0x0438, 0x0020, 0x0433, 0x0440, 0x0443, 0 };
+static const TText KStr_uk_EStrTitleNoBios[] = { 0x0042, 0x0049, 0x004F, 0x0053, 0x0020, 0x043D, 0x0435, 0x0020, 0x0437, 0x043D, 0x0430, 0x0439, 0x0434, 0x0435, 0x043D, 0x043E, 0 };
+static const TText KStr_uk_EStrAskNoBiosWarn[] = { 0x0413, 0x0440, 0x0430, 0x0020, 0x043F, 0x0456, 0x0434, 0x0435, 0x0020, 0x043D, 0x0430, 0x0020, 0x0432, 0x0431, 0x0443, 0x0434, 0x043E, 0x0432, 0x0430, 0x043D, 0x0456, 0x0439, 0x0020, 0x0437, 0x0430, 0x043C, 0x0456, 0x043D, 0x0456, 0x0020, 0x0042, 0x0049, 0x004F, 0x0053, 0x0020, 0x0028, 0x0048, 0x004C, 0x0045, 0x0029, 0x002C, 0x0020, 0x0441, 0x0443, 0x043C, 0x0456, 0x0441, 0x043D, 0x0456, 0x0441, 0x0442, 0x044C, 0x0020, 0x0433, 0x0456, 0x0440, 0x0448, 0x0430, 0x002E, 0 };
+static const TText KStr_uk_EStrAskContinue[] = { 0x041F, 0x0440, 0x043E, 0x0434, 0x043E, 0x0432, 0x0436, 0x0438, 0x0442, 0x0438, 0 };
+static const TText KStr_uk_EStrAskPickBios[] = { 0x0412, 0x0438, 0x0431, 0x0440, 0x0430, 0x0442, 0x0438, 0x0020, 0x0042, 0x0049, 0x004F, 0x0053, 0 };
+
+static const TText *const KStr_zh_EStrItemMore = _S("More...");
+static const TText *const KStr_zh_EStrItemHelp = _S("Help");
+static const TText *const KStr_zh_EStrItemGames = _S("Games");
+static const TText *const KStr_zh_EStrTitleSetup = _S("First setup");
+static const TText *const KStr_zh_EStrValFound = _S("found");
+static const TText *const KStr_zh_EStrValMissing = _S("not found");
+static const TText *const KStr_zh_EStrHintSetup = _S("L/R change, OK select, C skip");
+static const TText *const KStr_zh_EStrHintHelpList = _S("OK open, C back");
+static const TText *const KStr_zh_EStrHintHelpText = _S("Up/Down scroll, C back");
+static const TText *const KStr_zh_EStrTitleNoGame = _S("No game");
+static const TText *const KStr_zh_EStrAskNoGameWarn = _S("No disc image is selected, or its file is missing.");
+static const TText *const KStr_zh_EStrAskPickGame = _S("Select game");
+static const TText *const KStr_zh_EStrTitleNoBios = _S("BIOS not found");
+static const TText *const KStr_zh_EStrAskNoBiosWarn = _S("The game will run on the built-in BIOS replacement (HLE); compatibility is worse.");
+static const TText *const KStr_zh_EStrAskContinue = _S("Continue");
+static const TText *const KStr_zh_EStrAskPickBios = _S("Select BIOS");
+
+static const TText *const KStr_de_EStrItemMore = _S("More...");
+static const TText *const KStr_de_EStrItemHelp = _S("Help");
+static const TText *const KStr_de_EStrItemGames = _S("Games");
+static const TText *const KStr_de_EStrTitleSetup = _S("First setup");
+static const TText *const KStr_de_EStrValFound = _S("found");
+static const TText *const KStr_de_EStrValMissing = _S("not found");
+static const TText *const KStr_de_EStrHintSetup = _S("L/R change, OK select, C skip");
+static const TText *const KStr_de_EStrHintHelpList = _S("OK open, C back");
+static const TText *const KStr_de_EStrHintHelpText = _S("Up/Down scroll, C back");
+static const TText *const KStr_de_EStrTitleNoGame = _S("No game");
+static const TText *const KStr_de_EStrAskNoGameWarn = _S("No disc image is selected, or its file is missing.");
+static const TText *const KStr_de_EStrAskPickGame = _S("Select game");
+static const TText *const KStr_de_EStrTitleNoBios = _S("BIOS not found");
+static const TText *const KStr_de_EStrAskNoBiosWarn = _S("The game will run on the built-in BIOS replacement (HLE); compatibility is worse.");
+static const TText *const KStr_de_EStrAskContinue = _S("Continue");
+static const TText *const KStr_de_EStrAskPickBios = _S("Select BIOS");
+
+static const TText *const KStr_fr_EStrItemMore = _S("More...");
+static const TText *const KStr_fr_EStrItemHelp = _S("Help");
+static const TText *const KStr_fr_EStrItemGames = _S("Games");
+static const TText *const KStr_fr_EStrTitleSetup = _S("First setup");
+static const TText *const KStr_fr_EStrValFound = _S("found");
+static const TText *const KStr_fr_EStrValMissing = _S("not found");
+static const TText *const KStr_fr_EStrHintSetup = _S("L/R change, OK select, C skip");
+static const TText *const KStr_fr_EStrHintHelpList = _S("OK open, C back");
+static const TText *const KStr_fr_EStrHintHelpText = _S("Up/Down scroll, C back");
+static const TText *const KStr_fr_EStrTitleNoGame = _S("No game");
+static const TText *const KStr_fr_EStrAskNoGameWarn = _S("No disc image is selected, or its file is missing.");
+static const TText *const KStr_fr_EStrAskPickGame = _S("Select game");
+static const TText *const KStr_fr_EStrTitleNoBios = _S("BIOS not found");
+static const TText *const KStr_fr_EStrAskNoBiosWarn = _S("The game will run on the built-in BIOS replacement (HLE); compatibility is worse.");
+static const TText *const KStr_fr_EStrAskContinue = _S("Continue");
+static const TText *const KStr_fr_EStrAskPickBios = _S("Select BIOS");
+
+static const TText *const KStr_es_EStrItemMore = _S("More...");
+static const TText *const KStr_es_EStrItemHelp = _S("Help");
+static const TText *const KStr_es_EStrItemGames = _S("Games");
+static const TText *const KStr_es_EStrTitleSetup = _S("First setup");
+static const TText *const KStr_es_EStrValFound = _S("found");
+static const TText *const KStr_es_EStrValMissing = _S("not found");
+static const TText *const KStr_es_EStrHintSetup = _S("L/R change, OK select, C skip");
+static const TText *const KStr_es_EStrHintHelpList = _S("OK open, C back");
+static const TText *const KStr_es_EStrHintHelpText = _S("Up/Down scroll, C back");
+static const TText *const KStr_es_EStrTitleNoGame = _S("No game");
+static const TText *const KStr_es_EStrAskNoGameWarn = _S("No disc image is selected, or its file is missing.");
+static const TText *const KStr_es_EStrAskPickGame = _S("Select game");
+static const TText *const KStr_es_EStrTitleNoBios = _S("BIOS not found");
+static const TText *const KStr_es_EStrAskNoBiosWarn = _S("The game will run on the built-in BIOS replacement (HLE); compatibility is worse.");
+static const TText *const KStr_es_EStrAskContinue = _S("Continue");
+static const TText *const KStr_es_EStrAskPickBios = _S("Select BIOS");
+
+static const TText *const KStr_ru_EStrItemMore = _S("More...");
+static const TText *const KStr_ru_EStrItemHelp = _S("Help");
+static const TText *const KStr_ru_EStrItemGames = _S("Games");
+static const TText *const KStr_ru_EStrTitleSetup = _S("First setup");
+static const TText *const KStr_ru_EStrValFound = _S("found");
+static const TText *const KStr_ru_EStrValMissing = _S("not found");
+static const TText *const KStr_ru_EStrHintSetup = _S("L/R change, OK select, C skip");
+static const TText *const KStr_ru_EStrHintHelpList = _S("OK open, C back");
+static const TText *const KStr_ru_EStrHintHelpText = _S("Up/Down scroll, C back");
+static const TText *const KStr_ru_EStrTitleNoGame = _S("No game");
+static const TText *const KStr_ru_EStrAskNoGameWarn = _S("No disc image is selected, or its file is missing.");
+static const TText *const KStr_ru_EStrAskPickGame = _S("Select game");
+static const TText *const KStr_ru_EStrTitleNoBios = _S("BIOS not found");
+static const TText *const KStr_ru_EStrAskNoBiosWarn = _S("The game will run on the built-in BIOS replacement (HLE); compatibility is worse.");
+static const TText *const KStr_ru_EStrAskContinue = _S("Continue");
+static const TText *const KStr_ru_EStrAskPickBios = _S("Select BIOS");
+
+static const TText *const KStr_pt_EStrItemMore = _S("More...");
+static const TText *const KStr_pt_EStrItemHelp = _S("Help");
+static const TText *const KStr_pt_EStrItemGames = _S("Games");
+static const TText *const KStr_pt_EStrTitleSetup = _S("First setup");
+static const TText *const KStr_pt_EStrValFound = _S("found");
+static const TText *const KStr_pt_EStrValMissing = _S("not found");
+static const TText *const KStr_pt_EStrHintSetup = _S("L/R change, OK select, C skip");
+static const TText *const KStr_pt_EStrHintHelpList = _S("OK open, C back");
+static const TText *const KStr_pt_EStrHintHelpText = _S("Up/Down scroll, C back");
+static const TText *const KStr_pt_EStrTitleNoGame = _S("No game");
+static const TText *const KStr_pt_EStrAskNoGameWarn = _S("No disc image is selected, or its file is missing.");
+static const TText *const KStr_pt_EStrAskPickGame = _S("Select game");
+static const TText *const KStr_pt_EStrTitleNoBios = _S("BIOS not found");
+static const TText *const KStr_pt_EStrAskNoBiosWarn = _S("The game will run on the built-in BIOS replacement (HLE); compatibility is worse.");
+static const TText *const KStr_pt_EStrAskContinue = _S("Continue");
+static const TText *const KStr_pt_EStrAskPickBios = _S("Select BIOS");
+
+static const TText *const KStr_it_EStrItemMore = _S("More...");
+static const TText *const KStr_it_EStrItemHelp = _S("Help");
+static const TText *const KStr_it_EStrItemGames = _S("Games");
+static const TText *const KStr_it_EStrTitleSetup = _S("First setup");
+static const TText *const KStr_it_EStrValFound = _S("found");
+static const TText *const KStr_it_EStrValMissing = _S("not found");
+static const TText *const KStr_it_EStrHintSetup = _S("L/R change, OK select, C skip");
+static const TText *const KStr_it_EStrHintHelpList = _S("OK open, C back");
+static const TText *const KStr_it_EStrHintHelpText = _S("Up/Down scroll, C back");
+static const TText *const KStr_it_EStrTitleNoGame = _S("No game");
+static const TText *const KStr_it_EStrAskNoGameWarn = _S("No disc image is selected, or its file is missing.");
+static const TText *const KStr_it_EStrAskPickGame = _S("Select game");
+static const TText *const KStr_it_EStrTitleNoBios = _S("BIOS not found");
+static const TText *const KStr_it_EStrAskNoBiosWarn = _S("The game will run on the built-in BIOS replacement (HLE); compatibility is worse.");
+static const TText *const KStr_it_EStrAskContinue = _S("Continue");
+static const TText *const KStr_it_EStrAskPickBios = _S("Select BIOS");
+
+static const TText *const KStr_pl_EStrItemMore = _S("More...");
+static const TText *const KStr_pl_EStrItemHelp = _S("Help");
+static const TText *const KStr_pl_EStrItemGames = _S("Games");
+static const TText *const KStr_pl_EStrTitleSetup = _S("First setup");
+static const TText *const KStr_pl_EStrValFound = _S("found");
+static const TText *const KStr_pl_EStrValMissing = _S("not found");
+static const TText *const KStr_pl_EStrHintSetup = _S("L/R change, OK select, C skip");
+static const TText *const KStr_pl_EStrHintHelpList = _S("OK open, C back");
+static const TText *const KStr_pl_EStrHintHelpText = _S("Up/Down scroll, C back");
+static const TText *const KStr_pl_EStrTitleNoGame = _S("No game");
+static const TText *const KStr_pl_EStrAskNoGameWarn = _S("No disc image is selected, or its file is missing.");
+static const TText *const KStr_pl_EStrAskPickGame = _S("Select game");
+static const TText *const KStr_pl_EStrTitleNoBios = _S("BIOS not found");
+static const TText *const KStr_pl_EStrAskNoBiosWarn = _S("The game will run on the built-in BIOS replacement (HLE); compatibility is worse.");
+static const TText *const KStr_pl_EStrAskContinue = _S("Continue");
+static const TText *const KStr_pl_EStrAskPickBios = _S("Select BIOS");
+
+static const TText *const KStr_tr_EStrItemMore = _S("More...");
+static const TText *const KStr_tr_EStrItemHelp = _S("Help");
+static const TText *const KStr_tr_EStrItemGames = _S("Games");
+static const TText *const KStr_tr_EStrTitleSetup = _S("First setup");
+static const TText *const KStr_tr_EStrValFound = _S("found");
+static const TText *const KStr_tr_EStrValMissing = _S("not found");
+static const TText *const KStr_tr_EStrHintSetup = _S("L/R change, OK select, C skip");
+static const TText *const KStr_tr_EStrHintHelpList = _S("OK open, C back");
+static const TText *const KStr_tr_EStrHintHelpText = _S("Up/Down scroll, C back");
+static const TText *const KStr_tr_EStrTitleNoGame = _S("No game");
+static const TText *const KStr_tr_EStrAskNoGameWarn = _S("No disc image is selected, or its file is missing.");
+static const TText *const KStr_tr_EStrAskPickGame = _S("Select game");
+static const TText *const KStr_tr_EStrTitleNoBios = _S("BIOS not found");
+static const TText *const KStr_tr_EStrAskNoBiosWarn = _S("The game will run on the built-in BIOS replacement (HLE); compatibility is worse.");
+static const TText *const KStr_tr_EStrAskContinue = _S("Continue");
+static const TText *const KStr_tr_EStrAskPickBios = _S("Select BIOS");
+
+static const TText *const KStr_ja_EStrItemMore = _S("More...");
+static const TText *const KStr_ja_EStrItemHelp = _S("Help");
+static const TText *const KStr_ja_EStrItemGames = _S("Games");
+static const TText *const KStr_ja_EStrTitleSetup = _S("First setup");
+static const TText *const KStr_ja_EStrValFound = _S("found");
+static const TText *const KStr_ja_EStrValMissing = _S("not found");
+static const TText *const KStr_ja_EStrHintSetup = _S("L/R change, OK select, C skip");
+static const TText *const KStr_ja_EStrHintHelpList = _S("OK open, C back");
+static const TText *const KStr_ja_EStrHintHelpText = _S("Up/Down scroll, C back");
+static const TText *const KStr_ja_EStrTitleNoGame = _S("No game");
+static const TText *const KStr_ja_EStrAskNoGameWarn = _S("No disc image is selected, or its file is missing.");
+static const TText *const KStr_ja_EStrAskPickGame = _S("Select game");
+static const TText *const KStr_ja_EStrTitleNoBios = _S("BIOS not found");
+static const TText *const KStr_ja_EStrAskNoBiosWarn = _S("The game will run on the built-in BIOS replacement (HLE); compatibility is worse.");
+static const TText *const KStr_ja_EStrAskContinue = _S("Continue");
+static const TText *const KStr_ja_EStrAskPickBios = _S("Select BIOS");
+
+static const TText *const KStr_hi_EStrItemMore = _S("More...");
+static const TText *const KStr_hi_EStrItemHelp = _S("Help");
+static const TText *const KStr_hi_EStrItemGames = _S("Games");
+static const TText *const KStr_hi_EStrTitleSetup = _S("First setup");
+static const TText *const KStr_hi_EStrValFound = _S("found");
+static const TText *const KStr_hi_EStrValMissing = _S("not found");
+static const TText *const KStr_hi_EStrHintSetup = _S("L/R change, OK select, C skip");
+static const TText *const KStr_hi_EStrHintHelpList = _S("OK open, C back");
+static const TText *const KStr_hi_EStrHintHelpText = _S("Up/Down scroll, C back");
+static const TText *const KStr_hi_EStrTitleNoGame = _S("No game");
+static const TText *const KStr_hi_EStrAskNoGameWarn = _S("No disc image is selected, or its file is missing.");
+static const TText *const KStr_hi_EStrAskPickGame = _S("Select game");
+static const TText *const KStr_hi_EStrTitleNoBios = _S("BIOS not found");
+static const TText *const KStr_hi_EStrAskNoBiosWarn = _S("The game will run on the built-in BIOS replacement (HLE); compatibility is worse.");
+static const TText *const KStr_hi_EStrAskContinue = _S("Continue");
+static const TText *const KStr_hi_EStrAskPickBios = _S("Select BIOS");
+
+static const TText *const KStr_ar_EStrItemMore = _S("More...");
+static const TText *const KStr_ar_EStrItemHelp = _S("Help");
+static const TText *const KStr_ar_EStrItemGames = _S("Games");
+static const TText *const KStr_ar_EStrTitleSetup = _S("First setup");
+static const TText *const KStr_ar_EStrValFound = _S("found");
+static const TText *const KStr_ar_EStrValMissing = _S("not found");
+static const TText *const KStr_ar_EStrHintSetup = _S("L/R change, OK select, C skip");
+static const TText *const KStr_ar_EStrHintHelpList = _S("OK open, C back");
+static const TText *const KStr_ar_EStrHintHelpText = _S("Up/Down scroll, C back");
+static const TText *const KStr_ar_EStrTitleNoGame = _S("No game");
+static const TText *const KStr_ar_EStrAskNoGameWarn = _S("No disc image is selected, or its file is missing.");
+static const TText *const KStr_ar_EStrAskPickGame = _S("Select game");
+static const TText *const KStr_ar_EStrTitleNoBios = _S("BIOS not found");
+static const TText *const KStr_ar_EStrAskNoBiosWarn = _S("The game will run on the built-in BIOS replacement (HLE); compatibility is worse.");
+static const TText *const KStr_ar_EStrAskContinue = _S("Continue");
+static const TText *const KStr_ar_EStrAskPickBios = _S("Select BIOS");
+
+static const TText *const KStr_ko_EStrItemMore = _S("More...");
+static const TText *const KStr_ko_EStrItemHelp = _S("Help");
+static const TText *const KStr_ko_EStrItemGames = _S("Games");
+static const TText *const KStr_ko_EStrTitleSetup = _S("First setup");
+static const TText *const KStr_ko_EStrValFound = _S("found");
+static const TText *const KStr_ko_EStrValMissing = _S("not found");
+static const TText *const KStr_ko_EStrHintSetup = _S("L/R change, OK select, C skip");
+static const TText *const KStr_ko_EStrHintHelpList = _S("OK open, C back");
+static const TText *const KStr_ko_EStrHintHelpText = _S("Up/Down scroll, C back");
+static const TText *const KStr_ko_EStrTitleNoGame = _S("No game");
+static const TText *const KStr_ko_EStrAskNoGameWarn = _S("No disc image is selected, or its file is missing.");
+static const TText *const KStr_ko_EStrAskPickGame = _S("Select game");
+static const TText *const KStr_ko_EStrTitleNoBios = _S("BIOS not found");
+static const TText *const KStr_ko_EStrAskNoBiosWarn = _S("The game will run on the built-in BIOS replacement (HLE); compatibility is worse.");
+static const TText *const KStr_ko_EStrAskContinue = _S("Continue");
+static const TText *const KStr_ko_EStrAskPickBios = _S("Select BIOS");
+
 static const TText *const KTable_en[EStrCount] =
 	{
 	KStr_en_EStrSecGame,
@@ -2198,6 +2456,22 @@ static const TText *const KTable_en[EStrCount] =
 	KStr_en_EStrValBaseN95,
 	KStr_en_EStrValBaseC5,
 	KStr_en_EStrItemWsola,
+	KStr_en_EStrItemMore,
+	KStr_en_EStrItemHelp,
+	KStr_en_EStrItemGames,
+	KStr_en_EStrTitleSetup,
+	KStr_en_EStrValFound,
+	KStr_en_EStrValMissing,
+	KStr_en_EStrHintSetup,
+	KStr_en_EStrHintHelpList,
+	KStr_en_EStrHintHelpText,
+	KStr_en_EStrTitleNoGame,
+	KStr_en_EStrAskNoGameWarn,
+	KStr_en_EStrAskPickGame,
+	KStr_en_EStrTitleNoBios,
+	KStr_en_EStrAskNoBiosWarn,
+	KStr_en_EStrAskContinue,
+	KStr_en_EStrAskPickBios,
 	};
 
 static const TText *const KTable_uk[EStrCount] =
@@ -2335,6 +2609,22 @@ static const TText *const KTable_uk[EStrCount] =
 	KStr_uk_EStrValBaseN95,
 	KStr_uk_EStrValBaseC5,
 	KStr_uk_EStrItemWsola,
+	KStr_uk_EStrItemMore,
+	KStr_uk_EStrItemHelp,
+	KStr_uk_EStrItemGames,
+	KStr_uk_EStrTitleSetup,
+	KStr_uk_EStrValFound,
+	KStr_uk_EStrValMissing,
+	KStr_uk_EStrHintSetup,
+	KStr_uk_EStrHintHelpList,
+	KStr_uk_EStrHintHelpText,
+	KStr_uk_EStrTitleNoGame,
+	KStr_uk_EStrAskNoGameWarn,
+	KStr_uk_EStrAskPickGame,
+	KStr_uk_EStrTitleNoBios,
+	KStr_uk_EStrAskNoBiosWarn,
+	KStr_uk_EStrAskContinue,
+	KStr_uk_EStrAskPickBios,
 	};
 
 static const TText *const KTable_zh[EStrCount] =
@@ -2472,6 +2762,22 @@ static const TText *const KTable_zh[EStrCount] =
 	KStr_zh_EStrValBaseN95,
 	KStr_zh_EStrValBaseC5,
 	KStr_zh_EStrItemWsola,
+	KStr_zh_EStrItemMore,
+	KStr_zh_EStrItemHelp,
+	KStr_zh_EStrItemGames,
+	KStr_zh_EStrTitleSetup,
+	KStr_zh_EStrValFound,
+	KStr_zh_EStrValMissing,
+	KStr_zh_EStrHintSetup,
+	KStr_zh_EStrHintHelpList,
+	KStr_zh_EStrHintHelpText,
+	KStr_zh_EStrTitleNoGame,
+	KStr_zh_EStrAskNoGameWarn,
+	KStr_zh_EStrAskPickGame,
+	KStr_zh_EStrTitleNoBios,
+	KStr_zh_EStrAskNoBiosWarn,
+	KStr_zh_EStrAskContinue,
+	KStr_zh_EStrAskPickBios,
 	};
 
 static const TText *const KTable_de[EStrCount] =
@@ -2609,6 +2915,22 @@ static const TText *const KTable_de[EStrCount] =
 	KStr_de_EStrValBaseN95,
 	KStr_de_EStrValBaseC5,
 	KStr_de_EStrItemWsola,
+	KStr_de_EStrItemMore,
+	KStr_de_EStrItemHelp,
+	KStr_de_EStrItemGames,
+	KStr_de_EStrTitleSetup,
+	KStr_de_EStrValFound,
+	KStr_de_EStrValMissing,
+	KStr_de_EStrHintSetup,
+	KStr_de_EStrHintHelpList,
+	KStr_de_EStrHintHelpText,
+	KStr_de_EStrTitleNoGame,
+	KStr_de_EStrAskNoGameWarn,
+	KStr_de_EStrAskPickGame,
+	KStr_de_EStrTitleNoBios,
+	KStr_de_EStrAskNoBiosWarn,
+	KStr_de_EStrAskContinue,
+	KStr_de_EStrAskPickBios,
 	};
 
 static const TText *const KTable_fr[EStrCount] =
@@ -2746,6 +3068,22 @@ static const TText *const KTable_fr[EStrCount] =
 	KStr_fr_EStrValBaseN95,
 	KStr_fr_EStrValBaseC5,
 	KStr_fr_EStrItemWsola,
+	KStr_fr_EStrItemMore,
+	KStr_fr_EStrItemHelp,
+	KStr_fr_EStrItemGames,
+	KStr_fr_EStrTitleSetup,
+	KStr_fr_EStrValFound,
+	KStr_fr_EStrValMissing,
+	KStr_fr_EStrHintSetup,
+	KStr_fr_EStrHintHelpList,
+	KStr_fr_EStrHintHelpText,
+	KStr_fr_EStrTitleNoGame,
+	KStr_fr_EStrAskNoGameWarn,
+	KStr_fr_EStrAskPickGame,
+	KStr_fr_EStrTitleNoBios,
+	KStr_fr_EStrAskNoBiosWarn,
+	KStr_fr_EStrAskContinue,
+	KStr_fr_EStrAskPickBios,
 	};
 
 static const TText *const KTable_es[EStrCount] =
@@ -2883,6 +3221,22 @@ static const TText *const KTable_es[EStrCount] =
 	KStr_es_EStrValBaseN95,
 	KStr_es_EStrValBaseC5,
 	KStr_es_EStrItemWsola,
+	KStr_es_EStrItemMore,
+	KStr_es_EStrItemHelp,
+	KStr_es_EStrItemGames,
+	KStr_es_EStrTitleSetup,
+	KStr_es_EStrValFound,
+	KStr_es_EStrValMissing,
+	KStr_es_EStrHintSetup,
+	KStr_es_EStrHintHelpList,
+	KStr_es_EStrHintHelpText,
+	KStr_es_EStrTitleNoGame,
+	KStr_es_EStrAskNoGameWarn,
+	KStr_es_EStrAskPickGame,
+	KStr_es_EStrTitleNoBios,
+	KStr_es_EStrAskNoBiosWarn,
+	KStr_es_EStrAskContinue,
+	KStr_es_EStrAskPickBios,
 	};
 
 static const TText *const KTable_ru[EStrCount] =
@@ -3020,6 +3374,22 @@ static const TText *const KTable_ru[EStrCount] =
 	KStr_ru_EStrValBaseN95,
 	KStr_ru_EStrValBaseC5,
 	KStr_ru_EStrItemWsola,
+	KStr_ru_EStrItemMore,
+	KStr_ru_EStrItemHelp,
+	KStr_ru_EStrItemGames,
+	KStr_ru_EStrTitleSetup,
+	KStr_ru_EStrValFound,
+	KStr_ru_EStrValMissing,
+	KStr_ru_EStrHintSetup,
+	KStr_ru_EStrHintHelpList,
+	KStr_ru_EStrHintHelpText,
+	KStr_ru_EStrTitleNoGame,
+	KStr_ru_EStrAskNoGameWarn,
+	KStr_ru_EStrAskPickGame,
+	KStr_ru_EStrTitleNoBios,
+	KStr_ru_EStrAskNoBiosWarn,
+	KStr_ru_EStrAskContinue,
+	KStr_ru_EStrAskPickBios,
 	};
 
 static const TText *const KTable_pt[EStrCount] =
@@ -3157,6 +3527,22 @@ static const TText *const KTable_pt[EStrCount] =
 	KStr_pt_EStrValBaseN95,
 	KStr_pt_EStrValBaseC5,
 	KStr_pt_EStrItemWsola,
+	KStr_pt_EStrItemMore,
+	KStr_pt_EStrItemHelp,
+	KStr_pt_EStrItemGames,
+	KStr_pt_EStrTitleSetup,
+	KStr_pt_EStrValFound,
+	KStr_pt_EStrValMissing,
+	KStr_pt_EStrHintSetup,
+	KStr_pt_EStrHintHelpList,
+	KStr_pt_EStrHintHelpText,
+	KStr_pt_EStrTitleNoGame,
+	KStr_pt_EStrAskNoGameWarn,
+	KStr_pt_EStrAskPickGame,
+	KStr_pt_EStrTitleNoBios,
+	KStr_pt_EStrAskNoBiosWarn,
+	KStr_pt_EStrAskContinue,
+	KStr_pt_EStrAskPickBios,
 	};
 
 static const TText *const KTable_it[EStrCount] =
@@ -3294,6 +3680,22 @@ static const TText *const KTable_it[EStrCount] =
 	KStr_it_EStrValBaseN95,
 	KStr_it_EStrValBaseC5,
 	KStr_it_EStrItemWsola,
+	KStr_it_EStrItemMore,
+	KStr_it_EStrItemHelp,
+	KStr_it_EStrItemGames,
+	KStr_it_EStrTitleSetup,
+	KStr_it_EStrValFound,
+	KStr_it_EStrValMissing,
+	KStr_it_EStrHintSetup,
+	KStr_it_EStrHintHelpList,
+	KStr_it_EStrHintHelpText,
+	KStr_it_EStrTitleNoGame,
+	KStr_it_EStrAskNoGameWarn,
+	KStr_it_EStrAskPickGame,
+	KStr_it_EStrTitleNoBios,
+	KStr_it_EStrAskNoBiosWarn,
+	KStr_it_EStrAskContinue,
+	KStr_it_EStrAskPickBios,
 	};
 
 static const TText *const KTable_pl[EStrCount] =
@@ -3431,6 +3833,22 @@ static const TText *const KTable_pl[EStrCount] =
 	KStr_pl_EStrValBaseN95,
 	KStr_pl_EStrValBaseC5,
 	KStr_pl_EStrItemWsola,
+	KStr_pl_EStrItemMore,
+	KStr_pl_EStrItemHelp,
+	KStr_pl_EStrItemGames,
+	KStr_pl_EStrTitleSetup,
+	KStr_pl_EStrValFound,
+	KStr_pl_EStrValMissing,
+	KStr_pl_EStrHintSetup,
+	KStr_pl_EStrHintHelpList,
+	KStr_pl_EStrHintHelpText,
+	KStr_pl_EStrTitleNoGame,
+	KStr_pl_EStrAskNoGameWarn,
+	KStr_pl_EStrAskPickGame,
+	KStr_pl_EStrTitleNoBios,
+	KStr_pl_EStrAskNoBiosWarn,
+	KStr_pl_EStrAskContinue,
+	KStr_pl_EStrAskPickBios,
 	};
 
 static const TText *const KTable_tr[EStrCount] =
@@ -3568,6 +3986,22 @@ static const TText *const KTable_tr[EStrCount] =
 	KStr_tr_EStrValBaseN95,
 	KStr_tr_EStrValBaseC5,
 	KStr_tr_EStrItemWsola,
+	KStr_tr_EStrItemMore,
+	KStr_tr_EStrItemHelp,
+	KStr_tr_EStrItemGames,
+	KStr_tr_EStrTitleSetup,
+	KStr_tr_EStrValFound,
+	KStr_tr_EStrValMissing,
+	KStr_tr_EStrHintSetup,
+	KStr_tr_EStrHintHelpList,
+	KStr_tr_EStrHintHelpText,
+	KStr_tr_EStrTitleNoGame,
+	KStr_tr_EStrAskNoGameWarn,
+	KStr_tr_EStrAskPickGame,
+	KStr_tr_EStrTitleNoBios,
+	KStr_tr_EStrAskNoBiosWarn,
+	KStr_tr_EStrAskContinue,
+	KStr_tr_EStrAskPickBios,
 	};
 
 static const TText *const KTable_ja[EStrCount] =
@@ -3705,6 +4139,22 @@ static const TText *const KTable_ja[EStrCount] =
 	KStr_ja_EStrValBaseN95,
 	KStr_ja_EStrValBaseC5,
 	KStr_ja_EStrItemWsola,
+	KStr_ja_EStrItemMore,
+	KStr_ja_EStrItemHelp,
+	KStr_ja_EStrItemGames,
+	KStr_ja_EStrTitleSetup,
+	KStr_ja_EStrValFound,
+	KStr_ja_EStrValMissing,
+	KStr_ja_EStrHintSetup,
+	KStr_ja_EStrHintHelpList,
+	KStr_ja_EStrHintHelpText,
+	KStr_ja_EStrTitleNoGame,
+	KStr_ja_EStrAskNoGameWarn,
+	KStr_ja_EStrAskPickGame,
+	KStr_ja_EStrTitleNoBios,
+	KStr_ja_EStrAskNoBiosWarn,
+	KStr_ja_EStrAskContinue,
+	KStr_ja_EStrAskPickBios,
 	};
 
 static const TText *const KTable_hi[EStrCount] =
@@ -3842,6 +4292,22 @@ static const TText *const KTable_hi[EStrCount] =
 	KStr_hi_EStrValBaseN95,
 	KStr_hi_EStrValBaseC5,
 	KStr_hi_EStrItemWsola,
+	KStr_hi_EStrItemMore,
+	KStr_hi_EStrItemHelp,
+	KStr_hi_EStrItemGames,
+	KStr_hi_EStrTitleSetup,
+	KStr_hi_EStrValFound,
+	KStr_hi_EStrValMissing,
+	KStr_hi_EStrHintSetup,
+	KStr_hi_EStrHintHelpList,
+	KStr_hi_EStrHintHelpText,
+	KStr_hi_EStrTitleNoGame,
+	KStr_hi_EStrAskNoGameWarn,
+	KStr_hi_EStrAskPickGame,
+	KStr_hi_EStrTitleNoBios,
+	KStr_hi_EStrAskNoBiosWarn,
+	KStr_hi_EStrAskContinue,
+	KStr_hi_EStrAskPickBios,
 	};
 
 static const TText *const KTable_ar[EStrCount] =
@@ -3979,6 +4445,22 @@ static const TText *const KTable_ar[EStrCount] =
 	KStr_ar_EStrValBaseN95,
 	KStr_ar_EStrValBaseC5,
 	KStr_ar_EStrItemWsola,
+	KStr_ar_EStrItemMore,
+	KStr_ar_EStrItemHelp,
+	KStr_ar_EStrItemGames,
+	KStr_ar_EStrTitleSetup,
+	KStr_ar_EStrValFound,
+	KStr_ar_EStrValMissing,
+	KStr_ar_EStrHintSetup,
+	KStr_ar_EStrHintHelpList,
+	KStr_ar_EStrHintHelpText,
+	KStr_ar_EStrTitleNoGame,
+	KStr_ar_EStrAskNoGameWarn,
+	KStr_ar_EStrAskPickGame,
+	KStr_ar_EStrTitleNoBios,
+	KStr_ar_EStrAskNoBiosWarn,
+	KStr_ar_EStrAskContinue,
+	KStr_ar_EStrAskPickBios,
 	};
 
 static const TText *const KTable_ko[EStrCount] =
@@ -4116,6 +4598,22 @@ static const TText *const KTable_ko[EStrCount] =
 	KStr_ko_EStrValBaseN95,
 	KStr_ko_EStrValBaseC5,
 	KStr_ko_EStrItemWsola,
+	KStr_ko_EStrItemMore,
+	KStr_ko_EStrItemHelp,
+	KStr_ko_EStrItemGames,
+	KStr_ko_EStrTitleSetup,
+	KStr_ko_EStrValFound,
+	KStr_ko_EStrValMissing,
+	KStr_ko_EStrHintSetup,
+	KStr_ko_EStrHintHelpList,
+	KStr_ko_EStrHintHelpText,
+	KStr_ko_EStrTitleNoGame,
+	KStr_ko_EStrAskNoGameWarn,
+	KStr_ko_EStrAskPickGame,
+	KStr_ko_EStrTitleNoBios,
+	KStr_ko_EStrAskNoBiosWarn,
+	KStr_ko_EStrAskContinue,
+	KStr_ko_EStrAskPickBios,
 	};
 
 static const TText *const *const KAllTables[ELangIdCount] =
