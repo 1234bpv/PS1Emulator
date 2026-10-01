@@ -29,6 +29,7 @@ param(
   [switch]$CfProfile,      # per-CF span/length histogram in GPU; bench only
   [switch]$CfTime,         # selected-CF primitive raster timing; bench only
   [switch]$SpuStageProfile,# per-stage timing in SPU; bench only
+  [switch]$Stage2Profile,  # PC sampling, recompile timers, slow-path counters; bench only
   [int[]]$Shots = @(6000), # frames whose dumps to pull and decode
   [int]$Timeout = 900,
   [switch]$NoRun,          # build and push only
@@ -81,11 +82,12 @@ if ($List) {
 # --- build ----------------------------------------------------------------
 # Any library rebuild forces a stage1 relink: abld tracks only its own sources
 # and would happily leave the previous EXE in place.
-if ($Core -or $Gpu -or $CoreCc -or $CfProfile -or $CfTime -or $SpuStageProfile) { $Build = $true }
+if ($Core -or $Gpu -or $CoreCc -or $CfProfile -or $CfTime -or $SpuStageProfile -or $Stage2Profile) { $Build = $true }
 if ($Release) { $Build = $true }
-if (($CfProfile -or $CfTime -or $SpuStageProfile) -and $Release) { throw 'CF/Stage diagnostics are bench-only' }
+if (($CfProfile -or $CfTime -or $SpuStageProfile -or $Stage2Profile) -and $Release) { throw 'CF/Stage diagnostics are bench-only' }
+if ($SpuStageProfile -and $Stage2Profile) { throw '-SpuStageProfile and -Stage2Profile must be built separately' }
 if ($CfProfile -and $CfTime) { throw '-CfProfile and -CfTime must be measured separately' }
-$Flavour = if ($Release) { 'release' } elseif ($SpuStageProfile) { 'bench-spustage' } else { 'bench' }
+$Flavour = if ($Release) { 'release' } elseif ($SpuStageProfile) { 'bench-spustage' } elseif ($Stage2Profile) { 'bench-stage2' } else { 'bench' }
 $GpuProfile = if ($CfProfile) { 'bench-cf' } elseif ($CfTime) { 'bench-cftime' } else { if ($Release) { 'release' } else { 'bench' } }
 
 function Build-Step {
@@ -153,6 +155,9 @@ function Build-Core {
     } elseif ($Profile -eq 'bench-spustage') {
       Copy-Item $coreMmp $coreBackup -Force
       [IO.File]::AppendAllText($coreMmp, "`r`nMACRO           PS1_SPU_STAGE_PROFILE`r`n")
+    } elseif ($Profile -eq 'bench-stage2') {
+      Copy-Item $coreMmp $coreBackup -Force
+      [IO.File]::AppendAllText($coreMmp, "`r`nMACRO           PS1_STAGE2_PROFILE`r`n")
     }
     try {
       if ($oldProfile -ne $Profile) {
@@ -160,7 +165,7 @@ function Build-Core {
       }
       Build-Step "cd /d `"$Proj\configs\core\group`" && call bldmake bldfiles && call .\ABLD.BAT build gcce urel" 'libpcsxcore csl343'
     } finally {
-      if ($Profile -eq 'release' -or $Profile -eq 'bench-spustage') {
+      if ($Profile -eq 'release' -or $Profile -eq 'bench-spustage' -or $Profile -eq 'bench-stage2') {
         Copy-Item $coreBackup $coreMmp -Force
         Remove-Item $coreBackup -Force
       }
@@ -247,7 +252,7 @@ if ($Build) {
     Build-Step "cd /d `"$Proj\configs\stage1\group`" && call bldmake bldfiles && call .\ABLD.BAT clean gcce urel" 'stage1 clean'
   }
 
-  if ($Release -or $SpuStageProfile) {
+  if ($Release -or $SpuStageProfile -or $Stage2Profile) {
     Copy-Item $MmpPath $MmpBackup -Force
     $patched = [IO.File]::ReadAllText($MmpPath)
     if ($Release) {
@@ -275,12 +280,15 @@ if ($Build) {
     if ($SpuStageProfile) {
       $patched = $patched + "`r`nMACRO           PS1_SPU_STAGE_PROFILE`r`n"
     }
+    if ($Stage2Profile) {
+      $patched = $patched + "`r`nMACRO           PS1_STAGE2_PROFILE`r`n"
+    }
     [IO.File]::WriteAllText($MmpPath, $patched)
   }
   try {
     Build-Step "cd /d `"$Proj\configs\stage1\group`" && call bldmake bldfiles && call .\ABLD.BAT build gcce urel" 'stage1'
   } finally {
-    if ($Release -or $SpuStageProfile) {
+    if ($Release -or $SpuStageProfile -or $Stage2Profile) {
       Copy-Item $MmpBackup $MmpPath -Force
       Remove-Item $MmpBackup -Force -ErrorAction SilentlyContinue
     }
@@ -291,6 +299,16 @@ if ($Build) {
   if ($fi.LastWriteTime -lt $started) { throw "stage1 EXE is older than this build" }
   Write-Host "[run] exe $($fi.Length) bytes, $($fi.LastWriteTime)"
   Set-Content -Path $FlavourFile -Value $Flavour -NoNewline
+  if ($Stage2Profile) {
+    # s2prof.ps1 needs the symbols of exactly this link. The E32 image carries none;
+    # the ELF the link produced before elf2e32 does, and its local symbols matter
+    # because the rasteriser is almost all static functions.
+    $elf = "$objDir\STAGE1\GCCE\urel\ps1stage1.exe"
+    $nm = Join-Path $Shared 'toolchain\CSL_Arm_Toolchain\bin\arm-none-symbianelf-nm.exe'
+    & $nm -S -n -C $elf | Set-Content -Path "$Exe.nm.txt" -Encoding ASCII
+    if (-not (Test-Path "$Exe.map") -or (Get-Item "$Exe.map").LastWriteTime -lt $started) { throw 'the linker map is older than this build' }
+    Write-Host "[run] symbols $((Get-Item "$Exe.nm.txt").Length) bytes, map $((Get-Item "$Exe.map").Length) bytes"
+  }
 }
 
 if ($NoPush) { Write-Host "[run] built only"; exit 0 }
@@ -409,3 +427,6 @@ foreach ($pat in @('"event":"boot"', '"event":"exeid"', '"event":"clocks"', '"ev
     ForEach-Object { Write-Host $_.Line }
 }
 Write-Host "[run] -> $RunDir"
+if ($Stage2Profile) {
+  & pwsh -NoProfile -File "$PSScriptRoot\s2prof.ps1" -Log "$RunDir\ps1_stage1.jsonl" -Map "$Exe.map" -Sym "$Exe.nm.txt"
+}

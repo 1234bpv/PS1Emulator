@@ -459,6 +459,7 @@ void voutSymbianSetSelfInterrupt(int aAt, int aFor);
 void voutSymbianSelfInterruptTick(int aFrame);
 #endif
 void voutSymbianRowStats(unsigned *box, unsigned *plain, unsigned *scale, unsigned *rgb24, unsigned *other);
+void voutSymbianRgb24Stats(unsigned *scaled, unsigned *b16, int *srcW, int *dstW);
 void voutSymbianSetDsa(int on);
 int voutSymbianDsaActive(void);
 void voutSymbianSetGl(int on);
@@ -701,6 +702,57 @@ static volatile TInt g_wdBeat;
 // Main thread ID: watchdog reads its context (where exactly it is executing).
 static TThreadId g_mainThreadId;
 
+#ifdef PS1_STAGE2_PROFILE
+// Stage 2 profile: where the guest thread spends its time. The watchdog reads the
+// main thread's PC every g_s2Ms milliseconds (arg "pcprof<ms>"; 0 = off, so one
+// binary gives the with/without pair). Samples are kept raw in memory and folded
+// into events only at teardown: s2prof, s2map, s2cls, s2hist, s2dyn, s2slow.
+// Classes that need symbols are resolved on the PC (tools-patches/s2prof.ps1).
+static const TInt KS2Max = 32768;
+static TInt g_s2Ms;
+static volatile TInt g_s2On;
+static volatile TInt g_s2N;
+static TUint32 g_s2Pc[KS2Max];
+static TUint8  g_s2Stage[KS2Max];
+static TInt g_s2Fail, g_s2Drop;
+static TUint g_s2Tick0, g_s2Tick1, g_s2CtxTicks;
+static TUint32 g_s2TcBase, g_s2TcSize;
+extern "C" {
+unsigned int ndrc_symbian_tcsize(void);
+void *ndrc_symbian_alloc(unsigned int size);
+extern unsigned int g_s2_rc_ticks, g_s2_rc_blocks, g_s2_rc_fail;
+extern unsigned int g_s2_ht_live, g_s2_ht_hit0, g_s2_ht_hit1, g_s2_ht_slow, g_s2_links;
+extern unsigned int g_s2_slow[2][6];
+extern int ndrc_s2_d1;
+extern unsigned int g_s2ImbCalls, g_s2ImbTicks, g_s2ImbBytes;
+}
+// Dynarec counters at the start of the frame loop, so the loadstate warm-up is not counted.
+static const TInt KS2Dyn = 11;
+static const TInt KS2Slow = 12;
+static TUint g_s2DynBase[KS2Dyn];
+static TUint g_s2SlowBase[KS2Slow];
+
+static void s2DynSnap(TUint *aDyn, TUint *aSlow)
+	{
+	aDyn[0] = g_s2_rc_ticks; aDyn[1] = g_s2_rc_blocks; aDyn[2] = g_s2_rc_fail;
+	aDyn[3] = g_s2_ht_live; aDyn[4] = g_s2_ht_hit0; aDyn[5] = g_s2_ht_hit1;
+	aDyn[6] = g_s2_ht_slow; aDyn[7] = g_s2_links;
+	aDyn[8] = g_s2ImbCalls; aDyn[9] = g_s2ImbTicks; aDyn[10] = g_s2ImbBytes;
+	for (TInt k = 0; k < 6; k++)
+		{ aSlow[k] = g_s2_slow[0][k]; aSlow[6 + k] = g_s2_slow[1][k]; }
+	}
+
+// Called where the pass clock starts.
+static void s2Begin()
+	{
+	s2DynSnap(g_s2DynBase, g_s2SlowBase);
+	g_s2N = 0; g_s2Fail = 0; g_s2Drop = 0; g_s2CtxTicks = 0;
+	g_s2TcBase = (TUint32)ndrc_symbian_tcbase();
+	g_s2TcSize = (TUint32)ndrc_symbian_tcsize();
+	g_s2On = (g_s2Ms > 0) ? 1 : 0;
+	}
+#endif
+
 // Terminates COOPERATIVELY: checks g_wdRun in short steps and exits on its own
 // when pass disables it. Avoids RThread::Kill (panic when killing already
 // dead thread) and avoids shutdown race conditions.
@@ -764,7 +816,11 @@ static TInt watchdogThread(TAny *aArg)
 	const TInt limitMs = (TInt)aArg;
 	// 5 ms step: after crash process survives only tens of milliseconds, and a coarser
 	// step fails to capture the stall (verified - at 25 ms it was lost).
+#ifdef PS1_STAGE2_PROFILE
+	const TInt step = g_s2Ms > 0 ? g_s2Ms : 5;
+#else
 	const TInt step = 5;
+#endif
 	TInt elapsed = 0;
 	TInt idleMs = 0;
 	TInt lastBeat = -1;
@@ -779,6 +835,29 @@ static TInt watchdogThread(TAny *aArg)
 	TInt snapCount = 0;
 	while (g_wdRun && idleMs < limitMs)
 		{
+#ifdef PS1_STAGE2_PROFILE
+		if (g_s2On && haveMainT)
+			{
+			const TUint c0 = User::FastCounter();
+			TBuf8<128> sctx;
+			mainT.Context(sctx);
+			const TBool ok = sctx.Length() >= 16 * 4;
+			if (ok && g_s2N < KS2Max)
+				{
+				const TInt k = g_s2N;
+				g_s2Pc[k] = ((const TUint32 *)sctx.Ptr())[15];
+				g_s2Stage[k] = (TUint8)g_stage;
+				g_s2N = k + 1;
+				g_s2Tick1 = User::NTickCount();
+				if (!k) g_s2Tick0 = g_s2Tick1;
+				}
+			else if (!ok)
+				g_s2Fail++;
+			else
+				g_s2Drop++;
+			g_s2CtxTicks += User::FastCounter() - c0;
+			}
+#endif
 		if (haveBeat && elapsed >= nextBeatMs)
 			{
 			unsigned gpData = 0, gpDataMem = 0, gpDma = 0, gpStatus = 0;
@@ -1811,6 +1890,9 @@ static TInt passSetup(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTes
 	// Pipeline profiling: cumulative time (ms) for each stage across entire pass.
 	// NTickCount is ~1ms here; per-frame error averages out over hundreds of frames.
 	g_pass.tStart = User::NTickCount();
+#ifdef PS1_STAGE2_PROFILE
+	s2Begin();
+#endif
 	// Overlay window opens along with pass, not upon menu toggle: between
 	// menu and first frame lies core init (BIOS, disc image), which would
 	// make first value three times lower.
@@ -2257,6 +2339,151 @@ static TBool passStep()
 	return ETrue;
 	}
 
+#ifdef PS1_STAGE2_PROFILE
+static TUint32 g_s2Exe[KS2Max], g_s2Sys[KS2Max];
+struct TS2Row { TUint32 key; TUint32 c[4]; TUint32 tot; };
+static const TInt KS2Rows = 8192;
+static TS2Row g_s2Rows[KS2Rows];
+
+static int s2CmpU32(const void *a, const void *b)
+	{
+	const TUint32 x = *(const TUint32 *)a, y = *(const TUint32 *)b;
+	return x < y ? -1 : (x > y ? 1 : 0);
+	}
+
+static int s2CmpRow(const void *a, const void *b)
+	{
+	const TUint32 x = ((const TS2Row *)a)->tot, y = ((const TS2Row *)b)->tot;
+	return x > y ? -1 : (x < y ? 1 : 0);
+	}
+
+// aPk holds (bucket << 2 | window). One row per bucket with the four per-window
+// counts, hottest first; whatever does not fit into aMaxRows is summed in "rest".
+static void s2Hist(const char *aMode, const char *aKind, TUint32 *aPk, TInt aN,
+	TUint32 aBase, TInt aShift, TInt aMaxRows)
+	{
+	qsort(aPk, (size_t)aN, sizeof(TUint32), s2CmpU32);
+	TInt rows = 0;
+	TUint32 lost[4] = { 0, 0, 0, 0 };
+	for (TInt i = 0; i < aN; i++)
+		{
+		const TUint32 key = aPk[i] >> 2;
+		const TInt w = (TInt)(aPk[i] & 3);
+		if (rows == 0 || g_s2Rows[rows - 1].key != key)
+			{
+			if (rows == KS2Rows)
+				{ lost[w]++; continue; }
+			TS2Row &r = g_s2Rows[rows++];
+			r.key = key; r.c[0] = r.c[1] = r.c[2] = r.c[3] = 0; r.tot = 0;
+			}
+		g_s2Rows[rows - 1].c[w]++;
+		g_s2Rows[rows - 1].tot++;
+		}
+	qsort(g_s2Rows, (size_t)rows, sizeof(TS2Row), s2CmpRow);
+	const TInt shown = rows < aMaxRows ? rows : aMaxRows;
+	for (TInt i = shown; i < rows; i++)
+		for (TInt w = 0; w < 4; w++)
+			lost[w] += g_s2Rows[i].c[w];
+	char buf[460];
+	TInt len = 0;
+	for (TInt i = 0; i < shown; i++)
+		{
+		const TS2Row &r = g_s2Rows[i];
+		len += snprintf(buf + len, sizeof(buf) - len, "%x:%u/%u/%u/%u ",
+			(unsigned)(aBase + (r.key << aShift)), (unsigned)r.c[0], (unsigned)r.c[1],
+			(unsigned)r.c[2], (unsigned)r.c[3]);
+		if (len > 400 || i == shown - 1)
+			{
+			logEvent("s2hist", NULL, "%s: kind=%s shift=%d base=%x rows=%s", aMode, aKind,
+				(int)aShift, (unsigned)aBase, buf);
+			len = 0;
+			}
+		}
+	logEvent("s2hist", NULL, "%s: kind=%s end buckets=%d shown=%d samples=%d rest=%u/%u/%u/%u",
+		aMode, aKind, (int)rows, (int)shown, (int)aN,
+		(unsigned)lost[0], (unsigned)lost[1], (unsigned)lost[2], (unsigned)lost[3]);
+	}
+
+static void s2Report(const char *aMode)
+	{
+	const TInt n = g_s2N;
+	TUint dyn[KS2Dyn], slow[KS2Slow];
+	s2DynSnap(dyn, slow);
+	const TUint freq = 32768;
+	for (TInt k = 0; k < KS2Dyn; k++) dyn[k] -= g_s2DynBase[k];
+	for (TInt k = 0; k < KS2Slow; k++) slow[k] -= g_s2SlowBase[k];
+	logEvent("s2dyn", NULL, "%s: rcMs=%u rcBlocks=%u rcFail=%u rcUsPerBlock=%u imbCalls=%u imbMs=%u imbKB=%u "
+		"links=%u htLive=%u htHit0=%u htHit1=%u htSlow=%u",
+		aMode, (unsigned)((unsigned long long)dyn[0] * 1000 / freq), dyn[1], dyn[2],
+		dyn[1] ? (unsigned)((unsigned long long)dyn[0] * 1000000 / freq / dyn[1]) : 0,
+		dyn[8], (unsigned)((unsigned long long)dyn[9] * 1000 / freq), dyn[10] / 1024,
+		dyn[7], dyn[3], dyn[4], dyn[5], dyn[6]);
+	if (ndrc_s2_d1)
+		logEvent("s2slow", NULL, "%s: d1=1 classes=scratch,scratchTail,io,bios,ram,other rd=%u,%u,%u,%u,%u,%u wr=%u,%u,%u,%u,%u,%u",
+			aMode, slow[0], slow[1], slow[2], slow[3], slow[4], slow[5],
+			slow[6], slow[7], slow[8], slow[9], slow[10], slow[11]);
+	if (g_s2Ms <= 0)
+		return;
+	if (n <= 0)
+		{
+		logEvent("s2prof", "NO_SAMPLES", "%s: ms=%d fail=%d", aMode, (int)g_s2Ms, (int)g_s2Fail);
+		return;
+		}
+	TModuleMemoryInfo mi;
+	TUint32 codeBase = 0, codeSize = 0;
+	if (RProcess().GetMemoryInfo(mi) == KErrNone)
+		{ codeBase = mi.iCodeBase; codeSize = mi.iCodeSize; }
+	const TUint span = g_s2Tick1 - g_s2Tick0;
+	logEvent("s2prof", NULL, "%s: ms=%d n=%d fail=%d drop=%d spanMs=%u rateHz=%u ctxUs=%u",
+		aMode, (int)g_s2Ms, (int)n, (int)g_s2Fail, (int)g_s2Drop, span,
+		span ? (unsigned)((unsigned long long)n * 1000 / span) : 0,
+		(unsigned)((unsigned long long)g_s2CtxTicks * 1000000 / freq / (n + g_s2Fail + g_s2Drop)));
+	logEvent("s2map", NULL, "%s: code=%x,%u tc=%x,%u anchors=%x,%x,%x", aMode,
+		(unsigned)codeBase, (unsigned)codeSize, (unsigned)g_s2TcBase, (unsigned)g_s2TcSize,
+		(unsigned)(TUint32)&ndrc_symbian_alloc, (unsigned)(TUint32)&ps1SpuInit,
+		(unsigned)(TUint32)&voutSymbianSetDsa);
+
+	// Coarse classes need nothing from the linker. Only the frame stage "exec" is the
+	// emulation proper; the other stages are counted so the split can be checked.
+	TUint stageN[5] = { 0, 0, 0, 0, 0 };
+	TInt execN = 0;
+	for (TInt i = 0; i < n; i++)
+		{
+		const TInt st = g_s2Stage[i] < 5 ? g_s2Stage[i] : 0;
+		stageN[st]++;
+		if (st == EStageExec) execN++;
+		}
+	TUint win[4][3];
+	for (TInt w = 0; w < 4; w++) win[w][0] = win[w][1] = win[w][2] = 0;
+	TUint sysHigh = 0;
+	TInt nExe = 0, nSys = 0, ei = 0;
+	for (TInt i = 0; i < n; i++)
+		{
+		if (g_s2Stage[i] != EStageExec) continue;
+		const TInt w = (ei * 4) / execN;
+		ei++;
+		const TUint32 pc = g_s2Pc[i];
+		if (pc - g_s2TcBase < g_s2TcSize)
+			win[w][0]++;
+		else if (pc - codeBase < codeSize)
+			{ win[w][1]++; g_s2Exe[nExe++] = (((pc - codeBase) >> 4) << 2) | (TUint32)w; }
+		else
+			{
+			win[w][2]++;
+			if (pc >= 0x80000000u) sysHigh++;
+			g_s2Sys[nSys++] = ((pc >> 8) << 2) | (TUint32)w;
+			}
+		}
+	logEvent("s2cls", NULL, "%s: stage=idle:%u,poll:%u,exec:%u,blit:%u,snd:%u win=tc/exe/sys "
+		"w0=%u/%u/%u w1=%u/%u/%u w2=%u/%u/%u w3=%u/%u/%u sysRom=%u", aMode,
+		stageN[0], stageN[1], stageN[2], stageN[3], stageN[4],
+		win[0][0], win[0][1], win[0][2], win[1][0], win[1][1], win[1][2],
+		win[2][0], win[2][1], win[2][2], win[3][0], win[3][1], win[3][2], sysHigh);
+	if (nExe) s2Hist(aMode, "exe", g_s2Exe, nExe, 0, 4, 1500);
+	if (nSys) s2Hist(aMode, "sys", g_s2Sys, nSys, 0, 8, 40);
+	}
+#endif
+
 // Pass summary, core cleanup. Mirror of passSetup.
 static void passTeardown()
 	{
@@ -2277,6 +2504,9 @@ static void passTeardown()
 	inputTraceClose();
 
 	// Disarm watchdog: request exit and wait for it to finish on its own.
+#ifdef PS1_STAGE2_PROFILE
+	g_s2On = 0;
+#endif
 	g_wdRun = 0;
 	if (g_pass.haveWd) { User::WaitForRequest(g_wdStat); g_wdThread.Close(); g_pass.haveWd = EFalse; }
 
@@ -2284,6 +2514,9 @@ static void passTeardown()
 	for (TInt s = 0; s < g_wdSamples; s++)
 		logEvent("wdsample", NULL, "%s: t=%ds pc=%08x cycle=%u", mode, (int)(s * 2),
 			(unsigned)g_wdPc[s], (unsigned)g_wdCyc[s]);
+#ifdef PS1_STAGE2_PROFILE
+	s2Report(mode);
+#endif
 
 	flushCoreRepeat();
 	logEvent("pass", stalled ? "STALLED" : (aProduced ? NULL : "NO_FRAMES"),
@@ -2444,6 +2677,8 @@ static void passTeardown()
 #endif
 	unsigned rowBox = 0, rowPlain = 0, rowScale = 0, rowRgb24 = 0, rowOther = 0;
 	voutSymbianRowStats(&rowBox, &rowPlain, &rowScale, &rowRgb24, &rowOther);
+	unsigned rgb24Scaled = 0, rgb24B16 = 0; int rgb24SrcW = 0, rgb24DstW = 0;
+	voutSymbianRgb24Stats(&rgb24Scaled, &rgb24B16, &rgb24SrcW, &rgb24DstW);
 	// covered/fbOk/rowCopy separate the three things that can block direct write
 	// (F9), and rgn/scr show exactly what region WS handed back when it didn't.
 	int dsaCovered = 0, dsaFbOk = 0, dsaRowCopy = 0, dsaRgnCount = 0, dsaRgnX = 0,
@@ -2451,9 +2686,10 @@ static void passTeardown()
 	voutSymbianDsaDiag(&dsaCovered, &dsaFbOk, &dsaRowCopy, &dsaRgnCount, &dsaRgnX,
 		&dsaRgnY, &dsaRgnW, &dsaRgnH, &dsaScrW, &dsaScrH, &dsaTries);
 	logEvent("dsa", NULL, "%s: active=%d gl=%d fbPlatform=%d pixB=%d strideB=%d rows=%u/%u/%u/%u/%u "
-		"covered=%d fbOk=%d rowCopy=%d rgn=%d,%d,%d,%d,%d scr=%d,%d tries=%d", mode,
+		"covered=%d fbOk=%d rowCopy=%d rgn=%d,%d,%d,%d,%d scr=%d,%d tries=%d rgb24scaled=%u rgb24b16=%u rgb24src=%d rgb24dst=%d", mode,
 		voutSymbianDsaActive(), voutSymbianGlActive(), voutSymbianFbFromPlatform(), voutSymbianFbPixBytes(), voutSymbianFbStrideB(), rowBox, rowPlain, rowScale, rowRgb24, rowOther,
-		dsaCovered, dsaFbOk, dsaRowCopy, dsaRgnCount, dsaRgnX, dsaRgnY, dsaRgnW, dsaRgnH, dsaScrW, dsaScrH, dsaTries);
+		dsaCovered, dsaFbOk, dsaRowCopy, dsaRgnCount, dsaRgnX, dsaRgnY, dsaRgnW, dsaRgnH, dsaScrW, dsaScrH, dsaTries,
+		rgb24Scaled, rgb24B16, rgb24SrcW, rgb24DstW);
 	{
 	// Rasteriser workload by kind: without pixel counts its time cannot be
 	// turned into bytes per pixel, and memory and arithmetic need opposite fixes.
@@ -3542,6 +3778,24 @@ GLDEF_C TInt E32Main()
 				{ g_pmuEvt0 = (TInt)((v >> 8) & 0xff); g_pmuEvt1 = (TInt)(v & 0xff); }
 			}
 		}
+#ifdef PS1_STAGE2_PROFILE
+		// "pcprof<ms>": sample the guest PC every <ms> ms (3 if omitted). "s2d1": count
+		// slow-path memory accesses by address class; heavy, so never together with pcprof
+		// when the shares are what is being measured.
+		_LIT(KPcProfArg, "pcprof");
+		{
+		const TInt pcp = cl.FindF(KPcProfArg);
+		if (pcp != KErrNotFound)
+			{
+			TLex lex(cl.Mid(pcp + 6));
+			TInt ms = 0;
+			g_s2Ms = (lex.Val(ms) == KErrNone && ms > 0) ? ms : 3;
+			}
+		}
+		_LIT(KS2D1Arg, "s2d1");
+		if (cl.FindF(KS2D1Arg) != KErrNotFound)
+			ndrc_s2_d1 = 1;
+#endif
 		_LIT(KMemBenchArg, "membench");
 		if (cl.FindF(KMemBenchArg) != KErrNotFound)
 			g_memBench = ETrue;
