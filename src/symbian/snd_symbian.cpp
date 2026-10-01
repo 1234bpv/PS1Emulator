@@ -87,18 +87,65 @@ static TBool g_wsola;
 // within +-4 of the best coarse offset. Left channel only (stride 2) - correlating
 // both channels at full resolution is the naive search sndSymbianWsolaBench measures,
 // and it is twice too slow on its own. Samples are shifted right by 6 bits before
-// multiplying so a KWsolaHop-long 32-bit accumulation cannot overflow.
+// multiplying, so every term is at most 2^18 and a KWsolaHop-long 32-bit sum cannot
+// overflow; that also makes smlad's wrapping accumulate exact, so the chosen offset
+// is bit-identical to a plain sample-by-sample loop.
+// The left channel is first packed as 10-bit halfword pairs, so the dot product is one
+// word load per operand plus one smlad per two samples. Two packed copies of the search
+// span, the second shifted by one sample, keep odd offsets word-aligned too.
+static TUint32 g_wsTmplW[KWsolaHop / 2];
+static TUint32 g_wsSearchA[(KWsolaRange + KWsolaHop) / 2 + 1];
+static TUint32 g_wsSearchB[(KWsolaRange + KWsolaHop) / 2 + 1];
+
+#if defined(__GNUC__) && defined(__arm__)
+#define WSOLA_SMLAD(aAcc, aX, aY) \
+	__asm__("smlad %0, %1, %2, %0" : "+r"(aAcc) : "r"(aX), "r"(aY))
+#else
+// Portable model of ARMv6 SMLAD (two signed 16x16 products added to a 32-bit accumulator).
+#define WSOLA_SMLAD(aAcc, aX, aY) \
+	((aAcc) += (TInt32)(TInt16)(aX) * (TInt32)(TInt16)(aY) + \
+	           (TInt32)(TInt16)((aX) >> 16) * (TInt32)(TInt16)((aY) >> 16))
+#endif
+
+static TInt32 WsolaDot(const TUint32 *aT, const TUint32 *aC, TInt aWords)
+	{
+	TInt32 s0 = 0, s1 = 0;         // two accumulators hide the smlad result latency
+	for (; aWords >= 4; aWords -= 4, aT += 4, aC += 4)
+		{
+		WSOLA_SMLAD(s0, aT[0], aC[0]);
+		WSOLA_SMLAD(s1, aT[1], aC[1]);
+		WSOLA_SMLAD(s0, aT[2], aC[2]);
+		WSOLA_SMLAD(s1, aT[3], aC[3]);
+		}
+	for (; aWords > 0; aWords--)
+		WSOLA_SMLAD(s0, *aT++, *aC++);
+	return s0 + s1;
+	}
+
 static TInt WsolaBestOffset(const TInt16 *aTmpl, const TInt16 *aSearch, TInt aLen, TInt aRange)
 	{
+	__ASSERT_ALWAYS(aLen <= KWsolaHop && !(aLen & 1) && aRange <= KWsolaRange, User::Invariant());
+	const TInt words = aLen / 2;
+	for (TInt k = 0; k < words; k++)
+		g_wsTmplW[k] = ((TUint32)(aTmpl[k * 4] >> 6) & 0xFFFF) | ((TUint32)(aTmpl[k * 4 + 2] >> 6) << 16);
+
+	const TInt frames = aRange + aLen - 1;
+	TInt v0 = aSearch[0] >> 6;
+	for (TInt k = 0; k * 2 < frames; k++)
+		{
+		const TInt v1 = (k * 2 + 1 < frames) ? (aSearch[(k * 2 + 1) * 2] >> 6) : 0;
+		const TInt v2 = (k * 2 + 2 < frames) ? (aSearch[(k * 2 + 2) * 2] >> 6) : 0;
+		g_wsSearchA[k] = ((TUint32)v0 & 0xFFFF) | ((TUint32)v1 << 16);
+		g_wsSearchB[k] = ((TUint32)v1 & 0xFFFF) | ((TUint32)v2 << 16);
+		v0 = v2;
+		}
+
 	TInt bestOff = 0;
 	TInt32 bestSum = 0;
 	TBool have = EFalse;
 	for (TInt off = 0; off < aRange; off += 4)
 		{
-		const TInt16 *cand = aSearch + off * 2;
-		TInt32 sum = 0;
-		for (TInt i = 0; i < aLen; i++)
-			sum += (TInt32)(aTmpl[i * 2] >> 6) * (TInt32)(cand[i * 2] >> 6);
+		const TInt32 sum = WsolaDot(g_wsTmplW, g_wsSearchA + (off >> 1), words);
 		if (!have || sum > bestSum)
 			{ bestSum = sum; bestOff = off; have = ETrue; }
 		}
@@ -108,10 +155,8 @@ static TInt WsolaBestOffset(const TInt16 *aTmpl, const TInt16 *aSearch, TInt aLe
 		{
 		if ((off & 3) == 0)
 			continue;              // already scored in the coarse pass
-		const TInt16 *cand = aSearch + off * 2;
-		TInt32 sum = 0;
-		for (TInt i = 0; i < aLen; i++)
-			sum += (TInt32)(aTmpl[i * 2] >> 6) * (TInt32)(cand[i * 2] >> 6);
+		const TUint32 *cand = ((off & 1) ? g_wsSearchB : g_wsSearchA) + (off >> 1);
+		const TInt32 sum = WsolaDot(g_wsTmplW, cand, words);
 		if (sum > bestSum)
 			{ bestSum = sum; bestOff = off; }
 		}
