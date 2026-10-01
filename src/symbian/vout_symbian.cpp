@@ -786,30 +786,52 @@ blitRow8888(TUint32 *aDst, const TUint16 *aSrc, TInt aPixels)
 		}
 	}
 
-// RGB24 -> XRGB8888 conversion for 32-bit screen buffer in 4-pixel blocks.
+// RGB24-KERNEL-BEGIN (plans/bench/rgb24-equiv extracts this block verbatim)
+// Byte reverse: a window of four source bytes b0 b1 b2 b3 (b0 lowest) becomes
+// b0<<24 | b1<<16 | b2<<8 | b3, so one shift right leaves b0<<16 | b1<<8 | b2, which
+// is the XRGB8888 pixel without its alpha byte. GCC 3.4 has no bswap builtin.
+static inline TUint32 Rev32(TUint32 aX)
+	{
+#ifdef __GCCE__
+	TUint32 r;
+	__asm__ ("rev %0, %1" : "=r" (r) : "r" (aX));
+	return r;
+#else
+	return (aX << 24) | ((aX & 0xff00u) << 8) | ((aX >> 8) & 0xff00u) | (aX >> 24);
+#endif
+	}
+
+// RGB24 -> XRGB8888 conversion for 32-bit screen buffer. Source rows start at any even
+// byte, so pixels are taken one by one until the source is word aligned (at most three,
+// since three bytes per pixel cycle the alignment), then four pixels per three word loads.
 static void __attribute__((__noinline__))
 blitRow8888_rgb24(TUint32 *aDst, const TUint8 *aSrc, TInt aPixels)
 	{
-	if (aPixels <= 0)
-		return;
+	while (aPixels > 0 && ((TUint)aSrc & 3))
+		{
+		*aDst++ = 0xff000000u | ((TUint32)aSrc[0] << 16) | ((TUint32)aSrc[1] << 8) | (TUint32)aSrc[2];
+		aSrc += 3;
+		aPixels--;
+		}
 	TInt blocks = aPixels >> 2;
 	if (blocks > 0)
 		{
-		const TUint8 *p = aSrc;
+		const TUint32 *s = (const TUint32 *)aSrc;
+		// Opaque for the same reason as in blitRow565: otherwise built from BICs in the loop.
+		TUint32 cA = 0xff000000u, cLow = 0x00ffffffu;
+		__asm__ __volatile__ ("" : "+r" (cA), "+r" (cLow));
 		do
 			{
-			const TUint32 w0 = 0xff000000u | ((TUint32)p[0] << 16) | ((TUint32)p[1] << 8) | (TUint32)p[2];
-			const TUint32 w1 = 0xff000000u | ((TUint32)p[3] << 16) | ((TUint32)p[4] << 8) | (TUint32)p[5];
-			const TUint32 w2 = 0xff000000u | ((TUint32)p[6] << 16) | ((TUint32)p[7] << 8) | (TUint32)p[8];
-			const TUint32 w3 = 0xff000000u | ((TUint32)p[9] << 16) | ((TUint32)p[10] << 8) | (TUint32)p[11];
-			// Four adjacent word stores: the compiler folds them into one stm.
-			// Naming r0-r3 by hand instead collides with whatever register the
-			// pointer itself was given.
-			aDst[0] = w0; aDst[1] = w1; aDst[2] = w2; aDst[3] = w3;
+			const TUint32 w0 = s[0], w1 = s[1], w2 = s[2];
+			s += 3;
+			// Pixels 1 and 2 straddle two words: gather their three bytes into a window first.
+			aDst[0] = cA | (Rev32(w0) >> 8);
+			aDst[1] = cA | (Rev32((w0 >> 24) | (w1 << 8)) >> 8);
+			aDst[2] = cA | (Rev32((w1 >> 16) | (w2 << 16)) >> 8);
+			aDst[3] = cA | (Rev32(w2) & cLow);
 			aDst += 4;
-			p += 12;
 			} while (--blocks);
-		aSrc = p;
+		aSrc = (const TUint8 *)s;
 		aPixels &= 3;
 		}
 	while (aPixels > 0)
@@ -819,6 +841,48 @@ blitRow8888_rgb24(TUint32 *aDst, const TUint8 *aSrc, TInt aPixels)
 		aPixels--;
 		}
 	}
+// Same for the 16-bit bitmap target (R, G, B bytes -> RGB565). A window of four source
+// bytes with R lowest: R is bits 0-7, G 8-15, B 16-23; whatever sits above bit 23 is ignored.
+static inline TUint32 Rgb24ToRgb565w(TUint32 aW)
+	{
+	return ((aW & 0xf8u) << 8) | ((aW >> 5) & 0x7e0u) | ((aW >> 19) & 0x1fu);
+	}
+
+static void __attribute__((__noinline__))
+blitRow565_rgb24(TUint16 *aDst, const TUint8 *aSrc, TInt aPixels)
+	{
+	while (aPixels > 0 && ((TUint)aSrc & 3))
+		{
+		*aDst++ = (TUint16)(((aSrc[0] >> 3) << 11) | ((aSrc[1] >> 2) << 5) | (aSrc[2] >> 3));
+		aSrc += 3;
+		aPixels--;
+		}
+	TInt blocks = aPixels >> 2;
+	if (blocks > 0)
+		{
+		const TUint32 *s = (const TUint32 *)aSrc;
+		do
+			{
+			const TUint32 w0 = s[0], w1 = s[1], w2 = s[2];
+			s += 3;
+			// Halfword stores: the bitmap row may start on any pixel, so no word pairing.
+			aDst[0] = (TUint16)Rgb24ToRgb565w(w0);
+			aDst[1] = (TUint16)Rgb24ToRgb565w((w0 >> 24) | (w1 << 8));
+			aDst[2] = (TUint16)Rgb24ToRgb565w((w1 >> 16) | (w2 << 16));
+			aDst[3] = (TUint16)Rgb24ToRgb565w(w2 >> 8);
+			aDst += 4;
+			} while (--blocks);
+		aSrc = (const TUint8 *)s;
+		aPixels &= 3;
+		}
+	while (aPixels > 0)
+		{
+		*aDst++ = (TUint16)(((aSrc[0] >> 3) << 11) | ((aSrc[1] >> 2) << 5) | (aSrc[2] >> 3));
+		aSrc += 3;
+		aPixels--;
+		}
+	}
+// RGB24-KERNEL-END
 
 // Average of two BGR555 pixels without overflow between adjacent fields:
 // (a&b) + (((a^b) & mask) >> 1). Mask clears LSB of each of three
@@ -1640,6 +1704,9 @@ static TBool g_smoothDown = ETrue;   // box filter downscaling (see blitCurrent)
 // paths honest, because a guard that never matches looks exactly like a change
 // that does not help.
 static TUint g_rowBox, g_rowPlain, g_rowScale, g_rowRgb24, g_rowOther;
+// RGB24 rows split by loop, and the geometry of the first RGB24 frame.
+static TUint g_rowRgb24Scaled, g_rowRgb24B16;
+static TInt  g_rgb24SrcW, g_rgb24DstW;
 static TInt  g_fxaaThr;              // lower FXAA threshold in green steps; 0 - disabled
 static TInt  g_fxaaMax = 31;         // upper: above this untouched (UI text)
 
@@ -1964,6 +2031,12 @@ static void blitCurrent()
 		if (rgb24)
 			{
 			g_rowRgb24++;
+			if (sxStep != 0x10000u)
+				g_rowRgb24Scaled++;
+			if (pixB == 2)
+				g_rowRgb24B16++;
+			if (!g_rgb24SrcW)
+				{ g_rgb24SrcW = sw; g_rgb24DstW = dstW; }
 			// RGB24: 3 bytes per pixel (R, G, B) from VRAM.
 			const TUint8 *srow = vbytes + startByte + ssy * 2048;
 			if (pixB == 4)
@@ -1983,11 +2056,7 @@ static void blitCurrent()
 			else
 				{
 				if (sxStep == 0x10000u)
-					{
-					const TUint8 *p = srow;
-					for (TInt dx = 0; dx < dstW; dx++, p += 3)
-						drow[dx] = (TUint16)(((p[0] >> 3) << 11) | ((p[1] >> 2) << 5) | (p[2] >> 3));
-					}
+					blitRow565_rgb24(drow, srow, dstW);
 				else
 					{
 					for (TInt dx = 0; dx < dstW; dx++, sxf += sxStep)
@@ -2673,6 +2742,14 @@ extern "C" void voutSymbianRowStats(unsigned *aBox, unsigned *aPlain,
 	if (aScale)   *aScale   = g_rowScale;
 	if (aRgb24)   *aRgb24   = g_rowRgb24;
 	if (aOther)   *aOther   = g_rowOther;
+	}
+
+extern "C" void voutSymbianRgb24Stats(unsigned *aScaled, unsigned *aB16, int *aSrcW, int *aDstW)
+	{
+	if (aScaled) *aScaled = g_rowRgb24Scaled;
+	if (aB16)    *aB16    = g_rowRgb24B16;
+	if (aSrcW)   *aSrcW   = g_rgb24SrcW;
+	if (aDstW)   *aDstW   = g_rgb24DstW;
 	}
 
 // Frame geometry after scaling (Z3): what the game provides and where it is placed.
