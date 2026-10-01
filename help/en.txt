@@ -38,7 +38,7 @@
 
 [hint.sec.sound] OK opens or closes the section: sound output and pitch.
 [hint.sound] Sound output. Off removes the sound and saves the processor time of the audio path. Needs a game restart.
-[hint.wsola] When the game runs below full speed, stretches the sound without changing its pitch. Costs about 23% of a frame time on the N95 in a measurement. Needs a restart.
+[hint.wsola] When the game runs below full speed, stretches the sound without changing its pitch. Costs about 6% of a frame time on the N95 in a measurement. Needs a restart.
 
 [hint.sec.input] OK opens or closes the section: key layouts, key assignment and tilt control.
 [hint.preset] Replaces all key assignments with a ready layout. Left/Right choose, OK applies. Your own assignments are lost.
