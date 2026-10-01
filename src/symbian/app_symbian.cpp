@@ -88,8 +88,8 @@ static const TUid KUidPs1App = { 0xE0001002 };
 //
 // Item order = display order. The item's section is given by KItemSection, so
 // items can only be reordered together with it.
-// Sections form an accordion: a header row, the everyday rows, then a "More..." row that
-// opens the rarely needed ones. Only the open section's rows are visible (ItemVisible).
+// Sections form an accordion: a header row, then the section's rows, main ones first.
+// Only the open section's rows are visible (ItemVisible), and only one is open at a time.
 enum TCfgItem
 	{
 	// There is intentionally no DISPLAY skip ("Show every") here: it renders the
@@ -97,13 +97,13 @@ enum TCfgItem
 	// -22.5% for ECfgGpuSkip. Kept as a command-line probe "showskip".
 	ECfgStart = 0,
 	ECfgHdrGame, ECfgGame, ECfgSaveState, ECfgLoadState, ECfgAdd,
-	ECfgHdrVideo, ECfgSmooth, ECfgFxaa, ECfgFps, ECfgMoreVideo,
+	ECfgHdrVideo, ECfgSmooth, ECfgFxaa, ECfgFps,
 	ECfgLight, ECfgBlend, ECfgDirty, ECfgDsa, ECfgGl, ECfgSwDraw, ECfgIlace, ECfgPixSkip,
-	ECfgHdrSpeed, ECfgGpuSkip, ECfgMoreSpeed, ECfgCpu, ECfgGteNf, ECfgCycle,
+	ECfgHdrSpeed, ECfgGpuSkip, ECfgCpu, ECfgGteNf, ECfgCycle,
 	ECfgHdrSound, ECfgSound, ECfgWsola,
-	ECfgHdrInput, ECfgPreset, ECfgKeyBase, ECfgKeys, ECfgMoreInput,
+	ECfgHdrInput, ECfgPreset, ECfgKeyBase, ECfgKeys,
 	ECfgTilt, ECfgTiltSide, ECfgTiltPitch, ECfgTiltDead, ECfgTiltSens,
-	ECfgHdrSystem, ECfgLang, ECfgBios, ECfgProfile, ECfgMoreSystem, ECfgReset,
+	ECfgHdrSystem, ECfgLang, ECfgBios, ECfgProfile, ECfgReset,
 	ECfgHelp, ECfgExit,
 	ECfgCount
 	};
@@ -116,12 +116,9 @@ enum TCfgSection
 static const TStrId KSecStrId[ESecCount] =
 	{ EStrSecGame, EStrSecVideo, EStrSecSpeed, EStrSecSound, EStrSecControls, EStrSecSystem };
 
-// A section's header row, and the row that opens its rarely needed part (ECfgCount
-// where it has none). The rows after the "More..." row are that part.
+// A section's header row.
 static const unsigned char KSecHdr[ESecCount] =
 	{ ECfgHdrGame, ECfgHdrVideo, ECfgHdrSpeed, ECfgHdrSound, ECfgHdrInput, ECfgHdrSystem };
-static const unsigned char KSecMore[ESecCount] =
-	{ ECfgCount, ECfgMoreVideo, ECfgMoreSpeed, ECfgCount, ECfgMoreInput, ECfgMoreSystem };
 
 // ESecCount in the table means no section: Start, Help and Exit stay on the top level.
 static const unsigned char KItemSection[ECfgCount] =
@@ -129,12 +126,12 @@ static const unsigned char KItemSection[ECfgCount] =
 	ESecCount,
 	ESecGame, ESecGame, ESecGame, ESecGame, ESecGame,
 	ESecVideo, ESecVideo, ESecVideo, ESecVideo, ESecVideo, ESecVideo, ESecVideo,
-	ESecVideo, ESecVideo, ESecVideo, ESecVideo, ESecVideo, ESecVideo,
-	ESecSpeed, ESecSpeed, ESecSpeed, ESecSpeed, ESecSpeed, ESecSpeed,
+	ESecVideo, ESecVideo, ESecVideo, ESecVideo, ESecVideo,
+	ESecSpeed, ESecSpeed, ESecSpeed, ESecSpeed, ESecSpeed,
 	ESecSound, ESecSound, ESecSound,
 	ESecInput, ESecInput, ESecInput, ESecInput, ESecInput, ESecInput, ESecInput,
-	ESecInput, ESecInput, ESecInput,
-	ESecSystem, ESecSystem, ESecSystem, ESecSystem, ESecSystem, ESecSystem,
+	ESecInput, ESecInput,
+	ESecSystem, ESecSystem, ESecSystem, ESecSystem, ESecSystem,
 	ESecCount, ESecCount
 	};
 
@@ -142,17 +139,15 @@ static const TStrId KItemLabelStrId[ECfgCount] =
 	{
 	EStrItemStart,
 	EStrSecGame, EStrItemGame, EStrItemSaveState, EStrItemLoadState, EStrItemAdd,
-	EStrSecVideo, EStrItemSmooth, EStrItemFxaa, EStrItemFps, EStrItemMore,
+	EStrSecVideo, EStrItemSmooth, EStrItemFxaa, EStrItemFps,
 	EStrItemLight, EStrItemBlend, EStrItemDirty, EStrItemDsa, EStrItemGl,
 	EStrItemSwDraw, EStrItemIlace, EStrItemPixSkip,
-	EStrSecSpeed, EStrItemGpuSkip, EStrItemMore, EStrItemCpu, EStrItemGteNf,
-	EStrItemCycle,
+	EStrSecSpeed, EStrItemGpuSkip, EStrItemCpu, EStrItemGteNf, EStrItemCycle,
 	EStrSecSound, EStrItemSound, EStrItemWsola,
-	EStrSecControls, EStrItemPreset, EStrItemKeyBase, EStrItemKeys, EStrItemMore,
+	EStrSecControls, EStrItemPreset, EStrItemKeyBase, EStrItemKeys,
 	EStrItemTilt, EStrItemTiltSide, EStrItemTiltPitch, EStrItemTiltDead,
 	EStrItemTiltSens,
-	EStrSecSystem, EStrItemLang, EStrItemBios, EStrItemProfile, EStrItemMore,
-	EStrItemReset,
+	EStrSecSystem, EStrItemLang, EStrItemBios, EStrItemProfile, EStrItemReset,
 	EStrItemHelp, EStrItemExit
 	};
 
@@ -163,13 +158,13 @@ static const char *const KCfgKey[ECfgCount] =
 	{
 	NULL,
 	NULL, NULL, NULL, NULL, NULL,
-	NULL, "smooth", "fxaa", "fps", NULL, "light", "blend", "dirty", "dsa", "gl",
+	NULL, "smooth", "fxaa", "fps", "light", "blend", "dirty", "dsa", "gl",
 	"swdraw", "ilace", "pixskip",
-	NULL, "gpuskip", NULL, "cpu", "gtenf", "cycle",
+	NULL, "gpuskip", "cpu", "gtenf", "cycle",
 	NULL, "sound", "wsola",
-	NULL, NULL, NULL, NULL, NULL, "tilt", "tiltside", "tiltpitch", "tiltdead",
+	NULL, NULL, NULL, NULL, "tilt", "tiltside", "tiltpitch", "tiltdead",
 	"tiltsens",
-	NULL, "lang", NULL, "profile", NULL, NULL,
+	NULL, "lang", NULL, "profile", NULL,
 	NULL, NULL
 	};
 
@@ -179,13 +174,13 @@ static const char *const KItemHelpId[ECfgCount] =
 	{
 	"start",
 	"sec.game", "game", "savestate", "loadstate", "add",
-	"sec.video", "smooth", "fxaa", "fps", "more.video", "light", "blend", "dirty",
+	"sec.video", "smooth", "fxaa", "fps", "light", "blend", "dirty",
 	"dsa", "gl", "swdraw", "ilace", "pixskip",
-	"sec.speed", "gpuskip", "more.speed", "cpu", "gtenf", "cycle",
+	"sec.speed", "gpuskip", "cpu", "gtenf", "cycle",
 	"sec.sound", "sound", "wsola",
-	"sec.input", "preset", "keybase", "keys", "more.input", "tilt", "tiltside",
+	"sec.input", "preset", "keybase", "keys", "tilt", "tiltside",
 	"tiltpitch", "tiltdead", "tiltsens",
-	"sec.system", "lang", "bios", "profile", "more.system", "reset",
+	"sec.system", "lang", "bios", "profile", "reset",
 	"help", "exit"
 	};
 
@@ -205,26 +200,12 @@ static TBool isHeader(TInt aItem)
 		   aItem == ECfgHdrSound || aItem == ECfgHdrInput || aItem == ECfgHdrSystem;
 	}
 
-static TBool isMore(TInt aItem)
-	{
-	return aItem == ECfgMoreVideo || aItem == ECfgMoreSpeed || aItem == ECfgMoreInput ||
-		   aItem == ECfgMoreSystem;
-	}
-
-// A row of the part that the section's "More..." row opens.
-static TBool isExtra(TInt aItem)
-	{
-	const TInt s = KItemSection[aItem];
-	return s < ESecCount && !isHeader(aItem) && !isMore(aItem) &&
-		   KSecMore[s] < ECfgCount && aItem > KSecMore[s];
-	}
-
 static TBool isCommand(TInt aItem)
 	{
 	return aItem == ECfgStart || aItem == ECfgGame || aItem == ECfgSaveState ||
 		   aItem == ECfgLoadState || aItem == ECfgAdd || aItem == ECfgBios ||
 		   aItem == ECfgKeys || aItem == ECfgReset || aItem == ECfgHelp ||
-		   aItem == ECfgExit || isHeader(aItem) || isMore(aItem);
+		   aItem == ECfgExit || isHeader(aItem);
 	}
 
 // PS1 cycle multiplier. Upstream default is CYCLE_MULT_DEFAULT (175); higher means
@@ -293,26 +274,26 @@ static const TInt KPresetHold[EPresetCount - 1][KPresetBtnCount] =
 	};
 
 // Base layout for the physical keyboard, independent of the game-type preset above:
-// which keys exist differs by handset, not by game. N95 reuses the Default layout
-// verbatim (its D-pad sits on the arrow keys). C5-00.2 has no separate D-pad worth
-// relying on, so its base puts the whole scheme on the numeric keypad, the way the
-// old numpad-only Symbian PS1 emulators did: 2/4/6/8 for direction, 5 for confirm,
-// */# for Select/Start.
+// every one of these Nokias has a D-pad, so both bases steer with it. N95 reuses the
+// Default layout verbatim. C5-00.2 keeps the D-pad too but also answers to the numeric
+// keypad's 2/4/6/8 as a second key for the four directions (the way the old numpad-only
+// Symbian PS1 emulators did), with 5 on L2 and */# for Select/Start. Each button has
+// one Alt: the directions take the digits, Select and Start take the named codes.
 enum TKeyboardBase { EBaseN95 = 0, EBaseC5, EBaseCount };
 
 static const TStrId KBaseNameStrId[EBaseCount] = { EStrValBaseN95, EStrValBaseC5 };
 
 static const TInt KBaseC5Scan[KPresetBtnCount] =
 	{
-	'2', '8', '4', '6',
-	'5', '0', '7', '9',
-	'1', '3', EStdKeyDevice3, EStdKeyBackspace, '*', '#'
+	EStdKeyUpArrow, EStdKeyDownArrow, EStdKeyLeftArrow, EStdKeyRightArrow,
+	EStdKeyDevice3, '0', '7', '9',
+	'1', '3', '5', EStdKeyBackspace, '*', '#'
 	};
 // * and # each get their named scan code as the alt: firmwares are known to send
 // either the ASCII character or the named code for these two (see the volume
 // handler in OfferKeyEventL, which checks both for the same reason).
 static const TInt KBaseC5Alt[KPresetBtnCount] =
-	{ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, EStdKeyNkpAsterisk, EStdKeyHash };
+	{ '2', '8', '4', '6', -1, -1, -1, -1, -1, -1, -1, -1, EStdKeyNkpAsterisk, EStdKeyHash };
 
 // Single emulator directory. Everything it reads and writes lives under it: otherwise
 // the card root got cluttered with files, and which ones belong to which game was unclear.
@@ -652,9 +633,9 @@ static const TStrId KSetupLabel[ESetCount] =
 	{ EStrItemLang, EStrItemKeyBase, EStrItemBios, EStrItemGames, EStrItemPreset,
 	  EStrItemStart, EStrItemHelp };
 
-// Ticks of the menu loop (50 ms each): a long hint waits at its ends, then moves.
-const TInt KHintHold = 24;
-const TInt KHintStep = 4;
+const TInt KHintHoldMs = 2000;   // wait at both ends of a long hint
+const TInt KHintPxPerSec = 40;   // smooth, evenly timed scroll
+const TInt KRowGap = 2;          // row height = font height + this
 
 _LIT(KTopicSetup, "topic.setup");
 
@@ -669,6 +650,9 @@ public:
 	RWindow &FrameWindow() { return Window(); }
 	TBool MenuActive() const { return iPage != EPageNone; }
 	TBool OnProgress() const { return iPage == EPageProgress; }
+	// Sleep of the menu loop: short only while a progress page or a moving hint needs it.
+	TInt TickUs() const
+		{ return iPage == EPageProgress ? 20000 : (iPage == EPageMain && iHintPhase == 1) ? 30000 : 50000; }
 	// Leaving the foreground (call, task switch) pauses through the menu.
 	void FocusLost();
 	void MenuTick();
@@ -683,7 +667,8 @@ private:
 	void Draw(const TRect &aRect) const;
 
 	// drawing
-	TRect DrawChrome(CWindowGc &gc, const TDesC &aTitle, const TDesC &aHint) const;
+	TRect DrawChrome(CWindowGc &gc, const TDesC &aTitle, const TDesC &aHint,
+	                 TInt aHintPx = -1) const;
 	void DrawMain(CWindowGc &gc, const TRect &aBody) const;
 	void DrawKeys(CWindowGc &gc, const TRect &aBody) const;
 	void DrawFiles(CWindowGc &gc, const TRect &aBody) const;
@@ -697,9 +682,13 @@ private:
 	             const TDesC &aLeft, const TDesC &aRight, TBool aSel,
 	             TInt aIndent = 0, TInt aStyle = ERowNormal) const;
 	TRect BodyRect() const;
+	TRect BodyRectFor(const TRect &r) const;
 	TInt BodyRows() const;
 	TPtrC HintText() const;
 	void HintTick();
+	void ResetHint();
+	void LogGeometry() const;
+	void StepValue(TInt aItem, TInt aDelta);
 	void ItemLabel(TInt aItem, TDes &aOut) const;
 	void ItemValue(TInt aItem, TDes &aOut) const;
 	TBool ItemVisible(TInt aItem) const;
@@ -786,8 +775,8 @@ private:
 	TInt iPage;
 	TInt iSel;                // selected item on the main page
 	TInt iOpenSec;            // section open on the main page (ESecCount = all closed)
-	TBool iOpenMore;          // ... and its "More..." part
-	TInt iHintOff, iHintTick; // scroll of a hint wider than the status line
+	TInt iHintPx, iHintPhase; // pixel scroll of a hint wider than the status line, and its phase
+	TUint32 iHintT0;          // NTickCount (ms) at which the phase began
 	TInt iBackPage;           // where the file browsers return: main or the setup page
 	HBufC *iHelp;             // help file of the interface language (UTF-16), NULL = none
 	HBufC *iHelpEn;           // English fallback; NULL = none, or the language is English
@@ -850,6 +839,7 @@ void CPs1Container::ConstructL(const TRect &aRect)
 	iBaseSel = EBaseN95;
 	iStateSlot = 1;
 	iOpenSec = ESecCount;
+	ResetHint();
 	iBackPage = EPageMain;
 	iHelpTopic = -1;
 	iSetupBack = EPageMain;
@@ -908,8 +898,8 @@ void CPs1Container::ConstructL(const TRect &aRect)
 	// the machine UID is for telling the handsets apart (keyboard autodetect needs it).
 	TInt mach = 0;
 	HAL::Get(HAL::EMachineUid, mach);
-	const TInt lh = iCoeEnv->NormalFont()->HeightInPixels() + 3;
-	ps1LogFmt("menu", "geometry lh=%d rows=%d machine=0x%08x", (int)lh, (int)BodyRows(), (int)mach);
+	ps1LogFmt("menu", "machine=0x%08x", (int)mach);
+	LogGeometry();
 	ActivateL();
 	}
 
@@ -939,15 +929,10 @@ void CPs1Container::ShowError()
 
 TBool CPs1Container::ItemVisible(TInt aItem) const
 	{
-	// Only the open section shows its rows, and its "More..." part only once opened.
+	// Only the open section shows its rows.
 	const TInt sec = KItemSection[aItem];
-	if (sec < ESecCount && !isHeader(aItem))
-		{
-		if (sec != iOpenSec)
-			return EFalse;
-		if (isExtra(aItem) && !iOpenMore)
-			return EFalse;
-		}
+	if (sec < ESecCount && !isHeader(aItem) && sec != iOpenSec)
+		return EFalse;
 	// Slots are named after iGamePath, which already points at the next game while the
 	// core still runs the old one.
 	if (aItem == ECfgSaveState || aItem == ECfgLoadState)
@@ -1614,11 +1599,9 @@ void CPs1Container::ItemLabel(TInt aItem, TDes &aOut) const
 			: RestartNeeded() ? EStrItemRestart : EStrItemResume));
 		return;
 		}
-	if (isHeader(aItem) || isMore(aItem))
+	if (isHeader(aItem))
 		{
-		const TBool open = (iOpenSec == KItemSection[aItem]) &&
-						   (isHeader(aItem) || iOpenMore);
-		aOut.Copy(open ? _L("- ") : _L("+ "));
+		aOut.Copy(iOpenSec == KItemSection[aItem] ? _L("- ") : _L("+ "));
 		aOut.Append(Tr(KItemLabelStrId[aItem]));
 		return;
 		}
@@ -1640,10 +1623,6 @@ void CPs1Container::ItemValue(TInt aItem, TDes &aOut) const
 		case ECfgHdrSpeed:
 		case ECfgHdrInput:
 		case ECfgHdrSystem:
-		case ECfgMoreVideo:
-		case ECfgMoreSpeed:
-		case ECfgMoreInput:
-		case ECfgMoreSystem:
 		case ECfgHelp:
 			break;
 		case ECfgHdrSound:
@@ -1759,28 +1738,51 @@ void CPs1Container::ItemValue(TInt aItem, TDes &aOut) const
 
 // --- Drawing ----------------------------------------------------------------
 
-// The list area between the title bar and the hint line.
-TRect CPs1Container::BodyRect() const
+// One line per menu open so the row budget can be read off a device, in the current
+// orientation and in the other one.
+void CPs1Container::LogGeometry() const
 	{
 	const TRect r = Rect();
-	const TInt lh = iCoeEnv->NormalFont()->HeightInPixels() + 3;
-	return TRect(r.iTl.iX, r.iTl.iY + lh + 8, r.iBr.iX, r.iBr.iY - lh - 4);
+	const TRect rot(r.iTl, TPoint(r.iTl.iX + r.Height(), r.iTl.iY + r.Width()));
+	const TInt lh = iCoeEnv->NormalFont()->HeightInPixels() + KRowGap;
+	ps1LogFmt("menu", "geometry screen=%dx%d lh=%d rows=%d rows_rotated=%d",
+		(int)r.Width(), (int)r.Height(), (int)lh, (int)BodyRows(),
+		(int)(BodyRectFor(rot).Height() / lh));
+	}
+
+// The list area between the title bar and the hint line. The rows are packed against
+// the hint line, so what is left over sits under the title bar and not as a gap above
+// the hint.
+TRect CPs1Container::BodyRectFor(const TRect &r) const
+	{
+	const CFont *font = iCoeEnv->NormalFont();
+	const TInt lh = font->HeightInPixels() + KRowGap;
+	const TInt top = r.iTl.iY + lh + 5;
+	const TInt bottom = r.iBr.iY - 4 - font->AscentInPixels() - 1;
+	TInt rows = (bottom - top) / lh;
+	if (rows < 1) rows = 1;
+	return TRect(r.iTl.iX, bottom - rows * lh, r.iBr.iX, bottom);
+	}
+
+TRect CPs1Container::BodyRect() const
+	{
+	return BodyRectFor(Rect());
 	}
 
 TInt CPs1Container::BodyRows() const
 	{
-	const TInt lh = iCoeEnv->NormalFont()->HeightInPixels() + 3;
+	const TInt lh = iCoeEnv->NormalFont()->HeightInPixels() + KRowGap;
 	const TInt rows = BodyRect().Height() / lh;
 	return (rows < 1) ? 1 : rows;
 	}
 
 // Header, list body, and hint line. Returns the rectangle for the list.
 TRect CPs1Container::DrawChrome(CWindowGc &gc, const TDesC &aTitle,
-								const TDesC &aHint) const
+								const TDesC &aHint, TInt aHintPx) const
 	{
 	const TRect r = Rect();
 	const CFont *font = iCoeEnv->NormalFont();
-	const TInt lh = font->HeightInPixels() + 3;
+	const TInt lh = font->HeightInPixels() + KRowGap;
 	const TInt asc = font->AscentInPixels();
 
 	gc.SetBrushStyle(CGraphicsContext::ESolidBrush);
@@ -1805,9 +1807,21 @@ TRect CPs1Container::DrawChrome(CWindowGc &gc, const TDesC &aTitle,
 		// Cut at the screen edge on a character boundary rather than mid-glyph.
 		TPtrC hint(aHint);
 		const TInt avail = r.Width() - 12;
-		if (font->TextWidthInPixels(hint) > avail)
-			hint.Set(hint.Left(font->TextCount(hint, avail)));
-		gc.DrawText(hint, TPoint(r.iTl.iX + 6, r.iBr.iY - 4));
+		const TInt w = font->TextWidthInPixels(hint);
+		if (w > avail && aHintPx >= 0)
+			{
+			// Scrolling hint: the whole text, shifted left and clipped to the line.
+			const TInt px = (aHintPx < w - avail) ? aHintPx : w - avail;
+			gc.SetClippingRect(TRect(r.iTl.iX + 6, r.iBr.iY - 5 - asc, r.iBr.iX - 6, r.iBr.iY));
+			gc.DrawText(hint, TPoint(r.iTl.iX + 6 - px, r.iBr.iY - 4));
+			gc.CancelClippingRect();
+			}
+		else
+			{
+			if (w > avail)
+				hint.Set(hint.Left(font->TextCount(hint, avail)));
+			gc.DrawText(hint, TPoint(r.iTl.iX + 6, r.iBr.iY - 4));
+			}
 		}
 
 	return BodyRect();
@@ -1854,7 +1868,7 @@ void CPs1Container::DrawRow(CWindowGc &gc, const TRect &aBody, TInt aY, TInt aLh
 void CPs1Container::DrawMain(CWindowGc &gc, const TRect &aBody) const
 	{
 	const CFont *font = iCoeEnv->NormalFont();
-	const TInt lh = font->HeightInPixels() + 3;
+	const TInt lh = font->HeightInPixels() + KRowGap;
 	TInt rows = aBody.Height() / lh;
 	if (rows < 1) rows = 1;
 
@@ -1887,9 +1901,8 @@ void CPs1Container::DrawMain(CWindowGc &gc, const TRect &aBody) const
 			TBuf<64> value;
 			ItemLabel(i, label);
 			ItemValue(i, value);
-			// Rows hang under their header, and the "More..." part one step deeper.
-			const TInt indent = (KItemSection[i] == ESecCount || isHeader(i)) ? 0
-				: isExtra(i) ? 20 : 10;
+			// Rows hang under their header.
+			const TInt indent = (KItemSection[i] == ESecCount || isHeader(i)) ? 0 : 10;
 			DrawRow(gc, aBody, y, lh, label, value, i == sel, indent,
 				isHeader(i) ? ERowHeader : ERowNormal);
 			y += lh;
@@ -1901,7 +1914,7 @@ void CPs1Container::DrawMain(CWindowGc &gc, const TRect &aBody) const
 void CPs1Container::DrawKeys(CWindowGc &gc, const TRect &aBody) const
 	{
 	const CFont *font = iCoeEnv->NormalFont();
-	const TInt lh = font->HeightInPixels() + 3;
+	const TInt lh = font->HeightInPixels() + KRowGap;
 	TInt rows = aBody.Height() / lh;
 	if (rows < 1) rows = 1;
 	TInt first = iKeySel - rows / 2;
@@ -1940,7 +1953,7 @@ void CPs1Container::DrawKeys(CWindowGc &gc, const TRect &aBody) const
 void CPs1Container::DrawFiles(CWindowGc &gc, const TRect &aBody) const
 	{
 	const CFont *font = iCoeEnv->NormalFont();
-	const TInt lh = font->HeightInPixels() + 3;
+	const TInt lh = font->HeightInPixels() + KRowGap;
 	TInt rows = aBody.Height() / lh;
 	if (rows < 1) rows = 1;
 	const TInt n = iBrowse->Count();
@@ -1998,7 +2011,7 @@ TBool CPs1Container::RunningGamePicked() const
 void CPs1Container::DrawAsk(CWindowGc &gc, const TRect &aBody) const
 	{
 	const CFont *font = iCoeEnv->NormalFont();
-	const TInt lh = font->HeightInPixels() + 3;
+	const TInt lh = font->HeightInPixels() + KRowGap;
 	TInt y = aBody.iTl.iY + font->AscentInPixels() + lh;
 
 	const TDesC &o0 = Tr(iAsk == EAskMode ? EStrAskCompress
@@ -2070,7 +2083,7 @@ void CPs1Container::DrawAsk(CWindowGc &gc, const TRect &aBody) const
 void CPs1Container::DrawError(CWindowGc &gc, const TRect &aBody) const
 	{
 	const CFont *font = iCoeEnv->NormalFont();
-	const TInt lh = font->HeightInPixels() + 3;
+	const TInt lh = font->HeightInPixels() + KRowGap;
 	TInt y = aBody.iTl.iY + font->AscentInPixels() + lh;
 
 	gc.SetPenColor(TRgb(0xff, 0x90, 0x90));
@@ -2086,7 +2099,7 @@ void CPs1Container::DrawError(CWindowGc &gc, const TRect &aBody) const
 void CPs1Container::DrawProgress(CWindowGc &gc, const TRect &aBody) const
 	{
 	const CFont *font = iCoeEnv->NormalFont();
-	const TInt lh = font->HeightInPixels() + 3;
+	const TInt lh = font->HeightInPixels() + KRowGap;
 	TInt y = aBody.iTl.iY + font->AscentInPixels() + lh;
 
 	TConvStat st;
@@ -2131,7 +2144,7 @@ void CPs1Container::DrawProgress(CWindowGc &gc, const TRect &aBody) const
 void CPs1Container::DrawHelp(CWindowGc &gc, const TRect &aBody) const
 	{
 	const CFont *font = iCoeEnv->NormalFont();
-	const TInt lh = font->HeightInPixels() + 3;
+	const TInt lh = font->HeightInPixels() + KRowGap;
 	const TInt rows = BodyRows();
 	TInt y = aBody.iTl.iY + font->AscentInPixels();
 	if (iHelpTopic < 0)
@@ -2178,7 +2191,7 @@ void CPs1Container::DrawHelp(CWindowGc &gc, const TRect &aBody) const
 void CPs1Container::DrawSetup(CWindowGc &gc, const TRect &aBody) const
 	{
 	const CFont *font = iCoeEnv->NormalFont();
-	const TInt lh = font->HeightInPixels() + 3;
+	const TInt lh = font->HeightInPixels() + KRowGap;
 	TInt y = aBody.iTl.iY + font->AscentInPixels();
 	for (TInt i = 0; i < ESetCount; i++)
 		{
@@ -2298,13 +2311,12 @@ void CPs1Container::Draw(const TRect & /*aRect*/) const
 		{
 		// The selected row's own hint replaces the general one when the help file has it.
 		TPtrC hint = HintText();
-		if (hint.Length())
-			hint.Set(hint.Mid(iHintOff < hint.Length() ? iHintOff : 0));
-		else
+		const TBool own = hint.Length() > 0;
+		if (!own)
 			hint.Set(Tr(iGameClosed  ? EStrHintGameClosed
 				: iStartedOnce ? EStrHintMainResume
 							   : EStrHintMainStart));
-		const TRect body = DrawChrome(gc, _L("PS1Emulator"), hint);
+		const TRect body = DrawChrome(gc, _L("PS1Emulator"), hint, own ? iHintPx : -1);
 		DrawMain(gc, body);
 		}
 	gc.DiscardFont();
@@ -2479,7 +2491,7 @@ TInt CPs1Container::LayoutHelp(CWindowGc *aGc, const TRect &aBody, TInt aFrom) c
 	if (!TopicAt(iHelpTopic, key) || !HelpFind(key, inl, body))
 		return 0;
 	const CFont *font = iCoeEnv->NormalFont();
-	const TInt lh = font->HeightInPixels() + 3;
+	const TInt lh = font->HeightInPixels() + KRowGap;
 	const TInt rows = BodyRows();
 	TInt y = aBody.iTl.iY + font->AscentInPixels();
 	TInt pos = 0, n = 0;
@@ -2567,37 +2579,60 @@ TPtrC CPs1Container::HintText() const
 	return TPtrC();
 	}
 
-// A hint wider than the status line scrolls: it waits at the start, moves two characters
-// per step, waits at the end and starts over. Driven by the menu tick.
+void CPs1Container::ResetHint()
+	{
+	iHintPx = 0;
+	iHintPhase = 0;
+	iHintT0 = User::NTickCount();
+	}
+
+// A hint wider than the status line waits at its start, scrolls pixel by pixel at a
+// fixed speed (timed by the clock, so it is even whatever the tick jitter), waits at
+// its end and starts over. Phase 0 = waiting at the start, 1 = moving, 2 = at the end.
 void CPs1Container::HintTick()
 	{
 	if (iStatusMsg.Length())
 		return;
 	const TPtrC hint = HintText();
 	const CFont *font = iCoeEnv->NormalFont();
-	const TInt avail = Rect().Width() - 12;
-	if (!hint.Length() || font->TextWidthInPixels(hint) <= avail)
+	const TInt over = hint.Length()
+		? font->TextWidthInPixels(hint) - (Rect().Width() - 12) : 0;
+	if (over <= 0)
 		{
-		iHintOff = 0;
-		iHintTick = 0;
+		iHintPx = 0;
+		iHintPhase = 0;
 		return;
 		}
-	if (iHintOff > hint.Length())
-		iHintOff = 0;
-	++iHintTick;
-	if (font->TextWidthInPixels(hint.Mid(iHintOff)) <= avail)
+	const TUint32 now = User::NTickCount();
+	const TInt ms = (TInt)(now - iHintT0);
+	if (iHintPhase == 0)
 		{
-		if (iHintTick >= KHintHold)
+		if (ms >= KHintHoldMs)
 			{
-			iHintOff = 0;
-			iHintTick = 0;
+			iHintPhase = 1;
+			iHintT0 = now;
+			}
+		}
+	else if (iHintPhase == 1)
+		{
+		TInt px = ms * KHintPxPerSec / 1000;
+		if (px >= over)
+			{
+			px = over;
+			iHintPhase = 2;
+			iHintT0 = now;
+			}
+		if (px != iHintPx)
+			{
+			iHintPx = px;
 			DrawNow();
 			}
 		}
-	else if (iHintTick >= (iHintOff ? KHintStep : KHintHold))
+	else if (ms >= KHintHoldMs)
 		{
-		iHintOff += 2;
-		iHintTick = 0;
+		iHintPx = 0;
+		iHintPhase = 0;
+		iHintT0 = now;
 		DrawNow();
 		}
 	}
@@ -2612,6 +2647,8 @@ void CPs1Container::OpenMenu()
 	voutSymbianSuspend(1);
 	iPage = EPageMain;
 	FixSel();
+	ResetHint();
+	LogGeometry();
 	iConfirm = -1;
 	iStatusMsg.Zero();
 	DrawNow();
@@ -2742,9 +2779,85 @@ TBool CPs1Container::RestartNeeded() const
 	       iCfg.iDsa    != iDsaAtStart    || iCfg.iWsola != iWsolaAtStart;
 	}
 
+void CPs1Container::StepValue(TInt aItem, TInt d)
+	{
+	TInt &v = iCfg.Value(aItem);
+	if (aItem == ECfgGpuSkip)
+		{
+		// -1 is the adaptive mode of gpulib: it decides per-frame and is the one
+		// that synchronizes the skip with the moment the game flips the buffer.
+		v += d;
+		if (v < -1) v = 3;
+		if (v > 3) v = -1;
+		}
+	else if (aItem == ECfgFxaa)
+		{
+		v += d;
+		if (v < 0) v = 5;
+		if (v > 5) v = 0;
+		}
+	else if (aItem == ECfgCycle)
+		{
+		// The shown number is speed, so right must lower the multiplier.
+		v -= d * KCycleStep;
+		if (v < KCycleMin) v = KCycleMax;
+		if (v > KCycleMax) v = KCycleMin;
+		}
+	else if (aItem == ECfgTiltSide || aItem == ECfgTiltPitch)
+		{
+		v = (v + d + 9) % 9;
+		}
+	else if (aItem == ECfgTiltDead)
+		{
+		v += d * 2;
+		if (v < 0) v = 40;
+		if (v > 40) v = 0;
+		}
+	else if (aItem == ECfgTiltSens)
+		{
+		v += d * 10;
+		if (v < 40) v = 300;
+		if (v > 300) v = 40;
+		}
+	else if (aItem == ECfgLang)
+		{
+		const TInt count = I18nLanguageCount();
+		v = (v + d + count) % count;
+		I18nSetLanguage(v);
+		LoadHelp();
+		}
+	else if (aItem == ECfgPreset)
+		{
+		// Only highlights a name here; OK applies it (see below) - unlike
+		// language, applying a preset overwrites fourteen keys at once and
+		// should not happen on every arrow press while browsing the list.
+		iPresetSel = (iPresetSel + d + EPresetCount) % EPresetCount;
+		}
+	else if (aItem == ECfgKeyBase)
+		{
+		// Same reasoning as ECfgPreset: highlight only, OK applies it.
+		iBaseSel = (iBaseSel + d + EBaseCount) % EBaseCount;
+		}
+	else
+		v = v ? 0 : 1;
+	}
+
 TKeyResponse CPs1Container::MainKeyL(TInt aScan)
 	{
 	FixSel();
+	// C inside an open section closes it and leaves the cursor on its header; with no
+	// section around the cursor it keeps its old meaning below.
+	if ((aScan == EStdKeyBackspace || aScan == EStdKeyEscape) &&
+		KItemSection[iSel] < ESecCount && KItemSection[iSel] == iOpenSec)
+		{
+		iSel = KSecHdr[iOpenSec];
+		iOpenSec = ESecCount;
+		ResetHint();
+		iConfirm = -1;
+		iStatusMsg.Zero();
+		DrawNow();
+		return EKeyWasConsumed;
+		}
 	// Exit must work from here too; otherwise there is no way to exit from the menu before start.
 	if (aScan == EStdKeyDevice1 || aScan == EStdKeyBackspace || aScan == EStdKeyEscape)
 		{
@@ -2777,8 +2890,7 @@ TKeyResponse CPs1Container::MainKeyL(TInt aScan)
 			iSel = (iSel + d + ECfgCount) % ECfgCount;
 			}
 		while (!ItemVisible(iSel));
-		iHintOff = 0;
-		iHintTick = 0;
+		ResetHint();
 		iConfirm = -1;      // confirmation applies only while staying on the item
 		iStatusMsg.Zero();
 		DrawNow();
@@ -2799,68 +2911,22 @@ TKeyResponse CPs1Container::MainKeyL(TInt aScan)
 			DrawNow();
 			return EKeyWasConsumed;
 			}
+		if (isHeader(iSel))
+			{
+			// Right opens a closed section and Left closes an open one.
+			const TInt sec = KItemSection[iSel];
+			const TBool open = (iOpenSec == sec);
+			if ((d > 0 && !open) || (d < 0 && open))
+				{
+				iOpenSec = open ? ESecCount : sec;
+				ResetHint();
+				}
+			DrawNow();
+			return EKeyWasConsumed;
+			}
 		if (!isCommand(iSel))
 			{
-			TInt &v = iCfg.Value(iSel);
-			if (iSel == ECfgGpuSkip)
-				{
-				// -1 is the adaptive mode of gpulib: it decides per-frame and is the one
-				// that synchronizes the skip with the moment the game flips the buffer.
-				v += d;
-				if (v < -1) v = 3;
-				if (v > 3) v = -1;
-				}
-			else if (iSel == ECfgFxaa)
-				{
-				v += d;
-				if (v < 0) v = 5;
-				if (v > 5) v = 0;
-				}
-			else if (iSel == ECfgCycle)
-				{
-				// The shown number is speed, so right must lower the multiplier.
-				v -= d * KCycleStep;
-				if (v < KCycleMin) v = KCycleMax;
-				if (v > KCycleMax) v = KCycleMin;
-				}
-			else if (iSel == ECfgTiltSide || iSel == ECfgTiltPitch)
-				{
-				v = (v + d + 9) % 9;
-				}
-			else if (iSel == ECfgTiltDead)
-				{
-				v += d * 2;
-				if (v < 0) v = 40;
-				if (v > 40) v = 0;
-				}
-			else if (iSel == ECfgTiltSens)
-				{
-				v += d * 10;
-				if (v < 40) v = 300;
-				if (v > 300) v = 40;
-				}
-
-			else if (iSel == ECfgLang)
-				{
-				const TInt count = I18nLanguageCount();
-				v = (v + d + count) % count;
-				I18nSetLanguage(v);
-				LoadHelp();
-				}
-			else if (iSel == ECfgPreset)
-				{
-				// Only highlights a name here; OK applies it (see below) - unlike
-				// language, applying a preset overwrites fourteen keys at once and
-				// should not happen on every arrow press while browsing the list.
-				iPresetSel = (iPresetSel + d + EPresetCount) % EPresetCount;
-				}
-			else if (iSel == ECfgKeyBase)
-				{
-				// Same reasoning as ECfgPreset: highlight only, OK applies it.
-				iBaseSel = (iBaseSel + d + EBaseCount) % EBaseCount;
-				}
-			else
-				v = v ? 0 : 1;
+			StepValue(iSel, d);
 			iStatusMsg.Zero();
 			DrawNow();
 			return EKeyWasConsumed;
@@ -2957,24 +3023,19 @@ TKeyResponse CPs1Container::MainKeyL(TInt aScan)
 				// One section open at a time: opening another closes this one.
 				const TInt sec = KItemSection[iSel];
 				iOpenSec = (iOpenSec == sec) ? ESecCount : sec;
-				iOpenMore = EFalse;
-				iHintOff = 0;
-				iHintTick = 0;
+				ResetHint();
 				}
-				break;
-			case ECfgMoreVideo:
-			case ECfgMoreSpeed:
-			case ECfgMoreInput:
-			case ECfgMoreSystem:
-				iOpenMore = !iOpenMore;
 				break;
 			case ECfgHelp:
 				OpenHelp(EPageMain);
 				break;
 			default:
-				// A value row does not start the game: that belongs to Start alone,
-				// and OK landing on a hidden action cost a restart more than once.
-				OpenGameBrowse();
+				// A value row steps like Right does, with the same limits.
+				if (!isCommand(iSel))
+					{
+					StepValue(iSel, 1);
+					iStatusMsg.Zero();
+					}
 				break;
 			}
 		DrawNow();
@@ -3645,8 +3706,9 @@ TInt CPs1AppUi::Tick()
 		ps1GuiHeartbeat();
 		// Without a pause the main thread would spin CIdle at full speed and starve
 		// the conversion worker thread (and outside conversion just heat the device).
-		// Only the progress page needs the short step; elsewhere it just wakes the CPU.
-		User::After(iContainer->OnProgress() ? 20000 : 50000);
+		// Only the progress page and a moving hint need the short step; elsewhere it just
+		// wakes the CPU.
+		User::After(iContainer->TickUs());
 		iInTick = EFalse;
 		return ETrue;
 		}

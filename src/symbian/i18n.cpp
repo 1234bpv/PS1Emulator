@@ -2066,7 +2066,6 @@ static const TText *const KStr_ko_EStrItemWsola = _S("Preserve pitch");
 // --- First setup, help and start checks ---
 // English and Ukrainian are translated; the other thirteen keep the English
 // text as a placeholder until a translation pass covers them.
-static const TText *const KStr_en_EStrItemMore = _S("More...");
 static const TText *const KStr_en_EStrItemHelp = _S("Help");
 static const TText *const KStr_en_EStrItemGames = _S("Games");
 static const TText *const KStr_en_EStrTitleSetup = _S("First setup");
@@ -2083,7 +2082,6 @@ static const TText *const KStr_en_EStrAskNoBiosWarn = _S("The game will run on t
 static const TText *const KStr_en_EStrAskContinue = _S("Continue");
 static const TText *const KStr_en_EStrAskPickBios = _S("Select BIOS");
 
-static const TText KStr_uk_EStrItemMore[] = { 0x0414, 0x043E, 0x0434, 0x0430, 0x0442, 0x043A, 0x043E, 0x0432, 0x043E, 0x002E, 0x002E, 0x002E, 0 };
 static const TText KStr_uk_EStrItemHelp[] = { 0x0414, 0x043E, 0x0432, 0x0456, 0x0434, 0x043A, 0x0430, 0 };
 static const TText KStr_uk_EStrItemGames[] = { 0x0406, 0x0433, 0x0440, 0x0438, 0 };
 static const TText KStr_uk_EStrTitleSetup[] = { 0x041F, 0x0435, 0x0440, 0x0448, 0x0435, 0x0020, 0x043D, 0x0430, 0x043B, 0x0430, 0x0448, 0x0442, 0x0443, 0x0432, 0x0430, 0x043D, 0x043D, 0x044F, 0 };
@@ -2100,7 +2098,6 @@ static const TText KStr_uk_EStrAskNoBiosWarn[] = { 0x0413, 0x0440, 0x0430, 0x002
 static const TText KStr_uk_EStrAskContinue[] = { 0x041F, 0x0440, 0x043E, 0x0434, 0x043E, 0x0432, 0x0436, 0x0438, 0x0442, 0x0438, 0 };
 static const TText KStr_uk_EStrAskPickBios[] = { 0x0412, 0x0438, 0x0431, 0x0440, 0x0430, 0x0442, 0x0438, 0x0020, 0x0042, 0x0049, 0x004F, 0x0053, 0 };
 
-static const TText *const KStr_zh_EStrItemMore = _S("More...");
 static const TText *const KStr_zh_EStrItemHelp = _S("Help");
 static const TText *const KStr_zh_EStrItemGames = _S("Games");
 static const TText *const KStr_zh_EStrTitleSetup = _S("First setup");
@@ -2117,7 +2114,6 @@ static const TText *const KStr_zh_EStrAskNoBiosWarn = _S("The game will run on t
 static const TText *const KStr_zh_EStrAskContinue = _S("Continue");
 static const TText *const KStr_zh_EStrAskPickBios = _S("Select BIOS");
 
-static const TText *const KStr_de_EStrItemMore = _S("More...");
 static const TText *const KStr_de_EStrItemHelp = _S("Help");
 static const TText *const KStr_de_EStrItemGames = _S("Games");
 static const TText *const KStr_de_EStrTitleSetup = _S("First setup");
@@ -2134,7 +2130,6 @@ static const TText *const KStr_de_EStrAskNoBiosWarn = _S("The game will run on t
 static const TText *const KStr_de_EStrAskContinue = _S("Continue");
 static const TText *const KStr_de_EStrAskPickBios = _S("Select BIOS");
 
-static const TText *const KStr_fr_EStrItemMore = _S("More...");
 static const TText *const KStr_fr_EStrItemHelp = _S("Help");
 static const TText *const KStr_fr_EStrItemGames = _S("Games");
 static const TText *const KStr_fr_EStrTitleSetup = _S("First setup");
@@ -2151,7 +2146,6 @@ static const TText *const KStr_fr_EStrAskNoBiosWarn = _S("The game will run on t
 static const TText *const KStr_fr_EStrAskContinue = _S("Continue");
 static const TText *const KStr_fr_EStrAskPickBios = _S("Select BIOS");
 
-static const TText *const KStr_es_EStrItemMore = _S("More...");
 static const TText *const KStr_es_EStrItemHelp = _S("Help");
 static const TText *const KStr_es_EStrItemGames = _S("Games");
 static const TText *const KStr_es_EStrTitleSetup = _S("First setup");
@@ -2168,7 +2162,6 @@ static const TText *const KStr_es_EStrAskNoBiosWarn = _S("The game will run on t
 static const TText *const KStr_es_EStrAskContinue = _S("Continue");
 static const TText *const KStr_es_EStrAskPickBios = _S("Select BIOS");
 
-static const TText *const KStr_ru_EStrItemMore = _S("More...");
 static const TText *const KStr_ru_EStrItemHelp = _S("Help");
 static const TText *const KStr_ru_EStrItemGames = _S("Games");
 static const TText *const KStr_ru_EStrTitleSetup = _S("First setup");
@@ -2185,7 +2178,6 @@ static const TText *const KStr_ru_EStrAskNoBiosWarn = _S("The game will run on t
 static const TText *const KStr_ru_EStrAskContinue = _S("Continue");
 static const TText *const KStr_ru_EStrAskPickBios = _S("Select BIOS");
 
-static const TText *const KStr_pt_EStrItemMore = _S("More...");
 static const TText *const KStr_pt_EStrItemHelp = _S("Help");
 static const TText *const KStr_pt_EStrItemGames = _S("Games");
 static const TText *const KStr_pt_EStrTitleSetup = _S("First setup");
@@ -2202,7 +2194,6 @@ static const TText *const KStr_pt_EStrAskNoBiosWarn = _S("The game will run on t
 static const TText *const KStr_pt_EStrAskContinue = _S("Continue");
 static const TText *const KStr_pt_EStrAskPickBios = _S("Select BIOS");
 
-static const TText *const KStr_it_EStrItemMore = _S("More...");
 static const TText *const KStr_it_EStrItemHelp = _S("Help");
 static const TText *const KStr_it_EStrItemGames = _S("Games");
 static const TText *const KStr_it_EStrTitleSetup = _S("First setup");
@@ -2219,7 +2210,6 @@ static const TText *const KStr_it_EStrAskNoBiosWarn = _S("The game will run on t
 static const TText *const KStr_it_EStrAskContinue = _S("Continue");
 static const TText *const KStr_it_EStrAskPickBios = _S("Select BIOS");
 
-static const TText *const KStr_pl_EStrItemMore = _S("More...");
 static const TText *const KStr_pl_EStrItemHelp = _S("Help");
 static const TText *const KStr_pl_EStrItemGames = _S("Games");
 static const TText *const KStr_pl_EStrTitleSetup = _S("First setup");
@@ -2236,7 +2226,6 @@ static const TText *const KStr_pl_EStrAskNoBiosWarn = _S("The game will run on t
 static const TText *const KStr_pl_EStrAskContinue = _S("Continue");
 static const TText *const KStr_pl_EStrAskPickBios = _S("Select BIOS");
 
-static const TText *const KStr_tr_EStrItemMore = _S("More...");
 static const TText *const KStr_tr_EStrItemHelp = _S("Help");
 static const TText *const KStr_tr_EStrItemGames = _S("Games");
 static const TText *const KStr_tr_EStrTitleSetup = _S("First setup");
@@ -2253,7 +2242,6 @@ static const TText *const KStr_tr_EStrAskNoBiosWarn = _S("The game will run on t
 static const TText *const KStr_tr_EStrAskContinue = _S("Continue");
 static const TText *const KStr_tr_EStrAskPickBios = _S("Select BIOS");
 
-static const TText *const KStr_ja_EStrItemMore = _S("More...");
 static const TText *const KStr_ja_EStrItemHelp = _S("Help");
 static const TText *const KStr_ja_EStrItemGames = _S("Games");
 static const TText *const KStr_ja_EStrTitleSetup = _S("First setup");
@@ -2270,7 +2258,6 @@ static const TText *const KStr_ja_EStrAskNoBiosWarn = _S("The game will run on t
 static const TText *const KStr_ja_EStrAskContinue = _S("Continue");
 static const TText *const KStr_ja_EStrAskPickBios = _S("Select BIOS");
 
-static const TText *const KStr_hi_EStrItemMore = _S("More...");
 static const TText *const KStr_hi_EStrItemHelp = _S("Help");
 static const TText *const KStr_hi_EStrItemGames = _S("Games");
 static const TText *const KStr_hi_EStrTitleSetup = _S("First setup");
@@ -2287,7 +2274,6 @@ static const TText *const KStr_hi_EStrAskNoBiosWarn = _S("The game will run on t
 static const TText *const KStr_hi_EStrAskContinue = _S("Continue");
 static const TText *const KStr_hi_EStrAskPickBios = _S("Select BIOS");
 
-static const TText *const KStr_ar_EStrItemMore = _S("More...");
 static const TText *const KStr_ar_EStrItemHelp = _S("Help");
 static const TText *const KStr_ar_EStrItemGames = _S("Games");
 static const TText *const KStr_ar_EStrTitleSetup = _S("First setup");
@@ -2304,7 +2290,6 @@ static const TText *const KStr_ar_EStrAskNoBiosWarn = _S("The game will run on t
 static const TText *const KStr_ar_EStrAskContinue = _S("Continue");
 static const TText *const KStr_ar_EStrAskPickBios = _S("Select BIOS");
 
-static const TText *const KStr_ko_EStrItemMore = _S("More...");
 static const TText *const KStr_ko_EStrItemHelp = _S("Help");
 static const TText *const KStr_ko_EStrItemGames = _S("Games");
 static const TText *const KStr_ko_EStrTitleSetup = _S("First setup");
@@ -2456,7 +2441,6 @@ static const TText *const KTable_en[EStrCount] =
 	KStr_en_EStrValBaseN95,
 	KStr_en_EStrValBaseC5,
 	KStr_en_EStrItemWsola,
-	KStr_en_EStrItemMore,
 	KStr_en_EStrItemHelp,
 	KStr_en_EStrItemGames,
 	KStr_en_EStrTitleSetup,
@@ -2609,7 +2593,6 @@ static const TText *const KTable_uk[EStrCount] =
 	KStr_uk_EStrValBaseN95,
 	KStr_uk_EStrValBaseC5,
 	KStr_uk_EStrItemWsola,
-	KStr_uk_EStrItemMore,
 	KStr_uk_EStrItemHelp,
 	KStr_uk_EStrItemGames,
 	KStr_uk_EStrTitleSetup,
@@ -2762,7 +2745,6 @@ static const TText *const KTable_zh[EStrCount] =
 	KStr_zh_EStrValBaseN95,
 	KStr_zh_EStrValBaseC5,
 	KStr_zh_EStrItemWsola,
-	KStr_zh_EStrItemMore,
 	KStr_zh_EStrItemHelp,
 	KStr_zh_EStrItemGames,
 	KStr_zh_EStrTitleSetup,
@@ -2915,7 +2897,6 @@ static const TText *const KTable_de[EStrCount] =
 	KStr_de_EStrValBaseN95,
 	KStr_de_EStrValBaseC5,
 	KStr_de_EStrItemWsola,
-	KStr_de_EStrItemMore,
 	KStr_de_EStrItemHelp,
 	KStr_de_EStrItemGames,
 	KStr_de_EStrTitleSetup,
@@ -3068,7 +3049,6 @@ static const TText *const KTable_fr[EStrCount] =
 	KStr_fr_EStrValBaseN95,
 	KStr_fr_EStrValBaseC5,
 	KStr_fr_EStrItemWsola,
-	KStr_fr_EStrItemMore,
 	KStr_fr_EStrItemHelp,
 	KStr_fr_EStrItemGames,
 	KStr_fr_EStrTitleSetup,
@@ -3221,7 +3201,6 @@ static const TText *const KTable_es[EStrCount] =
 	KStr_es_EStrValBaseN95,
 	KStr_es_EStrValBaseC5,
 	KStr_es_EStrItemWsola,
-	KStr_es_EStrItemMore,
 	KStr_es_EStrItemHelp,
 	KStr_es_EStrItemGames,
 	KStr_es_EStrTitleSetup,
@@ -3374,7 +3353,6 @@ static const TText *const KTable_ru[EStrCount] =
 	KStr_ru_EStrValBaseN95,
 	KStr_ru_EStrValBaseC5,
 	KStr_ru_EStrItemWsola,
-	KStr_ru_EStrItemMore,
 	KStr_ru_EStrItemHelp,
 	KStr_ru_EStrItemGames,
 	KStr_ru_EStrTitleSetup,
@@ -3527,7 +3505,6 @@ static const TText *const KTable_pt[EStrCount] =
 	KStr_pt_EStrValBaseN95,
 	KStr_pt_EStrValBaseC5,
 	KStr_pt_EStrItemWsola,
-	KStr_pt_EStrItemMore,
 	KStr_pt_EStrItemHelp,
 	KStr_pt_EStrItemGames,
 	KStr_pt_EStrTitleSetup,
@@ -3680,7 +3657,6 @@ static const TText *const KTable_it[EStrCount] =
 	KStr_it_EStrValBaseN95,
 	KStr_it_EStrValBaseC5,
 	KStr_it_EStrItemWsola,
-	KStr_it_EStrItemMore,
 	KStr_it_EStrItemHelp,
 	KStr_it_EStrItemGames,
 	KStr_it_EStrTitleSetup,
@@ -3833,7 +3809,6 @@ static const TText *const KTable_pl[EStrCount] =
 	KStr_pl_EStrValBaseN95,
 	KStr_pl_EStrValBaseC5,
 	KStr_pl_EStrItemWsola,
-	KStr_pl_EStrItemMore,
 	KStr_pl_EStrItemHelp,
 	KStr_pl_EStrItemGames,
 	KStr_pl_EStrTitleSetup,
@@ -3986,7 +3961,6 @@ static const TText *const KTable_tr[EStrCount] =
 	KStr_tr_EStrValBaseN95,
 	KStr_tr_EStrValBaseC5,
 	KStr_tr_EStrItemWsola,
-	KStr_tr_EStrItemMore,
 	KStr_tr_EStrItemHelp,
 	KStr_tr_EStrItemGames,
 	KStr_tr_EStrTitleSetup,
@@ -4139,7 +4113,6 @@ static const TText *const KTable_ja[EStrCount] =
 	KStr_ja_EStrValBaseN95,
 	KStr_ja_EStrValBaseC5,
 	KStr_ja_EStrItemWsola,
-	KStr_ja_EStrItemMore,
 	KStr_ja_EStrItemHelp,
 	KStr_ja_EStrItemGames,
 	KStr_ja_EStrTitleSetup,
@@ -4292,7 +4265,6 @@ static const TText *const KTable_hi[EStrCount] =
 	KStr_hi_EStrValBaseN95,
 	KStr_hi_EStrValBaseC5,
 	KStr_hi_EStrItemWsola,
-	KStr_hi_EStrItemMore,
 	KStr_hi_EStrItemHelp,
 	KStr_hi_EStrItemGames,
 	KStr_hi_EStrTitleSetup,
@@ -4445,7 +4417,6 @@ static const TText *const KTable_ar[EStrCount] =
 	KStr_ar_EStrValBaseN95,
 	KStr_ar_EStrValBaseC5,
 	KStr_ar_EStrItemWsola,
-	KStr_ar_EStrItemMore,
 	KStr_ar_EStrItemHelp,
 	KStr_ar_EStrItemGames,
 	KStr_ar_EStrTitleSetup,
@@ -4598,7 +4569,6 @@ static const TText *const KTable_ko[EStrCount] =
 	KStr_ko_EStrValBaseN95,
 	KStr_ko_EStrValBaseC5,
 	KStr_ko_EStrItemWsola,
-	KStr_ko_EStrItemMore,
 	KStr_ko_EStrItemHelp,
 	KStr_ko_EStrItemGames,
 	KStr_ko_EStrTitleSetup,
