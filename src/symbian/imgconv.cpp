@@ -707,6 +707,23 @@ static void dstName(const TDesC &aSrcName, const TDesC &aDir, const TDesC &aExt,
 		aOut.Append(aExt);
 	}
 
+// Discs in a volume, counted the way pickEntry chooses: by .cue files when there
+// are any (their tracks belong to them), otherwise by standalone images.
+static TInt discCount(MConvVol &aVol)
+	{
+	const MDesCArray &e = aVol.Entries();
+	TInt cues = 0, images = 0;
+	for (TInt i = 0; i < e.MdcaCount(); i++)
+		{
+		const TPtrC n = e.MdcaPoint(i);
+		if (extIs(n, _L(".cue")))
+			cues++;
+		else if (isRawImageName(n) || extIs(n, _L(".pbp")) || extIs(n, _L(".cbn")))
+			images++;
+		}
+	return cues ? cues : images;
+	}
+
 // Selects appropriate entry to convert: .cue takes precedence over .bin
 // as it carries track layout; otherwise first disc image.
 static TInt pickEntry(MConvVol &aVol, TDes &aOut)
@@ -1033,13 +1050,29 @@ static TInt copyDisc(RFs &aFs, MConvVol &aVol, const TDesC &aEntry, const TCue &
                      const TDesC &aDstDir)
 	{
 	TInt r = KErrNone;
-	if (extIs(aEntry, _L(".cue")) || !aCue.iFiles->MdcaCount())
+	// A .bin picked next to its .cue took the layout from that .cue, and deleteSource
+	// removes the .cue as well: it has to travel with the tracks.
+	TFileName cueName(aEntry);
+	if (!extIs(aEntry, _L(".cue")))
 		{
+		const TInt dot = cueName.LocateReverse('.');
+		TInt csz = 0;
+		if (dot > 0)
+			{
+			cueName.SetLength(dot);
+			cueName.Append(_L(".cue"));
+			}
+		if (dot <= 0 || aVol.Size(cueName, csz) != KErrNone || csz <= 0)
+			cueName.Zero();
+		}
+	if (cueName.Length() || !aCue.iFiles->MdcaCount())
+		{
+		const TDesC &src = cueName.Length() ? (const TDesC &)cueName : aEntry;
 		TFileName dst;
 		TInt sz = 0;
-		aVol.Size(aEntry, sz);
-		dstName(aEntry, aDstDir, aEntry.Right(4), dst);
-		r = copyEntry(aFs, aVol, aEntry, dst, sz);
+		aVol.Size(src, sz);
+		dstName(src, aDstDir, src.Right(4), dst);
+		r = copyEntry(aFs, aVol, src, dst, sz);
 		}
 	for (TInt i = 0; i < aCue.iFiles->MdcaCount() && r == KErrNone; i++)
 		{
@@ -1139,8 +1172,11 @@ static TInt convertOne(RFs &aFs, const TDesC &aPath, TConvMode aMode,
 			r = copyDisc(aFs, *vol, entry, *cue, aDstDir);
 		}
 
+	// Only one disc is taken from an archive; deleting one that holds more would
+	// lose the rest.
+	const TBool keepArchive = ConvIsArchiveName(aPath) && discCount(*vol) > 1;
 	delete vol;
-	if (r == KErrNone && aDelete)
+	if (r == KErrNone && aDelete && !keepArchive)
 		deleteSource(aFs, aPath, *cue, onlyUsed);
 	delete cue->iFiles;
 	User::Free(cue);

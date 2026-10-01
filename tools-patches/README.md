@@ -31,7 +31,7 @@ checks the core/GPU profile markers before accepting the EXE.
 | `cl_bpabi.pm.patch` | SDK fix: vista patch without hardcoded path to CSL |
 | `makdeps.pm.patch` | SDK fix: preprocessor for dependency scanning |
 | `mmp-core/` | `bld.inf` + `pcsxcore.mmp` for the core (Stage 1) |
-| `mmp-gpu/` | `gpuunai.mmp` — gpulib + gpu_unai without assembler (Stage 2) |
+| `mmp-gpu/` | `asm/regen.cmd` only; the old `gpuunai.mmp` is archived in `docs/архів/`, the library is built by `gpu463-regen.cmd` |
 | `mmp-stage0/` | `stage0.mmp` — executable memory probe (Stage 0) |
 | `mmp-stage1/` | `stage1.mmp` — wrapper linking the core and GPU |
 

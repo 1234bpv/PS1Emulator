@@ -134,7 +134,7 @@ SYSTEMINCLUDE   \epoc32\include\libc
 
 STATICLIBRARY   gpuunai.lib
 // Hand-written ARM rasteriser loops. Built separately with a newer assembler -
-// see comment in gpuunai.mmp and tools-patches\gpuasm-regen.cmd.
+// see tools-patches\gpuasm-regen.cmd (the old gpuunai.mmp is archived).
 STATICLIBRARY   gpuasm.lib
 STATICLIBRARY   pcsxcore.lib
 LIBRARY         euser.lib

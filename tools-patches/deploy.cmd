@@ -78,8 +78,8 @@ if /i "%TARGET%"=="stage1" (
   REM gpu_unai is built outside abld, with GCCE 4.6.3 and the hand-written ARM
   REM inner loops. Measured against the abld/CSL 3.4.3 build on a fixed 9000-frame
   REM replay: rasteriser -8.3%, whole frame -3.0%, with every gpulib draw counter
-  REM identical. configs\gpu\group\gpuunai.mmp is kept only as the record of the
-  REM file list and macros - building it with abld would overwrite gpuunai.lib.
+  REM identical. The old gpuunai.mmp is archived in docs/archive (2026-10-01); building
+  REM it with abld would overwrite gpuunai.lib with a different rasteriser path.
   echo [deploy] === gpu_unai (asm + GCCE 4.6.3) ===
   call "%~dp0gpuasm-regen.cmd" || (echo [deploy] gpu asm FAILED & exit /b 1)
   call "%~dp0gpu463-regen.cmd" || (echo [deploy] gpu 4.6.3 build FAILED & exit /b 1)

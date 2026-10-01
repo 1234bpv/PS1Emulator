@@ -37,12 +37,14 @@ void ps1GuiShutdown(void);
 void ps1GuiRequestExit(void);
 void ps1GuiCloseGame(void);
 void ps1GuiEndPass(void);
+void ps1GuiHeartbeat(void);
 int  ps1GuiStartPass(void);
 void ps1Log(const char *aType, const char *aMsg);
 void ps1LogInt(const char *aType, const char *aMsg, int aVal);
 void ps1LogFmt(const char *aType, const char *aFmt, ...);
 int  ps1SndVolumeStep(int aDelta);
 int  ps1SndVolumeSteps(void);
+void ps1SndResetRate(void);
 int  voutSymbianKeyEvent(int aScanCode, int aDown);
 int  voutSymbianFinish(int aHoldMs);
 int  voutSymbianGlActive(void);
@@ -274,6 +276,7 @@ class TPs1Cfg
 	{
 public:
 	void SetDefaults();
+	void Clamp();
 	TInt &Value(TInt aItem);
 	TInt iInterp, iIlace, iLight, iBlend, iPixSkip, iGteNf, iSound, iGl, iWsola;
 	TInt iDirty, iDsa, iFps, iGpuSkip, iCycle, iSmooth, iFxaa, iProfile, iSwDraw;
@@ -332,6 +335,19 @@ void TPs1Cfg::SetDefaults()
 		iKeyAlt[i]  = voutSymbianDefaultKey(i, 1);
 		iKeyHold[i] = 0;
 		}
+	}
+
+// A hand-edited or truncated settings file must not reach the core or the menu
+// arithmetic (cycle=0 divided by zero on the first redraw): bad values fall back.
+void TPs1Cfg::Clamp()
+	{
+	if (iCycle < KCycleMin || iCycle > KCycleMax) iCycle = KCycleDefault;
+	if (iGpuSkip < -1 || iGpuSkip > 3) iGpuSkip = 0;
+	if (iFxaa < 0 || iFxaa > 5) iFxaa = 0;
+	if (iTiltSide < 0 || iTiltSide > 8) iTiltSide = 1;
+	if (iTiltPitch < 0 || iTiltPitch > 8) iTiltPitch = 3;
+	if (iTiltDead < 0 || iTiltDead > 40) iTiltDead = 10;
+	if (iTiltSens < 40 || iTiltSens > 300) iTiltSens = 100;
 	}
 
 TInt &TPs1Cfg::Value(TInt aItem)
@@ -431,6 +447,9 @@ public:
 	// CCoeControl::Window() is protected, and the output needs exactly this window.
 	RWindow &FrameWindow() { return Window(); }
 	TBool MenuActive() const { return iPage != EPageNone; }
+	TBool OnProgress() const { return iPage == EPageProgress; }
+	// Leaving the foreground (call, task switch) pauses through the menu.
+	void FocusLost();
 	void MenuTick();
 	void ApplyAndStart();
 	// Whether the user requested something that only takes effect with a new core
@@ -488,11 +507,12 @@ private:
 	TInt PickedIndex(const TDesC &aPath) const;
 	void TogglePickL();
 	void StartImportL();
+	void BeginImport();
 
 	// persistence
 	void ProfilePath(TDes &aOut) const;
-	void LoadCfg(const TDesC &aPath);
-	void ParseCfg(const TDesC8 &aTxt);
+	void LoadCfg(const TDesC &aPath, TBool aWithGame);
+	void ParseCfg(const TDesC8 &aTxt, TBool aWithGame);
 	void SaveCfg(const TDesC &aPath, TBool aWithGame) const;
 	void SaveAll() const;
 	void SetGameL(const TDesC &aPath);
@@ -533,6 +553,13 @@ private:
 	TFileName iGameAtStart, iBiosAtStart;
 	TInt iInterpAtStart, iGteNfAtStart, iSoundAtStart, iGlAtStart, iDsaAtStart, iWsolaAtStart;
 	TBool iCliMode;           // launched with arguments: do not touch the in-game menu
+	// The running game's settings as they were before another game's profile was
+	// loaded over them, so "Discard changes" can put them back.
+	TPs1Cfg iCfgPrev;
+	TBool iCfgPrevValid;
+	// The disc of the running game is being imported: the pass is torn down by the
+	// tick (MenuTick), not by the key handler that asked for it.
+	TBool iCloseReq;
 	// keyprobe only: how many arriving keys have already been logged, so a held
 	// side key cannot flood the log.
 	TInt iKeyProbeSeen;
@@ -569,13 +596,13 @@ void CPs1Container::ConstructL(const TRect &aRect)
 
 	MigrateOldLayout();
 	iCfg.SetDefaults();
-	LoadCfg(KCfgPath);
+	LoadCfg(KCfgPath, ETrue);
 	// Game profile overrides global settings - but only if it exists.
 	if (iCfg.iProfile && iGamePath.Length())
 		{
 		TFileName p;
 		ProfilePath(p);
-		LoadCfg(p);
+		LoadCfg(p, EFalse);
 		}
 	if (!iGamePath.Length())
 		AutoPickGameL();
@@ -635,8 +662,10 @@ void CPs1Container::ShowError()
 
 TBool CPs1Container::ItemVisible(TInt aItem) const
 	{
+	// Slots are named after iGamePath, which already points at the next game while the
+	// core still runs the old one.
 	if (aItem == ECfgSaveState || aItem == ECfgLoadState)
-		return iStartedOnce && !iGameClosed;
+		return iStartedOnce && !iGameClosed && iGamePath.CompareF(iGameAtStart) == 0;
 	// The switch only has an effect alongside GL; without it the software path always runs.
 	if (aItem == ECfgSwDraw)
 		return iCfg.iGl;
@@ -645,6 +674,19 @@ TBool CPs1Container::ItemVisible(TInt aItem) const
 	    aItem == ECfgTiltDead || aItem == ECfgTiltSens)
 		return iCfg.iTilt;
 	return ETrue;
+	}
+
+static TBool fileThere(const TDesC &aPath)
+	{
+	RFs fs;
+	TBool have = EFalse;
+	if (fs.Connect() == KErrNone)
+		{
+		TEntry e;
+		have = (fs.Entry(aPath, e) == KErrNone);
+		fs.Close();
+		}
+	return have;
 	}
 
 // First image in the card root - so that the first launch does not require going to the browser.
@@ -874,12 +916,17 @@ void CPs1Container::SetGameL(const TDesC &aPath)
 		ProfilePath(p);
 		SaveCfg(p, EFalse);
 		}
+	if (iStartedOnce && iCfg.iProfile && !iCfgPrevValid)
+		{
+		iCfgPrev = iCfg;
+		iCfgPrevValid = ETrue;
+		}
 	iGamePath = aPath;
 	if (iCfg.iProfile)
 		{
 		TFileName p;
 		ProfilePath(p);
-		LoadCfg(p);
+		LoadCfg(p, EFalse);
 		ApplyKeyMap();
 		}
 	}
@@ -928,7 +975,7 @@ void CPs1Container::StatePath(TDes &aOut, TInt aSlot) const
 
 void CPs1Container::DoSaveState()
 	{
-	if (!iStartedOnce || iGameClosed)
+	if (!iStartedOnce || iGameClosed || iGamePath.CompareF(iGameAtStart) != 0)
 		return;
 	RFs fs;
 	if (fs.Connect() == KErrNone)
@@ -938,7 +985,7 @@ void CPs1Container::DoSaveState()
 		}
 	TFileName path;
 	StatePath(path, iStateSlot);
-	TBuf8<KMaxFileName> path8;
+	TBuf8<KMaxFileName + 1> path8;
 	path8.Copy(path);
 	const int r = SaveState((const char *)path8.PtrZ());
 	if (r == 0)
@@ -955,11 +1002,11 @@ void CPs1Container::DoSaveState()
 
 void CPs1Container::DoLoadState()
 	{
-	if (!iStartedOnce || iGameClosed)
+	if (!iStartedOnce || iGameClosed || iGamePath.CompareF(iGameAtStart) != 0)
 		return;
 	TFileName path;
 	StatePath(path, iStateSlot);
-	TBuf8<KMaxFileName> path8;
+	TBuf8<KMaxFileName + 1> path8;
 	path8.Copy(path);
 	const int r = LoadState((const char *)path8.PtrZ());
 	if (r == 0)
@@ -974,7 +1021,7 @@ void CPs1Container::DoLoadState()
 		}
 	}
 
-void CPs1Container::LoadCfg(const TDesC &aPath)
+void CPs1Container::LoadCfg(const TDesC &aPath, TBool aWithGame)
 	{
 	RFs fs;
 	if (fs.Connect() != KErrNone)
@@ -988,8 +1035,12 @@ void CPs1Container::LoadCfg(const TDesC &aPath)
 		if (buf)
 			{
 			TPtr8 p(buf->Des());
+			// A profile without bios= means the default dump; without this it would
+			// inherit the previous game's.
+			if (!aWithGame)
+				iCfg.iBios.Zero();
 			if (f.Read(p) == KErrNone)
-				ParseCfg(p);
+				ParseCfg(p, aWithGame);
 			delete buf;
 			}
 		f.Close();
@@ -997,7 +1048,7 @@ void CPs1Container::LoadCfg(const TDesC &aPath)
 	fs.Close();
 	}
 
-void CPs1Container::ParseCfg(const TDesC8 &aTxt)
+void CPs1Container::ParseCfg(const TDesC8 &aTxt, TBool aWithGame)
 	{
 	TInt pos = 0;
 	while (pos < aTxt.Length())
@@ -1048,6 +1099,10 @@ void CPs1Container::ParseCfg(const TDesC8 &aTxt)
 				TInt v = 0;
 				if (lv.Val(v) == KErrNone)
 					{
+					// Language is global: a profile written under another language
+					// must not switch it back.
+					if (i == ECfgLang && (!aWithGame || v < 0 || v >= I18nLanguageCount()))
+						break;
 					iCfg.Value(i) = v;
 					if (i == ECfgLang)
 						I18nSetLanguage(v);
@@ -1055,6 +1110,7 @@ void CPs1Container::ParseCfg(const TDesC8 &aTxt)
 				break;
 				}
 		}
+	iCfg.Clamp();
 	}
 
 void CPs1Container::SaveCfg(const TDesC &aPath, TBool aWithGame) const
@@ -1067,10 +1123,12 @@ void CPs1Container::SaveCfg(const TDesC &aPath, TBool aWithGame) const
 	// Written aside and renamed over the target: a card that fills up mid-write
 	// would otherwise leave the settings file truncated.
 	TFileName tmp(aPath);
-	if (tmp.Length() + 4 <= tmp.MaxLength())
-		tmp.Append(_L(".new"));
-	else
-		tmp.Copy(aPath);
+	if (tmp.Length() + 4 > tmp.MaxLength())
+		{
+		fs.Close();
+		return;
+		}
+	tmp.Append(_L(".new"));
 	RFile f;
 	if (f.Replace(fs, tmp, EFileWrite | EFileShareAny) == KErrNone)
 		{
@@ -1086,15 +1144,16 @@ void CPs1Container::SaveCfg(const TDesC &aPath, TBool aWithGame) const
 			}
 		// BIOS is written to both files: in the profile it is per-game, in the
 		// global file it is the default for games that have no profile yet.
-		if (iCfg.iBios.Length())
-			{
-			TBuf8<KMaxFileName> b;
-			b.Copy(iCfg.iBios);
-			line.Format(_L8("bios=%S\n"), &b);
-			if (werr == KErrNone) werr = f.Write(line);
-			}
+		// Always written, even when empty: a profile that omits it would take over
+		// the previous game's dump on load.
+		{
+		TBuf8<KMaxFileName> b;
+		b.Copy(iCfg.iBios);
+		line.Format(_L8("bios=%S\n"), &b);
+		if (werr == KErrNone) werr = f.Write(line);
+		}
 		for (TInt i = 0; i < ECfgCount; i++)
-			if (KCfgKey[i])
+			if (KCfgKey[i] && (aWithGame || i != ECfgLang))
 				{
 				line.Format(_L8("%s=%d\n"), KCfgKey[i], c.Value(i));
 				if (werr == KErrNone) werr = f.Write(line);
@@ -1106,9 +1165,7 @@ void CPs1Container::SaveCfg(const TDesC &aPath, TBool aWithGame) const
 			if (werr == KErrNone) werr = f.Write(line);
 			}
 		f.Close();
-		if (werr == KErrNone && tmp != aPath)
-			fs.Replace(tmp, aPath);
-		else if (werr != KErrNone)
+		if (werr != KErrNone || fs.Replace(tmp, aPath) != KErrNone)
 			fs.Delete(tmp);
 		}
 	fs.Close();
@@ -1806,9 +1863,16 @@ void CPs1Container::DoCloseMenu(TBool aWithRestart)
 	ps1CfgApplyLive(iCfg.iIlace, iCfg.iLight, iCfg.iBlend, iCfg.iPixSkip,
 		iCfg.iFps, iCfg.iGpuSkip, iCfg.iCycle, iCfg.iSmooth, iCfg.iFxaa, iCfg.iDirty,
 		iCfg.iSwDraw);
+	ps1SndResetRate();
 	iPage = EPageNone;
 	voutSymbianSuspend(0);
 	ps1Log("menu", "close");
+	}
+
+void CPs1Container::FocusLost()
+	{
+	if (iStartedOnce && !iGameClosed && !iCliMode)
+		OpenMenu();
 	}
 
 void CPs1Container::CloseMenu()
@@ -1818,6 +1882,13 @@ void CPs1Container::CloseMenu()
 
 void CPs1Container::RevertRestartSettings()
 	{
+	if (iCfgPrevValid)
+		{
+		const TInt lang = iCfg.iLang;
+		iCfg = iCfgPrev;
+		iCfg.iLang = lang;
+		iCfgPrevValid = EFalse;
+		}
 	iGamePath = iGameAtStart;
 	iCfg.iBios = iBiosAtStart;
 	iCfg.iInterp = iInterpAtStart;
@@ -1832,6 +1903,14 @@ void CPs1Container::RevertRestartSettings()
 // thread, so the only way to update it is the application tick.
 void CPs1Container::MenuTick()
 	{
+	if (iCloseReq)
+		{
+		iCloseReq = EFalse;
+		ps1GuiCloseGame();
+		BeginImport();
+		DrawNow();
+		return;
+		}
 	if (iPage != EPageProgress)
 		return;
 	TConvStat st;
@@ -1854,9 +1933,9 @@ void CPs1Container::ApplyAndStart()
 	voutSymbianSetTiltMap(iCfg.iTiltSide, iCfg.iTiltPitch, iCfg.iTiltDead, iCfg.iTiltSens);
 	// No sensor means the switch would sit on "on" and do nothing.
 	if (iCfg.iTilt && !voutSymbianTiltActive()) iCfg.iTilt = 0;
-	TBuf8<KMaxFileName> path8;
+	TBuf8<KMaxFileName + 1> path8;
 	path8.Copy(iGamePath);
-	TBuf8<KMaxFileName> bios8;
+	TBuf8<KMaxFileName + 1> bios8;
 	bios8.Copy(iCfg.iBios);
 	ps1CfgApply((const char *)path8.PtrZ(), (const char *)bios8.PtrZ(),
 		iCfg.iInterp, iCfg.iIlace,
@@ -1871,6 +1950,7 @@ void CPs1Container::ApplyAndStart()
 
 void CPs1Container::SnapRestart()
 	{
+	iCfgPrevValid = EFalse;
 	iGameAtStart = iGamePath;
 	iBiosAtStart = iCfg.iBios;
 	iInterpAtStart = iCfg.iInterp;
@@ -1908,7 +1988,10 @@ TKeyResponse CPs1Container::MainKeyL(TInt aScan)
 			DoCloseMenu(EFalse);
 			}
 		else
+			{
+			SaveAll();
 			CEikonEnv::Static()->EikAppUi()->HandleCommandL(EEikCmdExit);
+			}
 		return EKeyWasConsumed;
 		}
 
@@ -2013,7 +2096,10 @@ TKeyResponse CPs1Container::MainKeyL(TInt aScan)
 			{
 			case ECfgStart:
 				if (iGameClosed)
+					{
+					SaveAll();
 					CEikonEnv::Static()->EikAppUi()->HandleCommandL(EEikCmdExit);
+					}
 				else if (!iGamePath.Length())
 					{
 					iBrowsePath = KImgDir;
@@ -2097,6 +2183,7 @@ TKeyResponse CPs1Container::MainKeyL(TInt aScan)
 					iConfirm = ECfgReset;
 				break;
 			case ECfgExit:
+				SaveAll();
 				CEikonEnv::Static()->EikAppUi()->HandleCommandL(EEikCmdExit);
 				return EKeyWasConsumed;
 			default:
@@ -2183,17 +2270,24 @@ void CPs1Container::StartImportL()
 	{
 	if (!iPicked->Count())
 		return;
+	iPage = EPageProgress;
 	// The core holds the disc image open and reads from it every frame, while the
 	// converter needs to read it and (with consent) delete it. Shut down the pass
-	// BEFORE starting the queue.
+	// BEFORE starting the queue - from the tick, since tearing it down here would
+	// close sound and DSA inside a key handler.
 	if (RunningGamePicked())
 		{
-		ps1GuiCloseGame();
 		iGameClosed = ETrue;
+		iCloseReq = ETrue;
+		return;
 		}
+	BeginImport();
+	}
+
+void CPs1Container::BeginImport()
+	{
 	const TInt r = ConvStart(*iPicked, (TConvMode)iConvMode,
 		iAskSel == 0 /*delete*/, KImgDir);
-	iPage = EPageProgress;
 	if (r != KErrNone)
 		ps1LogInt("import", "start failed", r);
 	}
@@ -2355,6 +2449,8 @@ TKeyResponse CPs1Container::ErrorKeyL(TInt /*aScan*/)
 
 TKeyResponse CPs1Container::ProgressKeyL(TInt aScan)
 	{
+	if (iCloseReq)
+		return EKeyWasConsumed;
 	TConvStat st;
 	ConvStat(st);
 	if (aScan == EStdKeyDevice1 || aScan == EStdKeyBackspace || aScan == EStdKeyEscape)
@@ -2368,6 +2464,16 @@ TKeyResponse CPs1Container::ProgressKeyL(TInt aScan)
 			// Freshly imported games should appear in the list immediately.
 			iScanMode = EScanGames;
 			iBrowsePath = KImgDir;
+			// The import may have compressed or deleted the picked game's image.
+			// When it was the running game, the pass is already closed and nothing
+			// is left to fall back to.
+			if (iGamePath.Length() && !fileThere(iGamePath))
+				{
+				if (iStartedOnce && !iGameClosed && fileThere(iGameAtStart))
+					iGamePath = iGameAtStart;
+				else
+					iGamePath.Zero();
+				}
 			if (!iGamePath.Length()) AutoPickGameL();
 			iPage = EPageMain;
 			}
@@ -2395,6 +2501,7 @@ TKeyResponse CPs1Container::KeysKeyL(TInt aScan)
 	if (aScan == EStdKeyDevice1 || aScan == EStdKeyBackspace || aScan == EStdKeyEscape)
 		{
 		ApplyKeyMap();
+		SaveAll();
 		iPage = EPageMain;
 		DrawNow();
 		return EKeyWasConsumed;
@@ -2525,6 +2632,8 @@ private:
 	CIdle *iIdle;
 	TBool iStarted;
 	TBool iInTick;
+	// Layout changed while the menu was up: output is re-attached after it closes.
+	TBool iLayoutPending;
 	// Capture handles held for the whole run by the keyprobe: released at once
 	// on the way out. 0 = that key was not captured.
 	TInt32 iKeyProbeCap[8];
@@ -2630,11 +2739,21 @@ TInt CPs1AppUi::Tick()
 	if (iContainer && iContainer->MenuActive())
 		{
 		iContainer->MenuTick();
+		// The watchdog counts frames, and none run while the menu is up.
+		ps1GuiHeartbeat();
 		// Without a pause the main thread would spin CIdle at full speed and starve
 		// the conversion worker thread (and outside conversion just heat the device).
-		User::After(20000);
+		// Only the progress page needs the short step; elsewhere it just wakes the CPU.
+		User::After(iContainer->OnProgress() ? 20000 : 50000);
 		iInTick = EFalse;
 		return ETrue;
+		}
+
+	if (iLayoutPending)
+		{
+		iLayoutPending = EFalse;
+		if (iStarted)
+			AttachOutput();
 		}
 
 	TInt more = ETrue;
@@ -2693,7 +2812,11 @@ void CPs1AppUi::HandleResourceChangeL(TInt aType)
 	if (aType == KEikDynamicLayoutVariantSwitch && iContainer)
 		{
 		iContainer->SetRect(ApplicationRect());
-		AttachOutput();
+		// Attaching under an open menu would bring DSA up over it, or onto a closed game.
+		if (iContainer->MenuActive())
+			iLayoutPending = ETrue;
+		else
+			AttachOutput();
 		}
 	}
 
@@ -2703,6 +2826,9 @@ void CPs1AppUi::HandleForegroundEventL(TBool aForeground)
 	{
 	CAknAppUi::HandleForegroundEventL(aForeground);
 	ps1LogInt("focus", "fore", (int)aForeground);
+	// Nobody is playing: pause, so the game neither runs nor sounds over a call.
+	if (!aForeground && iContainer)
+		iContainer->FocusLost();
 	}
 
 void CPs1AppUi::HandleCommandL(TInt aCommand)
