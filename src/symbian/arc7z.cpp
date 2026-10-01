@@ -132,11 +132,12 @@ TInt C7zSrc::New(RFs &aFs, const TDesC &aPath, TInt aPackPos, TInt aPackSize,
 
 	if (aMethod == K_LZMA)
 		{
-		const TInt dict = (aPropsSize < 5) ? 0
-			: aProps[1] + (aProps[2] << 8) + (aProps[3] << 16) +
-			  ((TInt)aProps[4] << 24);
-		ConvLogVal("7z lzma dict", dict);
-		if (aPropsSize < 5 || dict > KMaxDict)
+		// Unsigned: a signed shift of a byte >= 0x80 would go negative and pass the limit.
+		const TUint32 dict = (aPropsSize < 5) ? 0
+			: (TUint32)aProps[1] | ((TUint32)aProps[2] << 8) |
+			  ((TUint32)aProps[3] << 16) | ((TUint32)aProps[4] << 24);
+		ConvLogVal("7z lzma dict", (TInt)dict);
+		if (aPropsSize < 5 || dict > (TUint32)KMaxDict)
 			{
 			delete self;
 			return KErrTooBig;
@@ -146,7 +147,7 @@ TInt C7zSrc::New(RFs &aFs, const TDesC &aPath, TInt aPackPos, TInt aPackSize,
 		                     &g_szAlloc) != SZ_OK)
 			{
 			delete self;
-			ConvLogVal("7z dict oom", dict);
+			ConvLogVal("7z dict oom", (TInt)dict);
 			return KErrNoMemory;
 			}
 		LzmaDec_Init(&self->iLzma);
@@ -161,11 +162,10 @@ TInt C7zSrc::New(RFs &aFs, const TDesC &aPath, TInt aPackPos, TInt aPackSize,
 			}
 		// LZMA2 properties byte encodes dictionary as 2|3 << (n/2 + 11).
 		const TInt n = aProps[0] & 0x3f;
-		const TInt dict = (n > 40) ? 0x7fffffff
-			: (n == 40) ? 0xffffffff
-			: ((2 | (n & 1)) << (n / 2 + 11));
-		ConvLogVal("7z lzma2 dict", dict);
-		if (dict > KMaxDict)
+		const TUint32 dict = (n >= 40) ? 0xffffffffu
+			: ((TUint32)(2 | (n & 1)) << (n / 2 + 11));
+		ConvLogVal("7z lzma2 dict", (TInt)dict);
+		if (dict > (TUint32)KMaxDict)
 			{
 			delete self;
 			return KErrTooBig;
@@ -174,7 +174,7 @@ TInt C7zSrc::New(RFs &aFs, const TDesC &aPath, TInt aPackPos, TInt aPackSize,
 		if (Lzma2Dec_Allocate(&self->iLzma2, aProps[0], &g_szAlloc) != SZ_OK)
 			{
 			delete self;
-			ConvLogVal("7z dict oom", dict);
+			ConvLogVal("7z dict oom", (TInt)dict);
 			return KErrNoMemory;
 			}
 		Lzma2Dec_Init(&self->iLzma2);
@@ -421,11 +421,20 @@ TInt C7zVol::ScanL(RFs &aFs, const TDesC &aPath)
 		// SzArEx_GetFolderStreamPos is only declared in 7z.h with no body in SDK -
 		// compute manually: start of data plus packed stream position.
 		const TUint32 pk = db.db.FoStartPackStreamIndex[fo];
-		e.iPackPos  = (TInt)(db.dataPos + db.db.PackPositions[pk]);
-		e.iPackSize = (TInt)(db.db.PackPositions[pk + 1] - db.db.PackPositions[pk]);
-		e.iSize     = (TInt)SzArEx_GetFileSize(&db, i);
-		e.iSkip     = (TInt)(db.UnpackPositions[i] -
-		                     db.UnpackPositions[db.FolderToFile[fo]]);
+		const UInt64 packPos  = db.dataPos + db.db.PackPositions[pk];
+		const UInt64 packSize = db.db.PackPositions[pk + 1] - db.db.PackPositions[pk];
+		const UInt64 fileSize = SzArEx_GetFileSize(&db, i);
+		const UInt64 skip     = db.UnpackPositions[i] -
+		                        db.UnpackPositions[db.FolderToFile[fo]];
+		// Offsets and sizes are TInt downstream: 2 GB and up would turn negative.
+		const UInt64 KMaxSz = 0x7fffffff;
+		if (packPos > KMaxSz || packSize > KMaxSz || fileSize > KMaxSz ||
+		    skip > KMaxSz || packPos + packSize > KMaxSz)
+			continue;
+		e.iPackPos  = (TInt)packPos;
+		e.iPackSize = (TInt)packSize;
+		e.iSize     = (TInt)fileSize;
+		e.iSkip     = (TInt)skip;
 
 		TFileName name;
 		// Ask for the length FIRST: given a destination the SDK writes the whole

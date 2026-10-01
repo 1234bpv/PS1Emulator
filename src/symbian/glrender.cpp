@@ -95,6 +95,8 @@ static const TInt KMaxClips = 8;
 
 static TBool     g_on;            // renderer enabled by flag
 static TBool     g_ready;         // initialised and holding a context
+static TInt      g_initWait;      // frames to skip before glrInit is tried again
+const TInt       KInitRetryFrames = 120;
 static TGlrVert *g_v;             // interleaved vertex array (12 bytes per vertex)
 static TInt      g_nVerts;
 static TGlrBatch g_batch[KMaxBatch];
@@ -424,15 +426,28 @@ extern "C" void glrLoseContext(void)
 	g_ready = EFalse;
 	g_nTex = 0;
 	g_lastTex = -1;
+	g_dummyTex = 0;      // the id belonged to the lost context
 	}
 
 extern "C" void glrShutdown(void)
 	{
-	for (TInt i = 0; i < g_nTex; i++)
-		glDeleteTextures(1, &g_tex[i].iTex);
+	// Without a live context (g_ready cleared by glrLoseContext) there is nothing to delete.
+	if (g_ready)
+		{
+		for (TInt i = 0; i < g_nTex; i++)
+			glDeleteTextures(1, &g_tex[i].iTex);
+		if (g_dummyTex)
+			glDeleteTextures(1, &g_dummyTex);
+		}
 	g_nTex = 0;
+	g_dummyTex = 0;
 	User::Free(g_v); g_v = NULL;
 	User::Free(g_decode); g_decode = NULL;
+	User::Free(g_idx); g_idx = NULL;
+	User::Free(g_order); g_order = NULL;
+	User::Free(g_batchNext); g_batchNext = NULL;
+	User::Free(g_texHead); g_texHead = NULL;
+	User::Free(g_texTail); g_texTail = NULL;
 	g_ready = EFalse;
 	}
 
@@ -1028,8 +1043,21 @@ extern "C" void glrBeginFrame(void)
 	{
 	if (!g_on)
 		return;
-	if (!g_ready && glrInit() != 0)
-		return;
+	if (!g_ready)
+		{
+		// Out of memory fails every attempt; retrying each frame only slows the game
+		// and floods the log.
+		if (g_initWait > 0)
+			{
+			g_initWait--;
+			return;
+			}
+		if (glrInit() != 0)
+			{
+			g_initWait = KInitRetryFrames;
+			return;
+			}
+		}
 	g_nVerts = 0;
 	g_nBatch = 0;
 	g_nClips = 0;

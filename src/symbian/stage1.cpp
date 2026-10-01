@@ -469,6 +469,9 @@ static const TInt KWatchdogMs = 60000;
 // watchdog are needed to avoid cutting session short. Pass still self-terminates
 // (avoids leaving eternal console process that is hard to kill).
 static const TInt KPlayFrames = 200000;
+// The menu game has no frame budget: running out of it used to close the app
+// without a word after ~55 min of play. Only stand runs keep the finite KPlayFrames.
+static const TInt KGuiFrames = 0x7fffffff;
 static const TInt KPlayWatchdogMs = 1200000;    // 20 min
 static TInt g_watchdogMs = KWatchdogMs;         // benchmark by default
 
@@ -568,6 +571,9 @@ static char g_biosFile[64];
 // so in GUI mode we do not create or destroy own window. Declared here
 // because diagnostic logging frequency in watchdog (below) depends on it.
 static TBool g_guiMode;
+// Launched with arguments (deploy stand). Stand-only diagnostics (screen and VRAM
+// dumps, test pattern) run only then; a game started from the menu has none.
+static TBool g_cliArgs;
 
 static volatile TInt g_wdRun;    // 1 while pass wants watchdog alive
 static volatile TInt g_wdFired;  // 1 if watchdog triggered (spin longer than limit)
@@ -1525,6 +1531,10 @@ static TInt passSetup(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTes
 			Config.PsxType = PSX_TYPE_PAL;
 		}
 
+	// ndrc_g survives passes and the core never clears it: without this a restart
+	// after switching a hack off in the menu would keep the old flag.
+	ndrc_g.hacks &= ~(NDHACK_NO_STALLS | NDHACK_GTE_NO_FLAGS);
+
 	// Dynarec compatibility hacks disabled: GT crashed right after "vsync @8008ab10"
 	// (two consecutive runs, nothing else in log). This is do_vsync/vsync_hack_assemble -
 	// dynarec detects "VSync: timeout" loop and embeds custom ARM code instead,
@@ -1577,6 +1587,14 @@ static TInt passSetup(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTes
 		logEvent("disc", (cdInitRc || cdOpenRc) ? "CDRA_FAIL" : NULL,
 			"%s: cdra_init=%d cdra_open=%d checkcdrom=%d region=%d", mode,
 			cdInitRc, cdOpenRc, cdChkRc, (int)Config.PsxRegion);
+		// Stand runs keep going without a disc (BIOS shell); a game from the menu
+		// cannot start, so the shell must be told instead of showing a black screen.
+		if (cdOpenRc && g_guiMode && !g_cliArgs)
+			{
+			cdra_close();
+			EmuShutdown();
+			return KErrNotFound;
+			}
 		}
 
 	// GPU_init() called once per process in runStage1 (like LoadPlugins in frontend);
@@ -2047,7 +2065,7 @@ static TBool passStep()
 	// shows whether latch-based presentation gain is not a harness artifact.
 	// Screenshots at representative points: game menu (2D) and track (3D). Comparing
 	// these two files answers why 2D is not visible while video is.
-	if (g_pass.showScreen && (g_pass.i == g_dumpAt || g_pass.i == 6000))
+	if (g_pass.showScreen && g_cliArgs && (g_pass.i == g_dumpAt || g_pass.i == 6000))
 		{
 		char p[32];
 		snprintf(p, sizeof(p), "E:\\PS1\\logs\\ps1_scr%d.bin", (int)g_pass.i);
@@ -2475,8 +2493,14 @@ static void crashHandler(TExcType aType)
 	}
 
 // Once per process, shared by both branches.
+static TBool g_coreUp;
 static void coreInitOnce()
 	{
+	// A retried Start after a failed setup comes through here again, and GPU_init
+	// and SPU_init are not meant to run twice.
+	if (g_coreUp)
+		return;
+	g_coreUp = ETrue;
 	// Full mask: handler failed last time, and narrow mask was one of
 	// two reasons (second was stack overflow when no stack was left to call it).
 	const TInt excRc = User::SetExceptionHandler(crashHandler,
@@ -2571,7 +2595,7 @@ extern "C" int ps1GuiSetup(void)
 	ps1SndSetPumpAo(0);   // scheduler runs CIdle between frames
 	voutSymbianSetPumpAo(0);
 	coreInitOnce();
-	const TInt frames = g_playFrames > 0 ? g_playFrames : KPlayFrames;
+	const TInt frames = g_playFrames > 0 ? g_playFrames : (g_cliArgs ? KPlayFrames : KGuiFrames);
 	logEvent("start", NULL, "stage1 begin (gui), frames=%d cpu=%s input=%d", (int)frames,
 		g_guiInterp ? "interp" : "drc", (int)g_inputMode);
 	const TInt rc = passSetup(!g_guiInterp, frames, ETrue /*bios*/, EFalse /*gputest*/,
@@ -2579,9 +2603,18 @@ extern "C" int ps1GuiSetup(void)
 	// After passSetup: trace is tied to frame number, and frame counter
 	// starts right here.
 	inputTraceOpen();
+	// A menu request for GL is not proof that EGL came up (no 3D on the C5): with
+	// the software pass off and no MBX rasteriser nothing would draw at all.
+	if (rc == KErrNone && !voutSymbianGlActive())
+		{
+		if (!g_swoffCli)
+			gpu_unai_sw_off = 0;
+		if (!g_glRenderCli)
+			g_glRender = EFalse;
+		}
 	// After passSetup: window and GL context are already active, so rasterizer has
 	// resources to initialize.
-	if (g_glRender && rc == KErrNone)
+	if (g_glRender && rc == KErrNone && voutSymbianGlActive())
 		{
 		const TInt grc = glrInit();
 		glrSetEnabled(grc == 0 ? 1 : 0);
@@ -2601,6 +2634,13 @@ extern "C" int ps1GuiSetup(void)
 		}
 	g_guiUp = (rc == KErrNone);
 	return rc;
+	}
+
+// Called by the shell while the menu holds the frame loop: otherwise the watchdog
+// reads a long pause or import as a stall and closes the game after the menu.
+extern "C" void ps1GuiHeartbeat(void)
+	{
+	g_wdBeat++;
 	}
 
 extern "C" int ps1GuiStep(void)
@@ -2631,7 +2671,7 @@ extern "C" void ps1GuiEndPass(void)
 extern "C" int ps1GuiStartPass(void)
 	{
 	g_guiExit = 0;
-	const TInt frames = g_playFrames > 0 ? g_playFrames : KPlayFrames;
+	const TInt frames = g_playFrames > 0 ? g_playFrames : (g_cliArgs ? KPlayFrames : KGuiFrames);
 	const TInt rc = passSetup(!g_guiInterp, frames, ETrue /*bios*/, EFalse /*gputest*/,
 		ETrue /*screen*/, ETrue /*disc*/);
 	inputTraceOpen();
@@ -2662,9 +2702,13 @@ extern "C" void ps1GuiShutdown(void)
 	g_guiUp = EFalse;
 	passTeardown();
 
-	// VRAM snapshot to verify rasterization on host (Stage 2).
-	const int dumpRc = voutSymbianDump("E:\\PS1\\logs\\ps1_vram.bin");
-	logEvent("vram_dump", dumpRc ? "DUMP_FAIL" : NULL, "rc=%d", dumpRc);
+	// VRAM snapshot to verify rasterization on host (Stage 2); 1 MB written
+	// to the card on every exit, so only for stand runs.
+	if (g_cliArgs)
+		{
+		const int dumpRc = voutSymbianDump("E:\\PS1\\logs\\ps1_vram.bin");
+		logEvent("vram_dump", dumpRc ? "DUMP_FAIL" : NULL, "rc=%d", dumpRc);
+		}
 
 	ps1GpuShutdown();   // paired with ps1GpuInit: frees VRAM after snapshot
 	logEvent("shutdown", NULL, "gui: frames=%u ms=%u",
@@ -3003,8 +3047,9 @@ GLDEF_C TInt E32Main()
 	TBuf<256> cl;
 	User::CommandLine(cl);
 	cl.Trim();
+	g_cliArgs = (cl.Length() != 0);
 	TBuf8<256> cl8;
-	cl8.Copy(cl);
+	cl8.Copy(cl.Left(cl8.MaxLength() - 1));   // PtrZ below needs room for the terminator
 
 	// No arguments = launch from device menu: full AVKON application. Needed
 	// not only for exit and task list - MBX-EGL creates surface only
@@ -3313,7 +3358,7 @@ GLDEF_C TInt E32Main()
 			p.Append(nm.Left(p.MaxLength() - p.Length()));
 			TBuf8<256> p8;
 			p8.Copy(p);
-			const TInt n = p8.Length();
+			const TInt n = Min(p8.Length(), (TInt)sizeof(g_discPath) - 1);
 			for (TInt i = 0; i < n; i++)
 				g_discPath[i] = (char)p8[i];
 			g_discPath[n] = 0;
@@ -3373,7 +3418,8 @@ GLDEF_C TInt E32Main()
 		const TInt pp = cl.FindF(KPmuArg);
 		if (pp != KErrNotFound)
 			{
-			TLex lex(cl.Mid(pp + 3, 4));
+			TPtrC pmuHex = cl.Mid(pp + 3);
+			TLex lex(pmuHex.Left(4));
 			TUint v = 0;
 			if (lex.Val(v, EHex) == KErrNone)
 				{ g_pmuEvt0 = (TInt)((v >> 8) & 0xff); g_pmuEvt1 = (TInt)(v & 0xff); }

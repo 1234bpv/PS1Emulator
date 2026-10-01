@@ -220,8 +220,10 @@ static RWindow *g_winp = &g_win;
 
 // Letterboxing geometry cache: black bars (FillZ) are cleared only when it changes,
 // not every frame - the rest of the bitmap is fully overwritten by frame copy anyway.
-// Reset in initL on bitmap (re)creation.
+// Reset in initL on bitmap (re)creation, and whenever the screen buffer may have been
+// repainted by someone else (DSA abort/start) or the destination surface changes.
 static TInt g_blitOx = -1, g_blitOy, g_blitW, g_blitH;
+static TBool g_blitDirect;
 
 // Blit time breakdown: fill = scaling loop into bitmap, present = BitBlt+Flush in
 // window server. Shows what to optimize - loop (cache) or presentation (DSA/MBX).
@@ -485,6 +487,7 @@ static void dsaStartL()
 	// frame - an independent cause of "offset" that was not separated on 2026-08-01.
 	queryFramebuffer();
 	g_dsaActive = ETrue;
+	g_blitOx = -1;      // WS may have drawn over the bars while DSA was off
 	}
 
 // DSA observer: WS calls AbortNow when taking screen (dialog/notification), and
@@ -495,6 +498,7 @@ public:
 	void AbortNow(RDirectScreenAccess::TTerminationReasons aR)
 		{
 		g_dsaActive = EFalse;
+		g_blitOx = -1;
 		ps1LogFmt("dsa", "abort reason=%d", (int)aR);
 		}
 	void Restart(RDirectScreenAccess::TTerminationReasons aR)
@@ -1109,6 +1113,11 @@ static const TUint8 *voutSrcGeom(TInt &aStart, TInt &aW, TInt &aH,
 	const TInt startRow = aStart / 2048;
 	if (aH > 512 - startRow) aH = 512 - startRow;   // do not read past 1024x512 VRAM
 	if (aH < 1) aH = 1;
+	// Same for the right edge: a row must not run on into the next VRAM row.
+	const TInt pixB = aRgb24 ? 3 : 2;
+	const TInt colB = aStart % 2048;
+	if (aW * pixB > 2048 - colB) aW = (2048 - colB) / pixB;
+	if (aW < 1) aW = 1;
 	// Interlaced modes (hi-res, h>256) put the fields in adjacent VRAM rows, so
 	// reading them in order combs. Take one field; the aspect still uses the full
 	// height, because on hardware the field is stretched over the whole frame.
@@ -1822,10 +1831,12 @@ static void blitCurrent()
 		}
 	// Black bars only when geometry changed: otherwise they are already black from previous
 	// frame, and image is overwritten anyway. Eliminates ~150KB/frame memset.
-	if (ox != g_blitOx || oy != g_blitOy || dstW != g_blitW || dstH != g_blitH)
+	if (ox != g_blitOx || oy != g_blitOy || dstW != g_blitW || dstH != g_blitH ||
+	    directFb != g_blitDirect)
 		{
 		Mem::FillZ(dstB, dstStrideB * SH);
 		g_blitOx = ox; g_blitOy = oy; g_blitW = dstW; g_blitH = dstH;
+		g_blitDirect = directFb;
 		}
 
 	// Nearest-neighbor via 16.16 fixed-point: accumulator instead of division for
@@ -2884,7 +2895,9 @@ extern "C" int voutSymbianScreenDump(const char *aPath)
 // mean display output bug, corrupted VRAM - rasterization bug.
 extern "C" void ps1ScreenShot(void)
 	{
-	const int sr = voutSymbianScreenDump("E:\\PS1\\logs\\ps1_scrkey.bin");
+	// After a DSA abort g_fbBase may point at a buffer WS has taken back.
+	const int sr = (g_useDsa && !g_dsaActive) ? -3
+		: voutSymbianScreenDump("E:\\PS1\\logs\\ps1_scrkey.bin");
 	const int vr = voutSymbianDump("E:\\PS1\\logs\\ps1_vramkey.bin");
 	ps1LogFmt("screen_dump",
 		"manual: scr=%d vram=%d vout=%d,%d,%d,%d off=%d rgb24=%d dsa=%d fbPlat=%d "
@@ -2973,6 +2986,7 @@ extern "C" void voutSymbianBlitSplit(unsigned *aFillMs, unsigned *aPresentMs)
 	}
 
 // Memory bandwidth microbenchmark (fbwr, fbrd, heapwr, heaprd, vramrd, copy).
+#ifdef PS1_BENCH
 static volatile TUint32 g_memBenchSink;
 
 static void __attribute__((__noinline__))
@@ -3063,7 +3077,7 @@ static void memBenchWalk(char *aOut, int aLen, TUint aFreq, TUint aMinTicks)
 		if (n > 0 && n < left) { p += n; left -= n; }
 		}
 	}
-
+#endif
 
 extern "C" void voutSymbianMemBench(char *aOut, int aOutLen)
 	{
@@ -3077,7 +3091,8 @@ extern "C" void voutSymbianMemBench(char *aOut, int aOutLen)
 	const TUint minTicks = (TUint)(((TUint64)freq * 200ULL) / 1000ULL);
 
 	refreshFbFromPlatform();
-	const TBool fbOk = g_fbOk && (g_fbBase != NULL);
+	// The write loops below cover benchBytes; a smaller screen buffer would be overrun.
+	const TBool fbOk = g_fbOk && (g_fbBase != NULL) && (g_fbH * g_fbStrideB >= benchBytes);
 
 	TUint32 *heapBuf = (TUint32 *)User::Alloc(benchBytes);
 

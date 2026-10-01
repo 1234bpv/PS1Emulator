@@ -159,7 +159,8 @@ extern "C" int pmuSymbianStart(int aEvt0, int aEvt1, unsigned *aDiag)
 	// the jump target itself.
 	TUint8 buf[sizeof(KPmuSetup)];
 	Mem::Copy(buf, KPmuSetup, sizeof(KPmuSetup));
-	*(TUint32 *)(buf + KPmuCfgOff) = pmcrCfg(aEvt0, aEvt1);
+	const TUint32 cfgWord = pmcrCfg(aEvt0, aEvt1);
+	Mem::Copy(buf + KPmuCfgOff, &cfgWord, sizeof(cfgWord));
 	TInt res = -1;
 	const TInt rc = runBlob(buf, (TInt)sizeof(buf), res);
 	// The setup blob returns a literal zero, so a non-zero here means the jump

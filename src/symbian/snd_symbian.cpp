@@ -63,6 +63,7 @@ static const TInt KWsolaBufCap = 4096;             // input staging capacity, fr
 
 extern "C" unsigned int ndrc_symbian_fastcount(void);
 extern "C" unsigned int ndrc_symbian_fastfreq(void);
+extern "C" void ps1LogFmt(const char *aType, const char *aFmt, ...);
 
 // Number of times the device had no data to refill, i.e. audible underruns.
 static unsigned g_sndUnder;
@@ -126,9 +127,11 @@ public:
 	void Pump();
 	TBool WaitOpen(TInt aTimeoutMs);
 	void ApplyVolume();
+	void ResetRate();
 	TInt Step() const { return iStep; }
 private:
 	void ConstructL();
+	void Reopen();
 	void Refill();
 	void PushFrame(TInt aL, TInt aR);
 	void UpdateRate(TInt aInFrames);
@@ -153,6 +156,10 @@ private:
 	TInt iPrevL, iPrevR;
 	TInt iRateFrames;          // input frames since start of measurement window
 	TUint iRateT0;
+	// Stream lost to a higher-priority client (call, alarm) or failed to open: Pump
+	// reopens it, at most once a second while the device is still taken.
+	TBool iFailed;
+	TUint iRetryT0;
 	// WSOLA state (used instead of iPos/iPrev* above when iWsola is set). Incoming
 	// frames accumulate in iWsBuf until a full search window is available, then hops
 	// are cut off the front and the remainder compacted down, so index 0 always holds
@@ -204,10 +211,15 @@ void CSymSnd::MaoscOpenComplete(TInt aError)
 	{
 	iOpenErr = aError;
 	if (aError != KErrNone)
+		{
+		iFailed = ETrue;
 		return;
-	TRAP_IGNORE(iStream->SetAudioPropertiesL(
+		}
+	TRAPD(propErr, iStream->SetAudioPropertiesL(
 		TMdaAudioDataSettings::ESampleRate44100Hz,
 		TMdaAudioDataSettings::EChannelsStereo));
+	if (propErr != KErrNone)
+		ps1LogFmt("snd", "SetAudioProperties failed err=%d", (int)propErr);
 	iOpen = ETrue;
 	// The rate measurement window starts when device begins consuming data, not
 	// at construction: before opening there is no consumer and measurement would be bogus.
@@ -228,14 +240,58 @@ void CSymSnd::ApplyVolume()
 	iStream->SetVolume(v);
 	}
 
-void CSymSnd::MaoscBufferCopied(TInt /*aError*/, const TDesC8 & /*aBuffer*/)
+// Only these mean the device went to someone else. KErrUnderflow is the ordinary end
+// of data (a menu pause, a slow frame): the stream resumes on the next WriteL, and
+// reopening on it would only add a glitch.
+static TBool deviceTaken(TInt aError)
+	{
+	return aError == KErrInUse || aError == KErrDied || aError == KErrAccessDenied;
+	}
+
+void CSymSnd::MaoscBufferCopied(TInt aError, const TDesC8 & /*aBuffer*/)
 	{
 	if (iInFlight > 0)
 		iInFlight--;
+	if (deviceTaken(aError))
+		iFailed = ETrue;
 	Refill();
 	}
 
-void CSymSnd::MaoscPlayComplete(TInt /*aError*/) { }
+void CSymSnd::MaoscPlayComplete(TInt aError)
+	{
+	if (deviceTaken(aError))
+		iFailed = ETrue;
+	}
+
+void CSymSnd::Reopen()
+	{
+	const TUint now = ndrc_symbian_fastcount();
+	const TUint freq = ndrc_symbian_fastfreq();
+	if (freq && now - iRetryT0 < freq)
+		return;
+	iRetryT0 = now;
+	ps1LogFmt("snd", "stream lost, reopening err=%d", (int)iOpenErr);
+	iStream->Stop();
+	iOpen = EFalse;
+	iInFlight = 0;
+	iFailed = EFalse;
+	iOpenErr = KErrNone;
+	iStream->Open(NULL);   // asynchronous -> MaoscOpenComplete
+	}
+
+// After a menu pause the measurement window holds the pause itself, which would read
+// as a near-zero emulation speed and stretch the stream fourfold; start over instead.
+void CSymSnd::ResetRate()
+	{
+	iRateFrames = 0;
+	iRateT0 = ndrc_symbian_fastcount();
+	iStep = 1 << 16;
+	iPos = 0;
+	iHead = iTail = 0;
+	iWsLen = 0;
+	iWsAnaFrac = 0;
+	iWsPrimed = EFalse;
+	}
 
 #ifdef PS1_BENCH
 // Bench-only raw PCM dump of the samples actually pushed to the playback ring, i.e.
@@ -244,7 +300,6 @@ void CSymSnd::MaoscPlayComplete(TInt /*aError*/) { }
 // Rate and layout match the output stream (KSndRate, 16-bit signed stereo). Capped to
 // a few seconds so the run cannot fill the card, and buffered through RFile::Write in
 // KSndDumpBufFrames chunks so posting one sample at a time does not tax the frame budget.
-extern "C" void ps1LogFmt(const char *aType, const char *aFmt, ...);
 
 static const TInt KSndDumpSecs      = 6;
 static const TInt KSndDumpMaxFrames = KSndDumpSecs * KSndRate;
@@ -402,6 +457,11 @@ void CSymSnd::Feed(const void *aBuf, TInt aBytes)
 // from, never how far the nominal position advances, so it cannot drift the rate.
 void CSymSnd::WsolaFeed(const TInt16 *aSrc, TInt aFrames)
 	{
+	if (aFrames > KWsolaBufCap)
+		{
+		aSrc += (aFrames - KWsolaBufCap) * 2;
+		aFrames = KWsolaBufCap;
+		}
 	if (iWsLen + aFrames > KWsolaBufCap)
 		{
 		// Should not happen at normal chunk sizes and stretch ratios; keep the most
@@ -506,6 +566,8 @@ static TBool g_pumpAo = ETrue;
 
 void CSymSnd::Pump()
 	{
+	if (iFailed)
+		Reopen();
 	if (g_pumpAo)
 		{
 		TInt e;
@@ -705,6 +767,12 @@ int ps1SndVolumeStep(int aDelta)
 int ps1SndVolumeSteps(void)
 	{
 	return KVolSteps;
+	}
+
+void ps1SndResetRate(void)
+	{
+	if (g_snd)
+		g_snd->ResetRate();
 	}
 
 void ps1SndSetPumpAo(int aOn)

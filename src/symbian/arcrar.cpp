@@ -95,6 +95,26 @@ static TInt vint(const TUint8 *aBuf, TInt aLen, TInt &aPos, TUint32 &aOut)
 	return KErrCorrupt;
 	}
 
+// RAR5 extra area: records of (size, type, data); type 1 is file encryption.
+static TBool hasEncryption(const TUint8 *aBuf, TInt aLen)
+	{
+	TInt pos = 0;
+	while (pos < aLen)
+		{
+		TUint32 size = 0, type = 0;
+		if (vint(aBuf, aLen, pos, size) != KErrNone)
+			return ETrue;
+		const TInt rec = pos;
+		if (vint(aBuf, aLen, pos, type) != KErrNone || size == 0 ||
+		    size > (TUint32)(aLen - rec))
+			return ETrue;
+		if (type == 1)
+			return ETrue;
+		pos = rec + (TInt)size;
+		}
+	return EFalse;
+	}
+
 class CRarVol : public CBase, public MConvVol
 	{
 public:
@@ -147,7 +167,10 @@ TInt CRarVol::Scan4L(RFile &aFile, TInt aPos, TInt aSize)
 		const TInt type = h[2];
 		const TInt flags = rd16(h + 3);
 		TInt hsize = rd16(h + 5);
-		if (hsize < 7)
+		if (hsize < 7 || hsize > aSize - aPos)
+			break;
+		// Encrypted block headers: everything after is unreadable.
+		if (type == 0x73 && (flags & 0x0080))
 			break;
 		TInt dsize = 0;
 		if (flags & 0x8000)
@@ -157,6 +180,9 @@ TInt CRarVol::Scan4L(RFile &aFile, TInt aPos, TInt aSize)
 			if (aFile.Read(aPos + 7, pd, 4) != KErrNone || pd.Length() < 4)
 				break;
 			dsize = (TInt)rd32(d);
+			// Data must lie inside the file; this also rejects a size that went negative.
+			if (dsize < 0 || dsize > aSize - aPos - hsize)
+				break;
 			}
 
 		if (type == 0x74)               // file header
@@ -175,9 +201,14 @@ TInt CRarVol::Scan4L(RFile &aFile, TInt aPos, TInt aSize)
 				const TInt method   = fh[25];
 				const TInt nameLen  = rd16(fh + 26);
 				TInt off = 32;
+				TBool big = EFalse;
 				if (flags & 0x100)      // 64-bit sizes
+					{
 					off += 8;
-				if (off + nameLen <= hsize && nameLen > 0)
+					big = (hsize < 40) || rd32(fh + 32) || rd32(fh + 36);
+					}
+				if (packSize >= 0 && unpSize >= 0 && !big &&
+				    off + nameLen <= hsize && nameLen > 0)
 					{
 					TFileName name;
 					// RAR4 filename is single-byte unless the UNICODE flag is set;
@@ -189,7 +220,9 @@ TInt CRarVol::Scan4L(RFile &aFile, TInt aPos, TInt aSize)
 					TRarEnt e;
 					e.iPos = aPos + hsize;
 					e.iSize = unpSize;
-					e.iStored = (method == 0x30) && (packSize == unpSize);
+					// Flags 1, 2, 4: continued from / into another volume, encrypted.
+					e.iStored = (method == 0x30) && (packSize == unpSize) &&
+					            !(flags & 0x0007);
 					// Directory in RAR4 is value 0xE0 in the dictionary size field
 					// (flags bits 5-7), not a distinct block type.
 					if ((flags & 0xE0) != 0xE0)
@@ -229,6 +262,12 @@ TInt CRarVol::Scan5L(RFile &aFile, TInt aPos, TInt aSize)
 			break;
 		if ((flags & 2) && vint(hdr, p.Length(), q, dsize) != KErrNone)
 			break;
+		// Header and data area must fit in what is left of the file (hsize <= 2 MB per
+		// the format); this also keeps the step below from overflowing.
+		const TInt rem = aSize - aPos;
+		if (type == 4 || hsize == 0 || hsize > 0x200000 || hstart > rem ||
+		    hsize > (TUint32)(rem - hstart) || dsize > (TUint32)(rem - hstart) - hsize)
+			break;                          // type 4: encrypted headers follow
 
 		if (type == 2)                  // file
 			{
@@ -241,7 +280,8 @@ TInt CRarVol::Scan5L(RFile &aFile, TInt aPos, TInt aSize)
 			if (r == KErrNone) r = vint(hdr, p.Length(), q, cinfo);
 			if (r == KErrNone) r = vint(hdr, p.Length(), q, host);
 			if (r == KErrNone) r = vint(hdr, p.Length(), q, nlen);
-			if (r == KErrNone && nlen > 0 && q + (TInt)nlen <= p.Length())
+			if (r == KErrNone && nlen > 0 && q <= p.Length() &&
+			    nlen <= (TUint32)(p.Length() - q))
 				{
 				TFileName name;
 				// Filenames in RAR5 are UTF-8; ASCII identical for Latin, and
@@ -251,8 +291,14 @@ TInt CRarVol::Scan5L(RFile &aFile, TInt aPos, TInt aSize)
 				TRarEnt e;
 				e.iPos = aPos + hstart + (TInt)hsize;
 				e.iSize = (TInt)unpSize;
-				// Bits 7-9 are method; 0 means "uncompressed".
-				e.iStored = (((cinfo >> 7) & 7) == 0);
+				// Bits 7-9 are method; 0 means "uncompressed". Not usable: size over
+				// 2 GB or unknown (fflags 8), data continued across volumes (flags
+				// 0x18), encryption record in the extra area, or a header longer than
+				// the buffer, whose extra area was not seen.
+				e.iStored = (((cinfo >> 7) & 7) == 0) && unpSize <= 0x7fffffff &&
+				            !(fflags & 8) && !(flags & 0x18) && dsize == unpSize &&
+				            (TUint32)hstart + hsize <= (TUint32)p.Length() && extra <= hsize &&
+				            !hasEncryption(hdr + hstart + hsize - extra, (TInt)extra);
 				if (!(fflags & 1))       // not a directory
 					AddL(name, e);
 				}

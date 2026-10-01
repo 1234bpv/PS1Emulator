@@ -325,7 +325,9 @@ TInt CZipVol::ScanL(RFs &aFs, const TDesC &aPath)
 		if (s < 0) s = name.LocateReverse('\\');
 		if (s >= 0)
 			name.Delete(0, s + 1);
-		if (name.Length() && e.iSize >= 0)
+		// Sizes of 2 GB and up (or zip64 markers) do not fit TInt and would reach
+		// the importer as negative lengths.
+		if (name.Length() && e.iSize >= 0 && e.iComp >= 0 && e.iLocal >= 0)
 			{
 			iNames->AppendL(name);
 			iEnts.AppendL(e);

@@ -492,6 +492,11 @@ static void setStat(TInt aState, TInt aPercent, const TDesC *aName, const TDesC 
 void ConvStat(TConvStat &aOut)
 	{
 	if (g_lockOk) g_lock.Wait();
+	if (g_stat.iState == EConvRun && g_workerOk && g_worker.ExitType() != EExitPending)
+		{
+		g_stat.iState = EConvErr;
+		g_stat.iMsg.Copy(_L("worker stopped"));
+		}
 	aOut = g_stat;
 	if (g_lockOk) g_lock.Signal();
 	}
@@ -543,7 +548,8 @@ static TInt pbpFlushBlock(TPbpWriter &w)
 		return KErrNone;
 	if (w.iFill < KBlkBytes)
 		memset(w.iBlk + w.iFill, 0, KBlkBytes - w.iFill);
-	if (w.iBlocks >= KMaxIndex)
+	// One index slot stays reserved for the terminator written in pbpFinish.
+	if (w.iBlocks + 1 >= KMaxIndex)
 		return KErrOverflow;
 	zeroEcc(w.iBlk, KBlkBytes);
 
@@ -718,6 +724,23 @@ static TInt pickEntry(MConvVol &aVol, TDes &aOut)
 	return KErrNotFound;
 	}
 
+// Sources may return short counts mid-stream (archive decoders), so a short
+// result here means the stream really ended.
+static TInt readFull(MConvSrc &aSrc, TUint8 *aBuf, TInt aLen)
+	{
+	TInt got = 0;
+	while (got < aLen)
+		{
+		const TInt n = aSrc.Read(aBuf + got, aLen - got);
+		if (n < 0)
+			return n;
+		if (!n)
+			break;
+		got += n;
+		}
+	return got;
+	}
+
 // Copy entry (compression failed or requested by user).
 static TInt copyEntry(RFs &aFs, MConvVol &aVol, const TDesC &aName,
                       const TDesC &aDstPath, TInt aTotal)
@@ -748,6 +771,9 @@ static TInt copyEntry(RFs &aFs, MConvVol &aVol, const TDesC &aName,
 		}
 	if (!buf)
 		r = KErrNoMemory;
+	// A truncated source ends the stream quietly; the caller deletes it on success.
+	if (r == KErrNone && !g_cancel && aTotal > 0 && done != aTotal)
+		r = KErrCorrupt;
 	User::Free(buf);
 	out.Close();
 	delete src;
@@ -844,10 +870,16 @@ static TInt convertToPbp(RFs &aFs, MConvVol &aVol, const TDesC &aDstPath, TCue &
 		for (TInt s = 0; s < t.iLen && r == KErrNone; s++)
 			{
 			TUint8 sec[KSector];
-			const TInt n = src->Read(sec, KSector);
+			const TInt n = readFull(*src, sec, KSector);
 			if (n < 0) { r = n; break; }
 			if (n < KSector)
-				memset(sec + (n > 0 ? n : 0), 0, KSector - (n > 0 ? n : 0));
+				{
+				// Only the unfinished sector at the very end of the file is legitimate;
+				// anything else is a truncated or damaged source.
+				if (n == 0 || (TInt64)srcPos * KSector + n != (TInt64)src->Size())
+					{ r = KErrCorrupt; break; }
+				memset(sec + n, 0, KSector - n);
+				}
 			r = pbpAdd(w, sec, KSector);
 			srcPos++;
 			written++;
@@ -884,16 +916,22 @@ static TInt buildCue(MConvVol &aVol, const TDesC &aEntry, TCue &aCue)
 		TInt r = aVol.Open(aEntry, src);
 		if (r != KErrNone)
 			return r;
-		const TInt sz = Min(src->Size(), 64 * 1024);
-		TUint8 *buf = (TUint8 *)User::Alloc(sz + 1);
+		// A cue cut at 64 KB would silently drop tracks.
+		const TInt sz = src->Size();
+		if (sz <= 0 || sz > 64 * 1024)
+			{
+			delete src;
+			return KErrCorrupt;
+			}
+		TUint8 *buf = (TUint8 *)User::Alloc(sz);
 		if (!buf)
 			{
 			delete src;
 			return KErrNoMemory;
 			}
-		const TInt n = src->Read(buf, sz);
+		const TInt n = readFull(*src, buf, sz);
 		delete src;
-		if (n <= 0)
+		if (n != sz)
 			{
 			User::Free(buf);
 			return KErrCorrupt;
@@ -943,9 +981,19 @@ static TInt buildCue(MConvVol &aVol, const TDesC &aEntry, TCue &aCue)
 	return KErrNone;
 	}
 
-// Deletes source after successful import: whole archive or .cue together with all
-// referenced track files.
-static void deleteSource(RFs &aFs, const TDesC &aPath, const TCue &aCue)
+// Track file that conversion actually read (a name in .cue with no sectors to
+// take may be someone else's file).
+static TBool trackFileUsed(const TCue &aCue, TInt aFile)
+	{
+	for (TInt i = 1; i <= aCue.iCount; i++)
+		if (aCue.iTrk[i].iFile == aFile && aCue.iTrk[i].iLen > 0)
+			return ETrue;
+	return EFalse;
+	}
+
+// Deletes source after successful import: whole archive or .cue together with the
+// track files that were used (aOnlyUsed) or all that were copied.
+static void deleteSource(RFs &aFs, const TDesC &aPath, const TCue &aCue, TBool aOnlyUsed)
 	{
 	if (ConvIsArchiveName(aPath))
 		{
@@ -956,6 +1004,8 @@ static void deleteSource(RFs &aFs, const TDesC &aPath, const TCue &aCue)
 	const TPtrC dir = aPath.Left(s + 1);
 	for (TInt i = 0; aCue.iFiles && i < aCue.iFiles->MdcaCount(); i++)
 		{
+		if (aOnlyUsed && !trackFileUsed(aCue, i))
+			continue;
 		TFileName p(dir);
 		if (p.Length() + aCue.iFiles->MdcaPoint(i).Length() < p.MaxLength())
 			{
@@ -974,6 +1024,38 @@ static void deleteSource(RFs &aFs, const TDesC &aPath, const TCue &aCue)
 		cue.Append(_L(".cue"));
 		aFs.Delete(cue);
 		}
+	}
+
+// Stores the disc without conversion: the .cue (when it is the entry) and every
+// file it names. Anything left behind is an error, because the caller deletes the
+// source on success.
+static TInt copyDisc(RFs &aFs, MConvVol &aVol, const TDesC &aEntry, const TCue &aCue,
+                     const TDesC &aDstDir)
+	{
+	TInt r = KErrNone;
+	if (extIs(aEntry, _L(".cue")) || !aCue.iFiles->MdcaCount())
+		{
+		TFileName dst;
+		TInt sz = 0;
+		aVol.Size(aEntry, sz);
+		dstName(aEntry, aDstDir, aEntry.Right(4), dst);
+		r = copyEntry(aFs, aVol, aEntry, dst, sz);
+		}
+	for (TInt i = 0; i < aCue.iFiles->MdcaCount() && r == KErrNone; i++)
+		{
+		const TPtrC nm = aCue.iFiles->MdcaPoint(i);
+		TFileName d2(aDstDir);
+		if (d2.Length() + nm.Length() >= d2.MaxLength())
+			{
+			r = KErrBadName;
+			break;
+			}
+		d2.Append(nm);
+		TInt s2 = 0;
+		aVol.Size(nm, s2);
+		r = copyEntry(aFs, aVol, nm, d2, s2);
+		}
+	return r;
 	}
 
 static TInt convertOne(RFs &aFs, const TDesC &aPath, TConvMode aMode,
@@ -1016,6 +1098,8 @@ static TInt convertOne(RFs &aFs, const TDesC &aPath, TConvMode aMode,
 		}
 
 	TFileName dst;
+	// PBP conversion reads only tracks with sectors; a plain copy takes every file.
+	TBool onlyUsed = ETrue;
 	if (aMode == EConvModePbp)
 		{
 		r = buildCue(*vol, entry, *cue);
@@ -1041,10 +1125,8 @@ static TInt convertOne(RFs &aFs, const TDesC &aPath, TConvMode aMode,
 			// 2048-byte sectors or non-standard .cue: PBP cannot represent this,
 			// so store as is - game remains playable without saving space.
 			aMsg.Copy(_L("stored as is"));
-			dstName(entry, aDstDir, entry.Right(4), dst);
-			TInt sz = 0;
-			vol->Size(entry, sz);
-			r = copyEntry(aFs, *vol, entry, dst, sz);
+			onlyUsed = EFalse;
+			r = copyDisc(aFs, *vol, entry, *cue, aDstDir);
 			}
 		}
 	else
@@ -1052,33 +1134,14 @@ static TInt convertOne(RFs &aFs, const TDesC &aPath, TConvMode aMode,
 		// For .cue, transfer both the cue file and all track files: missing any
 		// of them loses track layout and prevents game from loading.
 		r = buildCue(*vol, entry, *cue);
+		onlyUsed = EFalse;
 		if (r == KErrNone || r == KErrNotSupported)
-			{
-			r = KErrNone;
-			if (extIs(entry, _L(".cue")))
-				{
-				TInt sz = 0;
-				vol->Size(entry, sz);
-				dstName(entry, aDstDir, _L(".cue"), dst);
-				r = copyEntry(aFs, *vol, entry, dst, sz);
-				}
-			for (TInt i = 0; i < cue->iFiles->MdcaCount() && r == KErrNone; i++)
-				{
-				const TPtrC nm = cue->iFiles->MdcaPoint(i);
-				TFileName d2(aDstDir);
-				if (d2.Length() + nm.Length() >= d2.MaxLength())
-					continue;
-				d2.Append(nm);
-				TInt s2 = 0;
-				vol->Size(nm, s2);
-				r = copyEntry(aFs, *vol, nm, d2, s2);
-				}
-			}
+			r = copyDisc(aFs, *vol, entry, *cue, aDstDir);
 		}
 
 	delete vol;
 	if (r == KErrNone && aDelete)
-		deleteSource(aFs, aPath, *cue);
+		deleteSource(aFs, aPath, *cue, onlyUsed);
 	delete cue->iFiles;
 	User::Free(cue);
 	return r;
@@ -1188,7 +1251,8 @@ static TInt workerMain(TAny *)
 TInt ConvStart(const MDesCArray &aFiles, TConvMode aMode, TBool aDeleteSrc,
                const TDesC &aDstDir)
 	{
-	if (g_stat.iState == EConvRun)
+	// A worker that died without its final setStat leaves the state at EConvRun.
+	if (g_stat.iState == EConvRun && (!g_workerOk || g_worker.ExitType() == EExitPending))
 		return KErrInUse;
 	ConvRelease();
 
@@ -1228,6 +1292,7 @@ TInt ConvStart(const MDesCArray &aFiles, TConvMode aMode, TBool aDeleteSrc,
 	g_job.iDelete = aDeleteSrc;
 	g_job.iDst = aDstDir;
 	g_cancel = 0;
+	if (g_lockOk) g_lock.Wait();
 	g_stat.iState = EConvRun;
 	g_stat.iErr = 0;
 	g_stat.iPercent = 0;
@@ -1235,6 +1300,7 @@ TInt ConvStart(const MDesCArray &aFiles, TConvMode aMode, TBool aDeleteSrc,
 	g_stat.iFileCount = aFiles.MdcaCount();
 	g_stat.iMsg.Zero();
 	g_stat.iName.Zero();
+	if (g_lockOk) g_lock.Signal();
 
 	// Dedicated heap: deflate keeps ~256 KB, block index another 256 KB; taking them
 	// from the main thread heap would compete with dynarec.
@@ -1250,8 +1316,8 @@ TInt ConvStart(const MDesCArray &aFiles, TConvMode aMode, TBool aDeleteSrc,
 		32 * 1024, 4 * 1024, 72 * 1024 * 1024, NULL);
 	if (r != KErrNone)
 		{
-		g_stat.iState = EConvErr;
-		g_stat.iMsg.Copy(_L("cannot start worker"));
+		TBuf<64> m(_L("cannot start worker"));
+		setStat(EConvErr, 0, NULL, &m);
 		return r;
 		}
 	g_workerOk = ETrue;
