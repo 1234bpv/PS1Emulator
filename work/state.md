@@ -615,6 +615,13 @@ Codex 2026-10-02 13:57: процес завершився (exit=0, out/codex-las
 codex-resume-2026-10-02b.ps1 (GET/PS0, restore, далі пошук у wrapper return /
 outbound EXITACK / ARM MSG reader).
 
+2026-10-02 15:30. Людина: іконка A лишається, на N95 з'явилась у меню.
+Згладжування масштабу (smooth) уже 1 у коді й у всіх 13 файлах E:\PS1\cfg на N95;
+акселерометр (tilt) у коді 0, але був 1 у трьох профілях (Colin McRae 2.0,
+NFS Porsche, gt.txt) - виправлено на 0 прямо на N95 (копії .orig у scratchpad
+сесії). deploy_net.ps1 виправлено (SymbianDeployDaemon 2743c6c): явний -Ip
+більше не сканує LAN (до цього LS для N95 пішов на E90 - лише читання).
+
 Ядро на GCCE 4.6.3 за замовчуванням з 2026-10-02 (рішення людини, коміт 2e59b51,
 CLAUDE.md §3 оновлено); run.ps1 без -CoreCc тепер перезбирає ядро типовим
 компілятором. На N95 release rel_463 (1 431 280 Б, SHA 9D3D910F...), людина
