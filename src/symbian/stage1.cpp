@@ -721,13 +721,14 @@ extern "C" {
 unsigned int ndrc_symbian_tcsize(void);
 void *ndrc_symbian_alloc(unsigned int size);
 extern unsigned int g_s2_rc_ticks, g_s2_rc_blocks, g_s2_rc_fail;
+extern unsigned int g_s2_rc_pass[10], g_s2_rc_slen, g_s2_rc_repeat, g_s2_rc_uniq, g_s2_rc_bk[8][12];
 extern unsigned int g_s2_ht_live, g_s2_ht_hit0, g_s2_ht_hit1, g_s2_ht_slow, g_s2_links;
 extern unsigned int g_s2_slow[2][6];
 extern int ndrc_s2_d1;
 extern unsigned int g_s2ImbCalls, g_s2ImbTicks, g_s2ImbBytes;
 }
 // Dynarec counters at the start of the frame loop, so the loadstate warm-up is not counted.
-static const TInt KS2Dyn = 11;
+static const TInt KS2Dyn = 22 + 8 * 12 + 1;
 static const TInt KS2Slow = 12;
 static TUint g_s2DynBase[KS2Dyn];
 static TUint g_s2SlowBase[KS2Slow];
@@ -738,6 +739,11 @@ static void s2DynSnap(TUint *aDyn, TUint *aSlow)
 	aDyn[3] = g_s2_ht_live; aDyn[4] = g_s2_ht_hit0; aDyn[5] = g_s2_ht_hit1;
 	aDyn[6] = g_s2_ht_slow; aDyn[7] = g_s2_links;
 	aDyn[8] = g_s2ImbCalls; aDyn[9] = g_s2ImbTicks; aDyn[10] = g_s2ImbBytes;
+	aDyn[11] = g_s2_rc_slen; aDyn[12] = g_s2_rc_repeat;
+	for (TInt k = 1; k < 10; k++) aDyn[12 + k] = g_s2_rc_pass[k];
+	for (TInt b = 0; b < 8; b++)
+		for (TInt k = 0; k < 12; k++) aDyn[22 + b * 12 + k] = g_s2_rc_bk[b][k];
+	aDyn[22 + 8 * 12] = g_s2_rc_uniq;
 	for (TInt k = 0; k < 6; k++)
 		{ aSlow[k] = g_s2_slow[0][k]; aSlow[6 + k] = g_s2_slow[1][k]; }
 	}
@@ -2418,6 +2424,27 @@ static void s2Report(const char *aMode)
 		dyn[1] ? (unsigned)((unsigned long long)dyn[0] * 1000000 / freq / dyn[1]) : 0,
 		dyn[8], (unsigned)((unsigned long long)dyn[9] * 1000 / freq), dyn[10] / 1024,
 		dyn[7], dyn[3], dyn[4], dyn[5], dyn[6]);
+	// Pass clock is FastCounter ticks, 32768 Hz; the sum over blocks is unbiased.
+	logEvent("s2rc", NULL, "%s: blocks=%u repeat=%u slen=%u uniq=%u rcMs=%u passMs=%u,%u,%u,%u,%u,%u,%u,%u,%u",
+		aMode, dyn[1], dyn[12], dyn[11], dyn[22 + 8 * 12], (unsigned)((unsigned long long)dyn[0] * 1000 / freq),
+		(unsigned)((unsigned long long)dyn[13] * 1000 / freq), (unsigned)((unsigned long long)dyn[14] * 1000 / freq),
+		(unsigned)((unsigned long long)dyn[15] * 1000 / freq), (unsigned)((unsigned long long)dyn[16] * 1000 / freq),
+		(unsigned)((unsigned long long)dyn[17] * 1000 / freq), (unsigned)((unsigned long long)dyn[18] * 1000 / freq),
+		(unsigned)((unsigned long long)dyn[19] * 1000 / freq), (unsigned)((unsigned long long)dyn[20] * 1000 / freq),
+		(unsigned)((unsigned long long)dyn[21] * 1000 / freq));
+	for (TInt b = 0; b < 8; b++)
+		{
+		const TUint *q = dyn + 22 + b * 12;
+		if (!q[0])
+			continue;
+		logEvent("s2rcb", NULL, "%s: slen<%d blocks=%u slen=%u us=%u passUs=%u,%u,%u,%u,%u,%u,%u,%u,%u", aMode,
+			16 << b, q[0], q[1], (unsigned)((unsigned long long)q[2] * 1000000 / freq),
+			(unsigned)((unsigned long long)q[3] * 1000000 / freq), (unsigned)((unsigned long long)q[4] * 1000000 / freq),
+			(unsigned)((unsigned long long)q[5] * 1000000 / freq), (unsigned)((unsigned long long)q[6] * 1000000 / freq),
+			(unsigned)((unsigned long long)q[7] * 1000000 / freq), (unsigned)((unsigned long long)q[8] * 1000000 / freq),
+			(unsigned)((unsigned long long)q[9] * 1000000 / freq), (unsigned)((unsigned long long)q[10] * 1000000 / freq),
+			(unsigned)((unsigned long long)q[11] * 1000000 / freq));
+		}
 	if (ndrc_s2_d1)
 		logEvent("s2slow", NULL, "%s: d1=1 classes=scratch,scratchTail,io,bios,ram,other rd=%u,%u,%u,%u,%u,%u wr=%u,%u,%u,%u,%u,%u",
 			aMode, slow[0], slow[1], slow[2], slow[3], slow[4], slow[5],
