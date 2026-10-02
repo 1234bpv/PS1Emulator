@@ -1,6 +1,7 @@
 // Application registration: without it the EXE resides in \sys\bin with no way to launch it from the menu.
 
 #include <appinfo.rh>
+#include <ps1stage1.rsg>
 
 UID2 KUidAppRegistrationResourceFile
 UID3 0xE0001002
@@ -8,6 +9,10 @@ UID3 0xE0001002
 RESOURCE APP_REGISTRATION_INFO
 	{
 	app_file = "ps1stage1";
+	// Caption and icon live in the application resource, not here: without this
+	// pair the shell falls back to the executable name and shows no icon.
+	localisable_resource_file = "\\resource\\apps\\ps1stage1";
+	localisable_resource_id = R_LOCALISABLE_APP_INFO;
 	hidden = KAppNotHidden;
 	embeddability = KAppNotEmbeddable;
 	newfile = KAppDoesNotSupportNewFile;

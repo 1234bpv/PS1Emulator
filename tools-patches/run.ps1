@@ -34,6 +34,7 @@ param(
   [int]$Timeout = 900,
   [switch]$NoRun,          # build and push only
   [switch]$NoPush,         # build only; no phone needed
+  [switch]$Resources,      # also push app resource, icon and registration (after changing them)
   [switch]$List,           # probe every transport and exit
   [string]$Ip,             # override the WiFi address
   [string]$Com             # override the Bluetooth port
@@ -333,6 +334,18 @@ if (-not $NoRun) {
              '-OutFile', "$RunDir\ps1_stage1.jsonl")
 }
 Invoke-Net $push | Select-Object -Last 6
+# apparc finds these on the card, where the daemon puts them (the installer route
+# for the application resource was never confirmed on this phone). The registration
+# only works together with the application resource it names: caption and icon
+# live there, so all three go together.
+if ($Resources) {
+  $z = "$Sdk\Epoc32\data\z"
+  foreach ($r in @(@("$z\resource\apps\ps1stage1.RSC", 'E:\resource\apps\ps1stage1.rsc'),
+                   @("$z\resource\apps\ps1stage1_aif.mbm", 'E:\resource\apps\ps1stage1_aif.mbm'),
+                   @("$z\private\10003a3f\import\apps\ps1stage1_reg.RSC", 'E:\private\10003a3f\import\apps\ps1stage1_reg.rsc'))) {
+    Invoke-Net ($link + @('-PutFile', $r[0], '-Remote', $r[1])) | Select-Object -Last 2
+  }
+}
 if ($NoRun) { Write-Host '[run] pushed only'; exit 0 }
 
 # --- pull the dumps and decode --------------------------------------------

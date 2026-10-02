@@ -2,4 +2,6 @@ PRJ_PLATFORMS
 GCCE
 
 PRJ_MMPFILES
+gnumakefile icons.mk
+
 stage1.mmp

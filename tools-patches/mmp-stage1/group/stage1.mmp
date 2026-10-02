@@ -97,6 +97,9 @@ SOURCEPATH      ..\..\..\src\symbian
 START RESOURCE  stage1.rss
 TARGET          ps1stage1
 TARGETPATH      \resource\apps
+// HEADER writes ps1stage1.rsg, which ps1stage1_reg.rss includes to name the
+// localisable resource that holds the caption and the icon.
+HEADER
 END
 
 // Registration. apparc requires the name to be exactly <app_file>_reg.rsc, otherwise
