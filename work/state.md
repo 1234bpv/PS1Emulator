@@ -556,8 +556,16 @@ plans/reports/perf05-mdec-2026-10-02.md. Відкрите спостережен
 configs/core/group/pcsxcore.mmp немає -mtune=arm1136j-s (у stage1.mmp є),
 одна пара дала emu -3 % - потрібна серія повторів. Ядро idct для щільних
 блоків (~35 % MDEC) не чіпали.
-A3: другий хід програміста a8ec8f024e971111b - PMU на Crash, потім A/B
-чернетки й A3_PLD з MD5 (каталог plans/runs/2026-10-02_a3/).
+A3 прийнято 2026-10-02 06:20: форк c75ad6f (переписані poly_4bp_lgd0m0std_asm і
+poly_4bp_l1d0m0std_asm). gpuRaster Crash 18 446 -> 18 022 мс (-2,3 %), GT
+10 570 -> 10 430 (-1,3 %), MD5 VRAM 768284da / d91f6098 однакові. PMU: 78
+тактів на піксель при 35 інструкціях, 1,24 промаху D-кеша і 0,8 мікро-TLB на
+піксель; texflat показав, що читання текселя+CLUT коштує до 4,2 с (23 %)
+растеризатора, dstflat - запис до 1,3 с. A3_PLD (pld текселя) програє +3,9 %,
+відхилено. Звіт plans/reports/perf05-a3-analysis-2026-10-02.md, розд. 11.
+Третій хід a8ec8f024e971111b: -mtune=arm1136j-s -fomit-frame-pointer у
+pcsxcore.mmp і gpuunai.mmp (зараз їх немає), потім pld призначення на вході
+спана; наприкінці release на N95.
 
 Codex, 2026-10-02 04:18: процес завершився (exit=0, out/codex-last-2026-10-02a.md):
 після перезавантаження E90 три підключення дали timeout до INFO, GET/restore не
