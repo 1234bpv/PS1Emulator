@@ -24,7 +24,7 @@ param(
   [switch]$Build,          # relink stage1
   [switch]$Gpu,            # + gpu_unai (asm + GCCE 4.6.3); implies -Build
   [switch]$Core,           # + libpcsxcore; implies -Build
-  [string]$CoreCc = '',     # which compiler builds libpcsxcore: csl343 or gcce463
+  [string]$CoreCc = '',     # which compiler builds libpcsxcore: gcce463 (default) or csl343
   [switch]$Release,        # relink stage1 without PS1_BENCH; implies -Build
   [switch]$CfProfile,      # per-CF span/length histogram in GPU; bench only
   [switch]$CfTime,         # selected-CF primitive raster timing; bench only
@@ -140,6 +140,7 @@ function Build-Core {
   $oldProfile = Get-CoreProfile
   $env:PS1_NO_DIAG = if ($Profile -eq 'release') { '1' } else { '0' }
   $env:PS1_SPU_STAGE_PROFILE = if ($Profile -eq 'bench-spustage') { '1' } else { '0' }
+  $env:PS1_STAGE2_PROFILE = if ($Profile -eq 'bench-stage2') { '1' } else { '0' }
   # abld relinks the library only when an object changed, so a library dropped in
   # by the other toolchain survives "abld build" untouched and the marker would
   # then lie about it. Remove the target and check the timestamp moved.
@@ -180,15 +181,19 @@ function Build-Core {
 if ($CoreCc -and $CoreCc -ne 'csl343' -and $CoreCc -ne 'gcce463') {
   throw "-CoreCc takes csl343 or gcce463, not '$CoreCc'"
 }
+# GCCE 4.6.3 builds the core by default: 2-4% shorter frames than CSL 3.4.3 with
+# identical VRAM on all three stands (2026-10-02). A build without -CoreCc goes back
+# to the default instead of keeping whatever compiler built the library last.
+$DefaultCoreCc = 'gcce463'
 if ($Core -or $CoreCc) {
-  $want = if ($CoreCc) { $CoreCc } else { 'csl343' }
+  $want = if ($CoreCc) { $CoreCc } else { $DefaultCoreCc }
   Build-Core $want $Flavour
 } elseif ($Build) {
   $have = Get-CoreCc
   $haveProfile = Get-CoreProfile
-  if ($have -eq 'unknown' -or $have -eq '') {
-    Write-Host '[run] pcsxcore.lib provenance unknown - rebuilding with csl343'
-    Build-Core 'csl343' $Flavour
+  if ($have -ne $DefaultCoreCc) {
+    Write-Host "[run] pcsxcore.lib built by '$have' - rebuilding with $DefaultCoreCc"
+    Build-Core $DefaultCoreCc $Flavour
   } elseif ($haveProfile -ne $Flavour) {
     Write-Host "[run] pcsxcore.lib profile $haveProfile -> $Flavour"
     Build-Core $have $Flavour
