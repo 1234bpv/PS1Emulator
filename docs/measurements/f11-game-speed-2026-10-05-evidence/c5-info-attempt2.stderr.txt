@@ -1,0 +1,8 @@
+Исключение при вызове "Open" с "0" аргументами: "Элемент не найден.
+"
+D:\VsCodeProjects\SymbianProjects\SymbianDeployDaemon\tools\deploy_net.ps1:161 знак:5
++     $sp.Open()
++     ~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:) [], ParentContainsErrorRecordException
+    + FullyQualifiedErrorId : IOException
+ 

@@ -1,0 +1,14 @@
+{
+  "name": "n95-preflight-attempt2",
+  "started": "2026-10-05T00:07:17.2633660+03:00",
+  "finished": "2026-10-05T00:07:18.2764677+03:00",
+  "limitSec": 40,
+  "timeout": false,
+  "exitCode": 1,
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-Do",
+    "LS E:\\PS1\\games\\; LS E:\\PS1\\cfg\\; LS E:\\PS1\\saves\\; FG; STAT E:\\PS1\\logs\\ps1_input.rec; STAT E:\\PS1\\logs\\ps1_interp.txt"
+  ]
+}

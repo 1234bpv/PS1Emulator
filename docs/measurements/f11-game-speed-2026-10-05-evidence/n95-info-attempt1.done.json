@@ -1,0 +1,15 @@
+{
+  "name": "n95-info-attempt1",
+  "started": "2026-10-05T00:06:38.6798798+03:00",
+  "finished": "2026-10-05T00:06:39.5239835+03:00",
+  "limitSec": 30,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-Device",
+    "n95",
+    "-Info"
+  ]
+}

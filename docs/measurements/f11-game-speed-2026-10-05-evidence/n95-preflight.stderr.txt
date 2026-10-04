@@ -1,0 +1,6 @@
+D:\VsCodeProjects\SymbianProjects\SymbianDeployDaemon\tools\deploy_net.ps1 : Не удается привязать параметр, так как пар
+аметр "Cmd" указан более одного раза. Для указания множественных значений параметров, допускающих множественные значени
+я, используйте синтаксис массива.  Например, "-parameter value1,value2,value3".
+    + CategoryInfo          : InvalidArgument: (:) [deploy_net.ps1], ParentContainsErrorRecordException
+    + FullyQualifiedErrorId : ParameterAlreadyBound,deploy_net.ps1
+ 

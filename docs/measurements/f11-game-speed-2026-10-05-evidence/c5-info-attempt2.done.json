@@ -1,0 +1,13 @@
+{
+  "name": "c5-info-attempt2",
+  "started": "2026-10-05T00:07:31.8354016+03:00",
+  "finished": "2026-10-05T00:07:33.9144086+03:00",
+  "limitSec": 30,
+  "timeout": false,
+  "exitCode": 1,
+  "args": [
+    "-Com",
+    "COM12",
+    "-Info"
+  ]
+}

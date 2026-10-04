@@ -1,0 +1,42 @@
+[
+  {
+    "Status": "OK",
+    "FriendlyName": "Стандартный последовательный порт по соединению Bluetooth (COM12)",
+    "InstanceId": "BTHENUM\\{00001101-0000-1000-8000-00805F9B34FB}_VID&00010001_PID&0153\\8&36A0CFA9&0&A8448113EA78_C00000000"
+  },
+  {
+    "Status": "OK",
+    "FriendlyName": "Стандартный последовательный порт по соединению Bluetooth (COM8)",
+    "InstanceId": "BTHENUM\\{00001101-0000-1000-8000-00805F9B34FB}_VID&000105D6_PID&000A\\8&36A0CFA9&0&08E09D9E2863_C00000000"
+  },
+  {
+    "Status": "OK",
+    "FriendlyName": "Стандартный последовательный порт по соединению Bluetooth (COM9)",
+    "InstanceId": "BTHENUM\\{00001101-0000-1000-8000-00805F9B34FB}_LOCALMFG&0002\\8&36A0CFA9&0&001A89C53774_C00000000"
+  },
+  {
+    "Status": "OK",
+    "FriendlyName": "Стандартный последовательный порт по соединению Bluetooth (COM3)",
+    "InstanceId": "BTHENUM\\{00001101-0000-1000-8000-00805F9B34FB}_LOCALMFG&0000\\8&36A0CFA9&0&000000000000_00000000"
+  },
+  {
+    "Status": "OK",
+    "FriendlyName": "Стандартный последовательный порт по соединению Bluetooth (COM7)",
+    "InstanceId": "BTHENUM\\{00001101-0000-1000-8000-00805F9B34FB}_LOCALMFG&0000\\8&36A0CFA9&0&000000000000_00000002"
+  },
+  {
+    "Status": "OK",
+    "FriendlyName": "Стандартный последовательный порт по соединению Bluetooth (COM10)",
+    "InstanceId": "BTHENUM\\{00001101-0000-1000-8000-00805F9B34FB}_LOCALMFG&0000\\8&36A0CFA9&0&000000000000_00000004"
+  },
+  {
+    "Status": "OK",
+    "FriendlyName": "Стандартный последовательный порт по соединению Bluetooth (COM13)",
+    "InstanceId": "BTHENUM\\{00001101-0000-1000-8000-00805F9B34FB}_LOCALMFG&0000\\8&36A0CFA9&0&000000000000_00000005"
+  },
+  {
+    "Status": "OK",
+    "FriendlyName": "Стандартный последовательный порт по соединению Bluetooth (COM4)",
+    "InstanceId": "BTHENUM\\{00001101-0000-1000-8000-00805F9B34FB}_LOCALMFG&0002\\8&36A0CFA9&0&A899DC4FC2E5_C00000000"
+  }
+]

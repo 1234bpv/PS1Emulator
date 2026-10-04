@@ -1,0 +1,26 @@
+{
+  "name": "n95-preflight",
+  "started": "2026-10-05T00:06:58.4785309+03:00",
+  "finished": "2026-10-05T00:06:58.7339834+03:00",
+  "limitSec": 40,
+  "timeout": false,
+  "exitCode": 1,
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-Cmd",
+    "LS E:\\PS1\\games\\",
+    "-Cmd",
+    "LS E:\\PS1\\cfg\\",
+    "-Cmd",
+    "LS E:\\PS1\\saves\\",
+    "-Cmd",
+    "FG",
+    "-Cmd",
+    "STAT E:\\sys\\bin\\ps1stage1.exe",
+    "-Cmd",
+    "STAT E:\\PS1\\logs\\ps1_input.rec",
+    "-Cmd",
+    "STAT E:\\PS1\\logs\\ps1_interp.txt"
+  ]
+}

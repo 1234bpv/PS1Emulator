@@ -1,0 +1,197 @@
+[
+  {
+    "Status": "OK",
+    "FriendlyName": "Служба обнаружения служб",
+    "InstanceId": "BTHENUM\\{00001000-0000-1000-8000-00805F9B34FB}_LOCALMFG&0002\\8&1B96BF54&0&001A89C53774_C00000000"
+  },
+  {
+    "Status": "OK",
+    "FriendlyName": "Служба идентификации устройств",
+    "InstanceId": "BTHENUM\\{00001200-0000-1000-8000-00805F9B34FB}_VID&0002054C_PID&0CE6\\8&1B96BF54&0&5810310B16D1_C00000000"
+  },
+  {
+    "Status": "OK",
+    "FriendlyName": "Служба передачи объектов",
+    "InstanceId": "BTHENUM\\{00001105-0000-1000-8000-00805F9B34FB}_LOCALMFG&0002\\8&1B96BF54&0&001A89C53774_C00000000"
+  },
+  {
+    "Status": "OK",
+    "FriendlyName": "Транспорт AVRCP Nokia C5-00.2",
+    "InstanceId": "BTHENUM\\{0000110C-0000-1000-8000-00805F9B34FB}_VID&00010001_PID&0153\\8&1B96BF54&0&A8448113EA78_C00000000"
+  },
+  {
+    "Status": "OK",
+    "FriendlyName": "Служба передачи объектов",
+    "InstanceId": "BTHENUM\\{00001105-0000-1000-8000-00805F9B34FB}_VID&00010001_PID&0153\\8&1B96BF54&0&A8448113EA78_C00000000"
+  },
+  {
+    "Status": "OK",
+    "FriendlyName": "Служба звукового шлюза гарнитуры",
+    "InstanceId": "BTHENUM\\{00001112-0000-1000-8000-00805F9B34FB}_LOCALMFG&0002\\8&1B96BF54&0&001A89C53774_C00000000"
+  },
+  {
+    "Status": "OK",
+    "FriendlyName": "Служба доступа к SIM-карте",
+    "InstanceId": "BTHENUM\\{0000112D-0000-1000-8000-00805F9B34FB}_VID&00010001_PID&0153\\8&1B96BF54&0&A8448113EA78_C00000000"
+  },
+  {
+    "Status": "OK",
+    "FriendlyName": "Транспорт AVRCP 701",
+    "InstanceId": "BTHENUM\\{0000110C-0000-1000-8000-00805F9B34FB}_VID&00010001_PID&0158\\8&1B96BF54&0&B05CE5DA0FD0_C00000000"
+  },
+  {
+    "Status": "OK",
+    "FriendlyName": "Служба передачи объектов",
+    "InstanceId": "BTHENUM\\{00001105-0000-1000-8000-00805F9B34FB}_VID&00010001_PID&0158\\8&1B96BF54&0&B05CE5DA0FD0_C00000000"
+  },
+  {
+    "Status": "OK",
+    "FriendlyName": "Служба доступа к SIM-карте",
+    "InstanceId": "BTHENUM\\{0000112D-0000-1000-8000-00805F9B34FB}_VID&00010001_PID&0158\\8&1B96BF54&0&B05CE5DA0FD0_C00000000"
+  },
+  {
+    "Status": "OK",
+    "FriendlyName": "Транспорт AVRCP Nokia C5-00.2",
+    "InstanceId": "BTHENUM\\{0000110E-0000-1000-8000-00805F9B34FB}_VID&00010001_PID&0153\\8&1B96BF54&0&A8448113EA78_C00000000"
+  },
+  {
+    "Status": "OK",
+    "FriendlyName": "Транспорт AVRCP Е90",
+    "InstanceId": "BTHENUM\\{0000110C-0000-1000-8000-00805F9B34FB}_LOCALMFG&0002\\8&1B96BF54&0&001A89C53774_C00000000"
+  },
+  {
+    "Status": "OK",
+    "FriendlyName": "Транспорт AVRCP AN01",
+    "InstanceId": "BTHENUM\\{0000110C-0000-1000-8000-00805F9B34FB}_VID&000105D6_PID&000A\\8&1B96BF54&0&08E09D9E2863_C00000000"
+  },
+  {
+    "Status": "OK",
+    "FriendlyName": "Служба доступа к телефонной книге (PSE)",
+    "InstanceId": "BTHENUM\\{0000112F-0000-1000-8000-00805F9B34FB}_VID&00010001_PID&0153\\8&1B96BF54&0&A8448113EA78_C00000000"
+  },
+  {
+    "Status": "OK",
+    "FriendlyName": "Intel(R) Wireless Bluetooth(R)",
+    "InstanceId": "USB\\VID_8087&PID_0029\\6&13C452C7&0&3"
+  },
+  {
+    "Status": "OK",
+    "FriendlyName": "Транспорт AVRCP 701",
+    "InstanceId": "BTHENUM\\{0000110E-0000-1000-8000-00805F9B34FB}_VID&00010001_PID&0158\\8&1B96BF54&0&B05CE5DA0FD0_C00000000"
+  },
+  {
+    "Status": "OK",
+    "FriendlyName": "701",
+    "InstanceId": "BTHENUM\\DEV_B05CE5DA0FD0\\8&1B96BF54&0&BLUETOOTHDEVICE_B05CE5DA0FD0"
+  },
+  {
+    "Status": "OK",
+    "FriendlyName": "Служба доступа к телефонной книге (PSE)",
+    "InstanceId": "BTHENUM\\{0000112F-0000-1000-8000-00805F9B34FB}_VID&00010001_PID&0158\\8&1B96BF54&0&B05CE5DA0FD0_C00000000"
+  },
+  {
+    "Status": "OK",
+    "FriendlyName": "Служба доступа к SIM-карте",
+    "InstanceId": "BTHENUM\\{0000112D-0000-1000-8000-00805F9B34FB}_LOCALMFG&0002\\8&1B96BF54&0&001A89C53774_C00000000"
+  },
+  {
+    "Status": "OK",
+    "FriendlyName": "Транспорт AVRCP AN01",
+    "InstanceId": "BTHENUM\\{0000110E-0000-1000-8000-00805F9B34FB}_VID&000105D6_PID&000A\\8&1B96BF54&0&08E09D9E2863_C00000000"
+  },
+  {
+    "Status": "OK",
+    "FriendlyName": "Транспорт AVRCP SKS",
+    "InstanceId": "BTHENUM\\{0000110C-0000-1000-8000-00805F9B34FB}_LOCALMFG&0002\\8&1B96BF54&0&A899DC4FC2E5_C00000000"
+  },
+  {
+    "Status": "OK",
+    "FriendlyName": "Перечислитель MTP-устройств Bluetooth",
+    "InstanceId": "BTHENUM\\{B1673F75-A798-4ED8-A662-B4F4D3286EA9}_VID&00010001_PID&0158\\8&1B96BF54&0&B05CE5DA0FD0_C00000000"
+  },
+  {
+    "Status": "OK",
+    "FriendlyName": "AN01",
+    "InstanceId": "BTHENUM\\DEV_08E09D9E2863\\8&1B96BF54&0&BLUETOOTHDEVICE_08E09D9E2863"
+  },
+  {
+    "Status": "OK",
+    "FriendlyName": "SKS",
+    "InstanceId": "BTHENUM\\DEV_A899DC4FC2E5\\8&1B96BF54&0&BLUETOOTHDEVICE_A899DC4FC2E5"
+  },
+  {
+    "Status": "OK",
+    "FriendlyName": "Перечислитель Bluetooth LE (Майкрософт)",
+    "InstanceId": "BTH\\MS_BTHLE\\7&1F36AFFD&0&3"
+  },
+  {
+    "Status": "OK",
+    "FriendlyName": "DualSense Wireless Controller",
+    "InstanceId": "BTHENUM\\DEV_5810310B16D1\\8&1B96BF54&0&BLUETOOTHDEVICE_5810310B16D1"
+  },
+  {
+    "Status": "OK",
+    "FriendlyName": "Служба звукового шлюза гарнитуры",
+    "InstanceId": "BTHENUM\\{00001112-0000-1000-8000-00805F9B34FB}_VID&00010001_PID&0153\\8&1B96BF54&0&A8448113EA78_C00000000"
+  },
+  {
+    "Status": "OK",
+    "FriendlyName": "Nokia C5-00.2",
+    "InstanceId": "BTHENUM\\DEV_A8448113EA78\\8&1B96BF54&0&BLUETOOTHDEVICE_A8448113EA78"
+  },
+  {
+    "Status": "OK",
+    "FriendlyName": "Е90",
+    "InstanceId": "BTHENUM\\DEV_001A89C53774\\8&1B96BF54&0&BLUETOOTHDEVICE_001A89C53774"
+  },
+  {
+    "Status": "OK",
+    "FriendlyName": "Служба передачи файлов Obex",
+    "InstanceId": "BTHENUM\\{00001106-0000-1000-8000-00805F9B34FB}_VID&00010001_PID&0153\\8&1B96BF54&0&A8448113EA78_C00000000"
+  },
+  {
+    "Status": "OK",
+    "FriendlyName": "Транспорт AVRCP Е90",
+    "InstanceId": "BTHENUM\\{0000110E-0000-1000-8000-00805F9B34FB}_LOCALMFG&0002\\8&1B96BF54&0&001A89C53774_C00000000"
+  },
+  {
+    "Status": "OK",
+    "FriendlyName": "Служба звукового шлюза гарнитуры",
+    "InstanceId": "BTHENUM\\{00001112-0000-1000-8000-00805F9B34FB}_VID&00010001_PID&0158\\8&1B96BF54&0&B05CE5DA0FD0_C00000000"
+  },
+  {
+    "Status": "OK",
+    "FriendlyName": "Служба передачи файлов Obex",
+    "InstanceId": "BTHENUM\\{00001106-0000-1000-8000-00805F9B34FB}_VID&00010001_PID&0158\\8&1B96BF54&0&B05CE5DA0FD0_C00000000"
+  },
+  {
+    "Status": "OK",
+    "FriendlyName": "Служба передачи файлов Obex",
+    "InstanceId": "BTHENUM\\{00001106-0000-1000-8000-00805F9B34FB}_LOCALMFG&0002\\8&1B96BF54&0&001A89C53774_C00000000"
+  },
+  {
+    "Status": "OK",
+    "FriendlyName": "Служба обнаружения служб",
+    "InstanceId": "BTHENUM\\{00001000-0000-1000-8000-00805F9B34FB}_VID&00010001_PID&0153\\8&1B96BF54&0&A8448113EA78_C00000000"
+  },
+  {
+    "Status": "OK",
+    "FriendlyName": "Microsoft Bluetooth Enumerator",
+    "InstanceId": "BTH\\MS_BTHBRB\\7&1F36AFFD&0&1"
+  },
+  {
+    "Status": "OK",
+    "FriendlyName": "Транспорт AVRCP SKS",
+    "InstanceId": "BTHENUM\\{0000110E-0000-1000-8000-00805F9B34FB}_LOCALMFG&0002\\8&1B96BF54&0&A899DC4FC2E5_C00000000"
+  },
+  {
+    "Status": "OK",
+    "FriendlyName": "Служба обнаружения служб",
+    "InstanceId": "BTHENUM\\{00001000-0000-1000-8000-00805F9B34FB}_VID&00010001_PID&0158\\8&1B96BF54&0&B05CE5DA0FD0_C00000000"
+  },
+  {
+    "Status": "OK",
+    "FriendlyName": "Bluetooth Device (RFCOMM Protocol TDI)",
+    "InstanceId": "BTH\\MS_RFCOMM\\7&1F36AFFD&0&0"
+  }
+]

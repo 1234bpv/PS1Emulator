@@ -1,0 +1,7 @@
+-Do sequence failed - see the stopped step above
+D:\VsCodeProjects\SymbianProjects\SymbianDeployDaemon\tools\deploy_net.ps1:835 знак:23
++ ... ot $doOk) { throw "-Do sequence failed - see the stopped step above"  ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : OperationStopped: (-Do sequence fa...pped step above:String) [], RuntimeException
+    + FullyQualifiedErrorId : -Do sequence failed - see the stopped step above
+ 
