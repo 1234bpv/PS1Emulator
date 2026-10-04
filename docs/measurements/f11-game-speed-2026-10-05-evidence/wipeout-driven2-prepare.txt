@@ -1,0 +1,14 @@
+LOG WipEout prepare driven gameplay state
+-START E:\sys\bin\ps1stage1.exe gui rec light blend dsa img"WipEout (USA).pbp" loadstate8200 savestate8500 frames10000 dumpat999999 limit90
+-WAITFG e0001002 20000
+-KEY star press 2 100
+SLEEP 12000
+-KEY 5 down
+SLEEP 45000
+-KEY 5 up
+-SHOT E:\tester\wipeout-driven2.bmp 2
+-ENDAPP 0xE0001002
+SLEEP 2000
+-KILL ps1stage1
+PS ps1stage1
+

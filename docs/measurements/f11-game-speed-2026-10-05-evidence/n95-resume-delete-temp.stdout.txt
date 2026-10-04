@@ -1,0 +1,5 @@
+[net] > DEL E:\PS1\logs\ps1_input_prev.rec
+[net] < OK 0
+[net] > DEL E:\PS1\logs\ps1_interp.txt
+[net] < ERR delete -1
+…„“…†„…ˆ…: [net] -Do stopped at step 2/2 'DEL E:\PS1\logs\ps1_interp.txt': ERR delete -1

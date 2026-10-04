@@ -1,0 +1,16 @@
+{
+  "name": "C5-crash-verify-get-C5-crash-verify.bmp-a1",
+  "started": "2026-10-05T01:20:33.0039930+03:00",
+  "finished": "2026-10-05T01:21:18.1344490+03:00",
+  "limitSec": 45,
+  "timeout": true,
+  "exitCode": -1,
+  "args": [
+    "-Com",
+    "COM12",
+    "-GetFile",
+    "E:\\tester\\C5-crash-verify.bmp",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\C5-crash-verify.bmp"
+  ]
+}

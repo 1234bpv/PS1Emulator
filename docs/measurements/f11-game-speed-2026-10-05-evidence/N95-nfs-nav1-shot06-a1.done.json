@@ -1,0 +1,16 @@
+{
+  "name": "N95-nfs-nav1-shot06-a1",
+  "started": "2026-10-05T01:49:27.1267095+03:00",
+  "finished": "2026-10-05T01:49:27.6923369+03:00",
+  "limitSec": 45,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-GetFile",
+    "E:\\tester\\nfs-nav1-06.bmp",
+    "-OutFile",
+    "./plans/runs/2026-10-05_game-speed/N95-nfs-nav1-06.bmp"
+  ]
+}

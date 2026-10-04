@@ -1,0 +1,5 @@
+[net] serial COM12 @ 115200 baud
+[net] PUT D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\c5-backup\cfg\ps1_settings.txt -> E:\PS1\cfg\ps1_settings.txt (436 bytes)
+[net] .. 436/436
+[net] OK 436
+[net] done

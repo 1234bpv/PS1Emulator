@@ -1,0 +1,4 @@
+[net] serial COM12 @ 115200 baud
+[net] GET E:\PS1\saves\bench.sav -> D:\VsCodeProjects\SymbianProjects\PS1Emulator\.\plans\runs\2026-10-05_game-speed\states\cast-nav1.sav
+[net] got 1 598 416 bytes
+[net] done

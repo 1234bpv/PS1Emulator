@@ -1,0 +1,16 @@
+{
+  "name": "N95-stock-wipeout-verify-get-N95-stock-wipeout-verify.bmp-a1",
+  "started": "2026-10-05T01:35:43.2369965+03:00",
+  "finished": "2026-10-05T01:35:46.2461861+03:00",
+  "limitSec": 45,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-GetFile",
+    "E:\\tester\\N95-stock-wipeout-verify.bmp",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\N95-stock-wipeout-verify.bmp"
+  ]
+}

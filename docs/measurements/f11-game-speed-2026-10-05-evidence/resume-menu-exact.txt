@@ -1,0 +1,10 @@
+LOG resume native menu foreground test
+-APP 0xE0001002
+-WAITFG PS1Emulator 20000
+FG
+-SHOT E:\tester\f11_resume_menu.bmp
+-ENDAPP 0xE0001002
+SLEEP 2000
+-KILL ps1stage1
+PS ps1stage1
+

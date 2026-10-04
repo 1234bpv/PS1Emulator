@@ -1,0 +1,4 @@
+[net] serial COM12 @ 115200 baud
+[net] GET E:\tester\f11_resume_menu.bmp -> D:\VsCodeProjects\SymbianProjects\PS1Emulator\.\plans\runs\2026-10-05_game-speed\resume-c5-menu.bmp
+[net] got 230 454 bytes
+[net] done

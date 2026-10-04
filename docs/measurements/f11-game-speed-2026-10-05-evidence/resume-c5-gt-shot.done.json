@@ -1,0 +1,16 @@
+{
+  "name": "resume-c5-gt-shot",
+  "started": "2026-10-05T00:58:20.4614546+03:00",
+  "finished": "2026-10-05T00:59:20.5034339+03:00",
+  "limitSec": 60,
+  "timeout": true,
+  "exitCode": -1,
+  "args": [
+    "-Com",
+    "COM12",
+    "-GetFile",
+    "E:\\tester\\f11_gt_state.bmp",
+    "-OutFile",
+    ".\\plans\\runs\\2026-10-05_game-speed\\resume-c5-gt.bmp"
+  ]
+}

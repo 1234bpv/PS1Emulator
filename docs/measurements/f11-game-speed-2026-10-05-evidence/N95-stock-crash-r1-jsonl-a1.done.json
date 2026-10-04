@@ -1,0 +1,16 @@
+{
+  "name": "N95-stock-crash-r1-jsonl-a1",
+  "started": "2026-10-05T01:19:06.4635948+03:00",
+  "finished": "2026-10-05T01:19:07.2879201+03:00",
+  "limitSec": 45,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-GetFile",
+    "E:\\PS1\\logs\\ps1_stage1.jsonl",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\N95-stock-crash-r1-a1.jsonl"
+  ]
+}

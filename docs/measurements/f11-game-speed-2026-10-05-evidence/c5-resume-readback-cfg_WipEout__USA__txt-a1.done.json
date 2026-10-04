@@ -1,0 +1,17 @@
+{
+  "name": "c5-resume-readback-cfg_WipEout__USA__txt-a1",
+  "started": "2026-10-05T01:52:54.9842803+03:00",
+  "finished": "2026-10-05T01:52:55.6512618+03:00",
+  "limitSec": 60,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\restoration-client.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-GetFile",
+    "E:\\PS1\\cfg\\WipEout__USA_.txt",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\c5-final-verified\\cfg\\WipEout__USA_.txt"
+  ]
+}

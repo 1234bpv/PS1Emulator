@@ -1,0 +1,7 @@
+[net] serial COM12 @ 115200 baud
+[net] > PS ps1stage1
+[net] < OK ps 1
+[net] < 1 ps1stage1[e0001002]0001
+[net] GET E:\PS1\logs\ps1_stage1.jsonl -> D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\c5-cast-start.jsonl
+[net] got 6 611 bytes
+[net] done

@@ -1,0 +1,11 @@
+Роботу відновлено 00:55: обидва INFO відповіли.
+Під час SCRIPT команди керування виконуються в абсолютному foreground потоці.
+WAITFG PS1 помилково збігається з PS1 deploy daemon. Слід перевіряти UID e0001002.
+N95 caption PS1Emulator, C5 caption ps1stage1 (APPINFO/EXE release verified).
+SLEEP3000 був замалий для першого SHOT: на N95 він передував loadstate.
+SLEEP25000: на обох апаратах зафіксовано GT race з HUD; оригінальний GT bench SHA256 8AA4F9…
+Клавіші star x2 за UID-foreground дають volume step=0 ДО init/pass tStart.
+Окремий клієнт до C5 під час Scenario не відкриває COM12, бо його утримує головний клієнт.
+Н95 stock перед серією: uptime102707 m86 CORE04360644, повний ocprobe ==end==.
+Release не містить profile emuMs/shown. EmuMs слід чесно позначати н/д.
+За stable directFB pixB4, fxaa0, gl0 та dstH240 сума dsa rows /240 дає кількість блітів. Геометрія найбільшого прямокутника4:3 стала320x240 незалежно від PS1src. У BMP C5 фізичне поле240x320 обрізає правий край320x240, HUD/заїзд видимі.

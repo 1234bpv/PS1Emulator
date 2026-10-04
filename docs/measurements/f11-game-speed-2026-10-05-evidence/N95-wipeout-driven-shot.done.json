@@ -1,0 +1,16 @@
+{
+  "name": "N95-wipeout-driven-shot",
+  "started": "2026-10-05T01:27:21.0043571+03:00",
+  "finished": "2026-10-05T01:27:24.9873013+03:00",
+  "limitSec": 20,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-GetFile",
+    "E:\\tester\\wipeout-driven.bmp",
+    "-OutFile",
+    ".\\plans\\runs\\2026-10-05_game-speed\\N95-wipeout-driven.bmp"
+  ]
+}

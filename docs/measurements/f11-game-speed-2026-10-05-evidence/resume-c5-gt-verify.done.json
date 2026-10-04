@@ -1,0 +1,18 @@
+{
+  "name": "resume-c5-gt-verify",
+  "started": "2026-10-05T00:57:58.1799928+03:00",
+  "finished": "2026-10-05T00:58:20.4389894+03:00",
+  "limitSec": 130,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Com",
+    "COM12",
+    "-Scenario",
+    ".\\plans\\runs\\2026-10-05_game-speed\\resume-gt-verify.txt",
+    "-ScenarioTimeoutSec",
+    "100",
+    "-OutFile",
+    ".\\plans\\runs\\2026-10-05_game-speed\\resume-c5-gt-verify.log"
+  ]
+}

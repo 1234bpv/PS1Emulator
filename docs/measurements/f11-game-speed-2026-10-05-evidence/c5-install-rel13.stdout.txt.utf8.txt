@@ -1,0 +1,11 @@
+[net] serial COM12 @ 115200 baud
+[net] PUT D:\VsCodeProjects\SymbianProjects\S60_3rd_FP1\Epoc32\release\gcce\urel\ps1stage1.exe -> E:\sys\bin\ps1stage1.exe (1 431 280 bytes)
+[net] .. 262 144/1 431 280
+[net] .. 524 288/1 431 280
+[net] .. 786 432/1 431 280
+[net] .. 1 048 576/1 431 280
+[net] .. 1 310 720/1 431 280
+[net] OK 1431280
+[net] PUT hash -> C:\sys\hash\ps1stage1.exe (20 bytes)
+[net] OK 20
+[net] done

@@ -1,0 +1,30 @@
+[
+  {
+    "receivedOffset": 211920,
+    "matchingOriginalOffset": 212928
+  },
+  {
+    "receivedOffset": 212048,
+    "matchingOriginalOffset": 216080
+  },
+  {
+    "receivedOffset": 212944,
+    "matchingOriginalOffset": 216976
+  },
+  {
+    "receivedOffset": 216016,
+    "matchingOriginalOffset": 220048
+  },
+  {
+    "receivedOffset": 400000,
+    "matchingOriginalOffset": 404032
+  },
+  {
+    "receivedOffset": 1000000,
+    "matchingOriginalOffset": 1004032
+  },
+  {
+    "receivedOffset": 1700000,
+    "matchingOriginalOffset": 1704032
+  }
+]

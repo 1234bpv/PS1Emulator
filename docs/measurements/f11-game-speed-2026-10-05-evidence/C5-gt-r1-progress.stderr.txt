@@ -1,0 +1,7 @@
+Исключение при вызове "Open" с "0" аргументами: "Доступ к порту 'COM12' закрыт."
+D:\VsCodeProjects\SymbianProjects\SymbianDeployDaemon\tools\deploy_net.ps1:161 знак:5
++     $sp.Open()
++     ~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:) [], ParentContainsErrorRecordException
+    + FullyQualifiedErrorId : UnauthorizedAccessException
+ 

@@ -1,0 +1,14 @@
+{
+  "name": "N95-stock-crash-clock-before-start",
+  "started": "2026-10-05T01:17:00.5050583+03:00",
+  "finished": "2026-10-05T01:17:04.4071824+03:00",
+  "limitSec": 20,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-Do",
+    "START E:\\sys\\bin\\ocprobe.exe patcher engine; SLEEP 2000"
+  ]
+}

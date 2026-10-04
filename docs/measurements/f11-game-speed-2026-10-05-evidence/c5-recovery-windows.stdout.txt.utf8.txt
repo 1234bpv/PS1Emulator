@@ -1,0 +1,2 @@
+[net] serial COM12 @ 115200 baud
+[net] > WG

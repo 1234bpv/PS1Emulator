@@ -1,0 +1,18 @@
+{
+  "name": "C5-crash-r2-scenario",
+  "started": "2026-10-05T01:24:14.4218037+03:00",
+  "finished": "2026-10-05T01:25:44.8832321+03:00",
+  "limitSec": 220,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Com",
+    "COM12",
+    "-Scenario",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\C5-crash-r2.txt",
+    "-ScenarioTimeoutSec",
+    "200",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\C5-crash-r2.log"
+  ]
+}

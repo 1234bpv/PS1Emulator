@@ -1,0 +1,16 @@
+{
+  "name": "resume-n95-gt-shot",
+  "started": "2026-10-05T00:59:10.8787901+03:00",
+  "finished": "2026-10-05T00:59:12.1749384+03:00",
+  "limitSec": 20,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-GetFile",
+    "E:\\tester\\f11_gt_state.bmp",
+    "-OutFile",
+    ".\\plans\\runs\\2026-10-05_game-speed\\resume-n95-gt.bmp"
+  ]
+}

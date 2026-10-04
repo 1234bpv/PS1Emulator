@@ -1,0 +1,3 @@
+[net] GET E:\ocprobe.log -> D:\VsCodeProjects\SymbianProjects\PS1Emulator\.\plans\runs\2026-10-05_game-speed\N95-stock-gt-clock-after.log
+[net] got 1ÿ264 bytes
+[net] done

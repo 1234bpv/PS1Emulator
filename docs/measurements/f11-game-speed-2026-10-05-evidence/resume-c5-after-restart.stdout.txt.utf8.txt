@@ -1,0 +1,11 @@
+[net] serial COM12 @ 115200 baud
+[net] > INFO
+[net] < OK info
+[net] < protocol 2
+[net] < screen 240x320
+[net] < ramfree 180850688
+[net] < tick 4615165 startTick 4537830 boot 0 by r
+[net] < drive C freekb 30480
+[net] < drive E freekb 10908696
+[net] < script IDLE
+[net] done

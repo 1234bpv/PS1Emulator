@@ -1,0 +1,16 @@
+{
+  "name": "C5-crash-state-put-a2",
+  "started": "2026-10-05T01:17:28.1933708+03:00",
+  "finished": "2026-10-05T01:19:55.2896519+03:00",
+  "limitSec": 240,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Com",
+    "COM12",
+    "-PutFile",
+    ".\\plans\\runs\\2026-10-05_game-speed\\states\\crash-start.sav",
+    "-Remote",
+    "E:\\PS1\\saves\\bench.sav"
+  ]
+}

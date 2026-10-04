@@ -1,0 +1,18 @@
+{
+  "name": "N95-wipeout-driven-prepare",
+  "started": "2026-10-05T01:26:34.3580842+03:00",
+  "finished": "2026-10-05T01:27:20.9492479+03:00",
+  "limitSec": 140,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-Scenario",
+    ".\\plans\\runs\\2026-10-05_game-speed\\wipeout-driven-prepare.txt",
+    "-ScenarioTimeoutSec",
+    "110",
+    "-OutFile",
+    ".\\plans\\runs\\2026-10-05_game-speed\\N95-wipeout-driven-prepare.log"
+  ]
+}

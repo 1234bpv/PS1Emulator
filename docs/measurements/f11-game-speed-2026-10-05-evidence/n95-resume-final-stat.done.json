@@ -1,0 +1,15 @@
+{
+  "name": "n95-resume-final-stat",
+  "started": "2026-10-05T01:52:16.1874843+03:00",
+  "finished": "2026-10-05T01:52:16.6703138+03:00",
+  "limitSec": 30,
+  "timeout": false,
+  "exitCode": 1,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\restoration-client.ps1",
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-Do",
+    "STAT E:\\PS1\\logs\\ps1_input_prev.rec; STAT E:\\PS1\\logs\\ps1_interp.txt; STATUS; PS ps1stage1; INFO"
+  ]
+}

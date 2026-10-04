@@ -1,0 +1,16 @@
+{
+  "name": "N95-stock-crash-verify-put-state",
+  "started": "2026-10-05T01:14:59.0294841+03:00",
+  "finished": "2026-10-05T01:15:09.7528673+03:00",
+  "limitSec": 120,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-PutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\states\\crash-start.sav",
+    "-Remote",
+    "E:\\PS1\\saves\\bench.sav"
+  ]
+}

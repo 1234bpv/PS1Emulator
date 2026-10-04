@@ -1,0 +1,14 @@
+{
+  "name": "N95-stock-wipeout-clock-before-start",
+  "started": "2026-10-05T01:36:23.0991736+03:00",
+  "finished": "2026-10-05T01:36:27.2328851+03:00",
+  "limitSec": 25,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-Do",
+    "START E:\\sys\\bin\\ocprobe.exe patcher engine; SLEEP 2000"
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "name": "N95-stock-wipeout-verify-scenario",
+  "started": "2026-10-05T01:35:01.9339644+03:00",
+  "finished": "2026-10-05T01:35:43.2126362+03:00",
+  "limitSec": 140,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-Scenario",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\N95-stock-wipeout-verify.txt",
+    "-ScenarioTimeoutSec",
+    "110",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\N95-stock-wipeout-verify.log"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "name": "C5-gt-r1-jsonl",
+  "started": "2026-10-05T01:07:17.6863778+03:00",
+  "finished": "2026-10-05T01:07:23.9268570+03:00",
+  "limitSec": 45,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Com",
+    "COM12",
+    "-GetFile",
+    "E:\\PS1\\logs\\ps1_stage1.jsonl",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\C5-gt-r1.jsonl"
+  ]
+}

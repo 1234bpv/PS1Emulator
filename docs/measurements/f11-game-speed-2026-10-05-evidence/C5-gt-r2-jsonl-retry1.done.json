@@ -1,0 +1,16 @@
+{
+  "name": "C5-gt-r2-jsonl-retry1",
+  "started": "2026-10-05T01:12:56.4124620+03:00",
+  "finished": "2026-10-05T01:12:59.9866938+03:00",
+  "limitSec": 40,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Com",
+    "COM12",
+    "-GetFile",
+    "E:\\PS1\\logs\\ps1_stage1.jsonl",
+    "-OutFile",
+    ".\\plans\\runs\\2026-10-05_game-speed\\C5-gt-r2-retry1.jsonl"
+  ]
+}

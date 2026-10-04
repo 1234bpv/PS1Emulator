@@ -1,0 +1,14 @@
+{
+  "name": "resume-c5-daemon-restart",
+  "started": "2026-10-05T01:08:56.4342201+03:00",
+  "finished": "2026-10-05T01:09:16.5213389+03:00",
+  "limitSec": 20,
+  "timeout": true,
+  "exitCode": -1,
+  "args": [
+    "-Com",
+    "COM12",
+    "-Cmd",
+    "RESTART"
+  ]
+}

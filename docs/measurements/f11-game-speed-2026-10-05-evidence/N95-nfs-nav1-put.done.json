@@ -1,0 +1,16 @@
+{
+  "name": "N95-nfs-nav1-put",
+  "started": "2026-10-05T01:43:00.6785805+03:00",
+  "finished": "2026-10-05T01:43:05.6018528+03:00",
+  "limitSec": 90,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-PutFile",
+    "./plans/runs/2026-10-05_game-speed/states/nfs-intro.sav",
+    "-Remote",
+    "E:\\PS1\\saves\\bench.sav"
+  ]
+}

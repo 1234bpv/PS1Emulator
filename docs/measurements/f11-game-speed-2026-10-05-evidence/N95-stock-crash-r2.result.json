@@ -1,0 +1,18 @@
+{
+  "label": "N95-stock-crash",
+  "repeat": 2,
+  "frames": 1200,
+  "ms": 75450,
+  "shownFrames": 601,
+  "shownFps": 7.965540092776673,
+  "ps1Fps": 15.904572564612327,
+  "speedPercent": 26.507620941020544,
+  "errors": 0,
+  "shutdown": "gui: frames=1200 ms=75450",
+  "pass": "drc: frames=1200 ms=75450 pc=80000080 cycle=3334898603 vblanks=1208 fsAdvised=0",
+  "loaded": "Loaded CD Image: E:\\PS1\\games\\Crash Bandicoot (USA).pbp[+pbp] (478407220 bytes).\n",
+  "emuMs": null,
+  "shownMethod": "DSA direct FB pixB=4, stock fxaa=0, 240 rows per present",
+  "volume0ms": 3707,
+  "clockStartMs": 7651
+}

@@ -1,0 +1,9 @@
+[net] serial COM12 @ 115200 baud
+[net] GET E:\PS1\saves\BENCH.SAV -> D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\c5-backup\saves\BENCH.SAV
+[net] got 1 713 024 bytes
+[net] GET E:\PS1\saves\CARD1.MCD -> D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\c5-backup\saves\CARD1.MCD
+[net] got 131 072 bytes
+[net] GET E:\PS1\saves\CARD2.MCD -> D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\c5-backup\saves\CARD2.MCD
+[net] got 131 072 bytes
+[net] pulled 3 file(s) from E:\PS1\saves\
+[net] done

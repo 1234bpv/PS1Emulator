@@ -1,0 +1,17 @@
+{
+  "name": "c5-resume-readback-saves_BENCH_SAV-a3",
+  "started": "2026-10-05T01:54:55.7232450+03:00",
+  "finished": "2026-10-05T01:55:55.7462692+03:00",
+  "limitSec": 60,
+  "timeout": true,
+  "exitCode": -1,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\restoration-client.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-GetFile",
+    "E:\\PS1\\saves\\BENCH.SAV",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\c5-final-verified\\saves\\BENCH.SAV"
+  ]
+}

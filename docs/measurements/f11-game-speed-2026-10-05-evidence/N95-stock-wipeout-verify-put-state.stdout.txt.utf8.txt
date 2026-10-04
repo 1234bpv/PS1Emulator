@@ -1,0 +1,9 @@
+[net] PUT D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\states\wipeout-start.sav -> E:\PS1\saves\bench.sav (1 679 244 bytes)
+[net] .. 262 144/1 679 244
+[net] .. 524 288/1 679 244
+[net] .. 786 432/1 679 244
+[net] .. 1 048 576/1 679 244
+[net] .. 1 310 720/1 679 244
+[net] .. 1 572 864/1 679 244
+[net] OK 1679244
+[net] done

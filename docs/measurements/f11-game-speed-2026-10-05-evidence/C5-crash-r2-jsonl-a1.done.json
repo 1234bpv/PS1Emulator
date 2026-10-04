@@ -1,0 +1,16 @@
+{
+  "name": "C5-crash-r2-jsonl-a1",
+  "started": "2026-10-05T01:25:44.8998909+03:00",
+  "finished": "2026-10-05T01:26:29.9251151+03:00",
+  "limitSec": 45,
+  "timeout": true,
+  "exitCode": -1,
+  "args": [
+    "-Com",
+    "COM12",
+    "-GetFile",
+    "E:\\PS1\\logs\\ps1_stage1.jsonl",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\C5-crash-r2-a1.jsonl"
+  ]
+}

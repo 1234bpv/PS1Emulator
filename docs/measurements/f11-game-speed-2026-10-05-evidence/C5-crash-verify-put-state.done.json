@@ -1,0 +1,16 @@
+{
+  "name": "C5-crash-verify-put-state",
+  "started": "2026-10-05T01:14:54.8496251+03:00",
+  "finished": "2026-10-05T01:16:54.8918384+03:00",
+  "limitSec": 120,
+  "timeout": true,
+  "exitCode": -1,
+  "args": [
+    "-Com",
+    "COM12",
+    "-PutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\states\\crash-start.sav",
+    "-Remote",
+    "E:\\PS1\\saves\\bench.sav"
+  ]
+}

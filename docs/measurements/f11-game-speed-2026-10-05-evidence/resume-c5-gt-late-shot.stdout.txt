@@ -1,0 +1,4 @@
+[net] serial COM12 @ 115200 baud
+[net] GET E:\tester\f11_gt_state_late.bmp -> D:\VsCodeProjects\SymbianProjects\PS1Emulator\.\plans\runs\2026-10-05_game-speed\resume-c5-gt-late.bmp
+[net] got 230ÿ454 bytes
+[net] done

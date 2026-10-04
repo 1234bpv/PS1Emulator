@@ -1,0 +1,13 @@
+{
+  "name": "resume-c5-after-restart",
+  "started": "2026-10-05T01:10:12.1073374+03:00",
+  "finished": "2026-10-05T01:10:16.1822396+03:00",
+  "limitSec": 30,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Com",
+    "COM12",
+    "-Info"
+  ]
+}

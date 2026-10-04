@@ -1,0 +1,14 @@
+{
+  "name": "resume-n95-daemon-restart",
+  "started": "2026-10-05T01:08:56.4356841+03:00",
+  "finished": "2026-10-05T01:08:57.5527172+03:00",
+  "limitSec": 20,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-Cmd",
+    "RESTART"
+  ]
+}

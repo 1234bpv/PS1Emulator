@@ -1,0 +1,10 @@
+[net] GET E:\PS1\saves\bench.sav -> D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\n95-backup\saves\bench.sav
+[net] got 2 196 642 bytes
+[net] GET E:\PS1\saves\card1.mcd -> D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\n95-backup\saves\card1.mcd
+[net] got 131 072 bytes
+[net] GET E:\PS1\saves\card2.mcd -> D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\n95-backup\saves\card2.mcd
+[net] got 131 072 bytes
+[net] GET E:\PS1\saves\Crash_Bandicoot__USA__slot1.sav -> D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\n95-backup\saves\Crash_Bandicoot__USA__slot1.sav
+[net] got 2 269 656 bytes
+[net] pulled 4 file(s) from E:\PS1\saves\
+[net] done

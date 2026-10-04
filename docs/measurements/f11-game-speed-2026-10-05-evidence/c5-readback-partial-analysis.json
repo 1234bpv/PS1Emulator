@@ -1,0 +1,8 @@
+{
+  "expectedBytes": 1713024,
+  "receivedBytes": 1708096,
+  "firstMismatch": 211920,
+  "matchingPrefixBytes": 211920,
+  "nextMatchingOffsetInOriginal": -1,
+  "alignmentShift": null
+}

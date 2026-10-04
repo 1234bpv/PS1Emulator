@@ -1,0 +1,16 @@
+{
+  "name": "C5-cast-nav2-shot02-a1",
+  "started": "2026-10-05T01:44:50.1284385+03:00",
+  "finished": "2026-10-05T01:44:52.3920604+03:00",
+  "limitSec": 45,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Com",
+    "COM12",
+    "-GetFile",
+    "E:\\tester\\cast-nav2-02.bmp",
+    "-OutFile",
+    "./plans/runs/2026-10-05_game-speed/C5-cast-nav2-02.bmp"
+  ]
+}

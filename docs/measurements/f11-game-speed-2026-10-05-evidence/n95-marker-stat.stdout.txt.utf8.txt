@@ -1,0 +1,3 @@
+[net] > STAT E:\PS1\logs\ps1_interp.txt
+[net] < ERR stat -1
+[net] done

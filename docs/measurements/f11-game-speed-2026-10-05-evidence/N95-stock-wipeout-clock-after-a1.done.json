@@ -1,0 +1,16 @@
+{
+  "name": "N95-stock-wipeout-clock-after-a1",
+  "started": "2026-10-05T01:42:32.5523571+03:00",
+  "finished": "2026-10-05T01:42:32.8678726+03:00",
+  "limitSec": 30,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-GetFile",
+    "E:\\ocprobe.log",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\N95-stock-wipeout-clock-after.log"
+  ]
+}

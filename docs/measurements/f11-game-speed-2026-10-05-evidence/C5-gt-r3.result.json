@@ -1,0 +1,18 @@
+{
+  "label": "C5-gt",
+  "repeat": 3,
+  "frames": 1200,
+  "ms": 34403,
+  "shownFrames": 601,
+  "shownFps": 17.469406737784496,
+  "ps1Fps": 34.880679010551404,
+  "speedPercent": 58.134465017585676,
+  "errors": 0,
+  "shutdown": "gui: frames=1200 ms=34403",
+  "pass": "drc: frames=1200 ms=34403 pc=80000080 cycle=733371181 vblanks=1208 fsAdvised=0",
+  "loaded": "Loaded CD Image: E:\\PS1\\games\\gt.pbp[+pbp] (406756372 bytes).\n",
+  "emuMs": null,
+  "shownMethod": "DSA direct FB pixB=4, stock fxaa=0, 240 rows per present",
+  "volume0ms": 1908,
+  "clockStartMs": 4675
+}

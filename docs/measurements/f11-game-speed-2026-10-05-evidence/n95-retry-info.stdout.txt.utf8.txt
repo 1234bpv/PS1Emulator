@@ -1,0 +1,12 @@
+[net] > INFO
+[net] < OK info
+[net] < protocol 2
+[net] < screen 320x240
+[net] < ramfree 89526272
+[net] < tick 100603471 startTick 62209 boot 0 by n
+[net] < ap Huawei
+[net] < drive C freekb 65752
+[net] < drive E freekb 1061024
+[net] < scriptlog E:\tester\s14s2.log
+[net] < script DONE 31
+[net] done

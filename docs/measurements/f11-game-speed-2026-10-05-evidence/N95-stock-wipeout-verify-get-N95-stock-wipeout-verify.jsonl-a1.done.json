@@ -1,0 +1,16 @@
+{
+  "name": "N95-stock-wipeout-verify-get-N95-stock-wipeout-verify.jsonl-a1",
+  "started": "2026-10-05T01:35:46.2646597+03:00",
+  "finished": "2026-10-05T01:35:48.1929486+03:00",
+  "limitSec": 45,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-GetFile",
+    "E:\\PS1\\logs\\ps1_stage1.jsonl",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\N95-stock-wipeout-verify.jsonl"
+  ]
+}

@@ -1,0 +1,9 @@
+[net] > STATUS
+[net] < OK RUNNING 5 -WAIT 231 180000
+[net] > CANCEL
+[net] < OK cancel
+[net] > STATUS
+[net] < OK RUNNING 5 -WAIT 231 180000
+[net] > PS ps1stage1
+[net] < OK ps 0
+[net] done

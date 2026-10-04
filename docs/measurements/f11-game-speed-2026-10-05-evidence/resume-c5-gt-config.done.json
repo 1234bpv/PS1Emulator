@@ -1,0 +1,16 @@
+{
+  "name": "resume-c5-gt-config",
+  "started": "2026-10-05T00:57:54.5903215+03:00",
+  "finished": "2026-10-05T00:57:58.1426096+03:00",
+  "limitSec": 30,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Com",
+    "COM12",
+    "-PutFile",
+    ".\\plans\\runs\\2026-10-05_game-speed\\stock-gt.txt",
+    "-Remote",
+    "E:\\PS1\\cfg\\ps1_settings.txt"
+  ]
+}

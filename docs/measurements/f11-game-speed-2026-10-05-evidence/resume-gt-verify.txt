@@ -1,0 +1,11 @@
+LOG verified UID foreground GT state smoke
+-START E:\sys\bin\ps1stage1.exe gui light blend dsa imggt.pbp loadstate1 frames20000 dumpat999999 limit60
+-WAITFG e0001002 20000
+FG
+-KEY star press 2 100
+SLEEP 3000
+-SHOT E:\tester\f11_gt_state.bmp
+-ENDAPP 0xE0001002
+SLEEP 2000
+-KILL ps1stage1
+PS ps1stage1

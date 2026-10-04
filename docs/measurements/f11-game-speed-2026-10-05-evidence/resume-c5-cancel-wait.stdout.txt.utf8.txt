@@ -1,0 +1,11 @@
+[net] serial COM12 @ 115200 baud
+[net] > STATUS
+[net] < OK RUNNING 5 -WAIT 4 180000
+[net] > CANCEL
+[net] < OK cancel
+[net] > STATUS
+[net] < OK RUNNING 5 -WAIT 4 180000
+[net] > PS ps1stage1
+[net] < OK ps 1
+[net] < 0 ps1stage1[e0001002]0001
+[net] done

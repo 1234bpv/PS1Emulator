@@ -1,0 +1,6 @@
+Первинні джерела/пошук рідних FPS (2026-10-05):
+GT 30: прямо у дорученні.
+Crash 30: Andy Gavin, автор рушія, інтерв'ю Ars War Stories https://arstechnica.com/video/watch/war-stories-how-crash-bandicoot-hacked-the-playstation-to-run/ (йдеться про зберігання animation vertices 30fps).
+WipEout 30: автор порту після читання коду PS1 https://phoboslab.org/log/2023/08/rewriting-wipeout (physics assumes30fps); Digital Foundry original frame test https://www.youtube.com/watch?v=FVk3Z7wK5AU .
+Cast60: TAS record https://tasvideos.org/497G (1293frames/21.550sec at60) — VBlank, не достатній доказ visibleFPS. Нативний порт60 https://velxio.dev/blog/posts/castlevania-sotn-on-esp32-s3/ — не замір PS1; не видавати його за оригінальне залізо.
+Для Colin,Colony,NFS,Rayman,RC,Trek,Warzone,Wing пошук зроблено, надійної числової частоти в первинних джерелах не встановлено. Відгуки про плавність/швидкість не задають FPS. Частоти емуляторів інших людей не є рідними FPS. PC/PSP/нові ремастери не PS1.

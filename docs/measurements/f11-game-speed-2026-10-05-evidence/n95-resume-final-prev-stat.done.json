@@ -1,0 +1,15 @@
+{
+  "name": "n95-resume-final-prev-stat",
+  "started": "2026-10-05T01:53:48.9738345+03:00",
+  "finished": "2026-10-05T01:53:49.4963486+03:00",
+  "limitSec": 20,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-Cmd",
+    "STAT E:\\PS1\\logs\\ps1_input_prev.rec"
+  ]
+}

@@ -1,0 +1,10 @@
+[net] serial COM12 @ 115200 baud
+[net] PUT D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\c5-backup\saves\BENCH.SAV -> E:\PS1\saves\BENCH.SAV (1 713 024 bytes)
+[net] .. 262 144/1 713 024
+[net] .. 524 288/1 713 024
+[net] .. 786 432/1 713 024
+[net] .. 1 048 576/1 713 024
+[net] .. 1 310 720/1 713 024
+[net] .. 1 572 864/1 713 024
+[net] OK 1713024
+[net] done

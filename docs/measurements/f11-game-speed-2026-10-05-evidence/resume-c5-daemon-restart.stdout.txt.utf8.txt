@@ -1,0 +1,3 @@
+[net] serial COM12 @ 115200 baud
+[net] > RESTART
+[net] < OK restart requested

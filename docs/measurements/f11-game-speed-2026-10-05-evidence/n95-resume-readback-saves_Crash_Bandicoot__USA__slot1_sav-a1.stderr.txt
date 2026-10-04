@@ -1,0 +1,8 @@
+daemon not responding at 192.168.3.22 (explicit -Ip, not scanning; use -Ip scan to search)
+D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\restoration-client.ps1:746 знак:13
++             throw "daemon not responding at $Ip (explicit -Ip, not sc ...
++             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : OperationStopped: (daemon not resp...scan to search):String) [], RuntimeException
+    + FullyQualifiedErrorId : daemon not responding at 192.168.3.22 (explicit -Ip, not scanning; use -Ip scan to searc 
+   h)
+ 

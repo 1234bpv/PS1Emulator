@@ -1,0 +1,17 @@
+{
+  "name": "n95-resume-readback-saves_Crash_Bandicoot__USA__slot1_sav-a1",
+  "started": "2026-10-05T01:52:10.3606904+03:00",
+  "finished": "2026-10-05T01:52:12.7154499+03:00",
+  "limitSec": 60,
+  "timeout": false,
+  "exitCode": 1,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\restoration-client.ps1",
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-GetFile",
+    "E:\\PS1\\saves\\Crash_Bandicoot__USA__slot1.sav",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\n95-final-verified\\saves\\Crash_Bandicoot__USA__slot1.sav"
+  ]
+}

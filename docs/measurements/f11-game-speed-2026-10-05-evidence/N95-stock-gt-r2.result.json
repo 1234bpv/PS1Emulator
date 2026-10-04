@@ -1,0 +1,18 @@
+{
+  "label": "N95-stock-gt",
+  "repeat": 2,
+  "frames": 1200,
+  "ms": 64568,
+  "shownFrames": 601,
+  "shownFps": 9.3080163548507,
+  "ps1Fps": 18.585057613678604,
+  "speedPercent": 30.975096022797672,
+  "errors": 0,
+  "shutdown": "gui: frames=1200 ms=64568",
+  "pass": "drc: frames=1200 ms=64568 pc=80000080 cycle=733371181 vblanks=1208 fsAdvised=0",
+  "loaded": "Loaded CD Image: E:\\PS1\\games\\gt.pbp[+pbp] (406756372 bytes).\n",
+  "emuMs": null,
+  "shownMethod": "DSA direct FB pixB=4, stock fxaa=0, 240 rows per present",
+  "volume0ms": 3681,
+  "clockStartMs": 7515
+}

@@ -1,0 +1,4 @@
+[net] serial COM12 @ 115200 baud
+[net] GET E:\PS1\saves\card1.mcd -> D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\c5-verified\saves\CARD1.MCD
+[net] got 131 072 bytes
+[net] done

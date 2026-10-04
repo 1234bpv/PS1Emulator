@@ -1,0 +1,18 @@
+{
+  "name": "resume-n95-gt-late",
+  "started": "2026-10-05T01:01:00.0368303+03:00",
+  "finished": "2026-10-05T01:01:46.9363290+03:00",
+  "limitSec": 130,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-Scenario",
+    ".\\plans\\runs\\2026-10-05_game-speed\\resume-gt-verify-late.txt",
+    "-ScenarioTimeoutSec",
+    "100",
+    "-OutFile",
+    ".\\plans\\runs\\2026-10-05_game-speed\\resume-n95-gt-late.log"
+  ]
+}

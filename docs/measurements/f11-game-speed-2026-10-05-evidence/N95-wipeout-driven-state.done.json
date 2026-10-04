@@ -1,0 +1,16 @@
+{
+  "name": "N95-wipeout-driven-state",
+  "started": "2026-10-05T01:27:26.5227428+03:00",
+  "finished": "2026-10-05T01:27:32.7282726+03:00",
+  "limitSec": 40,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-GetFile",
+    "E:\\PS1\\saves\\bench.sav",
+    "-OutFile",
+    ".\\plans\\runs\\2026-10-05_game-speed\\states\\wipeout-driven.sav"
+  ]
+}

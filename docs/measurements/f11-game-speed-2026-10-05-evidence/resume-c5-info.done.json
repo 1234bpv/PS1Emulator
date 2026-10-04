@@ -1,0 +1,13 @@
+{
+  "name": "resume-c5-info",
+  "started": "2026-10-05T00:55:23.4806512+03:00",
+  "finished": "2026-10-05T00:55:26.6008948+03:00",
+  "limitSec": 30,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Com",
+    "COM12",
+    "-Info"
+  ]
+}

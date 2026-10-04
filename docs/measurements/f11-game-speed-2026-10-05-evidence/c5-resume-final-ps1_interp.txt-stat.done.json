@@ -1,0 +1,15 @@
+{
+  "name": "c5-resume-final-ps1_interp.txt-stat",
+  "started": "2026-10-05T01:57:10.3551750+03:00",
+  "finished": "2026-10-05T01:57:16.5223267+03:00",
+  "limitSec": 20,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-Cmd",
+    "STAT E:\\PS1\\logs\\ps1_interp.txt"
+  ]
+}

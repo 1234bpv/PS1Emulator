@@ -1,0 +1,16 @@
+{
+  "name": "resume-n95-gt-put",
+  "started": "2026-10-05T00:58:38.5952928+03:00",
+  "finished": "2026-10-05T00:58:47.3185424+03:00",
+  "limitSec": 40,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-PutFile",
+    ".\\plans\\runs\\2026-10-05_game-speed\\c5-backup\\saves\\BENCH.SAV",
+    "-Remote",
+    "E:\\PS1\\saves\\bench.sav"
+  ]
+}

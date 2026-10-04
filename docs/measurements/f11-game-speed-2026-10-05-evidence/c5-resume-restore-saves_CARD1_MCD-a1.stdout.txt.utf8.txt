@@ -1,0 +1,4 @@
+[net] serial COM12 @ 115200 baud
+[net] PUT D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\c5-backup\saves\CARD1.MCD -> E:\PS1\saves\CARD1.MCD (131 072 bytes)
+[net] OK 131072
+[net] done

@@ -1,0 +1,4 @@
+[net] PUT D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\stock-gt.txt -> E:\PS1\cfg\ps1_settings.txt (434 bytes)
+[net] .. 434/434
+[net] OK 434
+[net] done

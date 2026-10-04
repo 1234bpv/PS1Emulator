@@ -1,0 +1,4 @@
+[net] serial COM12 @ 115200 baud
+[net] GET E:\tester\cast-nav1-06.bmp -> D:\VsCodeProjects\SymbianProjects\PS1Emulator\.\plans\runs\2026-10-05_game-speed\C5-cast-nav1-06.bmp
+[net] got 57ÿ654 bytes
+[net] done

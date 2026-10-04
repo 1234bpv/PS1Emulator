@@ -1,0 +1,17 @@
+{
+  "name": "c5-resume-restore-saves_CARD2_MCD-a1",
+  "started": "2026-10-05T01:52:32.6308745+03:00",
+  "finished": "2026-10-05T01:52:35.8292275+03:00",
+  "limitSec": 240,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\restoration-client.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-PutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\c5-backup\\saves\\CARD2.MCD",
+    "-Remote",
+    "E:\\PS1\\saves\\CARD2.MCD"
+  ]
+}

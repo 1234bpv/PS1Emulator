@@ -1,0 +1,4 @@
+[net] serial COM12 @ 115200 baud
+[net] GET E:\PS1\cfg\ps1_settings.txt -> D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\c5-final-verified\cfg\ps1_settings.txt
+[net] got 436 bytes
+[net] done

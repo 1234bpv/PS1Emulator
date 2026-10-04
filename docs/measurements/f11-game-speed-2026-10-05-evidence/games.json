@@ -1,0 +1,68 @@
+[
+  {
+    "key": "cast",
+    "image": "Castlevania - Symphony of the Night (USA.pbp",
+    "size": 398057383
+  },
+  {
+    "key": "colin",
+    "image": "Colin McRae Rally 2.0 (USA) (En,Fr,Es).pbp",
+    "size": 263206654
+  },
+  {
+    "key": "colony",
+    "image": "Colony Wars (USA) (Disc 1).pbp",
+    "size": 366364329
+  },
+  {
+    "key": "crash",
+    "image": "Crash Bandicoot (USA).pbp",
+    "size": 478407220,
+    "state": "crash-start.sav",
+    "frame": 4700
+  },
+  {
+    "key": "gt",
+    "image": "gt.pbp",
+    "size": 406756372,
+    "state": "gt-race.sav",
+    "frame": 7700
+  },
+  {
+    "key": "nfs",
+    "image": "Need for Speed - Porsche Unleashed (USA).pbp",
+    "size": 519772571
+  },
+  {
+    "key": "rayman",
+    "image": "Rayman (USA).pbp",
+    "size": 498135871
+  },
+  {
+    "key": "rc",
+    "image": "RC Helicopter (USA).pbp",
+    "size": 12839268
+  },
+  {
+    "key": "trek",
+    "image": "Star Trek - Invasion (USA).pbp",
+    "size": 310075072
+  },
+  {
+    "key": "warzone",
+    "image": "Warzone 2100 (USA).pbp",
+    "size": 414470047
+  },
+  {
+    "key": "wing",
+    "image": "Wing Commander III - Heart of the Tiger (USA) (Disc 1).pbp",
+    "size": 589288424
+  },
+  {
+    "key": "wipeout",
+    "image": "WipEout (USA).pbp",
+    "size": 450941663,
+    "state": "wipeout-driven2.sav",
+    "frame": 8500
+  }
+]

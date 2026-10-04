@@ -1,0 +1,26 @@
+[
+  {
+    "game": "gt",
+    "file": "gt-race.sav",
+    "loadFrame": 7700,
+    "bytes": 1713024,
+    "sha256": "8AA4F9A1ED7C5C280204126C22FE9BC3BDE33263F1828DE56BE893EA37162D13",
+    "status": "accepted gameplay state"
+  },
+  {
+    "game": "crash",
+    "file": "crash-start.sav",
+    "loadFrame": 4700,
+    "bytes": 2196642,
+    "sha256": "5FC5B6D32744A239016EDC7DDF65105923AC9222ED50C8356C457641AA17FCC6",
+    "status": "accepted gameplay state"
+  },
+  {
+    "game": "wipeout",
+    "file": "wipeout-driven2.sav",
+    "loadFrame": 8500,
+    "bytes": 1683839,
+    "sha256": "627E0B813E29E4C537E99A6FEB7BE2868D6EC9B20C4AE6928016506AD1AB998A",
+    "status": "accepted gameplay state"
+  }
+]

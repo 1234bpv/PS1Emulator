@@ -1,0 +1,16 @@
+{
+  "name": "resume-c5-gt-log",
+  "started": "2026-10-05T00:59:20.5116880+03:00",
+  "finished": "2026-10-05T00:59:23.2314441+03:00",
+  "limitSec": 40,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Com",
+    "COM12",
+    "-GetFile",
+    "E:\\PS1\\logs\\ps1_stage1.jsonl",
+    "-OutFile",
+    ".\\plans\\runs\\2026-10-05_game-speed\\resume-c5-gt.jsonl"
+  ]
+}

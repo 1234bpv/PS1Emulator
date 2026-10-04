@@ -1,0 +1,16 @@
+{
+  "name": "N95-stock-wipeout-verify-settings",
+  "started": "2026-10-05T01:34:58.7327882+03:00",
+  "finished": "2026-10-05T01:35:01.9094659+03:00",
+  "limitSec": 30,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-PutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\stock-wipeout.txt",
+    "-Remote",
+    "E:\\PS1\\cfg\\ps1_settings.txt"
+  ]
+}

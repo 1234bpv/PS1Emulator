@@ -1,0 +1,16 @@
+{
+  "name": "N95-stock-crash-verify-settings",
+  "started": "2026-10-05T01:14:56.2625305+03:00",
+  "finished": "2026-10-05T01:14:58.9806604+03:00",
+  "limitSec": 30,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-PutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\stock-crash.txt",
+    "-Remote",
+    "E:\\PS1\\cfg\\ps1_settings.txt"
+  ]
+}

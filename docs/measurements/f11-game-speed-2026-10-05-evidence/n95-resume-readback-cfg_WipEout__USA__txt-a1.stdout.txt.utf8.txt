@@ -1,0 +1,3 @@
+[net] GET E:\PS1\cfg\WipEout__USA_.txt -> D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\n95-final-verified\cfg\WipEout__USA_.txt
+[net] got 384 bytes
+[net] done

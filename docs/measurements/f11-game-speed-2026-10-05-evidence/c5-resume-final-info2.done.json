@@ -1,0 +1,15 @@
+{
+  "name": "c5-resume-final-info2",
+  "started": "2026-10-05T01:57:16.5257613+03:00",
+  "finished": "2026-10-05T01:57:22.7670487+03:00",
+  "limitSec": 25,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-Do",
+    "INFO; STATUS; PS ps1stage1; STAT E:\\PS1\\saves\\BENCH.SAV"
+  ]
+}

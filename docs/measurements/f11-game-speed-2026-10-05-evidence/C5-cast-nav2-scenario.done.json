@@ -1,0 +1,18 @@
+{
+  "name": "C5-cast-nav2-scenario",
+  "started": "2026-10-05T01:40:56.1543372+03:00",
+  "finished": "2026-10-05T01:44:08.1379937+03:00",
+  "limitSec": 330,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Com",
+    "COM12",
+    "-Scenario",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\C5-cast-nav2.txt",
+    "-ScenarioTimeoutSec",
+    "300",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\C5-cast-nav2.log"
+  ]
+}

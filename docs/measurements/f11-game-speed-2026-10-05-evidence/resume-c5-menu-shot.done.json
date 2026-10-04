@@ -1,0 +1,16 @@
+{
+  "name": "resume-c5-menu-shot",
+  "started": "2026-10-05T00:56:55.8150412+03:00",
+  "finished": "2026-10-05T00:57:03.4161893+03:00",
+  "limitSec": 60,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Com",
+    "COM12",
+    "-GetFile",
+    "E:\\tester\\f11_resume_menu.bmp",
+    "-OutFile",
+    ".\\plans\\runs\\2026-10-05_game-speed\\resume-c5-menu.bmp"
+  ]
+}

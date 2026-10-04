@@ -1,0 +1,4 @@
+[net] serial COM12 @ 115200 baud
+[net] GET E:\PS1\cfg\Rayman__USA_.txt -> D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\c5-final-verified\cfg\Rayman__USA_.txt
+[net] got 314 bytes
+[net] done

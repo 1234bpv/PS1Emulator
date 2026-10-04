@@ -1,0 +1,3 @@
+[net] > RESTART
+[net] < OK restart requested
+[net] done

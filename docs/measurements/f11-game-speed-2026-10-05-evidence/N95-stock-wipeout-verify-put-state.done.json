@@ -1,0 +1,16 @@
+{
+  "name": "N95-stock-wipeout-verify-put-state",
+  "started": "2026-10-05T01:23:48.5560512+03:00",
+  "finished": "2026-10-05T01:23:57.8291472+03:00",
+  "limitSec": 120,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-PutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\states\\wipeout-start.sav",
+    "-Remote",
+    "E:\\PS1\\saves\\bench.sav"
+  ]
+}

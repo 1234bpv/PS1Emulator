@@ -1,0 +1,16 @@
+{
+  "name": "resume-n95-gt-late-log",
+  "started": "2026-10-05T01:01:48.5986396+03:00",
+  "finished": "2026-10-05T01:01:52.6599919+03:00",
+  "limitSec": 20,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-GetFile",
+    "E:\\PS1\\logs\\ps1_stage1.jsonl",
+    "-OutFile",
+    ".\\plans\\runs\\2026-10-05_game-speed\\resume-n95-gt-late.jsonl"
+  ]
+}

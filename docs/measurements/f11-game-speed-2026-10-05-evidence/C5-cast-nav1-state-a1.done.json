@@ -1,0 +1,16 @@
+{
+  "name": "C5-cast-nav1-state-a1",
+  "started": "2026-10-05T01:37:51.0204896+03:00",
+  "finished": "2026-10-05T01:40:21.0500521+03:00",
+  "limitSec": 150,
+  "timeout": true,
+  "exitCode": -1,
+  "args": [
+    "-Com",
+    "COM12",
+    "-GetFile",
+    "E:\\PS1\\saves\\bench.sav",
+    "-OutFile",
+    "./plans/runs/2026-10-05_game-speed/states/cast-nav1.sav"
+  ]
+}

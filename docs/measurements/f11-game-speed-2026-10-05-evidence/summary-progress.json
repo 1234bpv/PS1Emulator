@@ -1,0 +1,52 @@
+[
+  {
+    "label": "C5-crash",
+    "runs": 3,
+    "medianMs": 37866,
+    "medianFps": 15.871758305603972,
+    "medianSpeed": 52.81783129984683,
+    "minFps": 15.832038144411369,
+    "maxFps": 15.88308359100399,
+    "errors": 0.0
+  },
+  {
+    "label": "C5-gt",
+    "runs": 3,
+    "medianMs": 34335,
+    "medianFps": 17.50400465996796,
+    "medianSpeed": 58.2495995340032,
+    "minFps": 17.469406737784496,
+    "maxFps": 17.507573992076438,
+    "errors": 0.0
+  },
+  {
+    "label": "N95-stock-crash",
+    "runs": 3,
+    "medianMs": 76178,
+    "medianFps": 7.889416892016068,
+    "medianSpeed": 26.254299141484417,
+    "minFps": 7.87587309491672,
+    "maxFps": 7.965540092776673,
+    "errors": 0.0
+  },
+  {
+    "label": "N95-stock-gt",
+    "runs": 3,
+    "medianMs": 65242,
+    "medianFps": 9.211857392477238,
+    "medianSpeed": 30.655099475797797,
+    "minFps": 9.195507818476697,
+    "maxFps": 9.3080163548507,
+    "errors": 0.0
+  },
+  {
+    "label": "N95-stock-wipeout",
+    "runs": 3,
+    "medianMs": 56895,
+    "medianFps": 10.545742156604271,
+    "medianSpeed": 35.15247385534757,
+    "minFps": 10.363947282054825,
+    "maxFps": 10.57250092509383,
+    "errors": 0.0
+  }
+]

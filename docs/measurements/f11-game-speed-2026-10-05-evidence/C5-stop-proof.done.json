@@ -1,0 +1,18 @@
+{
+  "name": "C5-stop-proof",
+  "started": "2026-10-05T01:49:22.0609112+03:00",
+  "finished": "2026-10-05T01:49:25.4153949+03:00",
+  "limitSec": 45,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Com",
+    "COM12",
+    "-Do",
+    "INFO; STATUS; PS ps1stage1; STAT E:\\PS1\\saves\\bench.sav",
+    "-GetFile",
+    "E:\\PS1\\logs\\ps1_input.rec",
+    "-OutFile",
+    "./plans/runs/2026-10-05_game-speed/C5-cast-nav2-input.rec"
+  ]
+}

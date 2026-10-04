@@ -1,0 +1,18 @@
+{
+  "name": "N95-stock-nfs-nav1-scenario",
+  "started": "2026-10-05T01:43:07.2403874+03:00",
+  "finished": "2026-10-05T01:47:13.9657287+03:00",
+  "limitSec": 330,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-Scenario",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\N95-stock-nfs-nav1.txt",
+    "-ScenarioTimeoutSec",
+    "300",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\N95-stock-nfs-nav1.log"
+  ]
+}

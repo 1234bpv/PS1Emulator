@@ -1,0 +1,16 @@
+{
+  "name": "N95-nfs-nav1-state-a1",
+  "started": "2026-10-05T01:49:27.7008134+03:00",
+  "finished": "2026-10-05T01:49:30.0551752+03:00",
+  "limitSec": 45,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-GetFile",
+    "E:\\PS1\\saves\\bench.sav",
+    "-OutFile",
+    "./plans/runs/2026-10-05_game-speed/states/nfs-nav1.sav"
+  ]
+}

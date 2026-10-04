@@ -1,0 +1,4 @@
+[net] serial COM12 @ 115200 baud
+[net] GET E:\sys\bin\ps1stage1.exe -> D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\c5-original.exe
+[net] got 1 345 764 bytes
+[net] done

@@ -1,0 +1,3 @@
+[net] > STAT E:\PS1\logs\ps1_input_prev.rec
+[net] < ERR stat -1
+[net] done
