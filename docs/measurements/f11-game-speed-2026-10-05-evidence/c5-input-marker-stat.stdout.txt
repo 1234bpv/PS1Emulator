@@ -1,0 +1,4 @@
+[net] serial COM12 @ 115200 baud
+[net] > STAT E:\PS1\logs\ps1_input.rec
+[net] < ERR stat -1
+[net] done

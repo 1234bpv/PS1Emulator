@@ -1,0 +1,16 @@
+{
+  "name": "n95-final-original-saves",
+  "started": "2026-10-05T00:39:11.1775851+03:00",
+  "finished": "2026-10-05T00:39:18.6072469+03:00",
+  "limitSec": 45,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-Pull",
+    "E:\\PS1\\saves",
+    "-PullTo",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\n95-verified\\saves"
+  ]
+}

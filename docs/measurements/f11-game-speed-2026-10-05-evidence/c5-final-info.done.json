@@ -1,0 +1,13 @@
+{
+  "name": "c5-final-info",
+  "started": "2026-10-05T00:47:34.4403099+03:00",
+  "finished": "2026-10-05T00:47:40.2094795+03:00",
+  "limitSec": 30,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Com",
+    "COM12",
+    "-Info"
+  ]
+}

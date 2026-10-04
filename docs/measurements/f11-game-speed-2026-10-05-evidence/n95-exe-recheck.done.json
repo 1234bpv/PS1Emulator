@@ -1,0 +1,16 @@
+{
+  "name": "n95-exe-recheck",
+  "started": "2026-10-05T00:23:28.6204868+03:00",
+  "finished": "2026-10-05T00:23:31.2443918+03:00",
+  "limitSec": 45,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-GetFile",
+    "E:\\sys\\bin\\ps1stage1.exe",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\n95-rechecked.exe"
+  ]
+}

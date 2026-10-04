@@ -7,7 +7,7 @@ function Invoke-BoundedNet {
     $stderr = Join-Path $script:RunRoot "$Name.stderr.txt"
     $marker = Join-Path $script:RunRoot "$Name.done.json"
     $argsList = @('-NoProfile','-ExecutionPolicy','Bypass','-File',$script:NetClient) + $NetArgs
-    $quoted = $argsList | ForEach-Object { '"' + $_.Replace('"','\"') + '"' }
+    $quoted = $argsList | ForEach-Object { '"' + [regex]::Replace([regex]::Replace($_, '(\\*)"', '$1$1\"'), '(\\+)$', '$1$1') + '"' }
     $started = Get-Date
     $p = Start-Process -FilePath powershell.exe -ArgumentList ($quoted -join ' ') -WindowStyle Hidden -PassThru -RedirectStandardOutput $stdout -RedirectStandardError $stderr
     $timeout = -not $p.WaitForExit($LimitSec * 1000)

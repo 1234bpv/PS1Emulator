@@ -1,0 +1,3 @@
+[net] > START E:\sys\bin\ocprobe.exe patcher engine
+[net] < OK proc 227
+[net] done

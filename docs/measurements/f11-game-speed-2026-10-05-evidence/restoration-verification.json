@@ -1,0 +1,258 @@
+[
+  {
+    "device": "c5",
+    "path": "cfg\\Castlevania___Symphony_of_the_Ni.txt",
+    "bytes": 314,
+    "originalSha256": "6B9DD6FFDCEC251CE39D9367D6A07CD95AA92ADCF202B5BB1883440BE99BCB55",
+    "readbackSha256": "6B9DD6FFDCEC251CE39D9367D6A07CD95AA92ADCF202B5BB1883440BE99BCB55",
+    "identical": true
+  },
+  {
+    "device": "c5",
+    "path": "cfg\\Colin_McRae_Rally_2_0__USA___En_.txt",
+    "bytes": 383,
+    "originalSha256": "8C54BFF6FF72F2BCEAB87CE184F527E990113379FA35C52056EBE37B65FC5BA8",
+    "readbackSha256": "8C54BFF6FF72F2BCEAB87CE184F527E990113379FA35C52056EBE37B65FC5BA8",
+    "identical": true
+  },
+  {
+    "device": "c5",
+    "path": "cfg\\Colony_Wars__USA___Disc_1_.txt",
+    "bytes": 314,
+    "originalSha256": "0F3E88F8C1E6983CB40DC528227F621072005E64F166BE3B735FB2564BEE3DED",
+    "readbackSha256": "0F3E88F8C1E6983CB40DC528227F621072005E64F166BE3B735FB2564BEE3DED",
+    "identical": true
+  },
+  {
+    "device": "c5",
+    "path": "cfg\\Gran_Turismo__USA___v1_1_.txt",
+    "bytes": 314,
+    "originalSha256": "828824F78FE3494CD127B633D24AD3A5668E91657F31A976D54050A47AB6B7B4",
+    "readbackSha256": "828824F78FE3494CD127B633D24AD3A5668E91657F31A976D54050A47AB6B7B4",
+    "identical": true
+  },
+  {
+    "device": "c5",
+    "path": "cfg\\gt.txt",
+    "bytes": 384,
+    "originalSha256": "84C62E3BF18579C6FE306BCFEE931510FA7C0EEB3067F9EA4E90AFC8E15CCC57",
+    "readbackSha256": "84C62E3BF18579C6FE306BCFEE931510FA7C0EEB3067F9EA4E90AFC8E15CCC57",
+    "identical": true
+  },
+  {
+    "device": "c5",
+    "path": "cfg\\Need_for_Speed___Porsche_Unleash.txt",
+    "bytes": 384,
+    "originalSha256": "BCCD3DB8080F134D90ABAB332DF0DBBD7B6915FD24963A2CAD38BC0C5834B9B4",
+    "readbackSha256": "BCCD3DB8080F134D90ABAB332DF0DBBD7B6915FD24963A2CAD38BC0C5834B9B4",
+    "identical": true
+  },
+  {
+    "device": "c5",
+    "path": "cfg\\ps1_settings.txt",
+    "bytes": 436,
+    "originalSha256": "33D064D95D778FD7B1FA4CCE3BB8671D80305B042015BDD1D82FD2F0243B5E9B",
+    "readbackSha256": "33D064D95D778FD7B1FA4CCE3BB8671D80305B042015BDD1D82FD2F0243B5E9B",
+    "identical": true
+  },
+  {
+    "device": "c5",
+    "path": "cfg\\Rayman__USA_.txt",
+    "bytes": 314,
+    "originalSha256": "D8A13EA57593BFBF8B1CD97D1E5BF5CB200B2F992671E84CE322BFB321AFD15A",
+    "readbackSha256": "D8A13EA57593BFBF8B1CD97D1E5BF5CB200B2F992671E84CE322BFB321AFD15A",
+    "identical": true
+  },
+  {
+    "device": "c5",
+    "path": "cfg\\RC_Helicopter__USA_.txt",
+    "bytes": 314,
+    "originalSha256": "A08984339CD0134227A6F45554747562E3C2FA9659EA4C988D09A3FA9B667061",
+    "readbackSha256": "A08984339CD0134227A6F45554747562E3C2FA9659EA4C988D09A3FA9B667061",
+    "identical": true
+  },
+  {
+    "device": "c5",
+    "path": "cfg\\Star_Trek___Invasion__USA_.txt",
+    "bytes": 314,
+    "originalSha256": "BF7B8F2639DA8BA9CA6152E9D9CDCB4FF57339B20E108EFDB2E88C8941F7F334",
+    "readbackSha256": "BF7B8F2639DA8BA9CA6152E9D9CDCB4FF57339B20E108EFDB2E88C8941F7F334",
+    "identical": true
+  },
+  {
+    "device": "c5",
+    "path": "cfg\\WipEout__USA_.txt",
+    "bytes": 384,
+    "originalSha256": "5C46EC3FF5A88E3BBA96534D4177D35B863DE4FEAAC1B56D35B95F64651A0B0D",
+    "readbackSha256": "5C46EC3FF5A88E3BBA96534D4177D35B863DE4FEAAC1B56D35B95F64651A0B0D",
+    "identical": true
+  },
+  {
+    "device": "c5",
+    "path": "saves\\BENCH.SAV",
+    "bytes": 1713024,
+    "originalSha256": "8AA4F9A1ED7C5C280204126C22FE9BC3BDE33263F1828DE56BE893EA37162D13",
+    "readbackSha256": "8AA4F9A1ED7C5C280204126C22FE9BC3BDE33263F1828DE56BE893EA37162D13",
+    "identical": true
+  },
+  {
+    "device": "c5",
+    "path": "saves\\CARD1.MCD",
+    "bytes": 131072,
+    "originalSha256": "645B2715088224B2D65375921F1C75C25C2A9618256AD6110E2FA93F968329E3",
+    "readbackSha256": "645B2715088224B2D65375921F1C75C25C2A9618256AD6110E2FA93F968329E3",
+    "identical": true
+  },
+  {
+    "device": "c5",
+    "path": "saves\\CARD2.MCD",
+    "bytes": 131072,
+    "originalSha256": "AC0DBCB89E54BCDDF7C698FB6FE52CB0CA71977DBA2D28E521D6ED556C7A11B5",
+    "readbackSha256": "AC0DBCB89E54BCDDF7C698FB6FE52CB0CA71977DBA2D28E521D6ED556C7A11B5",
+    "identical": true
+  },
+  {
+    "device": "n95",
+    "path": "ps1_input.rec",
+    "bytes": 475,
+    "originalSha256": "52E30D90AF01BE541287EE56970BD6ED89ABAF2C49B40EA26CEA558464056E18",
+    "readbackSha256": "52E30D90AF01BE541287EE56970BD6ED89ABAF2C49B40EA26CEA558464056E18",
+    "identical": true
+  },
+  {
+    "device": "n95",
+    "path": "cfg\\Castlevania___Symphony_of_the_Ni.txt",
+    "bytes": 314,
+    "originalSha256": "6B9DD6FFDCEC251CE39D9367D6A07CD95AA92ADCF202B5BB1883440BE99BCB55",
+    "readbackSha256": "6B9DD6FFDCEC251CE39D9367D6A07CD95AA92ADCF202B5BB1883440BE99BCB55",
+    "identical": true
+  },
+  {
+    "device": "n95",
+    "path": "cfg\\Colin_McRae_Rally_2_0__USA___En_.txt",
+    "bytes": 383,
+    "originalSha256": "8C54BFF6FF72F2BCEAB87CE184F527E990113379FA35C52056EBE37B65FC5BA8",
+    "readbackSha256": "8C54BFF6FF72F2BCEAB87CE184F527E990113379FA35C52056EBE37B65FC5BA8",
+    "identical": true
+  },
+  {
+    "device": "n95",
+    "path": "cfg\\Colony_Wars__USA___Disc_1_.txt",
+    "bytes": 314,
+    "originalSha256": "0F3E88F8C1E6983CB40DC528227F621072005E64F166BE3B735FB2564BEE3DED",
+    "readbackSha256": "0F3E88F8C1E6983CB40DC528227F621072005E64F166BE3B735FB2564BEE3DED",
+    "identical": true
+  },
+  {
+    "device": "n95",
+    "path": "cfg\\Crash_Bandicoot__USA_.txt",
+    "bytes": 391,
+    "originalSha256": "B67096DC102C91334968D9BF9272E299AB78BFEC7D7E3CC93142E42DE95F86DF",
+    "readbackSha256": "B67096DC102C91334968D9BF9272E299AB78BFEC7D7E3CC93142E42DE95F86DF",
+    "identical": true
+  },
+  {
+    "device": "n95",
+    "path": "cfg\\Gran_Turismo__USA___v1_1_.txt",
+    "bytes": 314,
+    "originalSha256": "828824F78FE3494CD127B633D24AD3A5668E91657F31A976D54050A47AB6B7B4",
+    "readbackSha256": "828824F78FE3494CD127B633D24AD3A5668E91657F31A976D54050A47AB6B7B4",
+    "identical": true
+  },
+  {
+    "device": "n95",
+    "path": "cfg\\gt.txt",
+    "bytes": 391,
+    "originalSha256": "1B406FC0BE08ABDE71900A69CA1D8876941BCDBE4E5D620E6855DCFAE2235393",
+    "readbackSha256": "1B406FC0BE08ABDE71900A69CA1D8876941BCDBE4E5D620E6855DCFAE2235393",
+    "identical": true
+  },
+  {
+    "device": "n95",
+    "path": "cfg\\Need_for_Speed___Porsche_Unleash.txt",
+    "bytes": 384,
+    "originalSha256": "E3020A54B606CEAF25BA4F43B6C890F9BB1DE473BA550FD363F05842D615A99B",
+    "readbackSha256": "E3020A54B606CEAF25BA4F43B6C890F9BB1DE473BA550FD363F05842D615A99B",
+    "identical": true
+  },
+  {
+    "device": "n95",
+    "path": "cfg\\ps1_settings.txt",
+    "bytes": 450,
+    "originalSha256": "8B7987103EDC2F9A26888A503E979261F9E93D58D1C024CA06C595420A667340",
+    "readbackSha256": "8B7987103EDC2F9A26888A503E979261F9E93D58D1C024CA06C595420A667340",
+    "identical": true
+  },
+  {
+    "device": "n95",
+    "path": "cfg\\Rayman__USA_.txt",
+    "bytes": 314,
+    "originalSha256": "D8A13EA57593BFBF8B1CD97D1E5BF5CB200B2F992671E84CE322BFB321AFD15A",
+    "readbackSha256": "D8A13EA57593BFBF8B1CD97D1E5BF5CB200B2F992671E84CE322BFB321AFD15A",
+    "identical": true
+  },
+  {
+    "device": "n95",
+    "path": "cfg\\RC_Helicopter__USA_.txt",
+    "bytes": 392,
+    "originalSha256": "C32716002AC260211E145FD25DAD3E4C651832F4213E729FDB30A59C4C1BC176",
+    "readbackSha256": "C32716002AC260211E145FD25DAD3E4C651832F4213E729FDB30A59C4C1BC176",
+    "identical": true
+  },
+  {
+    "device": "n95",
+    "path": "cfg\\Star_Trek___Invasion__USA_.txt",
+    "bytes": 314,
+    "originalSha256": "BF7B8F2639DA8BA9CA6152E9D9CDCB4FF57339B20E108EFDB2E88C8941F7F334",
+    "readbackSha256": "BF7B8F2639DA8BA9CA6152E9D9CDCB4FF57339B20E108EFDB2E88C8941F7F334",
+    "identical": true
+  },
+  {
+    "device": "n95",
+    "path": "cfg\\Warzone_2100__USA_.txt",
+    "bytes": 392,
+    "originalSha256": "D948C27D362CB3355143677C0B4FB982B2ADDA52A991242500210207FBD37DDE",
+    "readbackSha256": "D948C27D362CB3355143677C0B4FB982B2ADDA52A991242500210207FBD37DDE",
+    "identical": true
+  },
+  {
+    "device": "n95",
+    "path": "cfg\\WipEout__USA_.txt",
+    "bytes": 384,
+    "originalSha256": "5C46EC3FF5A88E3BBA96534D4177D35B863DE4FEAAC1B56D35B95F64651A0B0D",
+    "readbackSha256": "5C46EC3FF5A88E3BBA96534D4177D35B863DE4FEAAC1B56D35B95F64651A0B0D",
+    "identical": true
+  },
+  {
+    "device": "n95",
+    "path": "saves\\bench.sav",
+    "bytes": 2196642,
+    "originalSha256": "5FC5B6D32744A239016EDC7DDF65105923AC9222ED50C8356C457641AA17FCC6",
+    "readbackSha256": "5FC5B6D32744A239016EDC7DDF65105923AC9222ED50C8356C457641AA17FCC6",
+    "identical": true
+  },
+  {
+    "device": "n95",
+    "path": "saves\\card1.mcd",
+    "bytes": 131072,
+    "originalSha256": "645B2715088224B2D65375921F1C75C25C2A9618256AD6110E2FA93F968329E3",
+    "readbackSha256": "645B2715088224B2D65375921F1C75C25C2A9618256AD6110E2FA93F968329E3",
+    "identical": true
+  },
+  {
+    "device": "n95",
+    "path": "saves\\card2.mcd",
+    "bytes": 131072,
+    "originalSha256": "AC0DBCB89E54BCDDF7C698FB6FE52CB0CA71977DBA2D28E521D6ED556C7A11B5",
+    "readbackSha256": "AC0DBCB89E54BCDDF7C698FB6FE52CB0CA71977DBA2D28E521D6ED556C7A11B5",
+    "identical": true
+  },
+  {
+    "device": "n95",
+    "path": "saves\\Crash_Bandicoot__USA__slot1.sav",
+    "bytes": 2269656,
+    "originalSha256": "E7EBCD627C3FF55FB21A3AFB6BA7DFCF097B1601E11B44E4DDC249F252A135CF",
+    "readbackSha256": "E7EBCD627C3FF55FB21A3AFB6BA7DFCF097B1601E11B44E4DDC249F252A135CF",
+    "identical": true
+  }
+]

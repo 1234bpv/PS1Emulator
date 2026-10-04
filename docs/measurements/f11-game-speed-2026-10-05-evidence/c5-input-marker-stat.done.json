@@ -1,0 +1,14 @@
+{
+  "name": "c5-input-marker-stat",
+  "started": "2026-10-05T00:28:21.2430592+03:00",
+  "finished": "2026-10-05T00:28:22.2132575+03:00",
+  "limitSec": 30,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Com",
+    "COM12",
+    "-Cmd",
+    "STAT E:\\PS1\\logs\\ps1_input.rec"
+  ]
+}

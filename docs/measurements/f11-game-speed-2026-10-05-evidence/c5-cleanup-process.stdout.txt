@@ -1,0 +1,12 @@
+[net] serial COM12 @ 115200 baud
+[net] > PS ps1stage1
+[net] < OK ps 1
+[net] < 0 ps1stage1[e0001002]0001
+[net] > KILL ps1stage1
+[net] < OK kill 0 matched 1
+[net] > PS ps1stage1
+[net] < OK ps 1
+[net] < 0 ps1stage1[e0001002]0001
+[net] GET E:\PS1\logs\ps1_stage1.jsonl -> D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\c5-cast-cleanup.jsonl
+[net] got 14ÿ432 bytes
+[net] done

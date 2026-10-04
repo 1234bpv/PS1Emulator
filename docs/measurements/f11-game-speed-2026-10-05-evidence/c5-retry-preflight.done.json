@@ -1,0 +1,14 @@
+{
+  "name": "c5-retry-preflight",
+  "started": "2026-10-05T00:23:27.6311592+03:00",
+  "finished": "2026-10-05T00:23:30.1736172+03:00",
+  "limitSec": 45,
+  "timeout": false,
+  "exitCode": 1,
+  "args": [
+    "-Com",
+    "COM12",
+    "-Do",
+    "PS ps1stage1; STAT E:\\sys\\bin\\ps1stage1.exe; STAT C:\\sys\\hash\\ps1stage1.exe; LS E:\\PS1\\games\\; LS E:\\PS1\\cfg\\; LS E:\\PS1\\saves\\"
+  ]
+}

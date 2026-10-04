@@ -1,0 +1,16 @@
+{
+  "name": "n95-backup-input",
+  "started": "2026-10-05T00:26:44.6726942+03:00",
+  "finished": "2026-10-05T00:26:45.0980219+03:00",
+  "limitSec": 30,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-GetFile",
+    "E:\\PS1\\logs\\ps1_input.rec",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\n95-backup\\ps1_input.rec"
+  ]
+}

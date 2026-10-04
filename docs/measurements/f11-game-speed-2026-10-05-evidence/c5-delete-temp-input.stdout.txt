@@ -1,0 +1,6 @@
+[net] serial COM12 @ 115200 baud
+[net] > DEL E:\PS1\logs\ps1_input.rec
+[net] < OK 0
+[net] > DEL E:\PS1\logs\ps1_input_prev.rec
+[net] < ERR delete -1
+[net] done

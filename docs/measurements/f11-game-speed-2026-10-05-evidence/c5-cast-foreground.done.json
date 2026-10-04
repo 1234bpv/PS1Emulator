@@ -1,0 +1,18 @@
+{
+  "name": "c5-cast-foreground",
+  "started": "2026-10-05T00:33:38.9904451+03:00",
+  "finished": "2026-10-05T00:34:24.1487958+03:00",
+  "limitSec": 45,
+  "timeout": true,
+  "exitCode": -1,
+  "args": [
+    "-Com",
+    "COM12",
+    "-Do",
+    "APP 0xe0001002; WAITFG e0001002 10000",
+    "-Shot",
+    "E:\\tester\\f11-cast1.bmp",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\c5-cast1.bmp"
+  ]
+}

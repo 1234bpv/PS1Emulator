@@ -1,0 +1,14 @@
+{
+  "name": "c5-recovery-kill",
+  "started": "2026-10-05T00:36:33.1552281+03:00",
+  "finished": "2026-10-05T00:37:10.5360773+03:00",
+  "limitSec": 30,
+  "timeout": true,
+  "exitCode": -1,
+  "args": [
+    "-Com",
+    "COM12",
+    "-Cmd",
+    "KILL 1"
+  ]
+}

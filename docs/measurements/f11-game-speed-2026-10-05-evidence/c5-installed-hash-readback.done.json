@@ -1,0 +1,16 @@
+{
+  "name": "c5-installed-hash-readback",
+  "started": "2026-10-05T00:27:33.6833554+03:00",
+  "finished": "2026-10-05T00:27:36.4976580+03:00",
+  "limitSec": 30,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Com",
+    "COM12",
+    "-GetFile",
+    "C:\\sys\\hash\\ps1stage1.exe",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\c5-installed.sha1"
+  ]
+}

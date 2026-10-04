@@ -1,0 +1,16 @@
+{
+  "name": "n95-backup-cfg",
+  "started": "2026-10-05T00:26:36.1339420+03:00",
+  "finished": "2026-10-05T00:26:37.6174426+03:00",
+  "limitSec": 45,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-Pull",
+    "E:\\PS1\\cfg",
+    "-PullTo",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\n95-backup\\cfg"
+  ]
+}

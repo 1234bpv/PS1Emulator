@@ -1,0 +1,4 @@
+[net] serial COM12 @ 115200 baud
+[net] > START E:\sys\bin\ps1stage1.exe gui rec light blend dsa frames10001 savestate10000 dump999999 limit300000
+[net] < OK proc 1
+[net] done

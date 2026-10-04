@@ -1,0 +1,14 @@
+{
+  "name": "n95-clock-read-start",
+  "started": "2026-10-05T00:24:01.2896865+03:00",
+  "finished": "2026-10-05T00:24:02.3546386+03:00",
+  "limitSec": 30,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-Start",
+    "E:\\sys\\bin\\ocprobe.exe patcher engine"
+  ]
+}

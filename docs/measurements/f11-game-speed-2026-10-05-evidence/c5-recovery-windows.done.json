@@ -1,0 +1,18 @@
+{
+  "name": "c5-recovery-windows",
+  "started": "2026-10-05T00:35:21.5717374+03:00",
+  "finished": "2026-10-05T00:36:06.6629518+03:00",
+  "limitSec": 45,
+  "timeout": true,
+  "exitCode": -1,
+  "args": [
+    "-Com",
+    "COM12",
+    "-Do",
+    "WG; FG; PS ps1stage1",
+    "-GetFile",
+    "E:\\PS1\\logs\\ps1_stage1.jsonl",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\c5-cast-after-app.jsonl"
+  ]
+}

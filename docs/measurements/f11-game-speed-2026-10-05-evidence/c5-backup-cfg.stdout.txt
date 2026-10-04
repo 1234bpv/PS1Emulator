@@ -1,0 +1,25 @@
+[net] serial COM12 @ 115200 baud
+[net] GET E:\PS1\cfg\Castlevania___Symphony_of_the_Ni.txt -> D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\c5-backup\cfg\Castlevania___Symphony_of_the_Ni.txt
+[net] got 314 bytes
+[net] GET E:\PS1\cfg\Colin_McRae_Rally_2_0__USA___En_.txt -> D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\c5-backup\cfg\Colin_McRae_Rally_2_0__USA___En_.txt
+[net] got 383 bytes
+[net] GET E:\PS1\cfg\Colony_Wars__USA___Disc_1_.txt -> D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\c5-backup\cfg\Colony_Wars__USA___Disc_1_.txt
+[net] got 314 bytes
+[net] GET E:\PS1\cfg\Gran_Turismo__USA___v1_1_.txt -> D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\c5-backup\cfg\Gran_Turismo__USA___v1_1_.txt
+[net] got 314 bytes
+[net] GET E:\PS1\cfg\gt.txt -> D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\c5-backup\cfg\gt.txt
+[net] got 384 bytes
+[net] GET E:\PS1\cfg\Need_for_Speed___Porsche_Unleash.txt -> D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\c5-backup\cfg\Need_for_Speed___Porsche_Unleash.txt
+[net] got 384 bytes
+[net] GET E:\PS1\cfg\ps1_settings.txt -> D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\c5-backup\cfg\ps1_settings.txt
+[net] got 436 bytes
+[net] GET E:\PS1\cfg\Rayman__USA_.txt -> D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\c5-backup\cfg\Rayman__USA_.txt
+[net] got 314 bytes
+[net] GET E:\PS1\cfg\RC_Helicopter__USA_.txt -> D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\c5-backup\cfg\RC_Helicopter__USA_.txt
+[net] got 314 bytes
+[net] GET E:\PS1\cfg\Star_Trek___Invasion__USA_.txt -> D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\c5-backup\cfg\Star_Trek___Invasion__USA_.txt
+[net] got 314 bytes
+[net] GET E:\PS1\cfg\WipEout__USA_.txt -> D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\c5-backup\cfg\WipEout__USA_.txt
+[net] got 384 bytes
+[net] pulled 11 file(s) from E:\PS1\cfg\
+[net] done

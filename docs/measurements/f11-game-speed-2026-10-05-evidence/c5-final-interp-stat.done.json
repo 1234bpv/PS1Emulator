@@ -1,0 +1,14 @@
+{
+  "name": "c5-final-interp-stat",
+  "started": "2026-10-05T00:47:32.9191031+03:00",
+  "finished": "2026-10-05T00:47:34.4312311+03:00",
+  "limitSec": 30,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Com",
+    "COM12",
+    "-Cmd",
+    "STAT E:\\PS1\\logs\\ps1_interp.txt"
+  ]
+}

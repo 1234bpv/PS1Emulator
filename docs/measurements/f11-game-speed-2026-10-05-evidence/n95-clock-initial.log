@@ -1,0 +1,9 @@
+== ocprobe: DVFS probe, read-only ==
+UPTIME: 100638 s (1677 min) - ntick=100638008
+fast counter: 32768 Hz
+--- HAL ---
+ECPUSpeed(kHz) = 206438
+EFastCounterFreq(Hz) = 32768
+ENanoTickPeriod(us) = 1000
+ESystemTickPeriod = 15625
+ECPU = 0

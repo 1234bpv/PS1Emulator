@@ -1,0 +1,16 @@
+{
+  "name": "c5-backup-saves",
+  "started": "2026-10-05T00:27:38.3413383+03:00",
+  "finished": "2026-10-05T00:28:21.2362634+03:00",
+  "limitSec": 90,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Com",
+    "COM12",
+    "-Pull",
+    "E:\\PS1\\saves",
+    "-PullTo",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\c5-backup\\saves"
+  ]
+}

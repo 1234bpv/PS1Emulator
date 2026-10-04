@@ -1,0 +1,16 @@
+{
+  "name": "n95-clock-read-get",
+  "started": "2026-10-05T00:24:02.3835686+03:00",
+  "finished": "2026-10-05T00:24:03.3215281+03:00",
+  "limitSec": 30,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-GetFile",
+    "E:\\ocprobe.log",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\n95-clock-initial.log"
+  ]
+}

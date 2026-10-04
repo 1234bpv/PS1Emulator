@@ -1,0 +1,20 @@
+{
+  "name": "c5-rel13-smoke",
+  "started": "2026-10-05T00:29:07.6783250+03:00",
+  "finished": "2026-10-05T00:29:21.9141895+03:00",
+  "limitSec": 45,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Com",
+    "COM12",
+    "-Run",
+    "E:\\sys\\bin\\ps1stage1.exe gui frames30 dsa light blend imggt.pbp",
+    "-RunTimeoutSec",
+    "30",
+    "-GetFile",
+    "E:\\PS1\\logs\\ps1_stage1.jsonl",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\c5-rel13-smoke.jsonl"
+  ]
+}

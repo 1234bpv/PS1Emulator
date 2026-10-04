@@ -1,0 +1,16 @@
+{
+  "name": "c5-restored-settings-get",
+  "started": "2026-10-05T00:37:13.6517478+03:00",
+  "finished": "2026-10-05T00:37:15.9167693+03:00",
+  "limitSec": 30,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Com",
+    "COM12",
+    "-GetFile",
+    "E:\\PS1\\cfg\\ps1_settings.txt",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\c5-restored-settings.txt"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "name": "c5-restore-settings",
+  "started": "2026-10-05T00:37:12.1685873+03:00",
+  "finished": "2026-10-05T00:37:13.6417507+03:00",
+  "limitSec": 30,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Com",
+    "COM12",
+    "-PutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\c5-backup\\cfg\\ps1_settings.txt",
+    "-Remote",
+    "E:\\PS1\\cfg\\ps1_settings.txt"
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "name": "c5-cast-start",
+  "started": "2026-10-05T00:31:57.3298314+03:00",
+  "finished": "2026-10-05T00:31:59.3594058+03:00",
+  "limitSec": 30,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Com",
+    "COM12",
+    "-Start",
+    "E:\\sys\\bin\\ps1stage1.exe gui rec light blend dsa frames10001 savestate10000 dump999999 limit300000"
+  ]
+}

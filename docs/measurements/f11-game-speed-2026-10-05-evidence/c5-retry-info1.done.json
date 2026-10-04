@@ -1,0 +1,13 @@
+{
+  "name": "c5-retry-info1",
+  "started": "2026-10-05T00:23:04.1908239+03:00",
+  "finished": "2026-10-05T00:23:06.7902224+03:00",
+  "limitSec": 30,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Com",
+    "COM12",
+    "-Info"
+  ]
+}

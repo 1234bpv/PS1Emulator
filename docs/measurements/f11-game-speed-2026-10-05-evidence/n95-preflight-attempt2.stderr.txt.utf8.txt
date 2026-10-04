@@ -5,4 +5,3 @@ D:\VsCodeProjects\SymbianProjects\SymbianDeployDaemon\tools\deploy_net.ps1:835 Ð
     + CategoryInfo          : OperationStopped: (-Do sequence fa...pped step above:String) [], RuntimeException
     + FullyQualifiedErrorId : -Do sequence failed - see the stopped step above
  
-

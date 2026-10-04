@@ -1,0 +1,16 @@
+{
+  "name": "c5-restore-bench",
+  "started": "2026-10-05T00:38:04.6065093+03:00",
+  "finished": "2026-10-05T00:39:48.3075967+03:00",
+  "limitSec": 120,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Com",
+    "COM12",
+    "-PutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\c5-backup\\saves\\BENCH.SAV",
+    "-Remote",
+    "E:\\PS1\\saves\\bench.sav"
+  ]
+}

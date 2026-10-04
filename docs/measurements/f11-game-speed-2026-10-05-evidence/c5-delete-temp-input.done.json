@@ -1,0 +1,14 @@
+{
+  "name": "c5-delete-temp-input",
+  "started": "2026-10-05T00:41:18.3813896+03:00",
+  "finished": "2026-10-05T00:41:21.5388111+03:00",
+  "limitSec": 30,
+  "timeout": false,
+  "exitCode": 0,
+  "args": [
+    "-Com",
+    "COM12",
+    "-DelFile",
+    "E:\\PS1\\logs\\ps1_input.rec,E:\\PS1\\logs\\ps1_input_prev.rec"
+  ]
+}

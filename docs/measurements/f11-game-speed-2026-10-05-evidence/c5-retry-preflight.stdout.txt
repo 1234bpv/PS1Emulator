@@ -1,0 +1,37 @@
+[net] serial COM12 @ 115200 baud
+[net] > PS ps1stage1
+[net] < OK ps 0
+[net] > STAT E:\sys\bin\ps1stage1.exe
+[net] < OK stat 1345764 F 2026-08-27 17:49:52
+[net] > STAT C:\sys\hash\ps1stage1.exe
+[net] < OK stat 20 F 2026-08-27 17:49:52
+[net] > LS E:\PS1\games\
+[net] < OK ls 12
+[net] < F 398057383 Castlevania - Symphony of the Night (USA.pbp
+[net] < F 263206654 Colin McRae Rally 2.0 (USA) (En,Fr,Es).pbp
+[net] < F 366364329 Colony Wars (USA) (Disc 1).pbp
+[net] < F 478407220 Crash Bandicoot (USA).pbp
+[net] < F 406756372 GT.PBP
+[net] < F 519772571 Need for Speed - Porsche Unleashed (USA).pbp
+[net] < F 498135871 Rayman (USA).pbp
+[net] < F 12839268 RC Helicopter (USA).pbp
+[net] < F 310075072 Star Trek - Invasion (USA).pbp
+[net] < F 414470047 Warzone 2100 (USA).pbp
+[net] < F 589288424 Wing Commander III - Heart of the Tiger (USA) (Disc 1).pbp
+[net] < F 450941663 WipEout (USA).pbp
+[net] > LS E:\PS1\cfg\
+[net] < OK ls 11
+[net] < F 314 Castlevania___Symphony_of_the_Ni.txt
+[net] < F 383 Colin_McRae_Rally_2_0__USA___En_.txt
+[net] < F 314 Colony_Wars__USA___Disc_1_.txt
+[net] < F 314 Gran_Turismo__USA___v1_1_.txt
+[net] < F 384 gt.txt
+[net] < F 384 Need_for_Speed___Porsche_Unleash.txt
+[net] < F 436 ps1_settings.txt
+[net] < F 314 Rayman__USA_.txt
+[net] < F 314 RC_Helicopter__USA_.txt
+[net] < F 314 Star_Trek___Invasion__USA_.txt
+[net] < F 384 WipEout__USA_.txt
+[net] > LS E:\PS1\saves"
+[net] < ERR dir -28
+…„“…†„…ˆ…: [net] -Do stopped at step 6/6 'LS E:\PS1\saves"': ERR dir -28
