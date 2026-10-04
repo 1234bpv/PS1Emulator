@@ -7,7 +7,7 @@
 ; icon from ps1stage1.rsc, so the phone needs the current one (run.ps1 -Resources).
 &EN
 
-#{"PS1Emulator alpha 1.2"},(0xE0001002),1,2,0
+#{"PS1Emulator alpha 1.3"},(0xE0001002),1,3,0
 
 %{"PS1Emulator"}
 :"PS1Emulator"
