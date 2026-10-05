@@ -1,5 +1,5 @@
 {
-  "verifiedAt": "2026-10-05T22:22:21.0493852+03:00",
+  "verifiedAt": "2026-10-05T22:26:08.4762514+03:00",
   "acceptedResultFiles": 72,
   "completedTriples": 24,
   "canonicalStateHashes": [
@@ -128,8 +128,13 @@
       "shot": "C5-clean-retry4-wing-verify.png"
     }
   ],
-  "copiedFiles": 4502,
+  "copiedFiles": 4504,
   "copies": [
+    {
+      "path": "audit-completion-current.ps1",
+      "bytes": 5621,
+      "sha256": "BCF9207F9389DF5C24A51739CE9BDB16F3EBD7387E634956CEC861FCEA8E39C7"
+    },
     {
       "path": "audit-final.ps1",
       "bytes": 7257,
@@ -9841,6 +9846,11 @@
       "sha256": "7682C394E80E8E2240767E3DD8238DE75A02852266D87F994EB4C4788501A07C"
     },
     {
+      "path": "completion-audit-current.json",
+      "bytes": 16644,
+      "sha256": "1CAC438DAB9746DF93FB9EF77575923F6CC2164A6A018E8B342E58B577339CBC"
+    },
+    {
       "path": "continue2-c5-bench-buffered.sav.transfer.json",
       "bytes": 274,
       "sha256": "A85ACEB3A0EF2A5DD66CBFC86C906903D8E4EEA1348D5A39C90B2A76E5321692"
@@ -10108,7 +10118,7 @@
     {
       "path": "current-run-audit.json",
       "bytes": 22276,
-      "sha256": "FB46A57D431F24C41C9F30BE26433F96A8FF4247958B1170A0259F8E6E98A6D6"
+      "sha256": "D485166D2D5091BA4A661B05B02DBCFCDA5264E739D66ABAE9F3DF8364098E24"
     },
     {
       "path": "deploy_net-rfcomm.ps1",
@@ -22118,7 +22128,7 @@
     {
       "path": "summary-progress.json",
       "bytes": 28315,
-      "sha256": "3C110AC98C154879BCFA574499815EB51D57C20693ED1897EE8F6618BF11924A"
+      "sha256": "3EB202E0CA10BDB12924DDC5FEEBE684D1FDE4AAC61DB4FEA5F39E548C66A0C8"
     },
     {
       "path": "trek-nav1-recipe.txt",

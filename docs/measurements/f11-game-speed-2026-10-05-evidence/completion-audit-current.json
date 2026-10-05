@@ -1,0 +1,491 @@
+{
+  "verifiedAt": "2026-10-05T22:25:25.4738263+03:00",
+  "complete": false,
+  "acceptedRuns": 72,
+  "canonicalStates": 12,
+  "stockClockChecks": 24,
+  "restoredReadbacks": [
+    {
+      "path": "cfg\\Castlevania___Symphony_of_the_Ni.txt",
+      "sha256": "6B9DD6FFDCEC251CE39D9367D6A07CD95AA92ADCF202B5BB1883440BE99BCB55",
+      "device": "c5"
+    },
+    {
+      "path": "cfg\\Colin_McRae_Rally_2_0__USA___En_.txt",
+      "sha256": "8C54BFF6FF72F2BCEAB87CE184F527E990113379FA35C52056EBE37B65FC5BA8",
+      "device": "c5"
+    },
+    {
+      "path": "cfg\\Colony_Wars__USA___Disc_1_.txt",
+      "sha256": "0F3E88F8C1E6983CB40DC528227F621072005E64F166BE3B735FB2564BEE3DED",
+      "device": "c5"
+    },
+    {
+      "path": "cfg\\Gran_Turismo__USA___v1_1_.txt",
+      "sha256": "828824F78FE3494CD127B633D24AD3A5668E91657F31A976D54050A47AB6B7B4",
+      "device": "c5"
+    },
+    {
+      "path": "cfg\\gt.txt",
+      "sha256": "84C62E3BF18579C6FE306BCFEE931510FA7C0EEB3067F9EA4E90AFC8E15CCC57",
+      "device": "c5"
+    },
+    {
+      "path": "cfg\\Need_for_Speed___Porsche_Unleash.txt",
+      "sha256": "BCCD3DB8080F134D90ABAB332DF0DBBD7B6915FD24963A2CAD38BC0C5834B9B4",
+      "device": "c5"
+    },
+    {
+      "path": "cfg\\ps1_settings.txt",
+      "sha256": "33D064D95D778FD7B1FA4CCE3BB8671D80305B042015BDD1D82FD2F0243B5E9B",
+      "device": "c5"
+    },
+    {
+      "path": "cfg\\Rayman__USA_.txt",
+      "sha256": "D8A13EA57593BFBF8B1CD97D1E5BF5CB200B2F992671E84CE322BFB321AFD15A",
+      "device": "c5"
+    },
+    {
+      "path": "cfg\\RC_Helicopter__USA_.txt",
+      "sha256": "A08984339CD0134227A6F45554747562E3C2FA9659EA4C988D09A3FA9B667061",
+      "device": "c5"
+    },
+    {
+      "path": "cfg\\Star_Trek___Invasion__USA_.txt",
+      "sha256": "BF7B8F2639DA8BA9CA6152E9D9CDCB4FF57339B20E108EFDB2E88C8941F7F334",
+      "device": "c5"
+    },
+    {
+      "path": "cfg\\WipEout__USA_.txt",
+      "sha256": "5C46EC3FF5A88E3BBA96534D4177D35B863DE4FEAAC1B56D35B95F64651A0B0D",
+      "device": "c5"
+    },
+    {
+      "path": "saves\\BENCH.SAV",
+      "sha256": "8AA4F9A1ED7C5C280204126C22FE9BC3BDE33263F1828DE56BE893EA37162D13",
+      "device": "c5"
+    },
+    {
+      "path": "saves\\CARD1.MCD",
+      "sha256": "645B2715088224B2D65375921F1C75C25C2A9618256AD6110E2FA93F968329E3",
+      "device": "c5"
+    },
+    {
+      "path": "saves\\CARD2.MCD",
+      "sha256": "AC0DBCB89E54BCDDF7C698FB6FE52CB0CA71977DBA2D28E521D6ED556C7A11B5",
+      "device": "c5"
+    },
+    {
+      "path": "ps1_input.rec",
+      "sha256": "52E30D90AF01BE541287EE56970BD6ED89ABAF2C49B40EA26CEA558464056E18",
+      "device": "n95"
+    },
+    {
+      "path": "cfg\\Castlevania___Symphony_of_the_Ni.txt",
+      "sha256": "6B9DD6FFDCEC251CE39D9367D6A07CD95AA92ADCF202B5BB1883440BE99BCB55",
+      "device": "n95"
+    },
+    {
+      "path": "cfg\\Colin_McRae_Rally_2_0__USA___En_.txt",
+      "sha256": "8C54BFF6FF72F2BCEAB87CE184F527E990113379FA35C52056EBE37B65FC5BA8",
+      "device": "n95"
+    },
+    {
+      "path": "cfg\\Colony_Wars__USA___Disc_1_.txt",
+      "sha256": "0F3E88F8C1E6983CB40DC528227F621072005E64F166BE3B735FB2564BEE3DED",
+      "device": "n95"
+    },
+    {
+      "path": "cfg\\Crash_Bandicoot__USA_.txt",
+      "sha256": "B67096DC102C91334968D9BF9272E299AB78BFEC7D7E3CC93142E42DE95F86DF",
+      "device": "n95"
+    },
+    {
+      "path": "cfg\\Gran_Turismo__USA___v1_1_.txt",
+      "sha256": "828824F78FE3494CD127B633D24AD3A5668E91657F31A976D54050A47AB6B7B4",
+      "device": "n95"
+    },
+    {
+      "path": "cfg\\gt.txt",
+      "sha256": "1B406FC0BE08ABDE71900A69CA1D8876941BCDBE4E5D620E6855DCFAE2235393",
+      "device": "n95"
+    },
+    {
+      "path": "cfg\\Need_for_Speed___Porsche_Unleash.txt",
+      "sha256": "E3020A54B606CEAF25BA4F43B6C890F9BB1DE473BA550FD363F05842D615A99B",
+      "device": "n95"
+    },
+    {
+      "path": "cfg\\ps1_settings.txt",
+      "sha256": "8B7987103EDC2F9A26888A503E979261F9E93D58D1C024CA06C595420A667340",
+      "device": "n95"
+    },
+    {
+      "path": "cfg\\Rayman__USA_.txt",
+      "sha256": "D8A13EA57593BFBF8B1CD97D1E5BF5CB200B2F992671E84CE322BFB321AFD15A",
+      "device": "n95"
+    },
+    {
+      "path": "cfg\\RC_Helicopter__USA_.txt",
+      "sha256": "C32716002AC260211E145FD25DAD3E4C651832F4213E729FDB30A59C4C1BC176",
+      "device": "n95"
+    },
+    {
+      "path": "cfg\\Star_Trek___Invasion__USA_.txt",
+      "sha256": "BF7B8F2639DA8BA9CA6152E9D9CDCB4FF57339B20E108EFDB2E88C8941F7F334",
+      "device": "n95"
+    },
+    {
+      "path": "cfg\\Warzone_2100__USA_.txt",
+      "sha256": "D948C27D362CB3355143677C0B4FB982B2ADDA52A991242500210207FBD37DDE",
+      "device": "n95"
+    },
+    {
+      "path": "cfg\\WipEout__USA_.txt",
+      "sha256": "5C46EC3FF5A88E3BBA96534D4177D35B863DE4FEAAC1B56D35B95F64651A0B0D",
+      "device": "n95"
+    },
+    {
+      "path": "saves\\bench.sav",
+      "sha256": "5FC5B6D32744A239016EDC7DDF65105923AC9222ED50C8356C457641AA17FCC6",
+      "device": "n95"
+    },
+    {
+      "path": "saves\\card1.mcd",
+      "sha256": "645B2715088224B2D65375921F1C75C25C2A9618256AD6110E2FA93F968329E3",
+      "device": "n95"
+    },
+    {
+      "path": "saves\\card2.mcd",
+      "sha256": "AC0DBCB89E54BCDDF7C698FB6FE52CB0CA71977DBA2D28E521D6ED556C7A11B5",
+      "device": "n95"
+    },
+    {
+      "path": "saves\\Crash_Bandicoot__USA__slot1.sav",
+      "sha256": "E7EBCD627C3FF55FB21A3AFB6BA7DFCF097B1601E11B44E4DDC249F252A135CF",
+      "device": "n95"
+    }
+  ],
+  "screenshotFiles": [
+    {
+      "sha256": "19DB26B3EFDBD58D3DA66AB624D31DD9AB71842B69054DD3A671C378155B23E3",
+      "file": "resume-c5-gt-late.png"
+    },
+    {
+      "sha256": "92E35BF2D04A8C7C24D86C3293E5647F5EFFDB7C519C563AF9E5E1C31E97B6A6",
+      "file": "resume-n95-gt-late.png"
+    },
+    {
+      "sha256": "C63FC75E7BCA1B22762EF724226E0194011FF4A3BC66CE0B399B8D67FEBE80DB",
+      "file": "C5-crash-verify.png"
+    },
+    {
+      "sha256": "D63FFAC398B70B7FA9D438D4B6D6E0EFCEF70C9E774111CEFE74DBC7768E4C53",
+      "file": "N95-stock-crash-verify.png"
+    },
+    {
+      "sha256": "1996F34C6D30EF9D27EFB5AD1AEDB8A9253478E9EA4BA5880174593B0D0731AB",
+      "file": "N95-wipeout-driven2.png"
+    },
+    {
+      "sha256": "77905C40836DC3467B2B760175558D608E841C200742FCB1AC86329973CD3281",
+      "file": "N95-stock-wipeout-verify.png"
+    },
+    {
+      "sha256": "AA4E925A3078A83222C82888BCD811956B90A17ED99DEA58EE8F4845E12BD4F7",
+      "file": "N95-stock-nfs-verify.png"
+    },
+    {
+      "sha256": "47BEFF682228003A869FB8DB38AE53938660C04B2DA94A720A17391455FB3964",
+      "file": "N95-nfs-nav3-08.png"
+    },
+    {
+      "sha256": "BA659010AF416EC8E2EAF0E98533F9199C15E1EC33AB77651BDA1000593BE008",
+      "file": "N95-stock-rc-verify.png"
+    },
+    {
+      "sha256": "64C1FE8B8A5713D6E7F1561F83A49994F72DEB3463A2A6BB9EC784A27C540247",
+      "file": "N95-rc-nav3-04.png"
+    },
+    {
+      "sha256": "F3126CCC8E2BA57BF8872676F3BB4CAB09C3344BB5F2AF03B30FB1BBD9E6BD6C",
+      "file": "C5-v2-rc-verify.png"
+    },
+    {
+      "sha256": "5D85B32798A709DFBCE56B0ED8766892F4DCFA3E362215C383AC28AB70BDFBE7",
+      "file": "N95-stock-v2-cast-verify.png"
+    },
+    {
+      "sha256": "AAE7B1118FFA945BA6BEC12E31E9199D1C60129DC3648C5908F48969801FD5CC",
+      "file": "N95-stock-v2-cast-verify-early.png"
+    },
+    {
+      "sha256": "8050F915A71D03E047C675776493AD4ED22D4B4D5D9FD614BF29D87AC7C6A5B1",
+      "file": "C5-authorized-cast-verify.png"
+    },
+    {
+      "sha256": "5C5F44A977E3BA28283C1B84E9C7C42777271AF8A9133D7CA800C094C8A9ECB7",
+      "file": "C5-v2-colony-verify.png"
+    },
+    {
+      "sha256": "34FAB612A8EE0108EF5C3AEB8BFD258E08BD0C13619BCD6E7DC3D30D2D40E307",
+      "file": "C5-v2-colony-verify-early.png"
+    },
+    {
+      "sha256": "351F4F6AF330DE93DA5435EDF2D4C8792DCB25518D6D250D12C0BDB2DB0EF4A5",
+      "file": "N95-stock-rayman-verify.png"
+    },
+    {
+      "sha256": "FCAC06B32B61E36C8ED910843A0EDF5F39335773170E04E5F370BF3501C43CB9",
+      "file": "C5-v2-rayman-verify-early.png"
+    },
+    {
+      "sha256": "EB1B0ED60FA090677DD7FF998FFC086D5BA7372701954DAD6D1D95211369CD75",
+      "file": "C5-rayman-nav2-04.png"
+    },
+    {
+      "sha256": "D154DA330A15CC060DABC0EABA8CA0A52A1B2ED6B117FAA0F656D8A74537953E",
+      "file": "C5-clean-continue3-trek-verify.png"
+    },
+    {
+      "sha256": "2CF41476A4320FF6795D851BB133471ACF47298282875CFBC91F57567B57E170",
+      "file": "C5-continue3-trek-verify-early.png"
+    },
+    {
+      "sha256": "2CF41476A4320FF6795D851BB133471ACF47298282875CFBC91F57567B57E170",
+      "file": "N95-stock-continue3-trek-verify-early.png"
+    },
+    {
+      "sha256": "B2635677097E7BA53A7FC850143C0C24EF0789735620263C96A3E47EF1316CC7",
+      "file": "N95-clean-continue3-trek-verify.png"
+    },
+    {
+      "sha256": "AF5FBF0B6EBE2E9D4011D782689542A0A6FCD472F29C08FF5BBFC6725D347CEA",
+      "file": "N95-clean-continue3-colin-verify.png"
+    },
+    {
+      "sha256": "441050309681B7663D7EC41D8B294DFC9B3129695774B782F0BCC997877C9A22",
+      "file": "N95-stock-continue3-colin-verify-early.png"
+    },
+    {
+      "sha256": "AE3E393D5BB72E0553E3AEB6A82C5CBA25F194F3EE27DEFCC264C013E868B37B",
+      "file": "N95-colin-nav9-04.png"
+    },
+    {
+      "sha256": "441050309681B7663D7EC41D8B294DFC9B3129695774B782F0BCC997877C9A22",
+      "file": "C5-continue4-colin-verify-early.png"
+    },
+    {
+      "sha256": "C2333732C8D6CE3FBDBFD9EE54A899449DFC1C5D14CD32A03AFABA7BB1B7AF79",
+      "file": "C5-clean-continue4-colin-verify.png"
+    },
+    {
+      "sha256": "22606573976FBD4F5B6204AFF4EE53AAFF4CFD6D4E05FFFDB5FE4C36E2F14384",
+      "file": "C5-clean-continue3-warzone-verify.png"
+    },
+    {
+      "sha256": "58AD20CE3D48AC2C15D59DCD9D1E1172E991C22DB3FE35B6891BA73FCCA719D9",
+      "file": "C5-continue3-warzone-verify-early.png"
+    },
+    {
+      "sha256": "11D3005A370A4C34A70EB9992027A3D0BE318C04279C5B2112E825AFEABA32A4",
+      "file": "C5-warzone-nav5-03.png"
+    },
+    {
+      "sha256": "58AD20CE3D48AC2C15D59DCD9D1E1172E991C22DB3FE35B6891BA73FCCA719D9",
+      "file": "N95-stock-continue4-warzone-verify-early.png"
+    },
+    {
+      "sha256": "50D036554B7625DA9C9B6C75617B6705981B66BF2644AC3C2BF5F79E8AD2C539",
+      "file": "N95-clean-continue4-warzone-verify.png"
+    },
+    {
+      "sha256": "68C8A99B2F6E30D07B788913E33B5E76D4D12738E79EFA0A4338967D241F2706",
+      "file": "C5-clean-retry4-wing-verify.png"
+    },
+    {
+      "sha256": "8F2C9BB3232A27772315270041B2874165D2006DFB001BCE3609F7EE69BB9523",
+      "file": "C5-continue4-wing-verify-early.png"
+    },
+    {
+      "sha256": "A59B60D7BD893136D96677A60B5BF3EAED1AA40A2A3ECEC76B2D1FDB66376AD5",
+      "file": "C5-wing-nav6-04.png"
+    },
+    {
+      "sha256": "8F2C9BB3232A27772315270041B2874165D2006DFB001BCE3609F7EE69BB9523",
+      "file": "N95-stock-continue4-wing-verify-early.png"
+    },
+    {
+      "sha256": "D08A002F5E2DD7C2598B491DAF6C1B827276915368637877D4358E247ABBA109",
+      "file": "N95-clean-continue4-wing-verify.png"
+    }
+  ],
+  "releaseProofs": [
+    {
+      "sha256": "4CE2F9720F00FA69A8E2C262B2CFED6393E9B4197AC6B8B80E6FF3E6F0099EE4",
+      "file": "final2-c5-exe.exe",
+      "bytes": 1431280
+    },
+    {
+      "sha256": "4CE2F9720F00FA69A8E2C262B2CFED6393E9B4197AC6B8B80E6FF3E6F0099EE4",
+      "file": "continue2-n95-exe.exe",
+      "bytes": 1431280
+    }
+  ],
+  "clockTreeSource": "https://android.googlesource.com/kernel/common/+/320f5ea0cedc08ef65d67e056bcb9d181386ef2c/arch/arm/mach-omap2/clock2420_data.c",
+  "clockTreeSourceSha256": "EE6E7F1E31A5515714E55D213535818375587DA781747EBED994473A0440508E",
+  "staticDirectParents": [
+    {
+      "clock": "mpu_ck",
+      "parent": "core_ck"
+    },
+    {
+      "clock": "dsp_fck",
+      "parent": "core_ck"
+    },
+    {
+      "clock": "dsp_ick",
+      "parent": "dsp_fck"
+    },
+    {
+      "clock": "iva1_ifck",
+      "parent": "core_ck"
+    },
+    {
+      "clock": "iva1_mpu_int_ifck",
+      "parent": "iva1_ifck"
+    },
+    {
+      "clock": "core_l3_ck",
+      "parent": "core_ck"
+    },
+    {
+      "clock": "usb_l4_ick",
+      "parent": "core_l3_ck"
+    },
+    {
+      "clock": "l4_ck",
+      "parent": "core_l3_ck"
+    },
+    {
+      "clock": "ssi_ssr_sst_fck",
+      "parent": "core_ck"
+    },
+    {
+      "clock": "gfx_3d_fck",
+      "parent": "core_l3_ck"
+    },
+    {
+      "clock": "gfx_2d_fck",
+      "parent": "core_l3_ck"
+    },
+    {
+      "clock": "gfx_ick",
+      "parent": "core_l3_ck"
+    },
+    {
+      "clock": "dss1_fck",
+      "parent": "core_ck"
+    },
+    {
+      "clock": "gpmc_fck",
+      "parent": "core_l3_ck"
+    },
+    {
+      "clock": "sdma_fck",
+      "parent": "core_l3_ck"
+    },
+    {
+      "clock": "sdma_ick",
+      "parent": "core_l3_ck"
+    },
+    {
+      "clock": "sdrc_ick",
+      "parent": "core_l3_ck"
+    },
+    {
+      "clock": "vlynq_ick",
+      "parent": "core_l3_ck"
+    }
+  ],
+  "staticClockTreeIsNotLiveRegisterProof": true,
+  "requirements": [
+    {
+      "evidence": "games.json; states/manifest.json; current-run-audit.json",
+      "status": "proved",
+      "requirement": "Twelve common game images and canonical gameplay states"
+    },
+    {
+      "evidence": [
+        {
+          "sha256": "4CE2F9720F00FA69A8E2C262B2CFED6393E9B4197AC6B8B80E6FF3E6F0099EE4",
+          "file": "final2-c5-exe.exe",
+          "bytes": 1431280
+        },
+        {
+          "sha256": "4CE2F9720F00FA69A8E2C262B2CFED6393E9B4197AC6B8B80E6FF3E6F0099EE4",
+          "file": "continue2-n95-exe.exe",
+          "bytes": 1431280
+        }
+      ],
+      "status": "proved",
+      "requirement": "Release alpha1.3 verified on both devices before runs"
+    },
+    {
+      "evidence": "current-run-audit.json:72 runs",
+      "status": "proved",
+      "requirement": "All C5 and N95-stock runs: 3x1200 per game, correct image, zero errors, volume0, DSA"
+    },
+    {
+      "evidence": "current-run-audit.json:24 clock checks",
+      "status": "proved",
+      "requirement": "N95-stock registers before and after each series"
+    },
+    {
+      "evidence": "No accepted cpu50 runs. stand-stop.json: device unreachable after3 attempts",
+      "status": "incomplete",
+      "requirement": "All cpu50 game runs under latest peripheral constraint"
+    },
+    {
+      "evidence": "retry3-configuration-audit.json:IVA/3 remains; installed ocgui lacks IVA field",
+      "status": "contradicted for last known applied configuration",
+      "requirement": "No non-CPU peripheral above stock"
+    },
+    {
+      "evidence": "c5-final2-restoration-verification.json:14; n95-final2-restoration-verification.json:18; 32 local readbacks rehashed",
+      "status": "proved",
+      "requirement": "Original files restored and checked on both devices"
+    },
+    {
+      "evidence": "Final EXE GET incomplete38608bytes; final boot.dat GET failed; stand stop means no actual clocks after loss",
+      "status": "missing",
+      "requirement": "Latest actual clock after loss and final N95 EXE/boot.dat readback"
+    },
+    {
+      "evidence": "f11-game-speed-2026-10-05.md; summary-progress.json",
+      "status": "proved for completed stock measurements",
+      "requirement": "Report with stock medians/spreads, source notes, config, skip reasons and raw per-run data"
+    },
+    {
+      "evidence": "current-run-audit.json; states hashes; screenshot files checked by this audit",
+      "status": "proved",
+      "requirement": "Raw logs, screenshots and reusable states preserved"
+    },
+    {
+      "evidence": "f6-compat-matrix.md; git branch/log",
+      "status": "proved for previous commit5a5abc9; this audit pending commit",
+      "requirement": "One current F6 link, measure/game-speed commit, no push"
+    },
+    {
+      "evidence": "All clock actions through UI; logs show L3only4->6. Final boot.dat equality unavailable; no write commands issued",
+      "status": "proved by preserved command logs and unchanged source diff",
+      "requirement": "No emulator code/build changes, autonomous reboot, boot.dat writes or L3 decrease"
+    }
+  ],
+  "remaining": [
+    "Restore external access to N95",
+    "Verify all non-CPU domains, including IVA, at stock or lower via supported UI",
+    "Complete remaining valid cpu50 triples and before/after clocks",
+    "Verify final clock, full N95 EXE and unchanged boot.dat"
+  ]
+}
