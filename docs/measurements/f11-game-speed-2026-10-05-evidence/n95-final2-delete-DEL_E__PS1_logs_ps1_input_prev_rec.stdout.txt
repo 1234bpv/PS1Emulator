@@ -1,0 +1,3 @@
+[net] > DEL E:\PS1\logs\ps1_input_prev.rec
+[net] < OK 0
+[net] done

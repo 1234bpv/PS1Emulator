@@ -1,0 +1,9 @@
+[net] > ENDAPP 0xE0001011
+[net] < OK endapp
+[net] > PS ocgui
+[net] < OK ps 0
+[net] > START E:\sys\bin\ocprobe.exe patcher dsp 1
+[net] < OK proc 4
+[net] > SLEEP 2000
+[net] < OK sleep 2000
+[net] done

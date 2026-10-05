@@ -1,0 +1,17 @@
+{
+  "name": "n95-final2-readback-saves_card1_mcd-a1",
+  "started": "2026-10-05T22:15:31.1299987+03:00",
+  "finished": "2026-10-05T22:15:31.7898683+03:00",
+  "limitSec": 60,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\restoration-client.ps1",
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-GetFile",
+    "E:\\PS1\\saves\\card1.mcd",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\n95-final-verified\\saves\\card1.mcd"
+  ]
+}

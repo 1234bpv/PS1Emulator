@@ -1,0 +1,3 @@
+[net] > DEL E:\PS1\logs\ps1_interp.txt
+[net] < ERR delete -1
+[net] done

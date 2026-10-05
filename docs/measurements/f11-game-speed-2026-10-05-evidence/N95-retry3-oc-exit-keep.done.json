@@ -1,0 +1,15 @@
+{
+  "name": "N95-retry3-oc-exit-keep",
+  "started": "2026-10-05T22:18:36.0272106+03:00",
+  "finished": "2026-10-05T22:18:39.1522252+03:00",
+  "limitSec": 25,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-Do",
+    "ENDAPP 0xE0001011; PS ocgui; START E:\\sys\\bin\\ocprobe.exe patcher dsp 1; SLEEP 2000"
+  ]
+}

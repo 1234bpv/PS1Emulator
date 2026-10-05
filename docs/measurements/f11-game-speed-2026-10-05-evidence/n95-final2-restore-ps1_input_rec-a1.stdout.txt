@@ -1,0 +1,4 @@
+[net] PUT D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\n95-backup\ps1_input.rec -> E:\PS1\logs\ps1_input.rec (475 bytes)
+[net] .. 475/475
+[net] OK 475
+[net] done

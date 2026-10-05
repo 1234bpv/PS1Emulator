@@ -1,0 +1,19 @@
+[net] > KEY down press 4 100
+[net] < OK key 0x11 x4
+[net] > KEY right press 1 100
+[net] < OK key 0x0f x1
+[net] > KEY down press 3 100
+[net] < OK key 0x11 x3
+[net] > KEY right press 4 100
+[net] < OK key 0x0f x4
+[net] > KEY down press 2 100
+[net] < OK key 0x11 x2
+[net] > KEY right press 6 100
+[net] < OK key 0x0f x6
+[net] > KEY down press 1 100
+[net] < OK key 0x11 x1
+[net] > KEY right press 2 100
+[net] < OK key 0x0f x2
+[net] > SHOT E:\tester\N95-retry3-dividers-prepared.bmp 1
+[net] < OK shot 230454 320x240 fb mode11
+[net] done

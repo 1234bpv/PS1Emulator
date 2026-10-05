@@ -1,0 +1,15 @@
+{
+  "name": "N95-retry3-info",
+  "started": "2026-10-05T22:13:23.7584505+03:00",
+  "finished": "2026-10-05T22:13:25.7719496+03:00",
+  "limitSec": 25,
+  "timeout": false,
+  "exitCode": 1,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-Do",
+    "INFO; PS ps1stage1; STATUS"
+  ]
+}

@@ -1,0 +1,3 @@
+[net] GET E:\tester\N95-retry3-dsp6-applied.bmp -> D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed/N95-retry3-dsp6-applied.bmp
+[net] got 230ÿ454 bytes
+[net] done

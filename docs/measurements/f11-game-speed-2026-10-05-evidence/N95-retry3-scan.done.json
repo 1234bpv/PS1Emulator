@@ -1,0 +1,16 @@
+{
+  "name": "N95-retry3-scan",
+  "started": "2026-10-05T22:13:38.1430387+03:00",
+  "finished": "2026-10-05T22:13:50.0443816+03:00",
+  "limitSec": 60,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Ip",
+    "scan",
+    "-Device",
+    "n95",
+    "-Info"
+  ]
+}

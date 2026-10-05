@@ -1,0 +1,7 @@
+no daemon found on the LAN - is it running and on WiFi?
+D:\VsCodeProjects\SymbianProjects\SymbianDeployDaemon\tools\deploy_net.ps1:739 знак:25
++ ... -not $Ip) { throw "no daemon found on the LAN - is it running and on  ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : OperationStopped: (no daemon found...ng and on WiFi?:String) [], RuntimeException
+    + FullyQualifiedErrorId : no daemon found on the LAN - is it running and on WiFi?
+ 

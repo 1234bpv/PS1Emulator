@@ -1,0 +1,15 @@
+{
+  "name": "N95-retry3-oc-open",
+  "started": "2026-10-05T22:14:25.7398876+03:00",
+  "finished": "2026-10-05T22:14:30.1725259+03:00",
+  "limitSec": 60,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-Do",
+    "APP 0xE0001011; WAITFG e0001011 1000; SHOT E:\\tester\\N95-retry3-oc-open.bmp 1"
+  ]
+}

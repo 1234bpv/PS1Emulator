@@ -1,10 +1,11 @@
 {
-  "exportedAt": "2026-10-05T21:07:34.0391320+03:00",
+  "exportedAt": "2026-10-05T22:22:21.0934736+03:00",
   "acceptedRuns": 72,
   "triples": 24,
   "states": 12,
-  "copiedFiles": 4293,
-  "status": "stopped-n95-unreachable",
+  "copiedFiles": 4502,
+  "status": "stopped-n95-unreachable-before-game",
   "c5Restored": true,
-  "n95RestorationPending": true
+  "n95Restored": true,
+  "n95RestorationPending": false
 }

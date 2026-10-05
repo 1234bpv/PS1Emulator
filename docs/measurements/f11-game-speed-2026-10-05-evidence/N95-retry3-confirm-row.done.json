@@ -1,0 +1,15 @@
+{
+  "name": "N95-retry3-confirm-row",
+  "started": "2026-10-05T22:18:02.1808822+03:00",
+  "finished": "2026-10-05T22:18:05.6833081+03:00",
+  "limitSec": 60,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-Do",
+    "KEY down press 1 100; SHOT E:\\tester\\N95-retry3-confirm-row.bmp 1"
+  ]
+}

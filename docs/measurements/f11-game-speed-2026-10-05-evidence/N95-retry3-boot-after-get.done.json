@@ -1,0 +1,17 @@
+{
+  "name": "N95-retry3-boot-after-get",
+  "started": "2026-10-05T22:19:43.4628028+03:00",
+  "finished": "2026-10-05T22:19:45.2807161+03:00",
+  "limitSec": 30,
+  "timeout": false,
+  "exitCode": 1,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-GetFile",
+    "C:\\Data\\Overclock\\boot.dat",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator/plans/runs/2026-10-05_game-speed/n95-boot-after.dat"
+  ]
+}

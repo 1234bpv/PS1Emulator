@@ -1,0 +1,17 @@
+{
+  "name": "n95-final2-restore-saves_bench_sav-a1",
+  "started": "2026-10-05T22:15:04.3232527+03:00",
+  "finished": "2026-10-05T22:15:13.1806716+03:00",
+  "limitSec": 240,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\restoration-client.ps1",
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-PutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\n95-backup\\saves\\bench.sav",
+    "-Remote",
+    "E:\\PS1\\saves\\bench.sav"
+  ]
+}

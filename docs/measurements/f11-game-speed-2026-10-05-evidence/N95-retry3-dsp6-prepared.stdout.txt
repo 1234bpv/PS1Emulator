@@ -1,0 +1,7 @@
+[net] > KEY up press 12 100
+[net] < OK key 0x10 x12
+[net] > KEY right press 2 100
+[net] < OK key 0x0f x2
+[net] > SHOT E:\tester\N95-retry3-dsp6-prepared.bmp 1
+[net] < OK shot 230454 320x240 fb mode11
+[net] done

@@ -1,0 +1,23 @@
+{
+  "stoppedAt": "2026-10-05T21:07:13.7359619+03:00",
+  "reason": "N95 unreachable again during first cpu50 Castlevania scenario after user powered on",
+  "acceptedRuns": 72,
+  "completedTriples": 24,
+  "cpu50AcceptedRuns": 0,
+  "attempts": [
+    "N95-cpu50-cast-r1-scenario.done.json",
+    "N95-return-connect-check2.done.json",
+    "N95-return-connect-check3-scan.done.json"
+  ],
+  "lastVerifiedClock": "N95-cpu50-cast-clock-before.log",
+  "lastVerifiedMultiplier": 129,
+  "lastVerifiedCore": "04360846",
+  "c5Restored": true,
+  "n95CurrentFilesRestored": false,
+  "taskComplete": false,
+  "previousIncident": "interrupted-cpu50-2026-10-05-2027",
+  "recoveredAt": "2026-10-05T20:53:26+03:00",
+  "stockAfterReturn": "N95-return-clock.log",
+  "recoveredFailedJsonl": "N95-return-failed-cast.jsonl",
+  "nextAction": "Human restores N95 access; restore original 18 files and verify actual registers before further work; no autonomous reboot or L3 decrease"
+}

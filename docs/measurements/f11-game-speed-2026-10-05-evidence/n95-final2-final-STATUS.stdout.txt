@@ -1,0 +1,3 @@
+[net] > STATUS
+[net] < OK IDLE
+[net] done

@@ -1,0 +1,11 @@
+[net] > INFO
+[net] < OK info
+[net] < protocol 2
+[net] < screen 320x240
+[net] < ramfree 93777920
+[net] < tick 286797 startTick 64815 boot 0 by n
+[net] < ap Huawei
+[net] < drive C freekb 65688
+[net] < drive E freekb 1019728
+[net] < script IDLE
+[net] done

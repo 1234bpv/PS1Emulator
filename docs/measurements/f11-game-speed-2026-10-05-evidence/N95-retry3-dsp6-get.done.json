@@ -1,0 +1,17 @@
+{
+  "name": "N95-retry3-dsp6-get",
+  "started": "2026-10-05T22:18:39.1871309+03:00",
+  "finished": "2026-10-05T22:18:39.6050222+03:00",
+  "limitSec": 30,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-GetFile",
+    "E:\\ocprobe.log",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator/plans/runs/2026-10-05_game-speed/N95-retry3-dsp6.log"
+  ]
+}

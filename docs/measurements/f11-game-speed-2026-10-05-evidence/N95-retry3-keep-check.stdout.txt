@@ -1,0 +1,5 @@
+[net] > KEY down press 5 100
+[net] < OK key 0x11 x5
+[net] > SHOT E:\tester\N95-retry3-keep-check.bmp 1
+[net] < OK shot 230454 320x240 fb mode11
+[net] done

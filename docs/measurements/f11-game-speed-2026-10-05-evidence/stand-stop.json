@@ -1,23 +1,20 @@
 {
-  "stoppedAt": "2026-10-05T21:07:13.7359619+03:00",
-  "reason": "N95 unreachable again during first cpu50 Castlevania scenario after user powered on",
+  "stoppedAt": "2026-10-05T22:21:46.5099097+03:00",
+  "reason": "N95 unreachable after full GUI peripheral compensation, before any emulator run",
   "acceptedRuns": 72,
   "completedTriples": 24,
   "cpu50AcceptedRuns": 0,
   "attempts": [
-    "N95-cpu50-cast-r1-scenario.done.json",
-    "N95-return-connect-check2.done.json",
-    "N95-return-connect-check3-scan.done.json"
+    "N95-retry3-exe-get.done.json",
+    "N95-retry3-boot-after-get.done.json",
+    "N95-retry3-connect-check3-scan.done.json"
   ],
-  "lastVerifiedClock": "N95-cpu50-cast-clock-before.log",
+  "lastVerifiedClock": "N95-retry3-switch-clock.log",
   "lastVerifiedMultiplier": 129,
-  "lastVerifiedCore": "04360846",
+  "lastVerifiedCore": "04690C46",
+  "lastVerifiedDsp": "000023C6",
   "c5Restored": true,
-  "n95CurrentFilesRestored": false,
+  "n95CurrentFilesRestored": true,
   "taskComplete": false,
-  "previousIncident": "interrupted-cpu50-2026-10-05-2027",
-  "recoveredAt": "2026-10-05T20:53:26+03:00",
-  "stockAfterReturn": "N95-return-clock.log",
-  "recoveredFailedJsonl": "N95-return-failed-cast.jsonl",
-  "nextAction": "Human restores N95 access; restore original 18 files and verify actual registers before further work; no autonomous reboot or L3 decrease"
+  "nextAction": "Restore access and read clocks; IVA cannot be compensated by installed GUI; do not repeat game launches under unverified peripheral condition; no L3 decrease or autonomous reboot"
 }

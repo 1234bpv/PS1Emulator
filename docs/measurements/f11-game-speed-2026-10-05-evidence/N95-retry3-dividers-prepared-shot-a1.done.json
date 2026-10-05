@@ -1,0 +1,17 @@
+{
+  "name": "N95-retry3-dividers-prepared-shot-a1",
+  "started": "2026-10-05T22:16:59.7036535+03:00",
+  "finished": "2026-10-05T22:17:00.7994583+03:00",
+  "limitSec": 45,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-GetFile",
+    "E:\\tester\\N95-retry3-dividers-prepared.bmp",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed/N95-retry3-dividers-prepared.bmp"
+  ]
+}
