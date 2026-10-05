@@ -1,0 +1,17 @@
+{
+  "name": "N95-useroc-wipeout-clock-before-engine-get",
+  "started": "2026-10-05T23:32:44.5929258+03:00",
+  "finished": "2026-10-05T23:32:44.9928551+03:00",
+  "limitSec": 30,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-GetFile",
+    "E:\\ocprobe.log",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed/N95-useroc-wipeout-clock-before-engine.log"
+  ]
+}

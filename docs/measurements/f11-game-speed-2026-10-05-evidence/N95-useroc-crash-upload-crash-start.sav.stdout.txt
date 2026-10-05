@@ -1,0 +1,11 @@
+[net] PUT D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\states\crash-start.sav -> E:\PS1\saves\bench.sav (2ÿ196ÿ642 bytes)
+[net] .. 262ÿ144/2ÿ196ÿ642
+[net] .. 524ÿ288/2ÿ196ÿ642
+[net] .. 786ÿ432/2ÿ196ÿ642
+[net] .. 1ÿ048ÿ576/2ÿ196ÿ642
+[net] .. 1ÿ310ÿ720/2ÿ196ÿ642
+[net] .. 1ÿ572ÿ864/2ÿ196ÿ642
+[net] .. 1ÿ835ÿ008/2ÿ196ÿ642
+[net] .. 2ÿ097ÿ152/2ÿ196ÿ642
+[net] OK 2196642
+[net] done

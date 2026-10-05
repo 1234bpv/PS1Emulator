@@ -1,7 +1,7 @@
 {
   "name": "n95-final2-readback-cfg_ps1_settings_txt-a1",
-  "started": "2026-10-05T22:15:24.4422660+03:00",
-  "finished": "2026-10-05T22:15:24.9444285+03:00",
+  "started": "2026-10-05T23:36:56.9163193+03:00",
+  "finished": "2026-10-05T23:36:57.3056826+03:00",
   "limitSec": 60,
   "timeout": false,
   "exitCode": 0,

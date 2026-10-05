@@ -1,0 +1,15 @@
+{
+  "name": "N95-useroc-crash-retry3-clock-before-engine-start",
+  "started": "2026-10-05T23:04:47.1153990+03:00",
+  "finished": "2026-10-05T23:04:49.6208585+03:00",
+  "limitSec": 25,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-Do",
+    "START E:\\sys\\bin\\ocprobe.exe patcher engine; SLEEP 2000"
+  ]
+}

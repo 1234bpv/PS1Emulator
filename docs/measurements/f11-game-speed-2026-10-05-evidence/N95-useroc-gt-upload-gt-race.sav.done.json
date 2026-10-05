@@ -1,0 +1,17 @@
+{
+  "name": "N95-useroc-gt-upload-gt-race.sav",
+  "started": "2026-10-05T23:06:16.2923928+03:00",
+  "finished": "2026-10-05T23:06:23.8859264+03:00",
+  "limitSec": 240,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-PutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed/states/gt-race.sav",
+    "-Remote",
+    "E:\\PS1\\saves\\bench.sav"
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "name": "N95-useroc-colony-clock-before-engine-get",
+  "started": "2026-10-05T22:46:07.8252111+03:00",
+  "finished": "2026-10-05T22:46:08.2186269+03:00",
+  "limitSec": 30,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-GetFile",
+    "E:\\ocprobe.log",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed/N95-useroc-colony-clock-before-engine.log"
+  ]
+}

@@ -1,0 +1,8 @@
+LOG N95-useroc-rayman-r2 1200 PS1 frames stock release volume zero
+-START E:\sys\bin\ps1stage1.exe gui light blend dsa img"Rayman (USA).pbp" loadstate14000 frames15200 dumpat999999 limit150
+-WAITFG e0001002 20000
+-KEY star press 2 0
+SLEEP 43634
+-ENDAPP 0xE0001002
+-KILL ps1stage1
+PS ps1stage1

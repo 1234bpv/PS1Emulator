@@ -1,0 +1,19 @@
+{
+  "label": "N95-useroc-wing",
+  "repeat": 2,
+  "region": "NTSC",
+  "frames": 1200,
+  "ms": 19431,
+  "shownFrames": 480,
+  "shownFps": 24.702794503628223,
+  "ps1Fps": 61.75698625907056,
+  "speedPercent": 102.92831043178427,
+  "errors": 0,
+  "shutdown": "gui: frames=1200 ms=19431",
+  "pass": "drc: frames=1200 ms=19431 pc=80000080 cycle=3320140588 vblanks=1208 fsAdvised=0",
+  "loaded": "Loaded CD Image: E:\\PS1\\games\\Wing Commander III - Heart of the Tiger (USA) (Disc 1).pbp[+pbp] (589288424 bytes).\n",
+  "emuMs": null,
+  "shownMethod": "DSA direct FB pixB=4, stock fxaa=0, 240 rows per present",
+  "volume0ms": 3640,
+  "clockStartMs": 6988
+}

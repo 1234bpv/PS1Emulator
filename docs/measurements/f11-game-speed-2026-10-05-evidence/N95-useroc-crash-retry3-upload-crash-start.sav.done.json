@@ -1,0 +1,17 @@
+{
+  "name": "N95-useroc-crash-retry3-upload-crash-start.sav",
+  "started": "2026-10-05T23:04:38.9651025+03:00",
+  "finished": "2026-10-05T23:04:47.0972447+03:00",
+  "limitSec": 240,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-PutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\states\\crash-start.sav",
+    "-Remote",
+    "E:\\PS1\\saves\\bench.sav"
+  ]
+}

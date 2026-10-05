@@ -1,6 +1,24 @@
 $ErrorActionPreference='Stop'
 function Median($values) { $v=@($values | Sort-Object); if($v.Count -eq 0){return $null}; return $v[[int][Math]::Floor($v.Count/2)] }
-$results=@(Get-ChildItem $PSScriptRoot -Filter '*.result.json' -File | ForEach-Object { Get-Content $_.FullName -Raw | ConvertFrom-Json } | Where-Object { $_.frames -eq 1200 -and $_.errors -eq 0 })
+$clockAccepted=@{}
+$results=@(Get-ChildItem $PSScriptRoot -Filter '*.result.json' -File | ForEach-Object {
+ $candidate=Get-Content $_.FullName -Raw | ConvertFrom-Json
+ if($candidate.label -like 'N95-useroc-*'){
+  if($null -eq $candidate.volume0ms -or $null -eq $candidate.clockStartMs -or $candidate.volume0ms -ge $candidate.clockStartMs){return}
+  if(-not $clockAccepted.ContainsKey($candidate.label)){
+   $clockAccepted[$candidate.label]=$false
+   if((Test-Path "$PSScriptRoot/$($candidate.label)-clock-after-engine.log") -and (Test-Path "$PSScriptRoot/$($candidate.label)-clock-after-dsp.log")){
+    try{
+     & "$PSScriptRoot/check-user-clock-files.ps1" -Name "$($candidate.label)-clock-before" | Out-Null
+     & "$PSScriptRoot/check-user-clock-files.ps1" -Name "$($candidate.label)-clock-after" | Out-Null
+     $clockAccepted[$candidate.label]=$true
+    }catch{Write-Warning "User clock series excluded: $($candidate.label): $_"}
+   }
+  }
+  if(-not $clockAccepted[$candidate.label]){return}
+ }
+ $candidate
+} | Where-Object { $_.frames -eq 1200 -and $_.errors -eq 0 })
 $series=@($results | Group-Object label | Sort-Object Name | ForEach-Object {
  $runs=@($_.Group | Sort-Object repeat)
  $regions=@($runs.region | Where-Object {$_} | Select-Object -Unique)
@@ -9,3 +27,4 @@ $series=@($results | Group-Object label | Sort-Object Name | ForEach-Object {
 })
 [ordered]@{updated=(Get-Date).ToString('o');acceptedRuns=$results.Count;completedTriples=@($series | Where-Object repeatCount -eq 3).Count;series=$series} | ConvertTo-Json -Depth 8 | Set-Content "$PSScriptRoot/summary-progress.json" -Encoding UTF8
 $series | ForEach-Object { '{0}: {1} runs, {2} ms; median {3:F3} FPS, {4:F3}%' -f $_.label,$_.repeatCount,($_.ms -join '/'),$_.fpsMedian,$_.speedMedian }
+

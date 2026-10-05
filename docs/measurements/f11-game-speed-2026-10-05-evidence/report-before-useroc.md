@@ -1,0 +1,375 @@
+# F11: швидкість ігор alpha 1.3, 2026-10-05
+
+Стан на 2026-10-05 22:21: 72 дійсні штатні прогони. N95 знову недоступний; файли обох апаратів повернуто. Завдання не завершено.
+
+## Остання перевірка N95, 2026-10-05 22:20
+
+**Початкові файли обох апаратів повернуто: C5 14/14, N95 18/18; SHA-256 збігаються.** [Зворотне читання N95](f11-game-speed-2026-10-05-evidence/n95-final2-restoration-verification.json) завершено о22:15:36, тимчасові input_prev та interp відсутні за STAT. Нижче збережено історичні повідомлення про попереднє неповернення; вони більше не описують стан файлів.
+
+За новим дорученням користувача знову перевірено доступ. INFO .22 спершу не відповів, але scan знайшов N95 о22:13:50 з tick178401/startTick64815. Новий uptime свідчить про черговий перезапуск; виконавець його не робив. Read-only stock-регістри: PLL00056400, MPU2, CORE04360644; DSP000023C3. Усі початкові файли повернуто до наступних дій із тактуванням.
+
+Повна перевірка виявила, що попередній CORE04360846 компенсував L3, але DSS1 був +12,5%, SSI і VLYNQ +50%; DSP /3 при фактичному CORE990720 також давав330240 замість220160 кГц. Ці попередні cpu50 спроби не відповідали новій вимозі користувача. Жодна не мала дійсного виміряного результату.
+
+Користувач обрав: не перевищувати штатні частоти інших блоків; нижчі допустимі. Через ocgui, з покроковими SHOT, підготовлено MANUAL, m129, MPU/2, L3/6, L4/2, DSS1/12, DSS2=0, VLYNQ/18, SSI/6, USB=2, DSP/6, KEEP ON EXIT=ТАК. DSP застосовано окремо до зміни ЦП, потім APPLY/CONFIRM. ocgui штатно закрито з KEEP: його ShutdownL скасовує таймер DSP і зберігає частоти. L3 лише4→6; boot.dat не записували.
+
+Підтверджені регістри — [CORE/PLL/MPU](f11-game-speed-2026-10-05-evidence/N95-retry3-switch-clock.log) і [окремий DSP після виходу з ocgui](f11-game-speed-2026-10-05-evidence/N95-retry3-dsp6.log): PLL00081400, MPU00000002, CORE04690C46, DSP000023C6. Історичний рядок `firmware math` у DSP-пробі використовує stock CORE660480, а фактичні частоти нижче розраховані з реального CORE990720.
+
+| Блок | Штатно, МГц | Після зміни, МГц | Дільник |
+|---|---:|---:|---:|
+| ЦП |330,24|495,36|2|
+| L3/SDRAM |165,12|165,12|6|
+| L4 |82,56|82,56|2 від L3|
+| DSS1 |110,08|82,56|12|
+| DSP |220,16|165,12|6|
+| SSI |220,16|165,12|6|
+| VLYNQ |55,04|55,04|18|
+| USB interface |82,56|82,56|2 від L3|
+| IVA1 domain |220,16|330,24|3, не компенсований|
+
+**Умову для всіх інших блоків повністю не виконано:** DSP-регістр містить окремий IVA[12:8]=3; встановлений ocgui не має керування цим полем. IVA1 є окремим ARM7-блоком, його джерело CORE, а подальший MPU-дільник2 також зберігає пропорційне перевищення. USB interface походить від L3, функціональний USB — від окремого48MHz джерела. Це підтверджує [первинний код дерева тактування OMAP2420, TI/Nokia](https://android.googlesource.com/kernel/common/+/320f5ea0cedc08ef65d67e056bcb9d181386ef2c/arch/arm/mach-omap2/clock2420_data.c). Повного аудиту всіх інших периферійних доменів не отримано. [Машинний опис](f11-game-speed-2026-10-05-evidence/retry3-configuration-audit.json) явно має allNonCpuClocksVerifiedStockOrLower=false. Гру не запускали.
+
+Після зміни телефон утратив доступ ще під час підготовки, без запуску емулятора:
+
+1. GET EXE 22:18:58–22:19:43: timeout=true, межа45с, лише38608 із1431280 байтів; фінальний EXE не звірений, частковий файл не є доказом.
+2. GET boot.dat 22:19:43–22:19:45: `daemon not responding at 192.168.3.22`, exitCode1; фінальний boot.dat не отримано.
+3. Scan 22:20:03–22:20:19: `no daemon found on the LAN - is it running and on WiFi?`, exitCode1.
+
+Після трьох невдач звернення зупинено. Причина не встановлена; тепер збій зафіксовано без запуску гри, тому приписувати його Castlevania не можна. Поточні регістри після втрати доступу невідомі. Дані залишаються72 штатні прогони, cpu50=0. Нові параметри не підміняють попередню конфігурацію у звіті. Код емулятора не змінювали, REBOOT і зменшення L3 не виконували. Наступні дії потребують відновлення доступу та способу перевірити/компенсувати IVA через дозволений UI.
+
+Повторний аудит доказів:72 прогонів,12 станів,24 штатних перевірки регістрів,32 відновлені файли з повторним локальним SHA-256 і38 посилань на наявні знімки. [Аудит виконання за вимогами](f11-game-speed-2026-10-05-evidence/completion-audit-current.json) має complete=false: новий режим для всіх периферійних блоків не підтверджений, cpu50-серії відсутні, поточні регістри після втрати зв'язку не прочитані.
+
+Аудит первинного дерева тактування окремо показує, що GFX отримує частоту від L3, а камера має інтерфейс від L4 та функціональне джерело96MHz. За умови незмінних їхніх селекторів компенсація L3/L4 не прискорює ці блоки; це висновок із дерева, а не нове читання їхніх регістрів на N95. IVA залежить від CORE й залишається непідтвердженим щодо вимоги користувача. Список статичних батьків і SHA-256 первинного коду включено в аудит; апаратних команд під час цього аудиту не виконували.
+
+## Умови
+
+Дата: 2026-10-05, Europe/Helsinki. Гілка measure/game-speed, без push.
+Емулятор alpha 1.3, EXE 1 431 280 байтів, SHA-256
+`4CE2F9720F00FA69A8E2C262B2CFED6393E9B4197AC6B8B80E6FF3E6F0099EE4`.
+EXE обох телефонів звірені повним GET. На C5 за дорученням користувача
+замінено старий EXE готовим релізом і відповідним C:\sys\hash\ps1stage1.exe
+(SHA-1 962048C437A7D6770CE095C695EFC8A0829882C6). Код емулятора не змінювали й не перезбирали.
+
+C5: Bluetooth A8448113EA78, COM12, прямий RFCOMM до SDP-служби
+PS1 deploy daemon, канал 13. N95: WiFi 192.168.3.22:2323.
+На картках однакові дванадцять образів; назви й розміри — games.json.
+C5 штатний. N95-stock: m=86, ядро 330240 кГц, шина 165120 кГц,
+L3=4, CM_CLKSEL1_CORE=04360644. Повні read-only ocprobe-журнали
+до й після кожної завершеної трійки закінчуються == end ==.
+- [N95-cpu50-cast-clock-before.log](f11-game-speed-2026-10-05-evidence/N95-cpu50-cast-clock-before.log)
+- [N95-stock-cast-clock-after.log](f11-game-speed-2026-10-05-evidence/N95-stock-cast-clock-after.log)
+- [N95-stock-cast-clock-before.log](f11-game-speed-2026-10-05-evidence/N95-stock-cast-clock-before.log)
+- [N95-stock-colin-clock-after.log](f11-game-speed-2026-10-05-evidence/N95-stock-colin-clock-after.log)
+- [N95-stock-colin-clock-before.log](f11-game-speed-2026-10-05-evidence/N95-stock-colin-clock-before.log)
+- [N95-stock-colony-clock-after.log](f11-game-speed-2026-10-05-evidence/N95-stock-colony-clock-after.log)
+- [N95-stock-colony-clock-before.log](f11-game-speed-2026-10-05-evidence/N95-stock-colony-clock-before.log)
+- [N95-stock-crash-clock-after.log](f11-game-speed-2026-10-05-evidence/N95-stock-crash-clock-after.log)
+- [N95-stock-crash-clock-before.log](f11-game-speed-2026-10-05-evidence/N95-stock-crash-clock-before.log)
+- [N95-stock-gt-clock-after.log](f11-game-speed-2026-10-05-evidence/N95-stock-gt-clock-after.log)
+- [N95-stock-nfs-clock-after.log](f11-game-speed-2026-10-05-evidence/N95-stock-nfs-clock-after.log)
+- [N95-stock-nfs-clock-before.log](f11-game-speed-2026-10-05-evidence/N95-stock-nfs-clock-before.log)
+- [N95-stock-rayman-clock-after.log](f11-game-speed-2026-10-05-evidence/N95-stock-rayman-clock-after.log)
+- [N95-stock-rayman-clock-before.log](f11-game-speed-2026-10-05-evidence/N95-stock-rayman-clock-before.log)
+- [N95-stock-rc-clock-after.log](f11-game-speed-2026-10-05-evidence/N95-stock-rc-clock-after.log)
+- [N95-stock-rc-clock-before.log](f11-game-speed-2026-10-05-evidence/N95-stock-rc-clock-before.log)
+- [N95-stock-trek-clock-after.log](f11-game-speed-2026-10-05-evidence/N95-stock-trek-clock-after.log)
+- [N95-stock-trek-clock-before.log](f11-game-speed-2026-10-05-evidence/N95-stock-trek-clock-before.log)
+- [N95-stock-warzone-clock-after.log](f11-game-speed-2026-10-05-evidence/N95-stock-warzone-clock-after.log)
+- [N95-stock-warzone-clock-before.log](f11-game-speed-2026-10-05-evidence/N95-stock-warzone-clock-before.log)
+- [N95-stock-wing-clock-after.log](f11-game-speed-2026-10-05-evidence/N95-stock-wing-clock-after.log)
+- [N95-stock-wing-clock-before.log](f11-game-speed-2026-10-05-evidence/N95-stock-wing-clock-before.log)
+- [N95-stock-wipeout-clock-after.log](f11-game-speed-2026-10-05-evidence/N95-stock-wipeout-clock-after.log)
+- [N95-stock-wipeout-clock-before.log](f11-game-speed-2026-10-05-evidence/N95-stock-wipeout-clock-before.log)
+- [GT stock, регістри перед серією](f11-game-speed-2026-10-05-evidence/resume-n95-clock-before.log) — початкова назва журналу; прочитано 00:58 перед GT r1 о01:04.
+
+N95-cpu50 застосовано й підтверджено перед першою спробою; дійсних cpu50-прогонів немає.
+N95-cpu50: m=129, MPU=495360 кГц, CORE=990720 кГц, BUS=165120 кГц, L3=6, CM_CLKSEL1_CORE=04360846. Перехід зроблено через ocgui після всіх N95-stock; KEEP увімкнений.
+[Регістри після перемикання](f11-game-speed-2026-10-05-evidence/N95-cpu50-switch-clock.log).
+Виконавець не перезавантажував телефони. Пізніші ручні увімкнення N95 і зміни uptime описані в останніх перевірках. boot.dat не записували; його фінальне порівняння після втрати доступу недоступне. У встановленому ocgui 2.3.0 немає окремого рядка BUS GUARD; жодного захисту не перемикали. Зміна L3 лише 4 → 6, шина до й після переходу 165120 кГц; зворотний перехід не робили.
+Множник береться з фактичного CM_CLKSEL1_PLL[21:12], дільники — з CORE і MPU. Довідковий рядок stock у ocprobe описує початкові частоти й не є доказом поточного тактування; фактичні регістри наведені нижче нього. HAL ECPUSpeed також не використовували як частоту ядра.
+
+Sound=ON, volume=0, профілі вимкнено. STAR x2 після WAITFG за UID
+e0001002 дає vol step=0 перед clocks start; це перевіряється в кожному прогоні.
+Єдина змінна в шаблоні налаштувань — шлях до потрібного образу:
+
+```ini
+game=E:\PS1\games\Castlevania - Symphony of the Night (USA.pbp
+intro=1
+bios=
+smooth=1
+fxaa=0
+fps=0
+light=1
+blend=1
+dirty=1
+dsa=1
+gl=0
+swdraw=0
+ilace=0
+pixskip=0
+gpuskip=0
+cpu=0
+gtenf=0
+cycle=175
+sound=1
+wsola=0
+tilt=0
+tiltside=1
+tiltpitch=3
+tiltdead=10
+tiltsens=100
+lang=1
+profile=0
+btn0=16 -1 0
+btn1=17 -1 0
+btn2=14 -1 0
+btn3=15 -1 0
+btn4=167 53 0
+btn5=48 -1 0
+btn6=55 -1 0
+btn7=57 -1 0
+btn8=49 -1 0
+btn9=51 -1 0
+btn10=52 -1 0
+btn11=54 -1 0
+btn12=50 -1 0
+btn13=56 -1 0
+```
+
+## Метод і сцени
+
+Рівно 1200 фактичних кадрів PS1 після LoadState; початкові VBlank не включені.
+Регіон із reset у JSONL: NTSC → 60, PAL → 50 кадрів за секунду.
+Швидкість = 1200 / (gui_ms / 1000) / частоту регіону × 100%.
+Час береться з gui: frames=1200 ms=…, а не з тривалості сценарію.
+Окремий emuMs реліз без PS1_BENCH не журналює: н/д.
+
+Показані FPS = сума пʼяти лічильників dsa rows / 240 / (gui_ms / 1000).
+Перевірений шлях: active1 gl0 pixB4 covered1 fbOk1 rowCopy0 scr320×240 fxaa0.
+Це частота блітів емулятора, включно з повторними оновленнями; унікальність
+кожного зображення не доведена. screen presented рахує кадри PS1 й не використовується як видимий FPS.
+Серія не робить SHOT, діагностичних дампів чи збережень у вимірюваному інтервалі.
+
+| Гра | Стан / логічний loadframe | SHA-256 | Доказ сцени |
+|---|---|---|---|
+| gt | gt-race.sav / 7700 | 8AA4F9A1ED7C5C280204126C22FE9BC3BDE33263F1828DE56BE893EA37162D13 | resume-c5-gt-late.png; resume-n95-gt-late.png |
+| crash | crash-start.sav / 4700 | 5FC5B6D32744A239016EDC7DDF65105923AC9222ED50C8356C457641AA17FCC6 | C5-crash-verify.png; N95-stock-crash-verify.png |
+| wipeout | wipeout-driven2.sav / 8500 | 627E0B813E29E4C537E99A6FEB7BE2868D6EC9B20C4AE6928016506AD1AB998A | N95-wipeout-driven2.png; N95-stock-wipeout-verify.png |
+| nfs | nfs-start.sav / 24000 | 167FBE04475651F2CA16FF4D51B7CA46121AC25468BCFC990E29CF8913D249D0 | N95-stock-nfs-verify.png; N95-nfs-nav3-08.png |
+| rc | rc-practice.sav / 23000 | C73034CA0E1DFD91A9E5D5674EE8970E57631A2B0AEDA8AE8893C55A550A837D | N95-stock-rc-verify.png; N95-rc-nav3-04.png; C5-v2-rc-verify.png; N95-stock-rc-verify.png |
+| cast | cast-gameplay.sav / 17500 | D7FE9DC17C0F9E254340ADA3AB7A920961958D73AD058DC87B9664847036B006 | N95-stock-v2-cast-verify.png; N95-stock-v2-cast-verify-early.png; C5-authorized-cast-verify.png; N95-stock-v2-cast-verify-early.png |
+| colony | colony-flight.sav / 13000 | 4FBECEED3CE16D982523364A9D0A8224C2D4A2828044ECBF0A59B270BB50B8AA | C5-v2-colony-verify.png; C5-v2-colony-verify-early.png |
+| rayman | rayman-start.sav / 14000 | 081639BEF8A99A84255FB4C6676C4DA32C77F569F3657244258AADBFAD2B4020 | N95-stock-rayman-verify.png; C5-v2-rayman-verify-early.png; C5-v2-rayman-verify-early.png; navigation SHOT C5-rayman-nav2-04.png |
+| trek | trek-flight.sav / 23000 | 68CF57B4983C7C6FE7C40FAD931D8D76703A624690D5D494D7CF4A7DCE0544F9 | C5-clean-continue3-trek-verify.png; C5-continue3-trek-verify-early.png; C5-clean-continue3-trek-verify.png; N95-stock-continue3-trek-verify-early.png; N95-clean-continue3-trek-verify.png |
+| colin | colin-start.sav / 67000 | 8CDD564384D0AD17739A5512B1EA8C77F8EB5E6E848C26852AEC8AD872573D4B | N95-clean-continue3-colin-verify.png; N95-stock-continue3-colin-verify-early.png; N95-colin-nav9-04.png; Finland stage 1, player car on track, HUD timer 00:11:37; C5-continue4-colin-verify-early.png; C5-clean-continue4-colin-verify.png |
+| warzone | warzone-start.sav / 45000 | 01A9000F16513001BD9A1F291B9E02B57D196ACEE2EEFF2BB53A99F7B660CDE7 | C5-clean-continue3-warzone-verify.png; C5-continue3-warzone-verify-early.png; C5-warzone-nav5-03.png; Normal campaign first mission, vehicles, terrain, resource 1500 and player cursor; N95-stock-continue4-warzone-verify-early.png; N95-clean-continue4-warzone-verify.png |
+| wing | wing-flight.sav / 56000 | 27728255081328CC19DB60D93031A1037632FE96CF7B58CCB9197B0B5B2312A7 | C5-clean-retry4-wing-verify.png; C5-continue4-wing-verify-early.png; C5-wing-nav6-04.png; Player cockpit after takeoff, speed420, radar, weapon HUD; C5-continue4-wing-verify-early.png; N95-stock-continue4-wing-verify-early.png; C5-clean-retry4-wing-verify.png; N95-clean-continue4-wing-verify.png |
+
+Кожний стан прийнято після savestate rc=0 і візуального підтвердження gameplay.
+Для нових сцен зберігається також фактичний framebuffer третього кадру після load.
+Діагностика dumpat після читання малює тестовий візерунок; у Rayman він лишається
+на пізньому SHOT. Тому доказ там — ранній framebuffer і окремий SHOT без dumpat.
+C5 іноді має портретний SHOT 240×320 із обрізаним правим краєм; оригінальні BMP збережено.
+
+## Результати
+
+У клітинках — медіана трьох прогонів: показані FPS / швидкість PS1. «—» — завершеної дійсної трійки ще немає.
+
+| Гра | Регіон | Рідні FPS | C5 | N95-stock | N95-cpu50 |
+|---|---|---|---|---|---|
+| Castlevania - Symphony of the Night (USA.pbp | NTSC | не встановлено | 34.087 / 56.812% | 18.715 / 31.191% | — |
+| Colin McRae Rally 2.0 (USA) (En,Fr,Es).pbp | NTSC | не встановлено | 9.514 / 31.980% | 5.478 / 18.413% | — |
+| Colony Wars (USA) (Disc 1).pbp | NTSC | 30, висновок¹ | 19.526 / 64.979% | 10.376 / 34.528% | — |
+| Crash Bandicoot (USA).pbp | NTSC | 30 | 15.872 / 52.818% | 7.889 / 26.254% | — |
+| gt.pbp | NTSC | 30 | 17.504 / 58.250% | 9.212 / 30.655% | — |
+| Need for Speed - Porsche Unleashed (USA).pbp | NTSC | не встановлено | 13.768 / 46.670% | 7.691 / 26.071% | — |
+| Rayman (USA).pbp | NTSC | не встановлено | 39.600 / 66.000% | 23.681 / 39.469% | — |
+| RC Helicopter (USA).pbp | NTSC | не встановлено | 31.886 / 53.143% | 17.591 / 29.318% | — |
+| Star Trek - Invasion (USA).pbp | NTSC | не встановлено | 25.399 / 84.663% | 12.573 / 41.909% | — |
+| Warzone 2100 (USA).pbp | NTSC | не встановлено | 16.467 / 82.335% | 7.416 / 37.078% | — |
+| Wing Commander III - Heart of the Tiger (USA) (Disc 1).pbp | NTSC | не встановлено | 24.018 / 100.075% | 10.595 / 44.144% | — |
+| WipEout (USA).pbp | NTSC | 30 | 20.555 / 68.517% | 10.546 / 35.152% | — |
+
+| Серія | gui_ms, повтори 1/2/3 | Показані FPS min–max | Швидкість PS1 min–max |
+|---|---|---|---|
+| C5-cast (3/3) | 34565/35309/35204 | 33.986–34.717 | 56.643–57.862% |
+| C5-colin (3/3) | 62539/62438/62618 | 9.502–9.529 | 31.940–32.032% |
+| C5-colony (3/3) | 30779/30676/31104 | 19.322–19.592 | 64.300–65.198% |
+| C5-crash (3/3) | 37961/37839/37866 | 15.832–15.883 | 52.686–52.856% |
+| C5-gt (3/3) | 34328/34335/34403 | 17.469–17.508 | 58.134–58.261% |
+| C5-nfs (3/3) | 42839/42854/42883 | 13.758–13.772 | 46.639–46.686% |
+| C5-rayman (3/3) | 29263/30303/30367 | 39.517–41.007 | 65.861–68.346% |
+| C5-rc (3/3) | 37632/37634/38618 | 31.074–31.888 | 51.789–53.146% |
+| C5-trek (3/3) | 23623/23858/23601 | 25.149–25.423 | 83.829–84.742% |
+| C5-warzone (3/3) | 24291/24285/25260 | 15.835–16.471 | 79.177–82.355% |
+| C5-wing (3/3) | 19985/20039/19984 | 23.953–24.019 | 99.805–100.080% |
+| C5-wipeout (3/3) | 28070/29202/29190 | 20.547–21.375 | 68.488–71.250% |
+| N95-stock-cast (3/3) | 64121/63669/64126 | 18.713–18.847 | 31.189–31.412% |
+| N95-stock-colin (3/3) | 108814/108066/108616 | 5.468–5.506 | 18.380–18.507% |
+| N95-stock-colony (3/3) | 58023/57290/57924 | 10.358–10.490 | 34.469–34.910% |
+| N95-stock-crash (3/3) | 76309/75450/76178 | 7.876–7.966 | 26.209–26.508% |
+| N95-stock-gt (3/3) | 65242/64568/65358 | 9.196–9.308 | 30.601–30.975% |
+| N95-stock-nfs (3/3) | 76728/76262/76714 | 7.690–7.736 | 26.066–26.225% |
+| N95-stock-rayman (3/3) | 50673/50497/51065 | 23.499–23.764 | 39.166–39.606% |
+| N95-stock-rc (3/3) | 68217/68595/68196 | 17.494–17.596 | 29.157–29.327% |
+| N95-stock-trek (3/3) | 47653/48003/47722 | 12.499–12.591 | 41.664–41.970% |
+| N95-stock-warzone (3/3) | 53940/54261/53867 | 7.372–7.426 | 36.859–37.128% |
+| N95-stock-wing (3/3) | 45244/45306/45566 | 10.534–10.609 | 43.892–44.205% |
+| N95-stock-wipeout (3/3) | 56751/57893/56895 | 10.364–10.573 | 34.546–35.242% |
+
+Різниці в межах розкиду не трактуються як виграш. Повна швидкість означає 100% PS1.
+
+Рідні FPS: GT 30 — задано в дорученні; Crash 30 — [інтервʼю Andy Gavin](https://arstechnica.com/video/watch/war-stories-how-crash-bandicoot-hacked-the-playstation-to-run/);
+WipEout 30 — [опис оригінального коду автором його перенесення](https://phoboslab.org/log/2023/08/rewriting-wipeout).
+¹ Colony Wars 30 — висновок із опису успадкованого рушія попередніх ігор, зафіксованого
+на двох відеокадрах (30 NTSC / 25 PAL), у [Julian Gold, postmortem Red Sun, Game Developer серпень 2000, с.54–55](https://media.gdcvault.com/GD_Mag_Archives/GDM_August_2000.pdf).
+Це не прямий замір оригінального диска. Пошуки інших ігор не дали чисельного первинного
+джерела; VBlank 60 і FPS пізніших портів не підмінюють рідну частоту PS1. Нотатки — native-fps-sources.txt.
+
+## Стенд, відхилені результати й залишок
+
+### Повторне відновлення і зупинка, 2026-10-05 21:05
+
+Після повідомлення користувача про увімкнення N95 INFO о20:53:26 відповів на 192.168.3.22: tick1604352, startTick1556547, boot0, IDLE, PS ps1stage1=0. Новий uptime підтвердив перезапуск після попередньої сесії. Виконавець перезапуск не робив. [Отриманий журнал перерваного першого прогону](f11-game-speed-2026-10-05-evidence/N95-return-failed-cast.jsonl) закінчується loadstate17500 rc0 та clocks start, без shutdown, pass і exit: прогін недійсний. Перші артефакти з префіксом N95-cpu50-cast збережені в interrupted-cpu50-2026-10-05-2027/. Історичні посилання першого інциденту з такими іменами слід читати в цьому підкаталозі.
+
+[Регістри після повернення](f11-game-speed-2026-10-05-evidence/N95-return-clock.log) штатні: m86, PLL00056400, MPU2, CORE04360644, L3=4. RESTORE STOCK не потрібний. Через ocgui повторно підготовлено m129, MPU/2, L3/6; KEEP ON EXIT = ТАК, APPLY і CONFIRM. Після перезапуску стрілки працювали у звичайній орієнтації; усі неприкладені рухи збережені знімками. [Повна перевірка після перемикання](f11-game-speed-2026-10-05-evidence/N95-return-cpu50-switch-clock.log): m129, PLL00081400, MPU2, CORE04360846, L3=6, ядро495360 кГц, шина165120 кГц. Перед серією probe3 підтвердив ті самі регістри.
+
+Повторний Castlevania r1, proc4, знову втратив зв'язок після WAITFG та початку SLEEP86126. Три перевірки:
+
+1. N95-cpu50-cast-r1-scenario: 21:01:43–21:05:20, сім `link lost while scripting - reconnecting ...`; GET trace завершився `ObjectDisposedException`, `System.Net.Sockets.NetworkStream`; exitCode1, timeout=false, межа220с.
+2. N95-return-connect-check2: 21:05:27–21:05:29, `daemon not responding at 192.168.3.22 (explicit -Ip, not scanning; use -Ip scan to search)`; exitCode1.
+3. N95-return-connect-check3-scan: 21:05:29–21:05:45, `no daemon found on the LAN - is it running and on WiFi?`; exitCode1.
+
+Після трьох перевірок звернення зупинено. Повторення на тому самому етапі зафіксоване, але причину не встановлено: транспортні повідомлення самі не доводять аварію живлення чи процесора. Дійсних прогонів залишається72, cpu50=0. Післясерійні регістри, фінальний boot.dat та повернення18 файлів N95 недоступні. C5 не чіпали; його остаточне повернення чинне. Автономні REBOOT, зменшення L3 та запис boot.dat не виконувалися. Цей розділ описує останній стан; нижче збережена історія першої зупинки.
+
+
+### Зупинка N95-cpu50, 2026-10-05 20:27
+
+Усі 12 ігор виміряні на C5 і N95-stock: 72 дійсні прогони, 24 трійки. Після успішного переходу в cpu50 перший сценарій Castlevania втратив WiFi-зʼєднання. JSONL, повний trace та післясерійні регістри не отримано; прогін не прийнято. Перевірки:
+
+1. N95-cpu50-cast-r1-scenario, 20:22:48–20:26:23: SCRIPT запущено, після WAITFG і SLEEP 86126 клієнт сім разів написав `link lost while scripting - reconnecting ...`; отримання журналу закінчилося `ObjectDisposedException`, `System.Net.Sockets.NetworkStream`, exitCode=1. Клієнт повернувся сам до межі 220 с.
+2. INFO за 192.168.3.22, 20:26:53–20:26:55: `daemon not responding at 192.168.3.22 (explicit -Ip, not scanning; use -Ip scan to search)`, exitCode=1.
+3. `-Ip scan -Device n95 -Info`, 20:27:26–20:27:42: сканування всіх мереж, включно з 192.168.3.0/24, закінчилося `no daemon found on the LAN - is it running and on WiFi?`, exitCode=1.
+
+Після цих трьох перевірок звернення до телефона зупинено за правилом завдання. Причину втрати доступу не встановлено; зависання або перезавантаження телефона не доведені. Точні stdout/stderr і маркери мають префікси трьох перевірок вище; [машинний опис зупинки](f11-game-speed-2026-10-05-evidence/stand-stop.json).
+
+Останні підтверджені регістри — probe102 перед Castlevania: m129, PLL00081400, CORE04360846, MPU00000002. Поточний стан після втрати доступу не перевірено. RESTORE STOCK, REBOOT, повторне перемикання й запис boot.dat не виконувалися. Сцени всіх дванадцяти ігор готові; жодну гру не пропущено через ліміт навігації.
+
+
+Три попередні C5 Castlevania зі стану frame15000 виключені: раннє повторне
+завантаження на N95 показало вступ із вежами замку. Артефакти — rejected-cast-intro/.
+Новий стан frame17500 показує Richter із HUD на сходах і використовується для нових серій.
+Nav4 Cast не зберегла потрібний кадр; попередній bench не прийнято як новий стан.
+Окремий C5 Cast proc38 виключено через BT-діалог: covered0/rgn5, показаний FPS не доведено.
+Артефакти — rejected-cast-dsa-overlay/. Прийнята повторна трійка proc41–43 має covered1.
+На час серій парний KOMPUTER у BTUI C5 тимчасово авторизований; початково він неавторизований.
+Після фінального зворотного читання файлів авторизацію KOMPUTER повернуто в початковий стан: lock зник; PAVLO не змінювали. Доказ — c5-bt-authorization-restored.json і c5-bt-final-restored.png.
+
+Попередні великі GET C5 через віртуальний COM втрачали блоки по 1008 байтів
+і чекали оголошеного розміру до таймауту. Це не означало відʼєднання телефона:
+INFO відповідав. Прямий native RFCOMM дав повний початковий bench 1713024 байти
+з SHA256 8AA4F9A…62D13 і повний EXE з потрібним SHA256. Локальні PC-скрипти
+збережені; оригінальний deploy_net.ps1 не змінено.
+WAIT зависав після виходу емулятора; відновлено лише демон командою RESTART.
+Далі застосовуються SLEEP і ENDAPP/KILL/PS. WAITFG використовує UID, бо назва PS1 збігалася з демоном.
+О15:43–15:59 запуск локального PowerShell затримувався на 5–6 хвилин; збережено маркери таймаутів.
+О17:44 запуск відновився, INFO C5 і N95 відповіли, сценарій Trek nav3 підтверджено DONE29.
+Ці локальні затримки не вважаються відключенням телефона чи виміряною швидкістю гри.
+
+Пропущені через втрату доступу: N95-cpu50 для всіх дванадцяти ігор. Для завершення потрібне відновлення WiFi/демона, перевірка фактичних регістрів і продовження серій.
+Ліміт навігації — 10 спроб на гру; збої стенду — максимум три послідовні спроби.
+
+## Повернення файлів і артефакти
+
+**C5: остаточно повернуто й звірено 14/14 початкових файлів і профілів, SHA-256 ідентичні.** input, input_prev та interp відсутні за STAT. Релізний EXE повторно прочитаний: 1431280 байтів, SHA-256 4CE2F972…99EE4. C:/sys/hash/ps1stage1.exe містить потрібні 20 байтів SHA-1 962048C4…9882C6. Тимчасову авторизацію KOMPUTER скасовано останнім BT-сеансом; SHOT і GET виконані в тому самому зʼєднанні. PAVLO лишився авторизованим.
+
+[C5, 14 перевірок](f11-game-speed-2026-10-05-evidence/c5-final2-restoration-verification.json), [BT після повернення](f11-game-speed-2026-10-05-evidence/c5-bt-final-restored.png).
+
+**N95: поточні початкові файли ще НЕ повернуто й остаточний стан не перевірено.** Оригінали 18 файлів збережені з SHA-256. Останніми на телефон встановлено тимчасові stock-Castlevania налаштування та cast-gameplay bench; input/interp після навігації також потребують повернення. Попередній аудит відновлення стосувався попередньої фази й не підтверджує теперішнього стану N95.
+
+boot.dat прочитано до переходу: 68 байтів, SHA-256 3522F5C7A85D48D8807EE8E776CCC73999CBA8C70611EF66FA106C7CF1003FF3. Його не записували; фінальний повторний GET недоступний. Останнє підтверджене тактування N95 — cpu50; після втрати доступу його не чіпали.
+
+Сирі журнали, SHOT і стани: plans/runs/2026-10-05_game-speed/. Копія для коміту — [evidence/](f11-game-speed-2026-10-05-evidence/), [машинне зведення](f11-game-speed-2026-10-05-evidence/summary-progress.json), [аудит 72 прогонів](f11-game-speed-2026-10-05-evidence/current-run-audit.json). Архів оновлено й перевірено за SHA-256; код емулятора не змінено.
+## Висновок
+
+Повної швидкості за медіаною досягли: C5-wing (100.075%).
+Внесок розгону ядра ще не виміряно.
+Прийняті стани придатні для повторних замірів і відеозйомки.
+
+## Окремі прогони
+
+У кожному посиланні на JSON збережені точні gui/pass/Loaded CD Image; сирий JSONL має ту саму назву без .result. emuMs для всіх прогонів н/д у цьому релізі. Розміри завантажених образів перевірені проти games.json.
+
+| Прогін / точні рядки | gui: frames | gui: ms | Показані кадри | error | Loaded bytes |
+|---|---:|---:|---:|---:|---:|
+| [C5-cast-r1](f11-game-speed-2026-10-05-evidence/C5-cast-r1.result.json) | 1200 | 34565 | 1200 | 0 | 398057383 |
+| [C5-cast-r2](f11-game-speed-2026-10-05-evidence/C5-cast-r2.result.json) | 1200 | 35309 | 1200 | 0 | 398057383 |
+| [C5-cast-r3](f11-game-speed-2026-10-05-evidence/C5-cast-r3.result.json) | 1200 | 35204 | 1200 | 0 | 398057383 |
+| [C5-colin-r1](f11-game-speed-2026-10-05-evidence/C5-colin-r1.result.json) | 1200 | 62539 | 595 | 0 | 263206654 |
+| [C5-colin-r2](f11-game-speed-2026-10-05-evidence/C5-colin-r2.result.json) | 1200 | 62438 | 595 | 0 | 263206654 |
+| [C5-colin-r3](f11-game-speed-2026-10-05-evidence/C5-colin-r3.result.json) | 1200 | 62618 | 595 | 0 | 263206654 |
+| [C5-colony-r1](f11-game-speed-2026-10-05-evidence/C5-colony-r1.result.json) | 1200 | 30779 | 601 | 0 | 366364329 |
+| [C5-colony-r2](f11-game-speed-2026-10-05-evidence/C5-colony-r2.result.json) | 1200 | 30676 | 601 | 0 | 366364329 |
+| [C5-colony-r3](f11-game-speed-2026-10-05-evidence/C5-colony-r3.result.json) | 1200 | 31104 | 601 | 0 | 366364329 |
+| [C5-crash-r1](f11-game-speed-2026-10-05-evidence/C5-crash-r1.result.json) | 1200 | 37961 | 601 | 0 | 478407220 |
+| [C5-crash-r2](f11-game-speed-2026-10-05-evidence/C5-crash-r2.result.json) | 1200 | 37839 | 601 | 0 | 478407220 |
+| [C5-crash-r3](f11-game-speed-2026-10-05-evidence/C5-crash-r3.result.json) | 1200 | 37866 | 601 | 0 | 478407220 |
+| [C5-gt-r1](f11-game-speed-2026-10-05-evidence/C5-gt-r1.result.json) | 1200 | 34328 | 601 | 0 | 406756372 |
+| [C5-gt-r2](f11-game-speed-2026-10-05-evidence/C5-gt-r2.result.json) | 1200 | 34335 | 601 | 0 | 406756372 |
+| [C5-gt-r3](f11-game-speed-2026-10-05-evidence/C5-gt-r3.result.json) | 1200 | 34403 | 601 | 0 | 406756372 |
+| [C5-nfs-r1](f11-game-speed-2026-10-05-evidence/C5-nfs-r1.result.json) | 1200 | 42839 | 590 | 0 | 519772571 |
+| [C5-nfs-r2](f11-game-speed-2026-10-05-evidence/C5-nfs-r2.result.json) | 1200 | 42854 | 590 | 0 | 519772571 |
+| [C5-nfs-r3](f11-game-speed-2026-10-05-evidence/C5-nfs-r3.result.json) | 1200 | 42883 | 590 | 0 | 519772571 |
+| [C5-rayman-r1](f11-game-speed-2026-10-05-evidence/C5-rayman-r1.result.json) | 1200 | 29263 | 1200 | 0 | 498135871 |
+| [C5-rayman-r2](f11-game-speed-2026-10-05-evidence/C5-rayman-r2.result.json) | 1200 | 30303 | 1200 | 0 | 498135871 |
+| [C5-rayman-r3](f11-game-speed-2026-10-05-evidence/C5-rayman-r3.result.json) | 1200 | 30367 | 1200 | 0 | 498135871 |
+| [C5-rc-r1](f11-game-speed-2026-10-05-evidence/C5-rc-r1.result.json) | 1200 | 37632 | 1200 | 0 | 12839268 |
+| [C5-rc-r2](f11-game-speed-2026-10-05-evidence/C5-rc-r2.result.json) | 1200 | 37634 | 1200 | 0 | 12839268 |
+| [C5-rc-r3](f11-game-speed-2026-10-05-evidence/C5-rc-r3.result.json) | 1200 | 38618 | 1200 | 0 | 12839268 |
+| [C5-trek-r1](f11-game-speed-2026-10-05-evidence/C5-trek-r1.result.json) | 1200 | 23623 | 600 | 0 | 310075072 |
+| [C5-trek-r2](f11-game-speed-2026-10-05-evidence/C5-trek-r2.result.json) | 1200 | 23858 | 600 | 0 | 310075072 |
+| [C5-trek-r3](f11-game-speed-2026-10-05-evidence/C5-trek-r3.result.json) | 1200 | 23601 | 600 | 0 | 310075072 |
+| [C5-warzone-r1](f11-game-speed-2026-10-05-evidence/C5-warzone-r1.result.json) | 1200 | 24291 | 400 | 0 | 414470047 |
+| [C5-warzone-r2](f11-game-speed-2026-10-05-evidence/C5-warzone-r2.result.json) | 1200 | 24285 | 400 | 0 | 414470047 |
+| [C5-warzone-r3](f11-game-speed-2026-10-05-evidence/C5-warzone-r3.result.json) | 1200 | 25260 | 400 | 0 | 414470047 |
+| [C5-wing-r1](f11-game-speed-2026-10-05-evidence/C5-wing-r1.result.json) | 1200 | 19985 | 480 | 0 | 589288424 |
+| [C5-wing-r2](f11-game-speed-2026-10-05-evidence/C5-wing-r2.result.json) | 1200 | 20039 | 480 | 0 | 589288424 |
+| [C5-wing-r3](f11-game-speed-2026-10-05-evidence/C5-wing-r3.result.json) | 1200 | 19984 | 480 | 0 | 589288424 |
+| [C5-wipeout-r1](f11-game-speed-2026-10-05-evidence/C5-wipeout-r1.result.json) | 1200 | 28070 | 600 | 0 | 450941663 |
+| [C5-wipeout-r2](f11-game-speed-2026-10-05-evidence/C5-wipeout-r2.result.json) | 1200 | 29202 | 600 | 0 | 450941663 |
+| [C5-wipeout-r3](f11-game-speed-2026-10-05-evidence/C5-wipeout-r3.result.json) | 1200 | 29190 | 600 | 0 | 450941663 |
+| [N95-stock-cast-r1](f11-game-speed-2026-10-05-evidence/N95-stock-cast-r1.result.json) | 1200 | 64121 | 1200 | 0 | 398057383 |
+| [N95-stock-cast-r2](f11-game-speed-2026-10-05-evidence/N95-stock-cast-r2.result.json) | 1200 | 63669 | 1200 | 0 | 398057383 |
+| [N95-stock-cast-r3](f11-game-speed-2026-10-05-evidence/N95-stock-cast-r3.result.json) | 1200 | 64126 | 1200 | 0 | 398057383 |
+| [N95-stock-colin-r1](f11-game-speed-2026-10-05-evidence/N95-stock-colin-r1.result.json) | 1200 | 108814 | 595 | 0 | 263206654 |
+| [N95-stock-colin-r2](f11-game-speed-2026-10-05-evidence/N95-stock-colin-r2.result.json) | 1200 | 108066 | 595 | 0 | 263206654 |
+| [N95-stock-colin-r3](f11-game-speed-2026-10-05-evidence/N95-stock-colin-r3.result.json) | 1200 | 108616 | 595 | 0 | 263206654 |
+| [N95-stock-colony-r1](f11-game-speed-2026-10-05-evidence/N95-stock-colony-r1.result.json) | 1200 | 58023 | 601 | 0 | 366364329 |
+| [N95-stock-colony-r2](f11-game-speed-2026-10-05-evidence/N95-stock-colony-r2.result.json) | 1200 | 57290 | 601 | 0 | 366364329 |
+| [N95-stock-colony-r3](f11-game-speed-2026-10-05-evidence/N95-stock-colony-r3.result.json) | 1200 | 57924 | 601 | 0 | 366364329 |
+| [N95-stock-crash-r1](f11-game-speed-2026-10-05-evidence/N95-stock-crash-r1.result.json) | 1200 | 76309 | 601 | 0 | 478407220 |
+| [N95-stock-crash-r2](f11-game-speed-2026-10-05-evidence/N95-stock-crash-r2.result.json) | 1200 | 75450 | 601 | 0 | 478407220 |
+| [N95-stock-crash-r3](f11-game-speed-2026-10-05-evidence/N95-stock-crash-r3.result.json) | 1200 | 76178 | 601 | 0 | 478407220 |
+| [N95-stock-gt-r1](f11-game-speed-2026-10-05-evidence/N95-stock-gt-r1.result.json) | 1200 | 65242 | 601 | 0 | 406756372 |
+| [N95-stock-gt-r2](f11-game-speed-2026-10-05-evidence/N95-stock-gt-r2.result.json) | 1200 | 64568 | 601 | 0 | 406756372 |
+| [N95-stock-gt-r3](f11-game-speed-2026-10-05-evidence/N95-stock-gt-r3.result.json) | 1200 | 65358 | 601 | 0 | 406756372 |
+| [N95-stock-nfs-r1](f11-game-speed-2026-10-05-evidence/N95-stock-nfs-r1.result.json) | 1200 | 76728 | 590 | 0 | 519772571 |
+| [N95-stock-nfs-r2](f11-game-speed-2026-10-05-evidence/N95-stock-nfs-r2.result.json) | 1200 | 76262 | 590 | 0 | 519772571 |
+| [N95-stock-nfs-r3](f11-game-speed-2026-10-05-evidence/N95-stock-nfs-r3.result.json) | 1200 | 76714 | 590 | 0 | 519772571 |
+| [N95-stock-rayman-r1](f11-game-speed-2026-10-05-evidence/N95-stock-rayman-r1.result.json) | 1200 | 50673 | 1200 | 0 | 498135871 |
+| [N95-stock-rayman-r2](f11-game-speed-2026-10-05-evidence/N95-stock-rayman-r2.result.json) | 1200 | 50497 | 1200 | 0 | 498135871 |
+| [N95-stock-rayman-r3](f11-game-speed-2026-10-05-evidence/N95-stock-rayman-r3.result.json) | 1200 | 51065 | 1200 | 0 | 498135871 |
+| [N95-stock-rc-r1](f11-game-speed-2026-10-05-evidence/N95-stock-rc-r1.result.json) | 1200 | 68217 | 1200 | 0 | 12839268 |
+| [N95-stock-rc-r2](f11-game-speed-2026-10-05-evidence/N95-stock-rc-r2.result.json) | 1200 | 68595 | 1200 | 0 | 12839268 |
+| [N95-stock-rc-r3](f11-game-speed-2026-10-05-evidence/N95-stock-rc-r3.result.json) | 1200 | 68196 | 1200 | 0 | 12839268 |
+| [N95-stock-trek-r1](f11-game-speed-2026-10-05-evidence/N95-stock-trek-r1.result.json) | 1200 | 47653 | 600 | 0 | 310075072 |
+| [N95-stock-trek-r2](f11-game-speed-2026-10-05-evidence/N95-stock-trek-r2.result.json) | 1200 | 48003 | 600 | 0 | 310075072 |
+| [N95-stock-trek-r3](f11-game-speed-2026-10-05-evidence/N95-stock-trek-r3.result.json) | 1200 | 47722 | 600 | 0 | 310075072 |
+| [N95-stock-warzone-r1](f11-game-speed-2026-10-05-evidence/N95-stock-warzone-r1.result.json) | 1200 | 53940 | 400 | 0 | 414470047 |
+| [N95-stock-warzone-r2](f11-game-speed-2026-10-05-evidence/N95-stock-warzone-r2.result.json) | 1200 | 54261 | 400 | 0 | 414470047 |
+| [N95-stock-warzone-r3](f11-game-speed-2026-10-05-evidence/N95-stock-warzone-r3.result.json) | 1200 | 53867 | 400 | 0 | 414470047 |
+| [N95-stock-wing-r1](f11-game-speed-2026-10-05-evidence/N95-stock-wing-r1.result.json) | 1200 | 45244 | 480 | 0 | 589288424 |
+| [N95-stock-wing-r2](f11-game-speed-2026-10-05-evidence/N95-stock-wing-r2.result.json) | 1200 | 45306 | 480 | 0 | 589288424 |
+| [N95-stock-wing-r3](f11-game-speed-2026-10-05-evidence/N95-stock-wing-r3.result.json) | 1200 | 45566 | 480 | 0 | 589288424 |
+| [N95-stock-wipeout-r1](f11-game-speed-2026-10-05-evidence/N95-stock-wipeout-r1.result.json) | 1200 | 56751 | 600 | 0 | 450941663 |
+| [N95-stock-wipeout-r2](f11-game-speed-2026-10-05-evidence/N95-stock-wipeout-r2.result.json) | 1200 | 57893 | 600 | 0 | 450941663 |
+| [N95-stock-wipeout-r3](f11-game-speed-2026-10-05-evidence/N95-stock-wipeout-r3.result.json) | 1200 | 56895 | 600 | 0 | 450941663 |

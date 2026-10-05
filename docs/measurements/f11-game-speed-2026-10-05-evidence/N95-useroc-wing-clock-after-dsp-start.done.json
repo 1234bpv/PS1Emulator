@@ -1,0 +1,15 @@
+{
+  "name": "N95-useroc-wing-clock-after-dsp-start",
+  "started": "2026-10-05T23:32:29.4148625+03:00",
+  "finished": "2026-10-05T23:32:31.9121643+03:00",
+  "limitSec": 25,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-Do",
+    "START E:\\sys\\bin\\ocprobe.exe patcher dsp 1; SLEEP 2000"
+  ]
+}

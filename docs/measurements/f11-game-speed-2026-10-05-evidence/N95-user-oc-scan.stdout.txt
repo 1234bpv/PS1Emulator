@@ -1,0 +1,16 @@
+[net] scanning 192.168.46.0/24 for the daemon on port 2323 ...
+[net] scanning 192.168.246.0/24 for the daemon on port 2323 ...
+[net] scanning 192.168.56.0/24 for the daemon on port 2323 ...
+[net] scanning 192.168.3.0/24 for the daemon on port 2323 ...
+[net] found daemon at 192.168.3.22
+[net] > INFO
+[net] < OK info
+[net] < protocol 2
+[net] < screen 320x240
+[net] < ramfree 93450240
+[net] < tick 554215 startTick 60075 boot 0 by n
+[net] < ap Huawei
+[net] < drive C freekb 65684
+[net] < drive E freekb 1017808
+[net] < script IDLE
+[net] done

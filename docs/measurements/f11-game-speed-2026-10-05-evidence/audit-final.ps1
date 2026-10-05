@@ -1,4 +1,4 @@
-param([switch]$RunsOnly)
+param([switch]$RunsOnly,[switch]$UserOverclock)
 $ErrorActionPreference='Stop'
 function Assert($condition,[string]$message){if(-not $condition){throw $message}}
 & "$PSScriptRoot/update-progress.ps1" | Out-Null
@@ -19,7 +19,8 @@ foreach($game in $games){
  $stateChecks+=[ordered]@{game=$game.key;file=$state.file;sha256=$state.sha256;bytes=$state.bytes;loadFrame=$state.loadFrame;visualProofAccepted=($state.status -eq 'accepted gameplay state')}
  Assert ($state.status -eq 'accepted gameplay state') "Gameplay not accepted $($game.key)"
  $endCycles=@()
- foreach($device in @('C5','N95-stock','N95-cpu50')){
+ $thirdDevice=if($UserOverclock){'N95-useroc'}else{'N95-cpu50'}
+ foreach($device in @('C5','N95-stock',$thirdDevice)){
   $name="$device-$($game.key)"
   if($RunsOnly -and -not (Test-Path "$PSScriptRoot/$name-r3.result.json")){continue}
   foreach($repeat in 1..3){
@@ -43,12 +44,23 @@ foreach($game in $games){
    $zero=@($events | Where-Object {$_.event -eq 'vol' -and $_.msg -eq 'step=0'})[-1]
    $start=@($events | Where-Object event -eq clocks)[0]
    Assert ($zero -and $zero.ms -lt $start.ms) "Volume late $run"
+   $soundOpen=@($events | Where-Object {$_.event -eq 'snd_open' -and $_.msg -match 'rc=0'})
+   $soundStats=@($events | Where-Object event -eq 'sndstats')[-1]
+   Assert ($soundOpen.Count -eq 1 -and $soundStats.msg -match 'feeds=([1-9][0-9]*) samples=([1-9][0-9]*)') "Audio emulation absent $run"
    $pass=@($events | Where-Object event -eq pass)[-1].msg
    Assert ($pass -match 'cycle=(\d+)') "No end cycle $run"
    $endCycles+=$Matches[1]
    $runChecks+=[ordered]@{run=$run;frames=1200;guiMs=$result.ms;shownFrames=$result.shownFrames;errorCount=0;imageBytes=$game.size;endCycle=$Matches[1]}
   }
   if($device -ne 'C5'){
+   if($device -eq 'N95-useroc'){
+    foreach($side in @('before','after')){
+     $clockName="$name-clock-$side"
+     & "$PSScriptRoot/check-user-clock-files.ps1" -Name $clockName | Out-Null
+     $clockChecks+=[ordered]@{series=$name;side=$side;multiplier=111;core='04360644';engineLog="$clockName-engine.log";dspLog="$clockName-dsp.log";matchedUserBaseline=$true}
+    }
+    continue
+   }
    $multiplier=if($device -eq 'N95-stock'){86}else{129}
    $core=if($device -eq 'N95-stock'){'04360644'}else{$oc.core}
    foreach($side in @('before','after')){
@@ -84,13 +96,22 @@ foreach($device in @('c5','n95')){
 }
 $bt=Get-Content "$PSScriptRoot/c5-bt-authorization-restored.json" -Raw | ConvertFrom-Json
 Assert ($bt.peer -eq 'KOMPUTER' -and $bt.authorized -eq $false -and $bt.visuallyVerified) 'C5 BT peer authorization not restored'
-$bootBefore=(Get-FileHash "$PSScriptRoot/n95-boot-before.dat" -Algorithm SHA256).Hash
-$bootAfter=(Get-FileHash "$PSScriptRoot/n95-boot-after.dat" -Algorithm SHA256).Hash
+$bootPrefix=if($UserOverclock){'useroc'}else{'n95'}
+$bootBefore=(Get-FileHash "$PSScriptRoot/$bootPrefix-boot-before.dat" -Algorithm SHA256).Hash
+$bootAfter=(Get-FileHash "$PSScriptRoot/$bootPrefix-boot-after.dat" -Algorithm SHA256).Hash
 Assert ($bootBefore -eq $bootAfter) 'boot.dat differs'
-$finalClock=Get-Content "$PSScriptRoot/N95-cpu50-final-clock.log" -Raw
-& "$PSScriptRoot/check-clock-log.ps1" -Path "$PSScriptRoot/N95-cpu50-final-clock.log" -Multiplier 129 -Core $oc.core | Out-Null
+if($UserOverclock){
+ & "$PSScriptRoot/check-user-clock-files.ps1" -Name N95-useroc-final | Out-Null
+}else{
+ $finalClock=Get-Content "$PSScriptRoot/N95-cpu50-final-clock.log" -Raw
+ & "$PSScriptRoot/check-clock-log.ps1" -Path "$PSScriptRoot/N95-cpu50-final-clock.log" -Multiplier 129 -Core $oc.core | Out-Null
+}
 $repo=(Resolve-Path "$PSScriptRoot/../../..").Path
 $sourceDiff=@(& git -C $repo diff HEAD --name-only -- src tests tools-patches)
 Assert ($sourceDiff.Count -eq 0) 'Emulator/source infrastructure changed'
-[ordered]@{complete=$true;verifiedAt=(Get-Date).ToString('o');runs=$runChecks;states=$stateChecks;clockChecks=$clockChecks;restoredFiles=$restoreChecks;bootDatSha256=$bootAfter;c5PeerAuthorization=$bt;n95FinalMultiplier=129;n95FinalCore=$oc.core;emulatorSourceUnchanged=$true} | ConvertTo-Json -Depth 10 | Set-Content "$PSScriptRoot/final-audit.json" -Encoding utf8
+$finalMultiplier=if($UserOverclock){111}else{129}
+$finalCore=if($UserOverclock){'04360644'}else{$oc.core}
+$auditFile=if($UserOverclock){'final-audit-useroc.json'}else{'final-audit.json'}
+[ordered]@{complete=$true;verifiedAt=(Get-Date).ToString('o');runs=$runChecks;states=$stateChecks;clockChecks=$clockChecks;restoredFiles=$restoreChecks;bootDatSha256=$bootAfter;c5PeerAuthorization=$bt;n95FinalMultiplier=$finalMultiplier;n95FinalCore=$finalCore;userOverclock=$UserOverclock.IsPresent;emulatorSourceUnchanged=$true} | ConvertTo-Json -Depth 10 | Set-Content "$PSScriptRoot/$auditFile" -Encoding utf8
 Write-Output 'Final audit passed: 108 runs, 12 states, 48 clock checks, 32 restored files.'
+

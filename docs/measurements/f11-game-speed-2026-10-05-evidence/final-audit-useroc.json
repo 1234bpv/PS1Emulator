@@ -1,0 +1,1770 @@
+{
+  "complete": true,
+  "verifiedAt": "2026-10-05T23:37:18.9607633+03:00",
+  "runs": [
+    {
+      "run": "C5-cast-r1",
+      "frames": 1200,
+      "guiMs": 34565,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 398057383,
+      "endCycle": "3442875179"
+    },
+    {
+      "run": "C5-cast-r2",
+      "frames": 1200,
+      "guiMs": 35309,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 398057383,
+      "endCycle": "3442875179"
+    },
+    {
+      "run": "C5-cast-r3",
+      "frames": 1200,
+      "guiMs": 35204,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 398057383,
+      "endCycle": "3442875179"
+    },
+    {
+      "run": "N95-stock-cast-r1",
+      "frames": 1200,
+      "guiMs": 64121,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 398057383,
+      "endCycle": "3442875179"
+    },
+    {
+      "run": "N95-stock-cast-r2",
+      "frames": 1200,
+      "guiMs": 63669,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 398057383,
+      "endCycle": "3442875179"
+    },
+    {
+      "run": "N95-stock-cast-r3",
+      "frames": 1200,
+      "guiMs": 64126,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 398057383,
+      "endCycle": "3442875179"
+    },
+    {
+      "run": "N95-useroc-cast-r1",
+      "frames": 1200,
+      "guiMs": 34562,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 398057383,
+      "endCycle": "3442875179"
+    },
+    {
+      "run": "N95-useroc-cast-r2",
+      "frames": 1200,
+      "guiMs": 34623,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 398057383,
+      "endCycle": "3442875179"
+    },
+    {
+      "run": "N95-useroc-cast-r3",
+      "frames": 1200,
+      "guiMs": 34350,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 398057383,
+      "endCycle": "3442875179"
+    },
+    {
+      "run": "C5-colin-r1",
+      "frames": 1200,
+      "guiMs": 62539,
+      "shownFrames": 595,
+      "errorCount": 0,
+      "imageBytes": 263206654,
+      "endCycle": "3945987890"
+    },
+    {
+      "run": "C5-colin-r2",
+      "frames": 1200,
+      "guiMs": 62438,
+      "shownFrames": 595,
+      "errorCount": 0,
+      "imageBytes": 263206654,
+      "endCycle": "3945987890"
+    },
+    {
+      "run": "C5-colin-r3",
+      "frames": 1200,
+      "guiMs": 62618,
+      "shownFrames": 595,
+      "errorCount": 0,
+      "imageBytes": 263206654,
+      "endCycle": "3945987890"
+    },
+    {
+      "run": "N95-stock-colin-r1",
+      "frames": 1200,
+      "guiMs": 108814,
+      "shownFrames": 595,
+      "errorCount": 0,
+      "imageBytes": 263206654,
+      "endCycle": "3945987890"
+    },
+    {
+      "run": "N95-stock-colin-r2",
+      "frames": 1200,
+      "guiMs": 108066,
+      "shownFrames": 595,
+      "errorCount": 0,
+      "imageBytes": 263206654,
+      "endCycle": "3945987890"
+    },
+    {
+      "run": "N95-stock-colin-r3",
+      "frames": 1200,
+      "guiMs": 108616,
+      "shownFrames": 595,
+      "errorCount": 0,
+      "imageBytes": 263206654,
+      "endCycle": "3945987890"
+    },
+    {
+      "run": "N95-useroc-colin-r1",
+      "frames": 1200,
+      "guiMs": 70254,
+      "shownFrames": 595,
+      "errorCount": 0,
+      "imageBytes": 263206654,
+      "endCycle": "3945987890"
+    },
+    {
+      "run": "N95-useroc-colin-r2",
+      "frames": 1200,
+      "guiMs": 69773,
+      "shownFrames": 595,
+      "errorCount": 0,
+      "imageBytes": 263206654,
+      "endCycle": "3945987890"
+    },
+    {
+      "run": "N95-useroc-colin-r3",
+      "frames": 1200,
+      "guiMs": 70195,
+      "shownFrames": 595,
+      "errorCount": 0,
+      "imageBytes": 263206654,
+      "endCycle": "3945987890"
+    },
+    {
+      "run": "C5-colony-r1",
+      "frames": 1200,
+      "guiMs": 30779,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 366364329,
+      "endCycle": "902715179"
+    },
+    {
+      "run": "C5-colony-r2",
+      "frames": 1200,
+      "guiMs": 30676,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 366364329,
+      "endCycle": "902715179"
+    },
+    {
+      "run": "C5-colony-r3",
+      "frames": 1200,
+      "guiMs": 31104,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 366364329,
+      "endCycle": "902715179"
+    },
+    {
+      "run": "N95-stock-colony-r1",
+      "frames": 1200,
+      "guiMs": 58023,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 366364329,
+      "endCycle": "902715179"
+    },
+    {
+      "run": "N95-stock-colony-r2",
+      "frames": 1200,
+      "guiMs": 57290,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 366364329,
+      "endCycle": "902715179"
+    },
+    {
+      "run": "N95-stock-colony-r3",
+      "frames": 1200,
+      "guiMs": 57924,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 366364329,
+      "endCycle": "902715179"
+    },
+    {
+      "run": "N95-useroc-colony-r1",
+      "frames": 1200,
+      "guiMs": 29371,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 366364329,
+      "endCycle": "902715179"
+    },
+    {
+      "run": "N95-useroc-colony-r2",
+      "frames": 1200,
+      "guiMs": 29721,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 366364329,
+      "endCycle": "902715179"
+    },
+    {
+      "run": "N95-useroc-colony-r3",
+      "frames": 1200,
+      "guiMs": 29396,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 366364329,
+      "endCycle": "902715179"
+    },
+    {
+      "run": "C5-crash-r1",
+      "frames": 1200,
+      "guiMs": 37961,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 478407220,
+      "endCycle": "3334898603"
+    },
+    {
+      "run": "C5-crash-r2",
+      "frames": 1200,
+      "guiMs": 37839,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 478407220,
+      "endCycle": "3334898603"
+    },
+    {
+      "run": "C5-crash-r3",
+      "frames": 1200,
+      "guiMs": 37866,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 478407220,
+      "endCycle": "3334898603"
+    },
+    {
+      "run": "N95-stock-crash-r1",
+      "frames": 1200,
+      "guiMs": 76309,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 478407220,
+      "endCycle": "3334898603"
+    },
+    {
+      "run": "N95-stock-crash-r2",
+      "frames": 1200,
+      "guiMs": 75450,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 478407220,
+      "endCycle": "3334898603"
+    },
+    {
+      "run": "N95-stock-crash-r3",
+      "frames": 1200,
+      "guiMs": 76178,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 478407220,
+      "endCycle": "3334898603"
+    },
+    {
+      "run": "N95-useroc-crash-r1",
+      "frames": 1200,
+      "guiMs": 44416,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 478407220,
+      "endCycle": "3334898603"
+    },
+    {
+      "run": "N95-useroc-crash-r2",
+      "frames": 1200,
+      "guiMs": 44125,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 478407220,
+      "endCycle": "3334898603"
+    },
+    {
+      "run": "N95-useroc-crash-r3",
+      "frames": 1200,
+      "guiMs": 44510,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 478407220,
+      "endCycle": "3334898603"
+    },
+    {
+      "run": "C5-gt-r1",
+      "frames": 1200,
+      "guiMs": 34328,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 406756372,
+      "endCycle": "733371181"
+    },
+    {
+      "run": "C5-gt-r2",
+      "frames": 1200,
+      "guiMs": 34335,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 406756372,
+      "endCycle": "733371181"
+    },
+    {
+      "run": "C5-gt-r3",
+      "frames": 1200,
+      "guiMs": 34403,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 406756372,
+      "endCycle": "733371181"
+    },
+    {
+      "run": "N95-stock-gt-r1",
+      "frames": 1200,
+      "guiMs": 65242,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 406756372,
+      "endCycle": "733371181"
+    },
+    {
+      "run": "N95-stock-gt-r2",
+      "frames": 1200,
+      "guiMs": 64568,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 406756372,
+      "endCycle": "733371181"
+    },
+    {
+      "run": "N95-stock-gt-r3",
+      "frames": 1200,
+      "guiMs": 65358,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 406756372,
+      "endCycle": "733371181"
+    },
+    {
+      "run": "N95-useroc-gt-r1",
+      "frames": 1200,
+      "guiMs": 35048,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 406756372,
+      "endCycle": "733371181"
+    },
+    {
+      "run": "N95-useroc-gt-r2",
+      "frames": 1200,
+      "guiMs": 35306,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 406756372,
+      "endCycle": "733371181"
+    },
+    {
+      "run": "N95-useroc-gt-r3",
+      "frames": 1200,
+      "guiMs": 35037,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 406756372,
+      "endCycle": "733371181"
+    },
+    {
+      "run": "C5-nfs-r1",
+      "frames": 1200,
+      "guiMs": 42839,
+      "shownFrames": 590,
+      "errorCount": 0,
+      "imageBytes": 519772571,
+      "endCycle": "1970307884"
+    },
+    {
+      "run": "C5-nfs-r2",
+      "frames": 1200,
+      "guiMs": 42854,
+      "shownFrames": 590,
+      "errorCount": 0,
+      "imageBytes": 519772571,
+      "endCycle": "1970307884"
+    },
+    {
+      "run": "C5-nfs-r3",
+      "frames": 1200,
+      "guiMs": 42883,
+      "shownFrames": 590,
+      "errorCount": 0,
+      "imageBytes": 519772571,
+      "endCycle": "1970307884"
+    },
+    {
+      "run": "N95-stock-nfs-r1",
+      "frames": 1200,
+      "guiMs": 76728,
+      "shownFrames": 590,
+      "errorCount": 0,
+      "imageBytes": 519772571,
+      "endCycle": "1970307884"
+    },
+    {
+      "run": "N95-stock-nfs-r2",
+      "frames": 1200,
+      "guiMs": 76262,
+      "shownFrames": 590,
+      "errorCount": 0,
+      "imageBytes": 519772571,
+      "endCycle": "1970307884"
+    },
+    {
+      "run": "N95-stock-nfs-r3",
+      "frames": 1200,
+      "guiMs": 76714,
+      "shownFrames": 590,
+      "errorCount": 0,
+      "imageBytes": 519772571,
+      "endCycle": "1970307884"
+    },
+    {
+      "run": "N95-useroc-nfs-r1",
+      "frames": 1200,
+      "guiMs": 44510,
+      "shownFrames": 590,
+      "errorCount": 0,
+      "imageBytes": 519772571,
+      "endCycle": "1970307884"
+    },
+    {
+      "run": "N95-useroc-nfs-r2",
+      "frames": 1200,
+      "guiMs": 44162,
+      "shownFrames": 590,
+      "errorCount": 0,
+      "imageBytes": 519772571,
+      "endCycle": "1970307884"
+    },
+    {
+      "run": "N95-useroc-nfs-r3",
+      "frames": 1200,
+      "guiMs": 44576,
+      "shownFrames": 590,
+      "errorCount": 0,
+      "imageBytes": 519772571,
+      "endCycle": "1970307884"
+    },
+    {
+      "run": "C5-rayman-r1",
+      "frames": 1200,
+      "guiMs": 29263,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 498135871,
+      "endCycle": "1467195179"
+    },
+    {
+      "run": "C5-rayman-r2",
+      "frames": 1200,
+      "guiMs": 30303,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 498135871,
+      "endCycle": "1467195179"
+    },
+    {
+      "run": "C5-rayman-r3",
+      "frames": 1200,
+      "guiMs": 30367,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 498135871,
+      "endCycle": "1467195179"
+    },
+    {
+      "run": "N95-stock-rayman-r1",
+      "frames": 1200,
+      "guiMs": 50673,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 498135871,
+      "endCycle": "1467195179"
+    },
+    {
+      "run": "N95-stock-rayman-r2",
+      "frames": 1200,
+      "guiMs": 50497,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 498135871,
+      "endCycle": "1467195179"
+    },
+    {
+      "run": "N95-stock-rayman-r3",
+      "frames": 1200,
+      "guiMs": 51065,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 498135871,
+      "endCycle": "1467195179"
+    },
+    {
+      "run": "N95-useroc-rayman-r1",
+      "frames": 1200,
+      "guiMs": 23634,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 498135871,
+      "endCycle": "1467195179"
+    },
+    {
+      "run": "N95-useroc-rayman-r2",
+      "frames": 1200,
+      "guiMs": 24032,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 498135871,
+      "endCycle": "1467195179"
+    },
+    {
+      "run": "N95-useroc-rayman-r3",
+      "frames": 1200,
+      "guiMs": 23622,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 498135871,
+      "endCycle": "1467195179"
+    },
+    {
+      "run": "C5-rc-r1",
+      "frames": 1200,
+      "guiMs": 37632,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 12839268,
+      "endCycle": "2596155182"
+    },
+    {
+      "run": "C5-rc-r2",
+      "frames": 1200,
+      "guiMs": 37634,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 12839268,
+      "endCycle": "2596155182"
+    },
+    {
+      "run": "C5-rc-r3",
+      "frames": 1200,
+      "guiMs": 38618,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 12839268,
+      "endCycle": "2596155182"
+    },
+    {
+      "run": "N95-stock-rc-r1",
+      "frames": 1200,
+      "guiMs": 68217,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 12839268,
+      "endCycle": "2596155182"
+    },
+    {
+      "run": "N95-stock-rc-r2",
+      "frames": 1200,
+      "guiMs": 68595,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 12839268,
+      "endCycle": "2596155182"
+    },
+    {
+      "run": "N95-stock-rc-r3",
+      "frames": 1200,
+      "guiMs": 68196,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 12839268,
+      "endCycle": "2596155182"
+    },
+    {
+      "run": "N95-useroc-rc-r1",
+      "frames": 1200,
+      "guiMs": 38444,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 12839268,
+      "endCycle": "2596155182"
+    },
+    {
+      "run": "N95-useroc-rc-r2",
+      "frames": 1200,
+      "guiMs": 38131,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 12839268,
+      "endCycle": "2596155182"
+    },
+    {
+      "run": "N95-useroc-rc-r3",
+      "frames": 1200,
+      "guiMs": 38362,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 12839268,
+      "endCycle": "2596155182"
+    },
+    {
+      "run": "C5-trek-r1",
+      "frames": 1200,
+      "guiMs": 23623,
+      "shownFrames": 600,
+      "errorCount": 0,
+      "imageBytes": 310075072,
+      "endCycle": "2031675182"
+    },
+    {
+      "run": "C5-trek-r2",
+      "frames": 1200,
+      "guiMs": 23858,
+      "shownFrames": 600,
+      "errorCount": 0,
+      "imageBytes": 310075072,
+      "endCycle": "2031675182"
+    },
+    {
+      "run": "C5-trek-r3",
+      "frames": 1200,
+      "guiMs": 23601,
+      "shownFrames": 600,
+      "errorCount": 0,
+      "imageBytes": 310075072,
+      "endCycle": "2031675182"
+    },
+    {
+      "run": "N95-stock-trek-r1",
+      "frames": 1200,
+      "guiMs": 47653,
+      "shownFrames": 600,
+      "errorCount": 0,
+      "imageBytes": 310075072,
+      "endCycle": "2031675182"
+    },
+    {
+      "run": "N95-stock-trek-r2",
+      "frames": 1200,
+      "guiMs": 48003,
+      "shownFrames": 600,
+      "errorCount": 0,
+      "imageBytes": 310075072,
+      "endCycle": "2031675182"
+    },
+    {
+      "run": "N95-stock-trek-r3",
+      "frames": 1200,
+      "guiMs": 47722,
+      "shownFrames": 600,
+      "errorCount": 0,
+      "imageBytes": 310075072,
+      "endCycle": "2031675182"
+    },
+    {
+      "run": "N95-useroc-trek-r1",
+      "frames": 1200,
+      "guiMs": 21467,
+      "shownFrames": 600,
+      "errorCount": 0,
+      "imageBytes": 310075072,
+      "endCycle": "2031675182"
+    },
+    {
+      "run": "N95-useroc-trek-r2",
+      "frames": 1200,
+      "guiMs": 21862,
+      "shownFrames": 600,
+      "errorCount": 0,
+      "imageBytes": 310075072,
+      "endCycle": "2031675182"
+    },
+    {
+      "run": "N95-useroc-trek-r3",
+      "frames": 1200,
+      "guiMs": 21512,
+      "shownFrames": 600,
+      "errorCount": 0,
+      "imageBytes": 310075072,
+      "endCycle": "2031675182"
+    },
+    {
+      "run": "C5-warzone-r1",
+      "frames": 1200,
+      "guiMs": 24291,
+      "shownFrames": 400,
+      "errorCount": 0,
+      "imageBytes": 414470047,
+      "endCycle": "1344460591"
+    },
+    {
+      "run": "C5-warzone-r2",
+      "frames": 1200,
+      "guiMs": 24285,
+      "shownFrames": 400,
+      "errorCount": 0,
+      "imageBytes": 414470047,
+      "endCycle": "1344460591"
+    },
+    {
+      "run": "C5-warzone-r3",
+      "frames": 1200,
+      "guiMs": 25260,
+      "shownFrames": 400,
+      "errorCount": 0,
+      "imageBytes": 414470047,
+      "endCycle": "1344460591"
+    },
+    {
+      "run": "N95-stock-warzone-r1",
+      "frames": 1200,
+      "guiMs": 53940,
+      "shownFrames": 400,
+      "errorCount": 0,
+      "imageBytes": 414470047,
+      "endCycle": "1344460591"
+    },
+    {
+      "run": "N95-stock-warzone-r2",
+      "frames": 1200,
+      "guiMs": 54261,
+      "shownFrames": 400,
+      "errorCount": 0,
+      "imageBytes": 414470047,
+      "endCycle": "1344460591"
+    },
+    {
+      "run": "N95-stock-warzone-r3",
+      "frames": 1200,
+      "guiMs": 53867,
+      "shownFrames": 400,
+      "errorCount": 0,
+      "imageBytes": 414470047,
+      "endCycle": "1344460591"
+    },
+    {
+      "run": "N95-useroc-warzone-r1",
+      "frames": 1200,
+      "guiMs": 26912,
+      "shownFrames": 400,
+      "errorCount": 0,
+      "imageBytes": 414470047,
+      "endCycle": "1344460591"
+    },
+    {
+      "run": "N95-useroc-warzone-r2",
+      "frames": 1200,
+      "guiMs": 26627,
+      "shownFrames": 400,
+      "errorCount": 0,
+      "imageBytes": 414470047,
+      "endCycle": "1344460591"
+    },
+    {
+      "run": "N95-useroc-warzone-r3",
+      "frames": 1200,
+      "guiMs": 26947,
+      "shownFrames": 400,
+      "errorCount": 0,
+      "imageBytes": 414470047,
+      "endCycle": "1344460591"
+    },
+    {
+      "run": "C5-wing-r1",
+      "frames": 1200,
+      "guiMs": 19985,
+      "shownFrames": 480,
+      "errorCount": 0,
+      "imageBytes": 589288424,
+      "endCycle": "3320140588"
+    },
+    {
+      "run": "C5-wing-r2",
+      "frames": 1200,
+      "guiMs": 20039,
+      "shownFrames": 480,
+      "errorCount": 0,
+      "imageBytes": 589288424,
+      "endCycle": "3320140588"
+    },
+    {
+      "run": "C5-wing-r3",
+      "frames": 1200,
+      "guiMs": 19984,
+      "shownFrames": 480,
+      "errorCount": 0,
+      "imageBytes": 589288424,
+      "endCycle": "3320140588"
+    },
+    {
+      "run": "N95-stock-wing-r1",
+      "frames": 1200,
+      "guiMs": 45244,
+      "shownFrames": 480,
+      "errorCount": 0,
+      "imageBytes": 589288424,
+      "endCycle": "3320140588"
+    },
+    {
+      "run": "N95-stock-wing-r2",
+      "frames": 1200,
+      "guiMs": 45306,
+      "shownFrames": 480,
+      "errorCount": 0,
+      "imageBytes": 589288424,
+      "endCycle": "3320140588"
+    },
+    {
+      "run": "N95-stock-wing-r3",
+      "frames": 1200,
+      "guiMs": 45566,
+      "shownFrames": 480,
+      "errorCount": 0,
+      "imageBytes": 589288424,
+      "endCycle": "3320140588"
+    },
+    {
+      "run": "N95-useroc-wing-r1",
+      "frames": 1200,
+      "guiMs": 19164,
+      "shownFrames": 480,
+      "errorCount": 0,
+      "imageBytes": 589288424,
+      "endCycle": "3320140588"
+    },
+    {
+      "run": "N95-useroc-wing-r2",
+      "frames": 1200,
+      "guiMs": 19431,
+      "shownFrames": 480,
+      "errorCount": 0,
+      "imageBytes": 589288424,
+      "endCycle": "3320140588"
+    },
+    {
+      "run": "N95-useroc-wing-r3",
+      "frames": 1200,
+      "guiMs": 19173,
+      "shownFrames": 480,
+      "errorCount": 0,
+      "imageBytes": 589288424,
+      "endCycle": "3320140588"
+    },
+    {
+      "run": "C5-wipeout-r1",
+      "frames": 1200,
+      "guiMs": 28070,
+      "shownFrames": 600,
+      "errorCount": 0,
+      "imageBytes": 450941663,
+      "endCycle": "1354299190"
+    },
+    {
+      "run": "C5-wipeout-r2",
+      "frames": 1200,
+      "guiMs": 29202,
+      "shownFrames": 600,
+      "errorCount": 0,
+      "imageBytes": 450941663,
+      "endCycle": "1354299190"
+    },
+    {
+      "run": "C5-wipeout-r3",
+      "frames": 1200,
+      "guiMs": 29190,
+      "shownFrames": 600,
+      "errorCount": 0,
+      "imageBytes": 450941663,
+      "endCycle": "1354299190"
+    },
+    {
+      "run": "N95-stock-wipeout-r1",
+      "frames": 1200,
+      "guiMs": 56751,
+      "shownFrames": 600,
+      "errorCount": 0,
+      "imageBytes": 450941663,
+      "endCycle": "1354299190"
+    },
+    {
+      "run": "N95-stock-wipeout-r2",
+      "frames": 1200,
+      "guiMs": 57893,
+      "shownFrames": 600,
+      "errorCount": 0,
+      "imageBytes": 450941663,
+      "endCycle": "1354299190"
+    },
+    {
+      "run": "N95-stock-wipeout-r3",
+      "frames": 1200,
+      "guiMs": 56895,
+      "shownFrames": 600,
+      "errorCount": 0,
+      "imageBytes": 450941663,
+      "endCycle": "1354299190"
+    },
+    {
+      "run": "N95-useroc-wipeout-r1",
+      "frames": 1200,
+      "guiMs": 29455,
+      "shownFrames": 600,
+      "errorCount": 0,
+      "imageBytes": 450941663,
+      "endCycle": "1354299190"
+    },
+    {
+      "run": "N95-useroc-wipeout-r2",
+      "frames": 1200,
+      "guiMs": 29063,
+      "shownFrames": 600,
+      "errorCount": 0,
+      "imageBytes": 450941663,
+      "endCycle": "1354299190"
+    },
+    {
+      "run": "N95-useroc-wipeout-r3",
+      "frames": 1200,
+      "guiMs": 29473,
+      "shownFrames": 600,
+      "errorCount": 0,
+      "imageBytes": 450941663,
+      "endCycle": "1354299190"
+    }
+  ],
+  "states": [
+    {
+      "game": "cast",
+      "file": "cast-gameplay.sav",
+      "sha256": "D7FE9DC17C0F9E254340ADA3AB7A920961958D73AD058DC87B9664847036B006",
+      "bytes": 1593381,
+      "loadFrame": 17500,
+      "visualProofAccepted": true
+    },
+    {
+      "game": "colin",
+      "file": "colin-start.sav",
+      "sha256": "8CDD564384D0AD17739A5512B1EA8C77F8EB5E6E848C26852AEC8AD872573D4B",
+      "bytes": 2061537,
+      "loadFrame": 67000,
+      "visualProofAccepted": true
+    },
+    {
+      "game": "colony",
+      "file": "colony-flight.sav",
+      "sha256": "4FBECEED3CE16D982523364A9D0A8224C2D4A2828044ECBF0A59B270BB50B8AA",
+      "bytes": 1582507,
+      "loadFrame": 13000,
+      "visualProofAccepted": true
+    },
+    {
+      "game": "crash",
+      "file": "crash-start.sav",
+      "sha256": "5FC5B6D32744A239016EDC7DDF65105923AC9222ED50C8356C457641AA17FCC6",
+      "bytes": 2196642,
+      "loadFrame": 4700,
+      "visualProofAccepted": true
+    },
+    {
+      "game": "gt",
+      "file": "gt-race.sav",
+      "sha256": "8AA4F9A1ED7C5C280204126C22FE9BC3BDE33263F1828DE56BE893EA37162D13",
+      "bytes": 1713024,
+      "loadFrame": 7700,
+      "visualProofAccepted": true
+    },
+    {
+      "game": "nfs",
+      "file": "nfs-start.sav",
+      "sha256": "167FBE04475651F2CA16FF4D51B7CA46121AC25468BCFC990E29CF8913D249D0",
+      "bytes": 1801625,
+      "loadFrame": 24000,
+      "visualProofAccepted": true
+    },
+    {
+      "game": "rayman",
+      "file": "rayman-start.sav",
+      "sha256": "081639BEF8A99A84255FB4C6676C4DA32C77F569F3657244258AADBFAD2B4020",
+      "bytes": 1679398,
+      "loadFrame": 14000,
+      "visualProofAccepted": true
+    },
+    {
+      "game": "rc",
+      "file": "rc-practice.sav",
+      "sha256": "C73034CA0E1DFD91A9E5D5674EE8970E57631A2B0AEDA8AE8893C55A550A837D",
+      "bytes": 1265475,
+      "loadFrame": 23000,
+      "visualProofAccepted": true
+    },
+    {
+      "game": "trek",
+      "file": "trek-flight.sav",
+      "sha256": "68CF57B4983C7C6FE7C40FAD931D8D76703A624690D5D494D7CF4A7DCE0544F9",
+      "bytes": 1835418,
+      "loadFrame": 23000,
+      "visualProofAccepted": true
+    },
+    {
+      "game": "warzone",
+      "file": "warzone-start.sav",
+      "sha256": "01A9000F16513001BD9A1F291B9E02B57D196ACEE2EEFF2BB53A99F7B660CDE7",
+      "bytes": 1877951,
+      "loadFrame": 45000,
+      "visualProofAccepted": true
+    },
+    {
+      "game": "wing",
+      "file": "wing-flight.sav",
+      "sha256": "27728255081328CC19DB60D93031A1037632FE96CF7B58CCB9197B0B5B2312A7",
+      "bytes": 1550798,
+      "loadFrame": 56000,
+      "visualProofAccepted": true
+    },
+    {
+      "game": "wipeout",
+      "file": "wipeout-driven2.sav",
+      "sha256": "627E0B813E29E4C537E99A6FEB7BE2868D6EC9B20C4AE6928016506AD1AB998A",
+      "bytes": 1683839,
+      "loadFrame": 8500,
+      "visualProofAccepted": true
+    }
+  ],
+  "clockChecks": [
+    {
+      "series": "N95-stock-cast",
+      "side": "before",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "N95-stock-cast-clock-before.log"
+    },
+    {
+      "series": "N95-stock-cast",
+      "side": "after",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "N95-stock-cast-clock-after.log"
+    },
+    {
+      "series": "N95-useroc-cast",
+      "side": "before",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-cast-clock-before-engine.log",
+      "dspLog": "N95-useroc-cast-clock-before-dsp.log",
+      "matchedUserBaseline": true
+    },
+    {
+      "series": "N95-useroc-cast",
+      "side": "after",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-cast-clock-after-engine.log",
+      "dspLog": "N95-useroc-cast-clock-after-dsp.log",
+      "matchedUserBaseline": true
+    },
+    {
+      "series": "N95-stock-colin",
+      "side": "before",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "N95-stock-colin-clock-before.log"
+    },
+    {
+      "series": "N95-stock-colin",
+      "side": "after",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "N95-stock-colin-clock-after.log"
+    },
+    {
+      "series": "N95-useroc-colin",
+      "side": "before",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-colin-clock-before-engine.log",
+      "dspLog": "N95-useroc-colin-clock-before-dsp.log",
+      "matchedUserBaseline": true
+    },
+    {
+      "series": "N95-useroc-colin",
+      "side": "after",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-colin-clock-after-engine.log",
+      "dspLog": "N95-useroc-colin-clock-after-dsp.log",
+      "matchedUserBaseline": true
+    },
+    {
+      "series": "N95-stock-colony",
+      "side": "before",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "N95-stock-colony-clock-before.log"
+    },
+    {
+      "series": "N95-stock-colony",
+      "side": "after",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "N95-stock-colony-clock-after.log"
+    },
+    {
+      "series": "N95-useroc-colony",
+      "side": "before",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-colony-clock-before-engine.log",
+      "dspLog": "N95-useroc-colony-clock-before-dsp.log",
+      "matchedUserBaseline": true
+    },
+    {
+      "series": "N95-useroc-colony",
+      "side": "after",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-colony-clock-after-engine.log",
+      "dspLog": "N95-useroc-colony-clock-after-dsp.log",
+      "matchedUserBaseline": true
+    },
+    {
+      "series": "N95-stock-crash",
+      "side": "before",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "N95-stock-crash-clock-before.log"
+    },
+    {
+      "series": "N95-stock-crash",
+      "side": "after",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "N95-stock-crash-clock-after.log"
+    },
+    {
+      "series": "N95-useroc-crash",
+      "side": "before",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-crash-clock-before-engine.log",
+      "dspLog": "N95-useroc-crash-clock-before-dsp.log",
+      "matchedUserBaseline": true
+    },
+    {
+      "series": "N95-useroc-crash",
+      "side": "after",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-crash-clock-after-engine.log",
+      "dspLog": "N95-useroc-crash-clock-after-dsp.log",
+      "matchedUserBaseline": true
+    },
+    {
+      "series": "N95-stock-gt",
+      "side": "before",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "resume-n95-clock-before.log"
+    },
+    {
+      "series": "N95-stock-gt",
+      "side": "after",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "N95-stock-gt-clock-after.log"
+    },
+    {
+      "series": "N95-useroc-gt",
+      "side": "before",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-gt-clock-before-engine.log",
+      "dspLog": "N95-useroc-gt-clock-before-dsp.log",
+      "matchedUserBaseline": true
+    },
+    {
+      "series": "N95-useroc-gt",
+      "side": "after",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-gt-clock-after-engine.log",
+      "dspLog": "N95-useroc-gt-clock-after-dsp.log",
+      "matchedUserBaseline": true
+    },
+    {
+      "series": "N95-stock-nfs",
+      "side": "before",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "N95-stock-nfs-clock-before.log"
+    },
+    {
+      "series": "N95-stock-nfs",
+      "side": "after",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "N95-stock-nfs-clock-after.log"
+    },
+    {
+      "series": "N95-useroc-nfs",
+      "side": "before",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-nfs-clock-before-engine.log",
+      "dspLog": "N95-useroc-nfs-clock-before-dsp.log",
+      "matchedUserBaseline": true
+    },
+    {
+      "series": "N95-useroc-nfs",
+      "side": "after",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-nfs-clock-after-engine.log",
+      "dspLog": "N95-useroc-nfs-clock-after-dsp.log",
+      "matchedUserBaseline": true
+    },
+    {
+      "series": "N95-stock-rayman",
+      "side": "before",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "N95-stock-rayman-clock-before.log"
+    },
+    {
+      "series": "N95-stock-rayman",
+      "side": "after",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "N95-stock-rayman-clock-after.log"
+    },
+    {
+      "series": "N95-useroc-rayman",
+      "side": "before",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-rayman-clock-before-engine.log",
+      "dspLog": "N95-useroc-rayman-clock-before-dsp.log",
+      "matchedUserBaseline": true
+    },
+    {
+      "series": "N95-useroc-rayman",
+      "side": "after",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-rayman-clock-after-engine.log",
+      "dspLog": "N95-useroc-rayman-clock-after-dsp.log",
+      "matchedUserBaseline": true
+    },
+    {
+      "series": "N95-stock-rc",
+      "side": "before",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "N95-stock-rc-clock-before.log"
+    },
+    {
+      "series": "N95-stock-rc",
+      "side": "after",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "N95-stock-rc-clock-after.log"
+    },
+    {
+      "series": "N95-useroc-rc",
+      "side": "before",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-rc-clock-before-engine.log",
+      "dspLog": "N95-useroc-rc-clock-before-dsp.log",
+      "matchedUserBaseline": true
+    },
+    {
+      "series": "N95-useroc-rc",
+      "side": "after",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-rc-clock-after-engine.log",
+      "dspLog": "N95-useroc-rc-clock-after-dsp.log",
+      "matchedUserBaseline": true
+    },
+    {
+      "series": "N95-stock-trek",
+      "side": "before",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "N95-stock-trek-clock-before.log"
+    },
+    {
+      "series": "N95-stock-trek",
+      "side": "after",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "N95-stock-trek-clock-after.log"
+    },
+    {
+      "series": "N95-useroc-trek",
+      "side": "before",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-trek-clock-before-engine.log",
+      "dspLog": "N95-useroc-trek-clock-before-dsp.log",
+      "matchedUserBaseline": true
+    },
+    {
+      "series": "N95-useroc-trek",
+      "side": "after",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-trek-clock-after-engine.log",
+      "dspLog": "N95-useroc-trek-clock-after-dsp.log",
+      "matchedUserBaseline": true
+    },
+    {
+      "series": "N95-stock-warzone",
+      "side": "before",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "N95-stock-warzone-clock-before.log"
+    },
+    {
+      "series": "N95-stock-warzone",
+      "side": "after",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "N95-stock-warzone-clock-after.log"
+    },
+    {
+      "series": "N95-useroc-warzone",
+      "side": "before",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-warzone-clock-before-engine.log",
+      "dspLog": "N95-useroc-warzone-clock-before-dsp.log",
+      "matchedUserBaseline": true
+    },
+    {
+      "series": "N95-useroc-warzone",
+      "side": "after",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-warzone-clock-after-engine.log",
+      "dspLog": "N95-useroc-warzone-clock-after-dsp.log",
+      "matchedUserBaseline": true
+    },
+    {
+      "series": "N95-stock-wing",
+      "side": "before",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "N95-stock-wing-clock-before.log"
+    },
+    {
+      "series": "N95-stock-wing",
+      "side": "after",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "N95-stock-wing-clock-after.log"
+    },
+    {
+      "series": "N95-useroc-wing",
+      "side": "before",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-wing-clock-before-engine.log",
+      "dspLog": "N95-useroc-wing-clock-before-dsp.log",
+      "matchedUserBaseline": true
+    },
+    {
+      "series": "N95-useroc-wing",
+      "side": "after",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-wing-clock-after-engine.log",
+      "dspLog": "N95-useroc-wing-clock-after-dsp.log",
+      "matchedUserBaseline": true
+    },
+    {
+      "series": "N95-stock-wipeout",
+      "side": "before",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "N95-stock-wipeout-clock-before.log"
+    },
+    {
+      "series": "N95-stock-wipeout",
+      "side": "after",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "N95-stock-wipeout-clock-after.log"
+    },
+    {
+      "series": "N95-useroc-wipeout",
+      "side": "before",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-wipeout-clock-before-engine.log",
+      "dspLog": "N95-useroc-wipeout-clock-before-dsp.log",
+      "matchedUserBaseline": true
+    },
+    {
+      "series": "N95-useroc-wipeout",
+      "side": "after",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-wipeout-clock-after-engine.log",
+      "dspLog": "N95-useroc-wipeout-clock-after-dsp.log",
+      "matchedUserBaseline": true
+    }
+  ],
+  "restoredFiles": [
+    {
+      "device": "c5",
+      "path": "cfg\\Castlevania___Symphony_of_the_Ni.txt",
+      "bytes": 314,
+      "originalSha256": "6B9DD6FFDCEC251CE39D9367D6A07CD95AA92ADCF202B5BB1883440BE99BCB55",
+      "readbackSha256": "6B9DD6FFDCEC251CE39D9367D6A07CD95AA92ADCF202B5BB1883440BE99BCB55",
+      "identical": true,
+      "verifiedAt": "2026-10-05T20:18:19.3130078+03:00"
+    },
+    {
+      "device": "c5",
+      "path": "cfg\\Colin_McRae_Rally_2_0__USA___En_.txt",
+      "bytes": 383,
+      "originalSha256": "8C54BFF6FF72F2BCEAB87CE184F527E990113379FA35C52056EBE37B65FC5BA8",
+      "readbackSha256": "8C54BFF6FF72F2BCEAB87CE184F527E990113379FA35C52056EBE37B65FC5BA8",
+      "identical": true,
+      "verifiedAt": "2026-10-05T20:18:19.8914636+03:00"
+    },
+    {
+      "device": "c5",
+      "path": "cfg\\Colony_Wars__USA___Disc_1_.txt",
+      "bytes": 314,
+      "originalSha256": "0F3E88F8C1E6983CB40DC528227F621072005E64F166BE3B735FB2564BEE3DED",
+      "readbackSha256": "0F3E88F8C1E6983CB40DC528227F621072005E64F166BE3B735FB2564BEE3DED",
+      "identical": true,
+      "verifiedAt": "2026-10-05T20:18:20.5335282+03:00"
+    },
+    {
+      "device": "c5",
+      "path": "cfg\\Gran_Turismo__USA___v1_1_.txt",
+      "bytes": 314,
+      "originalSha256": "828824F78FE3494CD127B633D24AD3A5668E91657F31A976D54050A47AB6B7B4",
+      "readbackSha256": "828824F78FE3494CD127B633D24AD3A5668E91657F31A976D54050A47AB6B7B4",
+      "identical": true,
+      "verifiedAt": "2026-10-05T20:18:21.1337257+03:00"
+    },
+    {
+      "device": "c5",
+      "path": "cfg\\gt.txt",
+      "bytes": 384,
+      "originalSha256": "84C62E3BF18579C6FE306BCFEE931510FA7C0EEB3067F9EA4E90AFC8E15CCC57",
+      "readbackSha256": "84C62E3BF18579C6FE306BCFEE931510FA7C0EEB3067F9EA4E90AFC8E15CCC57",
+      "identical": true,
+      "verifiedAt": "2026-10-05T20:18:21.7781533+03:00"
+    },
+    {
+      "device": "c5",
+      "path": "cfg\\Need_for_Speed___Porsche_Unleash.txt",
+      "bytes": 384,
+      "originalSha256": "BCCD3DB8080F134D90ABAB332DF0DBBD7B6915FD24963A2CAD38BC0C5834B9B4",
+      "readbackSha256": "BCCD3DB8080F134D90ABAB332DF0DBBD7B6915FD24963A2CAD38BC0C5834B9B4",
+      "identical": true,
+      "verifiedAt": "2026-10-05T20:18:22.4183689+03:00"
+    },
+    {
+      "device": "c5",
+      "path": "cfg\\ps1_settings.txt",
+      "bytes": 436,
+      "originalSha256": "33D064D95D778FD7B1FA4CCE3BB8671D80305B042015BDD1D82FD2F0243B5E9B",
+      "readbackSha256": "33D064D95D778FD7B1FA4CCE3BB8671D80305B042015BDD1D82FD2F0243B5E9B",
+      "identical": true,
+      "verifiedAt": "2026-10-05T20:18:23.0413523+03:00"
+    },
+    {
+      "device": "c5",
+      "path": "cfg\\Rayman__USA_.txt",
+      "bytes": 314,
+      "originalSha256": "D8A13EA57593BFBF8B1CD97D1E5BF5CB200B2F992671E84CE322BFB321AFD15A",
+      "readbackSha256": "D8A13EA57593BFBF8B1CD97D1E5BF5CB200B2F992671E84CE322BFB321AFD15A",
+      "identical": true,
+      "verifiedAt": "2026-10-05T20:18:23.6671188+03:00"
+    },
+    {
+      "device": "c5",
+      "path": "cfg\\RC_Helicopter__USA_.txt",
+      "bytes": 314,
+      "originalSha256": "A08984339CD0134227A6F45554747562E3C2FA9659EA4C988D09A3FA9B667061",
+      "readbackSha256": "A08984339CD0134227A6F45554747562E3C2FA9659EA4C988D09A3FA9B667061",
+      "identical": true,
+      "verifiedAt": "2026-10-05T20:18:29.4760705+03:00"
+    },
+    {
+      "device": "c5",
+      "path": "cfg\\Star_Trek___Invasion__USA_.txt",
+      "bytes": 314,
+      "originalSha256": "BF7B8F2639DA8BA9CA6152E9D9CDCB4FF57339B20E108EFDB2E88C8941F7F334",
+      "readbackSha256": "BF7B8F2639DA8BA9CA6152E9D9CDCB4FF57339B20E108EFDB2E88C8941F7F334",
+      "identical": true,
+      "verifiedAt": "2026-10-05T20:18:30.1189237+03:00"
+    },
+    {
+      "device": "c5",
+      "path": "cfg\\WipEout__USA_.txt",
+      "bytes": 384,
+      "originalSha256": "5C46EC3FF5A88E3BBA96534D4177D35B863DE4FEAAC1B56D35B95F64651A0B0D",
+      "readbackSha256": "5C46EC3FF5A88E3BBA96534D4177D35B863DE4FEAAC1B56D35B95F64651A0B0D",
+      "identical": true,
+      "verifiedAt": "2026-10-05T20:18:30.7549889+03:00"
+    },
+    {
+      "device": "c5",
+      "path": "saves\\BENCH.SAV",
+      "bytes": 1713024,
+      "originalSha256": "8AA4F9A1ED7C5C280204126C22FE9BC3BDE33263F1828DE56BE893EA37162D13",
+      "readbackSha256": "8AA4F9A1ED7C5C280204126C22FE9BC3BDE33263F1828DE56BE893EA37162D13",
+      "identical": true,
+      "verifiedAt": "2026-10-05T20:18:44.8599215+03:00"
+    },
+    {
+      "device": "c5",
+      "path": "saves\\CARD1.MCD",
+      "bytes": 131072,
+      "originalSha256": "645B2715088224B2D65375921F1C75C25C2A9618256AD6110E2FA93F968329E3",
+      "readbackSha256": "645B2715088224B2D65375921F1C75C25C2A9618256AD6110E2FA93F968329E3",
+      "identical": true,
+      "verifiedAt": "2026-10-05T20:18:48.7523539+03:00"
+    },
+    {
+      "device": "c5",
+      "path": "saves\\CARD2.MCD",
+      "bytes": 131072,
+      "originalSha256": "AC0DBCB89E54BCDDF7C698FB6FE52CB0CA71977DBA2D28E521D6ED556C7A11B5",
+      "readbackSha256": "AC0DBCB89E54BCDDF7C698FB6FE52CB0CA71977DBA2D28E521D6ED556C7A11B5",
+      "identical": true,
+      "verifiedAt": "2026-10-05T20:18:55.582096+03:00"
+    },
+    {
+      "device": "n95",
+      "path": "ps1_input.rec",
+      "bytes": 475,
+      "originalSha256": "52E30D90AF01BE541287EE56970BD6ED89ABAF2C49B40EA26CEA558464056E18",
+      "readbackSha256": "52E30D90AF01BE541287EE56970BD6ED89ABAF2C49B40EA26CEA558464056E18",
+      "identical": true,
+      "verifiedAt": "2026-10-05T23:36:53.9902407+03:00"
+    },
+    {
+      "device": "n95",
+      "path": "cfg\\Castlevania___Symphony_of_the_Ni.txt",
+      "bytes": 314,
+      "originalSha256": "6B9DD6FFDCEC251CE39D9367D6A07CD95AA92ADCF202B5BB1883440BE99BCB55",
+      "readbackSha256": "6B9DD6FFDCEC251CE39D9367D6A07CD95AA92ADCF202B5BB1883440BE99BCB55",
+      "identical": true,
+      "verifiedAt": "2026-10-05T23:36:54.3387362+03:00"
+    },
+    {
+      "device": "n95",
+      "path": "cfg\\Colin_McRae_Rally_2_0__USA___En_.txt",
+      "bytes": 383,
+      "originalSha256": "8C54BFF6FF72F2BCEAB87CE184F527E990113379FA35C52056EBE37B65FC5BA8",
+      "readbackSha256": "8C54BFF6FF72F2BCEAB87CE184F527E990113379FA35C52056EBE37B65FC5BA8",
+      "identical": true,
+      "verifiedAt": "2026-10-05T23:36:54.7639908+03:00"
+    },
+    {
+      "device": "n95",
+      "path": "cfg\\Colony_Wars__USA___Disc_1_.txt",
+      "bytes": 314,
+      "originalSha256": "0F3E88F8C1E6983CB40DC528227F621072005E64F166BE3B735FB2564BEE3DED",
+      "readbackSha256": "0F3E88F8C1E6983CB40DC528227F621072005E64F166BE3B735FB2564BEE3DED",
+      "identical": true,
+      "verifiedAt": "2026-10-05T23:36:55.1740161+03:00"
+    },
+    {
+      "device": "n95",
+      "path": "cfg\\Crash_Bandicoot__USA_.txt",
+      "bytes": 391,
+      "originalSha256": "B67096DC102C91334968D9BF9272E299AB78BFEC7D7E3CC93142E42DE95F86DF",
+      "readbackSha256": "B67096DC102C91334968D9BF9272E299AB78BFEC7D7E3CC93142E42DE95F86DF",
+      "identical": true,
+      "verifiedAt": "2026-10-05T23:36:55.5842189+03:00"
+    },
+    {
+      "device": "n95",
+      "path": "cfg\\Gran_Turismo__USA___v1_1_.txt",
+      "bytes": 314,
+      "originalSha256": "828824F78FE3494CD127B633D24AD3A5668E91657F31A976D54050A47AB6B7B4",
+      "readbackSha256": "828824F78FE3494CD127B633D24AD3A5668E91657F31A976D54050A47AB6B7B4",
+      "identical": true,
+      "verifiedAt": "2026-10-05T23:36:56.0296406+03:00"
+    },
+    {
+      "device": "n95",
+      "path": "cfg\\gt.txt",
+      "bytes": 391,
+      "originalSha256": "1B406FC0BE08ABDE71900A69CA1D8876941BCDBE4E5D620E6855DCFAE2235393",
+      "readbackSha256": "1B406FC0BE08ABDE71900A69CA1D8876941BCDBE4E5D620E6855DCFAE2235393",
+      "identical": true,
+      "verifiedAt": "2026-10-05T23:36:56.4953611+03:00"
+    },
+    {
+      "device": "n95",
+      "path": "cfg\\Need_for_Speed___Porsche_Unleash.txt",
+      "bytes": 384,
+      "originalSha256": "E3020A54B606CEAF25BA4F43B6C890F9BB1DE473BA550FD363F05842D615A99B",
+      "readbackSha256": "E3020A54B606CEAF25BA4F43B6C890F9BB1DE473BA550FD363F05842D615A99B",
+      "identical": true,
+      "verifiedAt": "2026-10-05T23:36:56.915233+03:00"
+    },
+    {
+      "device": "n95",
+      "path": "cfg\\ps1_settings.txt",
+      "bytes": 450,
+      "originalSha256": "8B7987103EDC2F9A26888A503E979261F9E93D58D1C024CA06C595420A667340",
+      "readbackSha256": "8B7987103EDC2F9A26888A503E979261F9E93D58D1C024CA06C595420A667340",
+      "identical": true,
+      "verifiedAt": "2026-10-05T23:36:57.3094218+03:00"
+    },
+    {
+      "device": "n95",
+      "path": "cfg\\Rayman__USA_.txt",
+      "bytes": 314,
+      "originalSha256": "D8A13EA57593BFBF8B1CD97D1E5BF5CB200B2F992671E84CE322BFB321AFD15A",
+      "readbackSha256": "D8A13EA57593BFBF8B1CD97D1E5BF5CB200B2F992671E84CE322BFB321AFD15A",
+      "identical": true,
+      "verifiedAt": "2026-10-05T23:36:58.6059251+03:00"
+    },
+    {
+      "device": "n95",
+      "path": "cfg\\RC_Helicopter__USA_.txt",
+      "bytes": 392,
+      "originalSha256": "C32716002AC260211E145FD25DAD3E4C651832F4213E729FDB30A59C4C1BC176",
+      "readbackSha256": "C32716002AC260211E145FD25DAD3E4C651832F4213E729FDB30A59C4C1BC176",
+      "identical": true,
+      "verifiedAt": "2026-10-05T23:36:58.9376697+03:00"
+    },
+    {
+      "device": "n95",
+      "path": "cfg\\Star_Trek___Invasion__USA_.txt",
+      "bytes": 314,
+      "originalSha256": "BF7B8F2639DA8BA9CA6152E9D9CDCB4FF57339B20E108EFDB2E88C8941F7F334",
+      "readbackSha256": "BF7B8F2639DA8BA9CA6152E9D9CDCB4FF57339B20E108EFDB2E88C8941F7F334",
+      "identical": true,
+      "verifiedAt": "2026-10-05T23:36:59.2711182+03:00"
+    },
+    {
+      "device": "n95",
+      "path": "cfg\\Warzone_2100__USA_.txt",
+      "bytes": 392,
+      "originalSha256": "D948C27D362CB3355143677C0B4FB982B2ADDA52A991242500210207FBD37DDE",
+      "readbackSha256": "D948C27D362CB3355143677C0B4FB982B2ADDA52A991242500210207FBD37DDE",
+      "identical": true,
+      "verifiedAt": "2026-10-05T23:36:59.622747+03:00"
+    },
+    {
+      "device": "n95",
+      "path": "cfg\\WipEout__USA_.txt",
+      "bytes": 384,
+      "originalSha256": "5C46EC3FF5A88E3BBA96534D4177D35B863DE4FEAAC1B56D35B95F64651A0B0D",
+      "readbackSha256": "5C46EC3FF5A88E3BBA96534D4177D35B863DE4FEAAC1B56D35B95F64651A0B0D",
+      "identical": true,
+      "verifiedAt": "2026-10-05T23:37:00.0850691+03:00"
+    },
+    {
+      "device": "n95",
+      "path": "saves\\bench.sav",
+      "bytes": 2196642,
+      "originalSha256": "5FC5B6D32744A239016EDC7DDF65105923AC9222ED50C8356C457641AA17FCC6",
+      "readbackSha256": "5FC5B6D32744A239016EDC7DDF65105923AC9222ED50C8356C457641AA17FCC6",
+      "identical": true,
+      "verifiedAt": "2026-10-05T23:37:03.1631578+03:00"
+    },
+    {
+      "device": "n95",
+      "path": "saves\\card1.mcd",
+      "bytes": 131072,
+      "originalSha256": "645B2715088224B2D65375921F1C75C25C2A9618256AD6110E2FA93F968329E3",
+      "readbackSha256": "645B2715088224B2D65375921F1C75C25C2A9618256AD6110E2FA93F968329E3",
+      "identical": true,
+      "verifiedAt": "2026-10-05T23:37:03.7596488+03:00"
+    },
+    {
+      "device": "n95",
+      "path": "saves\\card2.mcd",
+      "bytes": 131072,
+      "originalSha256": "AC0DBCB89E54BCDDF7C698FB6FE52CB0CA71977DBA2D28E521D6ED556C7A11B5",
+      "readbackSha256": "AC0DBCB89E54BCDDF7C698FB6FE52CB0CA71977DBA2D28E521D6ED556C7A11B5",
+      "identical": true,
+      "verifiedAt": "2026-10-05T23:37:04.3038705+03:00"
+    },
+    {
+      "device": "n95",
+      "path": "saves\\Crash_Bandicoot__USA__slot1.sav",
+      "bytes": 2269656,
+      "originalSha256": "E7EBCD627C3FF55FB21A3AFB6BA7DFCF097B1601E11B44E4DDC249F252A135CF",
+      "readbackSha256": "E7EBCD627C3FF55FB21A3AFB6BA7DFCF097B1601E11B44E4DDC249F252A135CF",
+      "identical": true,
+      "verifiedAt": "2026-10-05T23:37:07.3010013+03:00"
+    }
+  ],
+  "bootDatSha256": "3522F5C7A85D48D8807EE8E776CCC73999CBA8C70611EF66FA106C7CF1003FF3",
+  "c5PeerAuthorization": {
+    "peer": "KOMPUTER",
+    "originalAuthorized": false,
+    "authorized": false,
+    "visuallyVerified": true,
+    "verifiedAt": "2026-10-05T20:26:28.4487479+03:00",
+    "before": "c5-bt-final-before.png",
+    "selectedAction": "c5-bt-final-untrust-selected.png",
+    "after": "c5-bt-final-restored.png",
+    "sameConnectionShotAndGet": true,
+    "otherPeer": "PAVLO unchanged",
+    "lastC5Connection": "c5-bt-final-untrust-and-proof.done.json"
+  },
+  "n95FinalMultiplier": 111,
+  "n95FinalCore": "04360644",
+  "userOverclock": true,
+  "emulatorSourceUnchanged": true
+}

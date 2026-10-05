@@ -1,0 +1,7 @@
+[net] PUT D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\states\rc-practice.sav -> E:\PS1\saves\bench.sav (1ÿ265ÿ475 bytes)
+[net] .. 262ÿ144/1ÿ265ÿ475
+[net] .. 524ÿ288/1ÿ265ÿ475
+[net] .. 786ÿ432/1ÿ265ÿ475
+[net] .. 1ÿ048ÿ576/1ÿ265ÿ475
+[net] OK 1265475
+[net] done

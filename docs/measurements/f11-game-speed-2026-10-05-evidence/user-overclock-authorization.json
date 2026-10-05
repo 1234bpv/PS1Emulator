@@ -1,0 +1,17 @@
+{
+  "request": "Протестуй N95 в розгоні з параметрами, які я встановив. Та версія розгону буда не стабільна.",
+  "scope": "All twelve games from original measurement task; third configuration now user-installed overclock",
+  "baseline": "user-oc-baseline.json",
+  "multiplier": 111,
+  "core": "04360644",
+  "dsp": "000023C3",
+  "cpuKhz": 426240,
+  "busKhz": 213120,
+  "clockChangesByAgentInUserSeries": false,
+  "previousCpu50NotSubstituted": true,
+  "status": "complete-user-overclock-testing",
+  "started": "2026-10-05T22:32:28+03:00",
+  "audioRequest": "Звук встановоюй на мінімум (без зввуку, але з емуляцією)",
+  "completedAt": "2026-10-05T23:37:19.2282698+03:00",
+  "audio": "sound=1, volume step=0 before measurement, snd_open rc0 and positive feeds/samples verified for every run"
+}

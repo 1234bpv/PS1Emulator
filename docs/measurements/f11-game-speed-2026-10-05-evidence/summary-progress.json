@@ -1,7 +1,7 @@
 {
-  "updated": "2026-10-05T22:25:23.5389981+03:00",
-  "acceptedRuns": 72,
-  "completedTriples": 24,
+  "updated": "2026-10-05T23:37:19.1011003+03:00",
+  "acceptedRuns": 108,
+  "completedTriples": 36,
   "series": [
     {
       "label": "C5-cast",
@@ -860,6 +860,438 @@
         "drc: frames=1200 ms=56751 pc=80000080 cycle=1354299190 vblanks=1208 fsAdvised=0",
         "drc: frames=1200 ms=57893 pc=80000080 cycle=1354299190 vblanks=1208 fsAdvised=0",
         "drc: frames=1200 ms=56895 pc=80000080 cycle=1354299190 vblanks=1208 fsAdvised=0"
+      ],
+      "loaded": [
+        "Loaded CD Image: E:\\PS1\\games\\WipEout (USA).pbp[+pbp] (450941663 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\WipEout (USA).pbp[+pbp] (450941663 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\WipEout (USA).pbp[+pbp] (450941663 bytes).\n"
+      ]
+    },
+    {
+      "label": "N95-useroc-cast",
+      "repeatCount": 3,
+      "region": "NTSC",
+      "ms": [
+        34562,
+        34623,
+        34350
+      ],
+      "shownFrames": [
+        1200,
+        1200,
+        1200
+      ],
+      "fpsMedian": 34.72021295063943,
+      "fpsMin": 34.65904167749762,
+      "fpsMax": 34.93449781659389,
+      "speedMedian": 57.86702158439905,
+      "speedMin": 57.76506946249603,
+      "speedMax": 58.22416302765648,
+      "errors": [
+        0,
+        0,
+        0
+      ],
+      "pass": [
+        "drc: frames=1200 ms=34562 pc=80000080 cycle=3442875179 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=34623 pc=80000080 cycle=3442875179 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=34350 pc=80000080 cycle=3442875179 vblanks=1208 fsAdvised=0"
+      ],
+      "loaded": [
+        "Loaded CD Image: E:\\PS1\\games\\Castlevania - Symphony of the Night (USA.pbp[+pbp] (398057383 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Castlevania - Symphony of the Night (USA.pbp[+pbp] (398057383 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Castlevania - Symphony of the Night (USA.pbp[+pbp] (398057383 bytes).\n"
+      ]
+    },
+    {
+      "label": "N95-useroc-colin",
+      "repeatCount": 3,
+      "region": "NTSC",
+      "ms": [
+        70254,
+        69773,
+        70195
+      ],
+      "shownFrames": [
+        595,
+        595,
+        595
+      ],
+      "fpsMedian": 8.47638720706603,
+      "fpsMin": 8.469268653742136,
+      "fpsMax": 8.52765396356757,
+      "speedMedian": 28.492057838877415,
+      "speedMin": 28.468129928544993,
+      "speedMax": 28.664383070815358,
+      "errors": [
+        0,
+        0,
+        0
+      ],
+      "pass": [
+        "drc: frames=1200 ms=70254 pc=80000080 cycle=3945987890 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=69773 pc=80000080 cycle=3945987890 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=70195 pc=80000080 cycle=3945987890 vblanks=1208 fsAdvised=0"
+      ],
+      "loaded": [
+        "Loaded CD Image: E:\\PS1\\games\\Colin McRae Rally 2.0 (USA) (En,Fr,Es).pbp[+pbp] (263206654 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Colin McRae Rally 2.0 (USA) (En,Fr,Es).pbp[+pbp] (263206654 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Colin McRae Rally 2.0 (USA) (En,Fr,Es).pbp[+pbp] (263206654 bytes).\n"
+      ]
+    },
+    {
+      "label": "N95-useroc-colony",
+      "repeatCount": 3,
+      "region": "NTSC",
+      "ms": [
+        29371,
+        29721,
+        29396
+      ],
+      "shownFrames": [
+        601,
+        601,
+        601
+      ],
+      "fpsMedian": 20.444958497754797,
+      "fpsMin": 20.221392281551765,
+      "fpsMax": 20.46236083211331,
+      "speedMedian": 68.03646754660498,
+      "speedMin": 67.29248679384946,
+      "speedMax": 68.09437880902931,
+      "errors": [
+        0,
+        0,
+        0
+      ],
+      "pass": [
+        "drc: frames=1200 ms=29371 pc=80000080 cycle=902715179 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=29721 pc=80000080 cycle=902715179 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=29396 pc=80000080 cycle=902715179 vblanks=1208 fsAdvised=0"
+      ],
+      "loaded": [
+        "Loaded CD Image: E:\\PS1\\games\\Colony Wars (USA) (Disc 1).pbp[+pbp] (366364329 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Colony Wars (USA) (Disc 1).pbp[+pbp] (366364329 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Colony Wars (USA) (Disc 1).pbp[+pbp] (366364329 bytes).\n"
+      ]
+    },
+    {
+      "label": "N95-useroc-crash",
+      "repeatCount": 3,
+      "region": "NTSC",
+      "ms": [
+        44416,
+        44125,
+        44510
+      ],
+      "shownFrames": [
+        601,
+        601,
+        601
+      ],
+      "fpsMedian": 13.531159942363113,
+      "fpsMin": 13.502583689058639,
+      "fpsMax": 13.620396600566572,
+      "speedMedian": 45.028818443804035,
+      "speedMin": 44.93372275893058,
+      "speedMax": 45.32577903682719,
+      "errors": [
+        0,
+        0,
+        0
+      ],
+      "pass": [
+        "drc: frames=1200 ms=44416 pc=80000080 cycle=3334898603 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=44125 pc=80000080 cycle=3334898603 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=44510 pc=80000080 cycle=3334898603 vblanks=1208 fsAdvised=0"
+      ],
+      "loaded": [
+        "Loaded CD Image: E:\\PS1\\games\\Crash Bandicoot (USA).pbp[+pbp] (478407220 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Crash Bandicoot (USA).pbp[+pbp] (478407220 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Crash Bandicoot (USA).pbp[+pbp] (478407220 bytes).\n"
+      ]
+    },
+    {
+      "label": "N95-useroc-gt",
+      "repeatCount": 3,
+      "region": "NTSC",
+      "ms": [
+        35048,
+        35306,
+        35037
+      ],
+      "shownFrames": [
+        601,
+        601,
+        601
+      ],
+      "fpsMedian": 17.147911435745264,
+      "fpsMin": 17.022602390528522,
+      "fpsMax": 17.153295088049777,
+      "speedMedian": 57.0645971239443,
+      "speedMin": 56.64759530957911,
+      "speedMax": 57.08251277221223,
+      "errors": [
+        0,
+        0,
+        0
+      ],
+      "pass": [
+        "drc: frames=1200 ms=35048 pc=80000080 cycle=733371181 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=35306 pc=80000080 cycle=733371181 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=35037 pc=80000080 cycle=733371181 vblanks=1208 fsAdvised=0"
+      ],
+      "loaded": [
+        "Loaded CD Image: E:\\PS1\\games\\gt.pbp[+pbp] (406756372 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\gt.pbp[+pbp] (406756372 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\gt.pbp[+pbp] (406756372 bytes).\n"
+      ]
+    },
+    {
+      "label": "N95-useroc-nfs",
+      "repeatCount": 3,
+      "region": "NTSC",
+      "ms": [
+        44510,
+        44162,
+        44576
+      ],
+      "shownFrames": [
+        590,
+        590,
+        590
+      ],
+      "fpsMedian": 13.25544821388452,
+      "fpsMin": 13.235821966977745,
+      "fpsMax": 13.359902178343372,
+      "speedMedian": 44.93372275893058,
+      "speedMin": 44.867193108399135,
+      "speedMax": 45.28780399438431,
+      "errors": [
+        0,
+        0,
+        0
+      ],
+      "pass": [
+        "drc: frames=1200 ms=44510 pc=80000080 cycle=1970307884 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=44162 pc=80000080 cycle=1970307884 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=44576 pc=80000080 cycle=1970307884 vblanks=1208 fsAdvised=0"
+      ],
+      "loaded": [
+        "Loaded CD Image: E:\\PS1\\games\\Need for Speed - Porsche Unleashed (USA).pbp[+pbp] (519772571 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Need for Speed - Porsche Unleashed (USA).pbp[+pbp] (519772571 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Need for Speed - Porsche Unleashed (USA).pbp[+pbp] (519772571 bytes).\n"
+      ]
+    },
+    {
+      "label": "N95-useroc-rayman",
+      "repeatCount": 3,
+      "region": "NTSC",
+      "ms": [
+        23634,
+        24032,
+        23622
+      ],
+      "shownFrames": [
+        1200,
+        1200,
+        1200
+      ],
+      "fpsMedian": 50.774308200050775,
+      "fpsMin": 49.93342210386152,
+      "fpsMax": 50.8001016002032,
+      "speedMedian": 84.62384700008462,
+      "speedMin": 83.22237017310253,
+      "speedMax": 84.66683600033866,
+      "errors": [
+        0,
+        0,
+        0
+      ],
+      "pass": [
+        "drc: frames=1200 ms=23634 pc=80000080 cycle=1467195179 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=24032 pc=80000080 cycle=1467195179 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=23622 pc=80000080 cycle=1467195179 vblanks=1208 fsAdvised=0"
+      ],
+      "loaded": [
+        "Loaded CD Image: E:\\PS1\\games\\Rayman (USA).pbp[+pbp] (498135871 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Rayman (USA).pbp[+pbp] (498135871 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Rayman (USA).pbp[+pbp] (498135871 bytes).\n"
+      ]
+    },
+    {
+      "label": "N95-useroc-rc",
+      "repeatCount": 3,
+      "region": "NTSC",
+      "ms": [
+        38444,
+        38131,
+        38362
+      ],
+      "shownFrames": [
+        1200,
+        1200,
+        1200
+      ],
+      "fpsMedian": 31.280955111829414,
+      "fpsMin": 31.214233690562896,
+      "fpsMax": 31.4704571083895,
+      "speedMedian": 52.13492518638236,
+      "speedMin": 52.02372281760483,
+      "speedMax": 52.45076184731583,
+      "errors": [
+        0,
+        0,
+        0
+      ],
+      "pass": [
+        "drc: frames=1200 ms=38444 pc=80000080 cycle=2596155182 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=38131 pc=80000080 cycle=2596155182 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=38362 pc=80000080 cycle=2596155182 vblanks=1208 fsAdvised=0"
+      ],
+      "loaded": [
+        "Loaded CD Image: E:\\PS1\\games\\RC Helicopter (USA).pbp[+pbp] (12839268 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\RC Helicopter (USA).pbp[+pbp] (12839268 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\RC Helicopter (USA).pbp[+pbp] (12839268 bytes).\n"
+      ]
+    },
+    {
+      "label": "N95-useroc-trek",
+      "repeatCount": 3,
+      "region": "NTSC",
+      "ms": [
+        21467,
+        21862,
+        21512
+      ],
+      "shownFrames": [
+        600,
+        600,
+        600
+      ],
+      "fpsMedian": 27.891409445890666,
+      "fpsMin": 27.44488152959473,
+      "fpsMax": 27.949876554711885,
+      "speedMedian": 92.97136481963555,
+      "speedMin": 91.48293843198243,
+      "speedMax": 93.16625518237295,
+      "errors": [
+        0,
+        0,
+        0
+      ],
+      "pass": [
+        "drc: frames=1200 ms=21467 pc=80000080 cycle=2031675182 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=21862 pc=80000080 cycle=2031675182 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=21512 pc=80000080 cycle=2031675182 vblanks=1208 fsAdvised=0"
+      ],
+      "loaded": [
+        "Loaded CD Image: E:\\PS1\\games\\Star Trek - Invasion (USA).pbp[+pbp] (310075072 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Star Trek - Invasion (USA).pbp[+pbp] (310075072 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Star Trek - Invasion (USA).pbp[+pbp] (310075072 bytes).\n"
+      ]
+    },
+    {
+      "label": "N95-useroc-warzone",
+      "repeatCount": 3,
+      "region": "NTSC",
+      "ms": [
+        26912,
+        26627,
+        26947
+      ],
+      "shownFrames": [
+        400,
+        400,
+        400
+      ],
+      "fpsMedian": 14.863258026159334,
+      "fpsMin": 14.843952944669166,
+      "fpsMax": 15.02234573928719,
+      "speedMedian": 74.31629013079667,
+      "speedMin": 74.21976472334583,
+      "speedMax": 75.11172869643595,
+      "errors": [
+        0,
+        0,
+        0
+      ],
+      "pass": [
+        "drc: frames=1200 ms=26912 pc=80000080 cycle=1344460591 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=26627 pc=80000080 cycle=1344460591 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=26947 pc=80000080 cycle=1344460591 vblanks=1208 fsAdvised=0"
+      ],
+      "loaded": [
+        "Loaded CD Image: E:\\PS1\\games\\Warzone 2100 (USA).pbp[+pbp] (414470047 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Warzone 2100 (USA).pbp[+pbp] (414470047 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Warzone 2100 (USA).pbp[+pbp] (414470047 bytes).\n"
+      ]
+    },
+    {
+      "label": "N95-useroc-wing",
+      "repeatCount": 3,
+      "region": "NTSC",
+      "ms": [
+        19164,
+        19431,
+        19173
+      ],
+      "shownFrames": [
+        480,
+        480,
+        480
+      ],
+      "fpsMedian": 25.035205758097323,
+      "fpsMin": 24.702794503628223,
+      "fpsMax": 25.046963055729492,
+      "speedMedian": 104.31335732540552,
+      "speedMin": 102.92831043178427,
+      "speedMax": 104.36234606553955,
+      "errors": [
+        0,
+        0,
+        0
+      ],
+      "pass": [
+        "drc: frames=1200 ms=19164 pc=80000080 cycle=3320140588 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=19431 pc=80000080 cycle=3320140588 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=19173 pc=80000080 cycle=3320140588 vblanks=1208 fsAdvised=0"
+      ],
+      "loaded": [
+        "Loaded CD Image: E:\\PS1\\games\\Wing Commander III - Heart of the Tiger (USA) (Disc 1).pbp[+pbp] (589288424 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Wing Commander III - Heart of the Tiger (USA) (Disc 1).pbp[+pbp] (589288424 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Wing Commander III - Heart of the Tiger (USA) (Disc 1).pbp[+pbp] (589288424 bytes).\n"
+      ]
+    },
+    {
+      "label": "N95-useroc-wipeout",
+      "repeatCount": 3,
+      "region": "NTSC",
+      "ms": [
+        29455,
+        29063,
+        29473
+      ],
+      "shownFrames": [
+        600,
+        600,
+        600
+      ],
+      "fpsMedian": 20.370056017654047,
+      "fpsMin": 20.35761544464425,
+      "fpsMax": 20.644806110862607,
+      "speedMedian": 67.90018672551349,
+      "speedMin": 67.85871814881416,
+      "speedMax": 68.81602036954203,
+      "errors": [
+        0,
+        0,
+        0
+      ],
+      "pass": [
+        "drc: frames=1200 ms=29455 pc=80000080 cycle=1354299190 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=29063 pc=80000080 cycle=1354299190 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=29473 pc=80000080 cycle=1354299190 vblanks=1208 fsAdvised=0"
       ],
       "loaded": [
         "Loaded CD Image: E:\\PS1\\games\\WipEout (USA).pbp[+pbp] (450941663 bytes).\n",

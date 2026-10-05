@@ -1,10 +1,10 @@
 {
-  "exportedAt": "2026-10-05T22:26:08.4986545+03:00",
-  "acceptedRuns": 72,
-  "triples": 24,
+  "exportedAt": "2026-10-05T23:38:31.8507516+03:00",
+  "acceptedRuns": 108,
+  "triples": 36,
   "states": 12,
-  "copiedFiles": 4504,
-  "status": "stopped-n95-unreachable-before-game",
+  "copiedFiles": 5511,
+  "status": "complete-user-installed-overclock",
   "c5Restored": true,
   "n95Restored": true,
   "n95RestorationPending": false

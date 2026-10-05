@@ -1,0 +1,19 @@
+{
+  "label": "N95-useroc-wipeout",
+  "repeat": 3,
+  "region": "NTSC",
+  "frames": 1200,
+  "ms": 29473,
+  "shownFrames": 600,
+  "shownFps": 20.35761544464425,
+  "ps1Fps": 40.7152308892885,
+  "speedPercent": 67.85871814881416,
+  "errors": 0,
+  "shutdown": "gui: frames=1200 ms=29473",
+  "pass": "drc: frames=1200 ms=29473 pc=80000080 cycle=1354299190 vblanks=1208 fsAdvised=0",
+  "loaded": "Loaded CD Image: E:\\PS1\\games\\WipEout (USA).pbp[+pbp] (450941663 bytes).\n",
+  "emuMs": null,
+  "shownMethod": "DSA direct FB pixB=4, stock fxaa=0, 240 rows per present",
+  "volume0ms": 3110,
+  "clockStartMs": 6503
+}

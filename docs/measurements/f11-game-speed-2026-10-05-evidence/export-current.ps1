@@ -1,4 +1,9 @@
+param([switch]$FinalUserOverclock)
 $ErrorActionPreference='Stop'
+if($FinalUserOverclock){
+ $finalAudit=Get-Content "$PSScriptRoot/final-audit-useroc.json" -Raw | ConvertFrom-Json
+ if(-not $finalAudit.complete -or $finalAudit.runs.Count -ne 108){throw 'Final user clock audit required'}
+}
 $repo=(Resolve-Path "$PSScriptRoot/../../..").Path
 $destination="$repo/docs/measurements/f11-game-speed-2026-10-05-evidence"
 New-Item -ItemType Directory -Force $destination | Out-Null
@@ -14,18 +19,20 @@ function Copy-Proof([string]$source,[string]$relative){
 }
 foreach($entry in Get-ChildItem $PSScriptRoot -File){
  if($entry.Name -in @('export-verification.json','export-progress.json')){continue}
- if($entry.Name -match '\.(json|jsonl|txt|log|bmp|png|ps1|cs|cjs|rec)$' -or $entry.Name -match '-early\.bin$' -or $entry.Name -eq 'final2-c5-sys-hash.bin' -or $entry.Name -eq 'n95-boot-before.dat'){
+ if($entry.Name -match '\.(json|jsonl|txt|log|bmp|png|ps1|cs|cjs|rec)$' -or $entry.Name -match '-early\.bin$' -or $entry.Name -in @('final2-c5-sys-hash.bin','n95-boot-before.dat','useroc-boot-before.dat','useroc-boot-after.dat','report-before-useroc.md')){
   Copy-Proof $entry.FullName $entry.Name
  }
 }
 $states=@(Get-Content "$PSScriptRoot/states/manifest.json" -Raw | ConvertFrom-Json)
+Copy-Proof "$PSScriptRoot/evidence.gitattributes" '.gitattributes'
 Copy-Proof "$PSScriptRoot/states/manifest.json" 'states/manifest.json'
 foreach($state in $states){
  $source="$PSScriptRoot/states/$($state.file)"
  if((Get-Item $source).Length -ne $state.bytes -or (Get-FileHash $source -Algorithm SHA256).Hash -ne $state.sha256){throw "Canonical state differs $($state.file)"}
  Copy-Proof $source "states/$($state.file)"
 }
-foreach($folder in @('rejected-cast-intro','rejected-cast-dsa-overlay','interrupted-cpu50-2026-10-05-2027')){
+foreach($folder in @('rejected-cast-intro','rejected-cast-dsa-overlay','interrupted-cpu50-2026-10-05-2027','rejected-useroc-crash-late-volume','rejected-useroc-crash-volume-one','rejected-useroc-gt-late-volume','rejected-useroc-crash-wrong-image')){
+ if(-not (Test-Path "$PSScriptRoot/$folder")){continue}
  foreach($file in Get-ChildItem "$PSScriptRoot/$folder" -File -Recurse){
   Copy-Proof $file.FullName ([IO.Path]::GetRelativePath($PSScriptRoot,$file.FullName))
  }
@@ -36,9 +43,15 @@ $restore=@(Get-Content "$PSScriptRoot/c5-final2-restoration-verification.json" -
 if($restore.Count -ne 14 -or @($restore | Where-Object {-not $_.identical}).Count){throw 'C5 restoration incomplete'}
 $n95Restore=@(Get-Content "$PSScriptRoot/n95-final2-restoration-verification.json" -Raw | ConvertFrom-Json)
 if($n95Restore.Count -ne 18 -or @($n95Restore | Where-Object {-not $_.identical}).Count){throw 'N95 restoration incomplete'}
-$proof=[ordered]@{verifiedAt=(Get-Date).ToString('o');acceptedResultFiles=$summary.acceptedRuns;completedTriples=$summary.completedTriples;canonicalStateHashes=$states;copiedFiles=$copies.Count;copies=$copies;c5RestoredFiles=14;c5BtAuthorizationRestored=$true;n95RestoredFiles=18;n95RestorationPending=$false;cpu50AcceptedRuns=0;taskComplete=$false;status='stopped-n95-unreachable-before-game';checkState='passed 11/11 on 2026-10-05';emulatorSourceChanged=$false}
+$latestUpload=@(Get-ChildItem $PSScriptRoot -Filter 'N95-useroc-*-upload-*.done.json' | ForEach-Object {Get-Content $_.FullName -Raw | ConvertFrom-Json} | Where-Object exitCode -eq 0 | Sort-Object finished | Select-Object -Last 1)
+$restoredAt=($n95Restore | Sort-Object verifiedAt | Select-Object -Last 1).verifiedAt
+$pending=($latestUpload.Count -gt 0 -and [datetime]$latestUpload[0].finished -gt [datetime]$restoredAt)
+if($FinalUserOverclock -and $pending){throw 'N95 uploaded measurement files after restoration'}
+$status=if($FinalUserOverclock){'complete-user-installed-overclock'}elseif(Test-Path "$PSScriptRoot/user-oc-baseline.json"){'measuring-user-installed-overclock'}else{'stopped-n95-unreachable-before-game'}
+$userRuns=@($summary.series | Where-Object label -like 'N95-useroc-*' | ForEach-Object repeatCount | Measure-Object -Sum).Sum
+$proof=[ordered]@{verifiedAt=(Get-Date).ToString('o');acceptedResultFiles=$summary.acceptedRuns;completedTriples=$summary.completedTriples;canonicalStateHashes=$states;copiedFiles=$copies.Count;copies=$copies;c5RestoredFiles=14;c5BtAuthorizationRestored=$true;n95RestorationProvedFiles=18;n95RestorationPending=$pending;cpu50AcceptedRuns=0;userOverclockAcceptedRuns=$userRuns;taskComplete=$FinalUserOverclock.IsPresent;status=$status;emulatorSourceChanged=$false}
 $proof | ConvertTo-Json -Depth 10 | Set-Content "$destination/export-verification.json" -Encoding utf8
-[ordered]@{exportedAt=(Get-Date).ToString('o');acceptedRuns=$summary.acceptedRuns;triples=$summary.completedTriples;states=$states.Count;copiedFiles=$copies.Count;status='stopped-n95-unreachable-before-game';c5Restored=$true;n95Restored=$true;n95RestorationPending=$false} | ConvertTo-Json | Set-Content "$destination/export-progress.json" -Encoding utf8
+[ordered]@{exportedAt=(Get-Date).ToString('o');acceptedRuns=$summary.acceptedRuns;triples=$summary.completedTriples;states=$states.Count;copiedFiles=$copies.Count;status=$status;c5Restored=$true;n95Restored=(-not $pending);n95RestorationPending=$pending} | ConvertTo-Json | Set-Content "$destination/export-progress.json" -Encoding utf8
 @'
 # Докази F11, стан на 2026-10-05 22:20
 
@@ -55,3 +68,19 @@ C5: 14/14 початкових файлів повернуто й звірено
 Оригінальні EXE, образи ігор, картки памʼяті та повні резервні копії не включені в архів; manifests резервних копій включені. Кандидати навігації не підмінюють прийняті states/manifest.json. Посібник Wing Commander для внутрішньої навігації не перевидається.
 '@ | Set-Content "$destination/README.md" -Encoding utf8
 Write-Output "Export verified: $($copies.Count) files, $($summary.acceptedRuns) runs, $($states.Count) canonical states."
+if(Test-Path "$PSScriptRoot/user-oc-baseline.json"){
+ $description=if($FinalUserOverclock){'Серії завершені:108 дійсних прогонів,36 трійок,12 ігор на C5/N95-stock/N95-useroc. Оригінальні файли повернуто32/32. Фінальні регістри користувача m111/CORE04360644/DSP000023C3, EXE та boot.dat перевірені.'}else{"Тестування N95-useroc триває: $($summary.acceptedRuns) прогонів, $($summary.completedTriples) трійок. Поточне повернення файлів N95 ще потрібне: $pending."}
+ @"
+# Докази F11 — параметри розгону користувача
+
+$description
+
+Останнє доручення користувача замінило початковий cpu50 на параметри, які він установив сам: m111, CPU426240kHz, CORE852480kHz, BUS213120kHz, DSS142080kHz, DSP284160kHz. Виконавець не змінював розгін під час цих серій. user-oc-baseline.json і N95-useroc-*-clock-* містять повні read-only перевірки регістрів до/після трійок. Це не режим cpu50 з початкового доручення; його невдалі спроби збережені окремо й не включені в accepted results.
+
+Основний звіт: ../f11-game-speed-2026-10-05.md. Підсумковий аудит: final-audit-useroc.json після завершення. summary-progress.json містить медіани й розкид; states/manifest.json —12 перевірених reusable gameplay-станів. export-verification.json містить SHA-256 усіх файлів поточного експорту. report-before-useroc.md, stand-stop snapshots, retry3 та completion-audit-current — історія попередніх спроб; їхні статуси не описують нові серії.
+
+Оригінальні EXE, образи ігор і повні резервні копії не перевидаються. Маніфести резервних копій включені. C5 BT-авторизація повернута; доказ c5-bt-final-restored.png. Кандидати навігації не підміняють прийняті стани. Посібник Wing Commander не перевидається.
+"@ | Set-Content "$destination/README.md" -Encoding utf8
+}
+
+

@@ -1,0 +1,23 @@
+{
+  "verifiedAt": "2026-10-05T22:39:55.9260462+03:00",
+  "registers": {
+    "CM_CLKSEL1_PLL": "0006F400",
+    "CM_CLKSEL2_PLL": "00000002",
+    "CM_CLKSEL_MPU": "00000002",
+    "CM_CLKSEL1_CORE": "04360644",
+    "SDRC_RFR_CTRL0": "0004DA01",
+    "SDRC_ACTIM_A_0": "BADDC4C6",
+    "CM_CLKSEL_DSP": "000023C3"
+  },
+  "multiplier": 111,
+  "coreKhz": 852480,
+  "mpuKhz": 426240,
+  "busKhz": 213120,
+  "dssKhz": 142080,
+  "dspKhz": 284160,
+  "engineLog": "N95-useroc-cast-clock-after-engine.log",
+  "dspLog": "N95-useroc-cast-clock-after-dsp.log",
+  "matchedBaseline": true,
+  "clockWritesPerformed": false,
+  "nextId": 12
+}

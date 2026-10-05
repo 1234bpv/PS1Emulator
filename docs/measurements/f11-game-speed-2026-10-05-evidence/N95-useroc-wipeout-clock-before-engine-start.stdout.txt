@@ -1,0 +1,5 @@
+[net] > START E:\sys\bin\ocprobe.exe patcher engine
+[net] < OK proc 96
+[net] > SLEEP 2000
+[net] < OK sleep 2000
+[net] done

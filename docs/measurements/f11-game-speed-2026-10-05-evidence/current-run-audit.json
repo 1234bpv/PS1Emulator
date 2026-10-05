@@ -1,6 +1,6 @@
 {
-  "verifiedAt": "2026-10-05T22:25:25.3573194+03:00",
-  "validRuns": 72,
+  "verifiedAt": "2026-10-05T23:36:34.1749470+03:00",
+  "validRuns": 108,
   "runChecks": [
     {
       "run": "C5-cast-r1",
@@ -51,6 +51,33 @@
       "run": "N95-stock-cast-r3",
       "frames": 1200,
       "guiMs": 64126,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 398057383,
+      "endCycle": "3442875179"
+    },
+    {
+      "run": "N95-useroc-cast-r1",
+      "frames": 1200,
+      "guiMs": 34562,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 398057383,
+      "endCycle": "3442875179"
+    },
+    {
+      "run": "N95-useroc-cast-r2",
+      "frames": 1200,
+      "guiMs": 34623,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 398057383,
+      "endCycle": "3442875179"
+    },
+    {
+      "run": "N95-useroc-cast-r3",
+      "frames": 1200,
+      "guiMs": 34350,
       "shownFrames": 1200,
       "errorCount": 0,
       "imageBytes": 398057383,
@@ -111,6 +138,33 @@
       "endCycle": "3945987890"
     },
     {
+      "run": "N95-useroc-colin-r1",
+      "frames": 1200,
+      "guiMs": 70254,
+      "shownFrames": 595,
+      "errorCount": 0,
+      "imageBytes": 263206654,
+      "endCycle": "3945987890"
+    },
+    {
+      "run": "N95-useroc-colin-r2",
+      "frames": 1200,
+      "guiMs": 69773,
+      "shownFrames": 595,
+      "errorCount": 0,
+      "imageBytes": 263206654,
+      "endCycle": "3945987890"
+    },
+    {
+      "run": "N95-useroc-colin-r3",
+      "frames": 1200,
+      "guiMs": 70195,
+      "shownFrames": 595,
+      "errorCount": 0,
+      "imageBytes": 263206654,
+      "endCycle": "3945987890"
+    },
+    {
       "run": "C5-colony-r1",
       "frames": 1200,
       "guiMs": 30779,
@@ -159,6 +213,33 @@
       "run": "N95-stock-colony-r3",
       "frames": 1200,
       "guiMs": 57924,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 366364329,
+      "endCycle": "902715179"
+    },
+    {
+      "run": "N95-useroc-colony-r1",
+      "frames": 1200,
+      "guiMs": 29371,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 366364329,
+      "endCycle": "902715179"
+    },
+    {
+      "run": "N95-useroc-colony-r2",
+      "frames": 1200,
+      "guiMs": 29721,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 366364329,
+      "endCycle": "902715179"
+    },
+    {
+      "run": "N95-useroc-colony-r3",
+      "frames": 1200,
+      "guiMs": 29396,
       "shownFrames": 601,
       "errorCount": 0,
       "imageBytes": 366364329,
@@ -219,6 +300,33 @@
       "endCycle": "3334898603"
     },
     {
+      "run": "N95-useroc-crash-r1",
+      "frames": 1200,
+      "guiMs": 44416,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 478407220,
+      "endCycle": "3334898603"
+    },
+    {
+      "run": "N95-useroc-crash-r2",
+      "frames": 1200,
+      "guiMs": 44125,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 478407220,
+      "endCycle": "3334898603"
+    },
+    {
+      "run": "N95-useroc-crash-r3",
+      "frames": 1200,
+      "guiMs": 44510,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 478407220,
+      "endCycle": "3334898603"
+    },
+    {
       "run": "C5-gt-r1",
       "frames": 1200,
       "guiMs": 34328,
@@ -267,6 +375,33 @@
       "run": "N95-stock-gt-r3",
       "frames": 1200,
       "guiMs": 65358,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 406756372,
+      "endCycle": "733371181"
+    },
+    {
+      "run": "N95-useroc-gt-r1",
+      "frames": 1200,
+      "guiMs": 35048,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 406756372,
+      "endCycle": "733371181"
+    },
+    {
+      "run": "N95-useroc-gt-r2",
+      "frames": 1200,
+      "guiMs": 35306,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 406756372,
+      "endCycle": "733371181"
+    },
+    {
+      "run": "N95-useroc-gt-r3",
+      "frames": 1200,
+      "guiMs": 35037,
       "shownFrames": 601,
       "errorCount": 0,
       "imageBytes": 406756372,
@@ -327,6 +462,33 @@
       "endCycle": "1970307884"
     },
     {
+      "run": "N95-useroc-nfs-r1",
+      "frames": 1200,
+      "guiMs": 44510,
+      "shownFrames": 590,
+      "errorCount": 0,
+      "imageBytes": 519772571,
+      "endCycle": "1970307884"
+    },
+    {
+      "run": "N95-useroc-nfs-r2",
+      "frames": 1200,
+      "guiMs": 44162,
+      "shownFrames": 590,
+      "errorCount": 0,
+      "imageBytes": 519772571,
+      "endCycle": "1970307884"
+    },
+    {
+      "run": "N95-useroc-nfs-r3",
+      "frames": 1200,
+      "guiMs": 44576,
+      "shownFrames": 590,
+      "errorCount": 0,
+      "imageBytes": 519772571,
+      "endCycle": "1970307884"
+    },
+    {
       "run": "C5-rayman-r1",
       "frames": 1200,
       "guiMs": 29263,
@@ -375,6 +537,33 @@
       "run": "N95-stock-rayman-r3",
       "frames": 1200,
       "guiMs": 51065,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 498135871,
+      "endCycle": "1467195179"
+    },
+    {
+      "run": "N95-useroc-rayman-r1",
+      "frames": 1200,
+      "guiMs": 23634,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 498135871,
+      "endCycle": "1467195179"
+    },
+    {
+      "run": "N95-useroc-rayman-r2",
+      "frames": 1200,
+      "guiMs": 24032,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 498135871,
+      "endCycle": "1467195179"
+    },
+    {
+      "run": "N95-useroc-rayman-r3",
+      "frames": 1200,
+      "guiMs": 23622,
       "shownFrames": 1200,
       "errorCount": 0,
       "imageBytes": 498135871,
@@ -435,6 +624,33 @@
       "endCycle": "2596155182"
     },
     {
+      "run": "N95-useroc-rc-r1",
+      "frames": 1200,
+      "guiMs": 38444,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 12839268,
+      "endCycle": "2596155182"
+    },
+    {
+      "run": "N95-useroc-rc-r2",
+      "frames": 1200,
+      "guiMs": 38131,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 12839268,
+      "endCycle": "2596155182"
+    },
+    {
+      "run": "N95-useroc-rc-r3",
+      "frames": 1200,
+      "guiMs": 38362,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 12839268,
+      "endCycle": "2596155182"
+    },
+    {
       "run": "C5-trek-r1",
       "frames": 1200,
       "guiMs": 23623,
@@ -483,6 +699,33 @@
       "run": "N95-stock-trek-r3",
       "frames": 1200,
       "guiMs": 47722,
+      "shownFrames": 600,
+      "errorCount": 0,
+      "imageBytes": 310075072,
+      "endCycle": "2031675182"
+    },
+    {
+      "run": "N95-useroc-trek-r1",
+      "frames": 1200,
+      "guiMs": 21467,
+      "shownFrames": 600,
+      "errorCount": 0,
+      "imageBytes": 310075072,
+      "endCycle": "2031675182"
+    },
+    {
+      "run": "N95-useroc-trek-r2",
+      "frames": 1200,
+      "guiMs": 21862,
+      "shownFrames": 600,
+      "errorCount": 0,
+      "imageBytes": 310075072,
+      "endCycle": "2031675182"
+    },
+    {
+      "run": "N95-useroc-trek-r3",
+      "frames": 1200,
+      "guiMs": 21512,
       "shownFrames": 600,
       "errorCount": 0,
       "imageBytes": 310075072,
@@ -543,6 +786,33 @@
       "endCycle": "1344460591"
     },
     {
+      "run": "N95-useroc-warzone-r1",
+      "frames": 1200,
+      "guiMs": 26912,
+      "shownFrames": 400,
+      "errorCount": 0,
+      "imageBytes": 414470047,
+      "endCycle": "1344460591"
+    },
+    {
+      "run": "N95-useroc-warzone-r2",
+      "frames": 1200,
+      "guiMs": 26627,
+      "shownFrames": 400,
+      "errorCount": 0,
+      "imageBytes": 414470047,
+      "endCycle": "1344460591"
+    },
+    {
+      "run": "N95-useroc-warzone-r3",
+      "frames": 1200,
+      "guiMs": 26947,
+      "shownFrames": 400,
+      "errorCount": 0,
+      "imageBytes": 414470047,
+      "endCycle": "1344460591"
+    },
+    {
       "run": "C5-wing-r1",
       "frames": 1200,
       "guiMs": 19985,
@@ -597,6 +867,33 @@
       "endCycle": "3320140588"
     },
     {
+      "run": "N95-useroc-wing-r1",
+      "frames": 1200,
+      "guiMs": 19164,
+      "shownFrames": 480,
+      "errorCount": 0,
+      "imageBytes": 589288424,
+      "endCycle": "3320140588"
+    },
+    {
+      "run": "N95-useroc-wing-r2",
+      "frames": 1200,
+      "guiMs": 19431,
+      "shownFrames": 480,
+      "errorCount": 0,
+      "imageBytes": 589288424,
+      "endCycle": "3320140588"
+    },
+    {
+      "run": "N95-useroc-wing-r3",
+      "frames": 1200,
+      "guiMs": 19173,
+      "shownFrames": 480,
+      "errorCount": 0,
+      "imageBytes": 589288424,
+      "endCycle": "3320140588"
+    },
+    {
       "run": "C5-wipeout-r1",
       "frames": 1200,
       "guiMs": 28070,
@@ -645,6 +942,33 @@
       "run": "N95-stock-wipeout-r3",
       "frames": 1200,
       "guiMs": 56895,
+      "shownFrames": 600,
+      "errorCount": 0,
+      "imageBytes": 450941663,
+      "endCycle": "1354299190"
+    },
+    {
+      "run": "N95-useroc-wipeout-r1",
+      "frames": 1200,
+      "guiMs": 29455,
+      "shownFrames": 600,
+      "errorCount": 0,
+      "imageBytes": 450941663,
+      "endCycle": "1354299190"
+    },
+    {
+      "run": "N95-useroc-wipeout-r2",
+      "frames": 1200,
+      "guiMs": 29063,
+      "shownFrames": 600,
+      "errorCount": 0,
+      "imageBytes": 450941663,
+      "endCycle": "1354299190"
+    },
+    {
+      "run": "N95-useroc-wipeout-r3",
+      "frames": 1200,
+      "guiMs": 29473,
       "shownFrames": 600,
       "errorCount": 0,
       "imageBytes": 450941663,
@@ -765,6 +1089,24 @@
       "log": "N95-stock-cast-clock-after.log"
     },
     {
+      "series": "N95-useroc-cast",
+      "side": "before",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-cast-clock-before-engine.log",
+      "dspLog": "N95-useroc-cast-clock-before-dsp.log",
+      "matchedUserBaseline": true
+    },
+    {
+      "series": "N95-useroc-cast",
+      "side": "after",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-cast-clock-after-engine.log",
+      "dspLog": "N95-useroc-cast-clock-after-dsp.log",
+      "matchedUserBaseline": true
+    },
+    {
       "series": "N95-stock-colin",
       "side": "before",
       "multiplier": 86,
@@ -777,6 +1119,24 @@
       "multiplier": 86,
       "core": "04360644",
       "log": "N95-stock-colin-clock-after.log"
+    },
+    {
+      "series": "N95-useroc-colin",
+      "side": "before",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-colin-clock-before-engine.log",
+      "dspLog": "N95-useroc-colin-clock-before-dsp.log",
+      "matchedUserBaseline": true
+    },
+    {
+      "series": "N95-useroc-colin",
+      "side": "after",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-colin-clock-after-engine.log",
+      "dspLog": "N95-useroc-colin-clock-after-dsp.log",
+      "matchedUserBaseline": true
     },
     {
       "series": "N95-stock-colony",
@@ -793,6 +1153,24 @@
       "log": "N95-stock-colony-clock-after.log"
     },
     {
+      "series": "N95-useroc-colony",
+      "side": "before",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-colony-clock-before-engine.log",
+      "dspLog": "N95-useroc-colony-clock-before-dsp.log",
+      "matchedUserBaseline": true
+    },
+    {
+      "series": "N95-useroc-colony",
+      "side": "after",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-colony-clock-after-engine.log",
+      "dspLog": "N95-useroc-colony-clock-after-dsp.log",
+      "matchedUserBaseline": true
+    },
+    {
       "series": "N95-stock-crash",
       "side": "before",
       "multiplier": 86,
@@ -805,6 +1183,24 @@
       "multiplier": 86,
       "core": "04360644",
       "log": "N95-stock-crash-clock-after.log"
+    },
+    {
+      "series": "N95-useroc-crash",
+      "side": "before",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-crash-clock-before-engine.log",
+      "dspLog": "N95-useroc-crash-clock-before-dsp.log",
+      "matchedUserBaseline": true
+    },
+    {
+      "series": "N95-useroc-crash",
+      "side": "after",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-crash-clock-after-engine.log",
+      "dspLog": "N95-useroc-crash-clock-after-dsp.log",
+      "matchedUserBaseline": true
     },
     {
       "series": "N95-stock-gt",
@@ -821,6 +1217,24 @@
       "log": "N95-stock-gt-clock-after.log"
     },
     {
+      "series": "N95-useroc-gt",
+      "side": "before",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-gt-clock-before-engine.log",
+      "dspLog": "N95-useroc-gt-clock-before-dsp.log",
+      "matchedUserBaseline": true
+    },
+    {
+      "series": "N95-useroc-gt",
+      "side": "after",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-gt-clock-after-engine.log",
+      "dspLog": "N95-useroc-gt-clock-after-dsp.log",
+      "matchedUserBaseline": true
+    },
+    {
       "series": "N95-stock-nfs",
       "side": "before",
       "multiplier": 86,
@@ -833,6 +1247,24 @@
       "multiplier": 86,
       "core": "04360644",
       "log": "N95-stock-nfs-clock-after.log"
+    },
+    {
+      "series": "N95-useroc-nfs",
+      "side": "before",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-nfs-clock-before-engine.log",
+      "dspLog": "N95-useroc-nfs-clock-before-dsp.log",
+      "matchedUserBaseline": true
+    },
+    {
+      "series": "N95-useroc-nfs",
+      "side": "after",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-nfs-clock-after-engine.log",
+      "dspLog": "N95-useroc-nfs-clock-after-dsp.log",
+      "matchedUserBaseline": true
     },
     {
       "series": "N95-stock-rayman",
@@ -849,6 +1281,24 @@
       "log": "N95-stock-rayman-clock-after.log"
     },
     {
+      "series": "N95-useroc-rayman",
+      "side": "before",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-rayman-clock-before-engine.log",
+      "dspLog": "N95-useroc-rayman-clock-before-dsp.log",
+      "matchedUserBaseline": true
+    },
+    {
+      "series": "N95-useroc-rayman",
+      "side": "after",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-rayman-clock-after-engine.log",
+      "dspLog": "N95-useroc-rayman-clock-after-dsp.log",
+      "matchedUserBaseline": true
+    },
+    {
       "series": "N95-stock-rc",
       "side": "before",
       "multiplier": 86,
@@ -861,6 +1311,24 @@
       "multiplier": 86,
       "core": "04360644",
       "log": "N95-stock-rc-clock-after.log"
+    },
+    {
+      "series": "N95-useroc-rc",
+      "side": "before",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-rc-clock-before-engine.log",
+      "dspLog": "N95-useroc-rc-clock-before-dsp.log",
+      "matchedUserBaseline": true
+    },
+    {
+      "series": "N95-useroc-rc",
+      "side": "after",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-rc-clock-after-engine.log",
+      "dspLog": "N95-useroc-rc-clock-after-dsp.log",
+      "matchedUserBaseline": true
     },
     {
       "series": "N95-stock-trek",
@@ -877,6 +1345,24 @@
       "log": "N95-stock-trek-clock-after.log"
     },
     {
+      "series": "N95-useroc-trek",
+      "side": "before",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-trek-clock-before-engine.log",
+      "dspLog": "N95-useroc-trek-clock-before-dsp.log",
+      "matchedUserBaseline": true
+    },
+    {
+      "series": "N95-useroc-trek",
+      "side": "after",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-trek-clock-after-engine.log",
+      "dspLog": "N95-useroc-trek-clock-after-dsp.log",
+      "matchedUserBaseline": true
+    },
+    {
       "series": "N95-stock-warzone",
       "side": "before",
       "multiplier": 86,
@@ -889,6 +1375,24 @@
       "multiplier": 86,
       "core": "04360644",
       "log": "N95-stock-warzone-clock-after.log"
+    },
+    {
+      "series": "N95-useroc-warzone",
+      "side": "before",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-warzone-clock-before-engine.log",
+      "dspLog": "N95-useroc-warzone-clock-before-dsp.log",
+      "matchedUserBaseline": true
+    },
+    {
+      "series": "N95-useroc-warzone",
+      "side": "after",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-warzone-clock-after-engine.log",
+      "dspLog": "N95-useroc-warzone-clock-after-dsp.log",
+      "matchedUserBaseline": true
     },
     {
       "series": "N95-stock-wing",
@@ -905,6 +1409,24 @@
       "log": "N95-stock-wing-clock-after.log"
     },
     {
+      "series": "N95-useroc-wing",
+      "side": "before",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-wing-clock-before-engine.log",
+      "dspLog": "N95-useroc-wing-clock-before-dsp.log",
+      "matchedUserBaseline": true
+    },
+    {
+      "series": "N95-useroc-wing",
+      "side": "after",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-wing-clock-after-engine.log",
+      "dspLog": "N95-useroc-wing-clock-after-dsp.log",
+      "matchedUserBaseline": true
+    },
+    {
       "series": "N95-stock-wipeout",
       "side": "before",
       "multiplier": 86,
@@ -917,6 +1439,24 @@
       "multiplier": 86,
       "core": "04360644",
       "log": "N95-stock-wipeout-clock-after.log"
+    },
+    {
+      "series": "N95-useroc-wipeout",
+      "side": "before",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-wipeout-clock-before-engine.log",
+      "dspLog": "N95-useroc-wipeout-clock-before-dsp.log",
+      "matchedUserBaseline": true
+    },
+    {
+      "series": "N95-useroc-wipeout",
+      "side": "after",
+      "multiplier": 111,
+      "core": "04360644",
+      "engineLog": "N95-useroc-wipeout-clock-after-engine.log",
+      "dspLog": "N95-useroc-wipeout-clock-after-dsp.log",
+      "matchedUserBaseline": true
     }
   ]
 }

@@ -1,0 +1,19 @@
+{
+  "label": "N95-useroc-rc",
+  "repeat": 1,
+  "region": "NTSC",
+  "frames": 1200,
+  "ms": 38444,
+  "shownFrames": 1200,
+  "shownFps": 31.214233690562896,
+  "ps1Fps": 31.214233690562896,
+  "speedPercent": 52.02372281760483,
+  "errors": 0,
+  "shutdown": "gui: frames=1200 ms=38444",
+  "pass": "drc: frames=1200 ms=38444 pc=80000080 cycle=2596155182 vblanks=1208 fsAdvised=0",
+  "loaded": "Loaded CD Image: E:\\PS1\\games\\RC Helicopter (USA).pbp[+pbp] (12839268 bytes).\n",
+  "emuMs": null,
+  "shownMethod": "DSA direct FB pixB=4, stock fxaa=0, 240 rows per present",
+  "volume0ms": 3109,
+  "clockStartMs": 5927
+}

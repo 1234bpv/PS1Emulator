@@ -1,0 +1,17 @@
+{
+  "name": "N95-useroc-trek-upload-trek-flight.sav",
+  "started": "2026-10-05T23:22:20.1656047+03:00",
+  "finished": "2026-10-05T23:22:27.7334685+03:00",
+  "limitSec": 240,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-PutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed/states/trek-flight.sav",
+    "-Remote",
+    "E:\\PS1\\saves\\bench.sav"
+  ]
+}

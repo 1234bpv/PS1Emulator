@@ -1,0 +1,4 @@
+[net] PUT D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\useroc-settings-wipeout.txt -> E:\PS1\cfg\ps1_settings.txt (445 bytes)
+[net] .. 445/445
+[net] OK 445
+[net] done

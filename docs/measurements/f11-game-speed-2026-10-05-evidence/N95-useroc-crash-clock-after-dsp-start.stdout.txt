@@ -1,0 +1,5 @@
+[net] > START E:\sys\bin\ocprobe.exe patcher dsp 1
+[net] < OK proc 46
+[net] > SLEEP 2000
+[net] < OK sleep 2000
+[net] done

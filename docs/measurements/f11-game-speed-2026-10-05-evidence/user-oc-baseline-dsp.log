@@ -1,0 +1,35 @@
+== ocprobe: DVFS probe, read-only ==
+UPTIME: 685 s (11 min) - ntick=685163
+fast counter: 32768 Hz
+--- HAL ---
+ECPUSpeed(kHz) = 206438
+EFastCounterFreq(Hz) = 32768
+ENanoTickPeriod(us) = 1000
+ESystemTickPeriod = 15625
+ECPU = 0
+ECPUABI = 0
+EMemoryRAM = 125501440
+EMemoryRAMFree = 93220864
+EMachineUid = 536882564
+EModel = 1112691795
+EManufacturer = 2
+EPowerExternal = 1
+EPowerBatteryStatus -> err -5
+ECaseState -> err -5
+--- TestPowerAPI skipped (pass "power <0..12>" to enable) ---
+--- DSP clock domain probe (READ ONLY, no PRCM writes) ---
+profile: RM-320 35.0.001/31.0.015  (auto by machine uid)
+engine ready: SRAM @cb202000, stock mult 86
+orig body (6 words, live ROM): e92d4010 e3a00001 eb00014c e59f11d0 e8bd4010 ea000135
+  stock: m=86 DPLL=330240 CORE=660480 MPU=330240 BUS=165120 DSS1=110080 kHz (l3div=4 dssdiv=6)
+  NOT STOCK AT START: m=111 CLKSEL1_CORE=04360644 CLKSEL_MPU=00000002  (stock: m=86 04360644 00000002)
+  CM_FCLKEN_DSP @c6008800 = 00000401
+  CM_ICLKEN_DSP @c6008810 = 00000002
+  CM_IDLEST_DSP @c6008820 = 00000000
+  CM_CLKSEL_DSP @c6008840 = 000023c3
+  fields: DSP[3:0]=3 [4:0]=3  IF[6:5]=2  bit7=1  IVA[12:8]=3  bit13=1
+  firmware math: CORE 660480 kHz / [3:0]=3 -> 220160 kHz (this is _BRIDGEINIT_DSP_FREQ)
+  VERDICT: divider is 3 -> DSP already at nominal. Do NOT write; slowness is elsewhere.
+  restore check: stock DoControl(1,0) -> 129  (nonzero = original code back)
+DSP probe done
+== end ==

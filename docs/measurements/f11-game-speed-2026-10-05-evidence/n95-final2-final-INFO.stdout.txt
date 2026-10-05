@@ -2,10 +2,11 @@
 [net] < OK info
 [net] < protocol 2
 [net] < screen 320x240
-[net] < ramfree 93777920
-[net] < tick 286797 startTick 64815 boot 0 by n
+[net] < ramfree 92872704
+[net] < tick 4412712 startTick 60075 boot 0 by n
 [net] < ap Huawei
-[net] < drive C freekb 65688
-[net] < drive E freekb 1019728
-[net] < script IDLE
+[net] < drive C freekb 65632
+[net] < drive E freekb 1016608
+[net] < scriptlog E:\tester\N95-useroc-wipeout-r3.log
+[net] < script DONE 8
 [net] done

@@ -1,0 +1,19 @@
+{
+  "label": "N95-useroc-crash",
+  "repeat": 2,
+  "region": "NTSC",
+  "frames": 1200,
+  "ms": 44125,
+  "shownFrames": 601,
+  "shownFps": 13.620396600566572,
+  "ps1Fps": 27.195467422096318,
+  "speedPercent": 45.32577903682719,
+  "errors": 0,
+  "shutdown": "gui: frames=1200 ms=44125",
+  "pass": "drc: frames=1200 ms=44125 pc=80000080 cycle=3334898603 vblanks=1208 fsAdvised=0",
+  "loaded": "Loaded CD Image: E:\\PS1\\games\\Crash Bandicoot (USA).pbp[+pbp] (478407220 bytes).\n",
+  "emuMs": null,
+  "shownMethod": "DSA direct FB pixB=4, stock fxaa=0, 240 rows per present",
+  "volume0ms": 3158,
+  "clockStartMs": 6658
+}

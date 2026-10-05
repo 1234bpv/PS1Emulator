@@ -1,0 +1,36 @@
+== ocprobe: DVFS probe, read-only ==
+UPTIME: 3283 s (54 min) - ntick=3283549
+fast counter: 32768 Hz
+--- HAL ---
+ECPUSpeed(kHz) = 206438
+EFastCounterFreq(Hz) = 32768
+ENanoTickPeriod(us) = 1000
+ESystemTickPeriod = 15625
+ECPU = 0
+ECPUABI = 0
+EMemoryRAM = 125501440
+EMemoryRAMFree = 92708864
+EMachineUid = 536882564
+EModel = 1112691795
+EManufacturer = 2
+EPowerExternal = 1
+EPowerBatteryStatus -> err -5
+ECaseState -> err -5
+--- TestPowerAPI skipped (pass "power <0..12>" to enable) ---
+--- engine self-check (read only) ---
+profile: RM-320 35.0.001/31.0.015  (auto by machine uid)
+engine ready: SRAM @cb202000, stock mult 86
+orig body (6 words, live ROM): e92d4010 e3a00001 eb00014c e59f11d0 e8bd4010 ea000135
+  stock: m=86 DPLL=330240 CORE=660480 MPU=330240 BUS=165120 DSS1=110080 kHz (l3div=4 dssdiv=6)
+  NOT STOCK AT START: m=111 CLKSEL1_CORE=04360644 CLKSEL_MPU=00000002  (stock: m=86 04360644 00000002)
+  CM_CLKSEL1_PLL  @c6008540 = 0006f400
+  CM_CLKSEL2_PLL  @c6008544 = 00000002
+  CM_CLKSEL_MPU   @c6008140 = 00000002
+  CM_CLKEN_PLL    @c6008500 = 0000000f
+  CM_IDLEST_PLL   @c6008520 = 00000106
+  CM_CLKSEL1_CORE @c6008240 = 04360644
+  SDRC_RFR_CTRL0  @c61290a4 = 0004da01
+  SDRC_ACTIM_A_0  @c612909c = baddc4c6
+  restore check: stock DoControl(1,0) -> 129  (nonzero = original code back)
+engine self-check done
+== end ==

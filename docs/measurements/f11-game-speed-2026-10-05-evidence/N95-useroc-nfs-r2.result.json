@@ -1,0 +1,19 @@
+{
+  "label": "N95-useroc-nfs",
+  "repeat": 2,
+  "region": "NTSC",
+  "frames": 1200,
+  "ms": 44162,
+  "shownFrames": 590,
+  "shownFps": 13.359902178343372,
+  "ps1Fps": 27.172682396630588,
+  "speedPercent": 45.28780399438431,
+  "errors": 0,
+  "shutdown": "gui: frames=1200 ms=44162",
+  "pass": "drc: frames=1200 ms=44162 pc=80000080 cycle=1970307884 vblanks=1208 fsAdvised=0",
+  "loaded": "Loaded CD Image: E:\\PS1\\games\\Need for Speed - Porsche Unleashed (USA).pbp[+pbp] (519772571 bytes).\n",
+  "emuMs": null,
+  "shownMethod": "DSA direct FB pixB=4, stock fxaa=0, 240 rows per present",
+  "volume0ms": 3352,
+  "clockStartMs": 6874
+}

@@ -1,0 +1,10 @@
+[net] PUT D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\states\colin-start.sav -> E:\PS1\saves\bench.sav (2ÿ061ÿ537 bytes)
+[net] .. 262ÿ144/2ÿ061ÿ537
+[net] .. 524ÿ288/2ÿ061ÿ537
+[net] .. 786ÿ432/2ÿ061ÿ537
+[net] .. 1ÿ048ÿ576/2ÿ061ÿ537
+[net] .. 1ÿ310ÿ720/2ÿ061ÿ537
+[net] .. 1ÿ572ÿ864/2ÿ061ÿ537
+[net] .. 1ÿ835ÿ008/2ÿ061ÿ537
+[net] OK 2061537
+[net] done

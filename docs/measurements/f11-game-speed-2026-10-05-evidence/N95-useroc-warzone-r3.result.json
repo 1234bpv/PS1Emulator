@@ -1,0 +1,19 @@
+{
+  "label": "N95-useroc-warzone",
+  "repeat": 3,
+  "region": "NTSC",
+  "frames": 1200,
+  "ms": 26947,
+  "shownFrames": 400,
+  "shownFps": 14.843952944669166,
+  "ps1Fps": 44.531858834007494,
+  "speedPercent": 74.21976472334583,
+  "errors": 0,
+  "shutdown": "gui: frames=1200 ms=26947",
+  "pass": "drc: frames=1200 ms=26947 pc=80000080 cycle=1344460591 vblanks=1208 fsAdvised=0",
+  "loaded": "Loaded CD Image: E:\\PS1\\games\\Warzone 2100 (USA).pbp[+pbp] (414470047 bytes).\n",
+  "emuMs": null,
+  "shownMethod": "DSA direct FB pixB=4, stock fxaa=0, 240 rows per present",
+  "volume0ms": 3390,
+  "clockStartMs": 6901
+}

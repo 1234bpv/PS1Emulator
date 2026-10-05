@@ -1,0 +1,4 @@
+[net] PUT D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\useroc-settings-nfs.txt -> E:\PS1\cfg\ps1_settings.txt (472 bytes)
+[net] .. 472/472
+[net] OK 472
+[net] done

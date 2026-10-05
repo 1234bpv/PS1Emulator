@@ -939,3 +939,16 @@ S2 (bench) після серії; для гри людиною залити ре
 2026-10-05 22:20: N95 знайдено scan, stock-перезапуск підтверджено. Повернуто18/18 оригінальних файлів і звіреноSHA256, input_prev/interp відсутні. Користувач дозволив нижчі периферійні частоти, заборонив перевищення stock. ЧерезUI виставленоm129 CORE04690C46 DSP000023C6, KEEP true, UIзакрито. DSP/SSI165120, DSS82560, VLYNQ55040, L3штатний165120. IVA3 окремий, GUIнепідтримуєкомпенсацію: всііншіблокиштатніабонижчі НЕпідтверджено. ГруНЕзапускали. GET EXEtimeout45s(38608bytes), GETbootdaemonunreachable, scanunreachable: після3стоп. Файлиповернуті, поточнірегістрипіслявтратидоступуневідомі;72valid,cpu50=0. БезREBOOT,L3decrease,bootwrite,emucodechanges.
 
 2026-10-05: offline completion audit повторно перевірив72runs/12states/24stockclockchecks/32readbackSHA/38screenshotrefs. complete=false. IVA керування GUIвідсутнє, поточнийдоступN95невідновленийзаостаннімscan. Статичнийclocktreeперевірено: GFXвідL3,CAMвідL4/fixed96MHz; цеНЕlive-registerproof. Безновихапаратнихзверненьпісля3невдач. Потрібніповерненнядоступу,повнапериферійнаперевірка,validcpu50серії,фінальнірегістри.
+2026-10-05 22:39: N95-useroc-cast three runs completed; user-installed clock registers unchanged before/after. Next proc12.
+2026-10-05 22:45: N95-useroc-colin three runs completed; user-installed clock registers unchanged before/after. Next proc19.
+2026-10-05 22:49: N95-useroc-colony three runs completed; user-installed clock registers unchanged before/after. Next proc26.
+2026-10-05 23:03: User requested mute with audio emulation. Sound remains ON. Archived Crash late-volume, Crash missing-zero, and GT late-volume attempts; invalid result excluded. Fixed validator requiring volume0 event before clocks start. New mute STAR press2 gap0; user m111 parameters untouched. Worker session12792, retry Crash r3 proc41 followed by clock42/43 and bulk next44.
+2026-10-05 23:10: N95-useroc-gt three runs completed; user-installed clock registers unchanged before/after. Next proc54.
+2026-10-05 23:14: N95-useroc-nfs three runs completed; user-installed clock registers unchanged before/after. Next proc61.
+2026-10-05 23:18: N95-useroc-rayman three runs completed; user-installed clock registers unchanged before/after. Next proc68.
+2026-10-05 23:22: N95-useroc-rc three runs completed; user-installed clock registers unchanged before/after. Next proc75.
+2026-10-05 23:25: N95-useroc-trek three runs completed; user-installed clock registers unchanged before/after. Next proc82.
+2026-10-05 23:29: N95-useroc-warzone three runs completed; user-installed clock registers unchanged before/after. Next proc89.
+2026-10-05 23:32: N95-useroc-wing three runs completed; user-installed clock registers unchanged before/after. Next proc96.
+2026-10-05 23:36: N95-useroc-wipeout three runs completed; user-installed clock registers unchanged before/after. Next proc103.
+2026-10-05 23:37: F11 completed with user-installed m111 CORE04360644 DSP000023C3. 108 valid runs/36 triples/12 canonical gameplay states. All runs sound ON, volume0 before clocks; positive audio feeds/samples. C5 14/14 and N95 18/18 originals restored with SHA readback; EXE release hash and boot.dat unchanged verified. User clock left unchanged, no emulator source changes, no push. Final evidence audit passed.

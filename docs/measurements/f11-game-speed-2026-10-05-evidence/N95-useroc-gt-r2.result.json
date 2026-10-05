@@ -1,0 +1,19 @@
+{
+  "label": "N95-useroc-gt",
+  "repeat": 2,
+  "region": "NTSC",
+  "frames": 1200,
+  "ms": 35306,
+  "shownFrames": 601,
+  "shownFps": 17.022602390528522,
+  "ps1Fps": 33.98855718574747,
+  "speedPercent": 56.64759530957911,
+  "errors": 0,
+  "shutdown": "gui: frames=1200 ms=35306",
+  "pass": "drc: frames=1200 ms=35306 pc=80000080 cycle=733371181 vblanks=1208 fsAdvised=0",
+  "loaded": "Loaded CD Image: E:\\PS1\\games\\gt.pbp[+pbp] (406756372 bytes).\n",
+  "emuMs": null,
+  "shownMethod": "DSA direct FB pixB=4, stock fxaa=0, 240 rows per present",
+  "volume0ms": 3195,
+  "clockStartMs": 6621
+}
