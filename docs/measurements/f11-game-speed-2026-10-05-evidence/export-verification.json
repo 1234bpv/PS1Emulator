@@ -1,5 +1,5 @@
 {
-  "verifiedAt": "2026-10-05T23:38:31.8209995+03:00",
+  "verifiedAt": "2026-10-05T23:39:14.6940874+03:00",
   "acceptedResultFiles": 108,
   "completedTriples": 36,
   "canonicalStateHashes": [
@@ -128,7 +128,7 @@
       "shot": "C5-clean-retry4-wing-verify.png"
     }
   ],
-  "copiedFiles": 5511,
+  "copiedFiles": 5512,
   "copies": [
     {
       "path": "audit-completion-current.ps1",
@@ -9851,6 +9851,11 @@
       "sha256": "7682C394E80E8E2240767E3DD8238DE75A02852266D87F994EB4C4788501A07C"
     },
     {
+      "path": "committed-evidence-verification.json",
+      "bytes": 165,
+      "sha256": "A53509F14E16069C1CF07C423118AE1FD28EC833376A8D64AD9F710B5517AB12"
+    },
+    {
       "path": "completion-audit-current.json",
       "bytes": 16644,
       "sha256": "1CAC438DAB9746DF93FB9EF77575923F6CC2164A6A018E8B342E58B577339CBC"
@@ -10142,8 +10147,8 @@
     },
     {
       "path": "export-current.ps1",
-      "bytes": 12040,
-      "sha256": "B308C19F05695E9A146F7E3865110EC9C54DEB45B2BAA21B314FBB2FA7829C35"
+      "bytes": 12078,
+      "sha256": "D7B06C20A23F678282CF50460362647CEAE3C585DCBC89296045CF3FCDF1F4E0"
     },
     {
       "path": "final-audit-useroc.json",
@@ -26972,8 +26977,8 @@
     },
     {
       "path": "verify-committed-evidence.cjs",
-      "bytes": 1967,
-      "sha256": "529393FCACB32437DD07E5CEE6232625C77736408EFD17134ECD2FBBF1DCA3A4"
+      "bytes": 1987,
+      "sha256": "1EB15B13A8BD758C01AED77824DF3638CA2198E9447D40387B9D1CA346DFC90C"
     },
     {
       "path": "verify-export-commit.cjs",
@@ -27126,552 +27131,552 @@
       "sha256": "27728255081328CC19DB60D93031A1037632FE96CF7B58CCB9197B0B5B2312A7"
     },
     {
-      "path": "rejected-cast-intro\\C5-cast-r1-a1.jsonl",
+      "path": "rejected-cast-intro/C5-cast-r1-a1.jsonl",
       "bytes": 8620,
       "sha256": "3F619DD6A7278A9706E176472A93B5133A4E9E5131F596E80B36575BF03767E1"
     },
     {
-      "path": "rejected-cast-intro\\C5-cast-r1-jsonl-a1.done.json",
+      "path": "rejected-cast-intro/C5-cast-r1-jsonl-a1.done.json",
       "bytes": 557,
       "sha256": "00F5C77446F93BD55E20DF8B57C652823698A7D3516D3AA18CCDDCA2B439D662"
     },
     {
-      "path": "rejected-cast-intro\\C5-cast-r1-jsonl-a1.stderr.txt",
+      "path": "rejected-cast-intro/C5-cast-r1-jsonl-a1.stderr.txt",
       "bytes": 0,
       "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
     },
     {
-      "path": "rejected-cast-intro\\C5-cast-r1-jsonl-a1.stdout.txt",
+      "path": "rejected-cast-intro/C5-cast-r1-jsonl-a1.stdout.txt",
       "bytes": 254,
       "sha256": "FEDDB7E0976DDE663BFBC8BD151C0900E7AA4BF81CAABB76FF187B98DFE4868E"
     },
     {
-      "path": "rejected-cast-intro\\C5-cast-r1-scenario.done.json",
+      "path": "rejected-cast-intro/C5-cast-r1-scenario.done.json",
       "bytes": 663,
       "sha256": "C8569B94453C84A20C821A5CBB804A3E1CAB3189FB7994F1D37A4C2E92DE529D"
     },
     {
-      "path": "rejected-cast-intro\\C5-cast-r1-scenario.stderr.txt",
+      "path": "rejected-cast-intro/C5-cast-r1-scenario.stderr.txt",
       "bytes": 0,
       "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
     },
     {
-      "path": "rejected-cast-intro\\C5-cast-r1-scenario.stdout.txt",
+      "path": "rejected-cast-intro/C5-cast-r1-scenario.stdout.txt",
       "bytes": 1343,
       "sha256": "D195E3E0807A7E053EA07207DAABBE2242FC74149C629A2A41A056FA7BA2D8BA"
     },
     {
-      "path": "rejected-cast-intro\\C5-cast-r1.jsonl",
+      "path": "rejected-cast-intro/C5-cast-r1.jsonl",
       "bytes": 8620,
       "sha256": "3F619DD6A7278A9706E176472A93B5133A4E9E5131F596E80B36575BF03767E1"
     },
     {
-      "path": "rejected-cast-intro\\C5-cast-r1.log",
+      "path": "rejected-cast-intro/C5-cast-r1.log",
       "bytes": 634,
       "sha256": "501BE1E1691CF783108F0BD1F144F1F04D93945D277CE021DFA6B68C5407F070"
     },
     {
-      "path": "rejected-cast-intro\\C5-cast-r1.result.json",
+      "path": "rejected-cast-intro/C5-cast-r1.result.json",
       "bytes": 647,
       "sha256": "06D08C042A85D82C915C05C937E299A819003FA84256EC76044284B1DED200B6"
     },
     {
-      "path": "rejected-cast-intro\\C5-cast-r1.txt",
+      "path": "rejected-cast-intro/C5-cast-r1.txt",
       "bytes": 314,
       "sha256": "EDC74E70C6D4EF4C6AF51391CBD92497016F682306AFE369AFCF638B5D3E02C2"
     },
     {
-      "path": "rejected-cast-intro\\C5-cast-r2-a1.jsonl",
+      "path": "rejected-cast-intro/C5-cast-r2-a1.jsonl",
       "bytes": 8620,
       "sha256": "3330B23D8E6B0A6CC3B6A432F1CBF23E130CAECEFA7CC5A34F85071D956BF187"
     },
     {
-      "path": "rejected-cast-intro\\C5-cast-r2-jsonl-a1.done.json",
+      "path": "rejected-cast-intro/C5-cast-r2-jsonl-a1.done.json",
       "bytes": 557,
       "sha256": "0C298B69E6E888C4AB77A43CD53782C4561F925ADB61A2F249E7154D737A214A"
     },
     {
-      "path": "rejected-cast-intro\\C5-cast-r2-jsonl-a1.stderr.txt",
+      "path": "rejected-cast-intro/C5-cast-r2-jsonl-a1.stderr.txt",
       "bytes": 0,
       "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
     },
     {
-      "path": "rejected-cast-intro\\C5-cast-r2-jsonl-a1.stdout.txt",
+      "path": "rejected-cast-intro/C5-cast-r2-jsonl-a1.stdout.txt",
       "bytes": 254,
       "sha256": "BA6B6338048535F2AF9961B108C7FB0C9BED7D04C1021769F9627DA6FA38EEF5"
     },
     {
-      "path": "rejected-cast-intro\\C5-cast-r2-scenario.done.json",
+      "path": "rejected-cast-intro/C5-cast-r2-scenario.done.json",
       "bytes": 663,
       "sha256": "B603BFF2DEE5A1B11F1A87C65E8C578DB59A208DDF7902380E33CE669AFB097B"
     },
     {
-      "path": "rejected-cast-intro\\C5-cast-r2-scenario.stderr.txt",
+      "path": "rejected-cast-intro/C5-cast-r2-scenario.stderr.txt",
       "bytes": 0,
       "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
     },
     {
-      "path": "rejected-cast-intro\\C5-cast-r2-scenario.stdout.txt",
+      "path": "rejected-cast-intro/C5-cast-r2-scenario.stdout.txt",
       "bytes": 1334,
       "sha256": "22EE4C0C086DEB186F7FC8B33089D836FFEBE5D92A97E65AAFC6627109FD7A3E"
     },
     {
-      "path": "rejected-cast-intro\\C5-cast-r2.jsonl",
+      "path": "rejected-cast-intro/C5-cast-r2.jsonl",
       "bytes": 8620,
       "sha256": "3330B23D8E6B0A6CC3B6A432F1CBF23E130CAECEFA7CC5A34F85071D956BF187"
     },
     {
-      "path": "rejected-cast-intro\\C5-cast-r2.log",
+      "path": "rejected-cast-intro/C5-cast-r2.log",
       "bytes": 625,
       "sha256": "4BC13AF558B906B6E1DD6B2A63BF6E40C5AA1C101BD7D2E59E3E1E881822344F"
     },
     {
-      "path": "rejected-cast-intro\\C5-cast-r2.result.json",
+      "path": "rejected-cast-intro/C5-cast-r2.result.json",
       "bytes": 645,
       "sha256": "A36AA8E0B486326AED4E02A282BDDCE45FDE20866418C37AF381D7E0F4FDFF14"
     },
     {
-      "path": "rejected-cast-intro\\C5-cast-r2.txt",
+      "path": "rejected-cast-intro/C5-cast-r2.txt",
       "bytes": 314,
       "sha256": "4119E90C81B3CD4FF4DF981C1ABC14D6C70D83BA14FDEBA9C1DE23694B4945A6"
     },
     {
-      "path": "rejected-cast-intro\\C5-cast-r3-a1.jsonl",
+      "path": "rejected-cast-intro/C5-cast-r3-a1.jsonl",
       "bytes": 8620,
       "sha256": "D1F04EED71EE1AA048B72AC3FCCD4BDE3C0ADC1C9460B52E803793A7C0AB51DF"
     },
     {
-      "path": "rejected-cast-intro\\C5-cast-r3-jsonl-a1.done.json",
+      "path": "rejected-cast-intro/C5-cast-r3-jsonl-a1.done.json",
       "bytes": 557,
       "sha256": "69B03BAF305417D8A9608E1BEFE4193109B85C44BFC002B0730B540C4255CDBF"
     },
     {
-      "path": "rejected-cast-intro\\C5-cast-r3-jsonl-a1.stderr.txt",
+      "path": "rejected-cast-intro/C5-cast-r3-jsonl-a1.stderr.txt",
       "bytes": 0,
       "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
     },
     {
-      "path": "rejected-cast-intro\\C5-cast-r3-jsonl-a1.stdout.txt",
+      "path": "rejected-cast-intro/C5-cast-r3-jsonl-a1.stdout.txt",
       "bytes": 254,
       "sha256": "9AA420A27E227397CA6170EEEE03BFAE0A72B8CD0B3B075F5B47F8FC363F68A1"
     },
     {
-      "path": "rejected-cast-intro\\C5-cast-r3-scenario.done.json",
+      "path": "rejected-cast-intro/C5-cast-r3-scenario.done.json",
       "bytes": 663,
       "sha256": "4C9C33833E15B99ECAECF4580E63AD8D2833B97ABE0E90C04DFC6272C78062B4"
     },
     {
-      "path": "rejected-cast-intro\\C5-cast-r3-scenario.stderr.txt",
+      "path": "rejected-cast-intro/C5-cast-r3-scenario.stderr.txt",
       "bytes": 0,
       "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
     },
     {
-      "path": "rejected-cast-intro\\C5-cast-r3-scenario.stdout.txt",
+      "path": "rejected-cast-intro/C5-cast-r3-scenario.stdout.txt",
       "bytes": 1343,
       "sha256": "9AE7245167083A9914A3BE388EDE7E1E31D62FDDB064F5F9A4EE0412FD7487F2"
     },
     {
-      "path": "rejected-cast-intro\\C5-cast-r3.jsonl",
+      "path": "rejected-cast-intro/C5-cast-r3.jsonl",
       "bytes": 8620,
       "sha256": "D1F04EED71EE1AA048B72AC3FCCD4BDE3C0ADC1C9460B52E803793A7C0AB51DF"
     },
     {
-      "path": "rejected-cast-intro\\C5-cast-r3.log",
+      "path": "rejected-cast-intro/C5-cast-r3.log",
       "bytes": 634,
       "sha256": "945B435A0A6F443389C994AC3AEDEE105004D50EE9ACBFE16FEA05DE60784966"
     },
     {
-      "path": "rejected-cast-intro\\C5-cast-r3.result.json",
+      "path": "rejected-cast-intro/C5-cast-r3.result.json",
       "bytes": 646,
       "sha256": "FC464F0A84F27B60131D4733999C2DC01B0A62C3B0AC4A0B3C2A7D1510056848"
     },
     {
-      "path": "rejected-cast-intro\\C5-cast-r3.txt",
+      "path": "rejected-cast-intro/C5-cast-r3.txt",
       "bytes": 314,
       "sha256": "333265DE6783C16F6D010CF025D448F1059E9A9E476A9E2E3EE648DA98EF34BF"
     },
     {
-      "path": "rejected-cast-intro\\rejection.json",
+      "path": "rejected-cast-intro/rejection.json",
       "bytes": 327,
       "sha256": "354FDABC0952A6573F991C600003A1543A31F8332C633C86A2AF19922DB233CD"
     },
     {
-      "path": "rejected-cast-dsa-overlay\\C5-cast-r1-a1.jsonl",
+      "path": "rejected-cast-dsa-overlay/C5-cast-r1-a1.jsonl",
       "bytes": 9496,
       "sha256": "DCAA7B060FA257D3DFD7C5F7CDCFA6C6CF868E23FAD617E54BE76CD5C2EAB946"
     },
     {
-      "path": "rejected-cast-dsa-overlay\\C5-cast-r1-jsonl-a1.done.json",
+      "path": "rejected-cast-dsa-overlay/C5-cast-r1-jsonl-a1.done.json",
       "bytes": 529,
       "sha256": "FD3F176E19D24D53C6227641678B72C113E6B6A5763D2548BE1608EF83248F66"
     },
     {
-      "path": "rejected-cast-dsa-overlay\\C5-cast-r1-jsonl-a1.stderr.txt",
+      "path": "rejected-cast-dsa-overlay/C5-cast-r1-jsonl-a1.stderr.txt",
       "bytes": 0,
       "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
     },
     {
-      "path": "rejected-cast-dsa-overlay\\C5-cast-r1-jsonl-a1.stdout.txt",
+      "path": "rejected-cast-dsa-overlay/C5-cast-r1-jsonl-a1.stdout.txt",
       "bytes": 207,
       "sha256": "9BF88A5837F33F804FF6CC2D17CA42C99CF928573DD6ABB0F4C1955C9EE77344"
     },
     {
-      "path": "rejected-cast-dsa-overlay\\C5-cast-r1-scenario.done.json",
+      "path": "rejected-cast-dsa-overlay/C5-cast-r1-scenario.done.json",
       "bytes": 635,
       "sha256": "17FE0F04F705DD8F863B9744DC0CBA51C870CBC138B58E6C3115391B892412A2"
     },
     {
-      "path": "rejected-cast-dsa-overlay\\C5-cast-r1-scenario.stderr.txt",
+      "path": "rejected-cast-dsa-overlay/C5-cast-r1-scenario.stderr.txt",
       "bytes": 0,
       "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
     },
     {
-      "path": "rejected-cast-dsa-overlay\\C5-cast-r1-scenario.stdout.txt",
+      "path": "rejected-cast-dsa-overlay/C5-cast-r1-scenario.stdout.txt",
       "bytes": 1296,
       "sha256": "82CE039D08981FF5EDE9F80961705153B312F0FA72EAD8CEAD275EF609CDC418"
     },
     {
-      "path": "rejected-cast-dsa-overlay\\C5-cast-r1.jsonl",
+      "path": "rejected-cast-dsa-overlay/C5-cast-r1.jsonl",
       "bytes": 9496,
       "sha256": "DCAA7B060FA257D3DFD7C5F7CDCFA6C6CF868E23FAD617E54BE76CD5C2EAB946"
     },
     {
-      "path": "rejected-cast-dsa-overlay\\C5-cast-r1.log",
+      "path": "rejected-cast-dsa-overlay/C5-cast-r1.log",
       "bytes": 634,
       "sha256": "BA0B3E0F190C4A6A54E91A19AA6EAAEFC61D4F191D2788755C8A9F0575AE7B68"
     },
     {
-      "path": "rejected-cast-dsa-overlay\\C5-cast-r1.txt",
+      "path": "rejected-cast-dsa-overlay/C5-cast-r1.txt",
       "bytes": 314,
       "sha256": "23C21A876B37123E50A0B699233EFC20540A95A378749E5CA5519FE778010DF4"
     },
     {
-      "path": "rejected-cast-dsa-overlay\\rejection.txt",
+      "path": "rejected-cast-dsa-overlay/rejection.txt",
       "bytes": 195,
       "sha256": "FD39985152A741F1C957B4F9BDC58098AAA1A5D1688A1BA46575C3F25D5C8938"
     },
     {
-      "path": "interrupted-cpu50-2026-10-05-2027\\N95-cpu50-cast-clock-before-a1.done.json",
+      "path": "interrupted-cpu50-2026-10-05-2027/N95-cpu50-cast-clock-before-a1.done.json",
       "bytes": 542,
       "sha256": "299D990767E6F8E4AC00C2CA6C7B28D04EE4CB90CA3998723364A5ADDF29EAC6"
     },
     {
-      "path": "interrupted-cpu50-2026-10-05-2027\\N95-cpu50-cast-clock-before-a1.stderr.txt",
+      "path": "interrupted-cpu50-2026-10-05-2027/N95-cpu50-cast-clock-before-a1.stderr.txt",
       "bytes": 0,
       "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
     },
     {
-      "path": "interrupted-cpu50-2026-10-05-2027\\N95-cpu50-cast-clock-before-a1.stdout.txt",
+      "path": "interrupted-cpu50-2026-10-05-2027/N95-cpu50-cast-clock-before-a1.stdout.txt",
       "bytes": 172,
       "sha256": "76085DB1C8C117C143ECBBB724FA1257ABBB650D5EF76430CE1762B49C0C1894"
     },
     {
-      "path": "interrupted-cpu50-2026-10-05-2027\\N95-cpu50-cast-clock-before-start.done.json",
+      "path": "interrupted-cpu50-2026-10-05-2027/N95-cpu50-cast-clock-before-start.done.json",
       "bytes": 440,
       "sha256": "06C1EF836919EEDABEA8AA08D19FBAD16F0D12210BA104E2070B7B65C3BFF652"
     },
     {
-      "path": "interrupted-cpu50-2026-10-05-2027\\N95-cpu50-cast-clock-before-start.stderr.txt",
+      "path": "interrupted-cpu50-2026-10-05-2027/N95-cpu50-cast-clock-before-start.stderr.txt",
       "bytes": 0,
       "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
     },
     {
-      "path": "interrupted-cpu50-2026-10-05-2027\\N95-cpu50-cast-clock-before-start.stdout.txt",
+      "path": "interrupted-cpu50-2026-10-05-2027/N95-cpu50-cast-clock-before-start.stdout.txt",
       "bytes": 124,
       "sha256": "B8F399C8ADD59F454C2BBCA5FE3BFB4D5027F2C22DB8BA1E77BCA8352C484688"
     },
     {
-      "path": "interrupted-cpu50-2026-10-05-2027\\N95-cpu50-cast-clock-before.log",
+      "path": "interrupted-cpu50-2026-10-05-2027/N95-cpu50-cast-clock-before.log",
       "bytes": 1368,
       "sha256": "F8FD564B2D7CC5A9EBE635215D0CF44A209A6EA6E97D4C2CD0D99529121AB583"
     },
     {
-      "path": "interrupted-cpu50-2026-10-05-2027\\N95-cpu50-cast-connect-check2.done.json",
+      "path": "interrupted-cpu50-2026-10-05-2027/N95-cpu50-cast-connect-check2.done.json",
       "bytes": 371,
       "sha256": "3652D55ADAB429265DC705DB4E234E2DC5B8C3CF18B24C73634878E8F179CEE6"
     },
     {
-      "path": "interrupted-cpu50-2026-10-05-2027\\N95-cpu50-cast-connect-check2.stderr.txt",
+      "path": "interrupted-cpu50-2026-10-05-2027/N95-cpu50-cast-connect-check2.stderr.txt",
       "bytes": 574,
       "sha256": "2C66F9E95046D37817DAA58CE82AE5191516A27675788A4784DAD6E67726F27C"
     },
     {
-      "path": "interrupted-cpu50-2026-10-05-2027\\N95-cpu50-cast-connect-check2.stdout.txt",
+      "path": "interrupted-cpu50-2026-10-05-2027/N95-cpu50-cast-connect-check2.stdout.txt",
       "bytes": 0,
       "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
     },
     {
-      "path": "interrupted-cpu50-2026-10-05-2027\\N95-cpu50-cast-connect-check3-scan.done.json",
+      "path": "interrupted-cpu50-2026-10-05-2027/N95-cpu50-cast-connect-check3-scan.done.json",
       "bytes": 396,
       "sha256": "FFFCA34F8667782F8F306898DFD9E08F8B6988F21086F4272DDFF6EA8AE819FD"
     },
     {
-      "path": "interrupted-cpu50-2026-10-05-2027\\N95-cpu50-cast-connect-check3-scan.stderr.txt",
+      "path": "interrupted-cpu50-2026-10-05-2027/N95-cpu50-cast-connect-check3-scan.stderr.txt",
       "bytes": 506,
       "sha256": "23790F0F71A8D1392B1CECFE1F5AE7234C38A5CB50D504D59E849CE00BBD3BAE"
     },
     {
-      "path": "interrupted-cpu50-2026-10-05-2027\\N95-cpu50-cast-connect-check3-scan.stdout.txt",
+      "path": "interrupted-cpu50-2026-10-05-2027/N95-cpu50-cast-connect-check3-scan.stdout.txt",
       "bytes": 376,
       "sha256": "F1D3CE9007FC1381DD9854CDD03DDD877CA63AF1980C599E1CC6ACE2CDC40C9E"
     },
     {
-      "path": "interrupted-cpu50-2026-10-05-2027\\N95-cpu50-cast-r1-scenario.done.json",
+      "path": "interrupted-cpu50-2026-10-05-2027/N95-cpu50-cast-r1-scenario.done.json",
       "bytes": 662,
       "sha256": "CE8D8AB340E7FBEFB3B563E6CB8EB0469523BDA4EC893856A18DCFB35FFED2BC"
     },
     {
-      "path": "interrupted-cpu50-2026-10-05-2027\\N95-cpu50-cast-r1-scenario.stderr.txt",
+      "path": "interrupted-cpu50-2026-10-05-2027/N95-cpu50-cast-r1-scenario.stderr.txt",
       "bytes": 459,
       "sha256": "4A1C0701848CFEA9FB19AAE39030557D39CFE67337836C01D4B34B9895131890"
     },
     {
-      "path": "interrupted-cpu50-2026-10-05-2027\\N95-cpu50-cast-r1-scenario.stdout.txt",
+      "path": "interrupted-cpu50-2026-10-05-2027/N95-cpu50-cast-r1-scenario.stdout.txt",
       "bytes": 893,
       "sha256": "D846B82A1C502729D44B7410F10816519D26BA7A5EBB6EC9CB8FE39156502ABB"
     },
     {
-      "path": "interrupted-cpu50-2026-10-05-2027\\N95-cpu50-cast-r1.txt",
+      "path": "interrupted-cpu50-2026-10-05-2027/N95-cpu50-cast-r1.txt",
       "bytes": 321,
       "sha256": "9219372193E67EDA68C2D3667F27050C6C3FA8EBC5CCF230E9F6EF154BF4E354"
     },
     {
-      "path": "interrupted-cpu50-2026-10-05-2027\\N95-cpu50-cast-upload-cast-gameplay.sav.done.json",
+      "path": "interrupted-cpu50-2026-10-05-2027/N95-cpu50-cast-upload-cast-gameplay.sav.done.json",
       "bytes": 553,
       "sha256": "8A897F5EFBD0EB7241330A821BEA42923715431EC71C197EF8E05FB375DD732F"
     },
     {
-      "path": "interrupted-cpu50-2026-10-05-2027\\N95-cpu50-cast-upload-cast-gameplay.sav.stderr.txt",
+      "path": "interrupted-cpu50-2026-10-05-2027/N95-cpu50-cast-upload-cast-gameplay.sav.stderr.txt",
       "bytes": 0,
       "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
     },
     {
-      "path": "interrupted-cpu50-2026-10-05-2027\\N95-cpu50-cast-upload-cast-gameplay.sav.stdout.txt",
+      "path": "interrupted-cpu50-2026-10-05-2027/N95-cpu50-cast-upload-cast-gameplay.sav.stdout.txt",
       "bytes": 354,
       "sha256": "62C01969EC8BA168F0C1202AE6795E6D8640F2AD3CC2A6968EDF1F7A86451A10"
     },
     {
-      "path": "interrupted-cpu50-2026-10-05-2027\\N95-cpu50-cast-upload-stock-cast.txt.done.json",
+      "path": "interrupted-cpu50-2026-10-05-2027/N95-cpu50-cast-upload-stock-cast.txt.done.json",
       "bytes": 545,
       "sha256": "EDD21622DF6333C89E0613A97D6EDD0C5D8003F13E1782E9BC14762CA26CF784"
     },
     {
-      "path": "interrupted-cpu50-2026-10-05-2027\\N95-cpu50-cast-upload-stock-cast.txt.stderr.txt",
+      "path": "interrupted-cpu50-2026-10-05-2027/N95-cpu50-cast-upload-stock-cast.txt.stderr.txt",
       "bytes": 0,
       "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
     },
     {
-      "path": "interrupted-cpu50-2026-10-05-2027\\N95-cpu50-cast-upload-stock-cast.txt.stdout.txt",
+      "path": "interrupted-cpu50-2026-10-05-2027/N95-cpu50-cast-upload-stock-cast.txt.stdout.txt",
       "bytes": 188,
       "sha256": "47763992E8D33F4F9EF9B3D41844ABCAB792EB425885FAD449A6230BD28670C0"
     },
     {
-      "path": "interrupted-cpu50-2026-10-05-2027\\stand-stop.json",
+      "path": "interrupted-cpu50-2026-10-05-2027/stand-stop.json",
       "bytes": 772,
       "sha256": "E6B67560775D7D73F8FF66266CEE1FD4A7CAF16596221ABF117DD60CBC8CE7EA"
     },
     {
-      "path": "rejected-useroc-crash-late-volume\\N95-useroc-crash-r3-a1.jsonl",
+      "path": "rejected-useroc-crash-late-volume/N95-useroc-crash-r3-a1.jsonl",
       "bytes": 8686,
       "sha256": "BF093D94D6C7065A3BA83C59BBD72673C343A79D7E7E9083E8F3E8D8CD17F77B"
     },
     {
-      "path": "rejected-useroc-crash-late-volume\\N95-useroc-crash-r3-jsonl-a1.done.json",
+      "path": "rejected-useroc-crash-late-volume/N95-useroc-crash-r3-jsonl-a1.done.json",
       "bytes": 553,
       "sha256": "EB471F665CE2FA98986EEE3572363C72991F4299EA2D1464144B6347304C74BD"
     },
     {
-      "path": "rejected-useroc-crash-late-volume\\N95-useroc-crash-r3-jsonl-a1.stderr.txt",
+      "path": "rejected-useroc-crash-late-volume/N95-useroc-crash-r3-jsonl-a1.stderr.txt",
       "bytes": 0,
       "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
     },
     {
-      "path": "rejected-useroc-crash-late-volume\\N95-useroc-crash-r3-jsonl-a1.stdout.txt",
+      "path": "rejected-useroc-crash-late-volume/N95-useroc-crash-r3-jsonl-a1.stdout.txt",
       "bytes": 183,
       "sha256": "04A762D7AB4C87AD07E40788CB045011E352000A1772C83CEA80A525D36D867F"
     },
     {
-      "path": "rejected-useroc-crash-late-volume\\N95-useroc-crash-r3-scenario.done.json",
+      "path": "rejected-useroc-crash-late-volume/N95-useroc-crash-r3-scenario.done.json",
       "bytes": 668,
       "sha256": "FD394EA78538C44BB32CBB39D8BF934A95957FEAF1022B5A29DBCE4392465EBE"
     },
     {
-      "path": "rejected-useroc-crash-late-volume\\N95-useroc-crash-r3-scenario.stderr.txt",
+      "path": "rejected-useroc-crash-late-volume/N95-useroc-crash-r3-scenario.stderr.txt",
       "bytes": 0,
       "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
     },
     {
-      "path": "rejected-useroc-crash-late-volume\\N95-useroc-crash-r3-scenario.stdout.txt",
+      "path": "rejected-useroc-crash-late-volume/N95-useroc-crash-r3-scenario.stdout.txt",
       "bytes": 1497,
       "sha256": "ACB89B1C24B0E19CB2F94C13F0D71CD4397642C81079D5051C736B671461A9B1"
     },
     {
-      "path": "rejected-useroc-crash-late-volume\\N95-useroc-crash-r3.jsonl",
+      "path": "rejected-useroc-crash-late-volume/N95-useroc-crash-r3.jsonl",
       "bytes": 8686,
       "sha256": "BF093D94D6C7065A3BA83C59BBD72673C343A79D7E7E9083E8F3E8D8CD17F77B"
     },
     {
-      "path": "rejected-useroc-crash-late-volume\\N95-useroc-crash-r3.log",
+      "path": "rejected-useroc-crash-late-volume/N95-useroc-crash-r3.log",
       "bytes": 619,
       "sha256": "F577773FB68A37F85FB6D2926FBF2AB730493FF5DE8A8BA26D28217F57BA2DBD"
     },
     {
-      "path": "rejected-useroc-crash-late-volume\\N95-useroc-crash-r3.txt",
+      "path": "rejected-useroc-crash-late-volume/N95-useroc-crash-r3.txt",
       "bytes": 302,
       "sha256": "EAD848A90C094390207FA3227582220554FC4DF5B94C7B2E145466F60CC24FC7"
     },
     {
-      "path": "rejected-useroc-crash-volume-one\\N95-useroc-crash-r3-a1.jsonl",
+      "path": "rejected-useroc-crash-volume-one/N95-useroc-crash-r3-a1.jsonl",
       "bytes": 8624,
       "sha256": "657E1B9BFE17CEE80443FB33A1960811ACA2FE94095A331FF00DA2462BA414EB"
     },
     {
-      "path": "rejected-useroc-crash-volume-one\\N95-useroc-crash-r3-jsonl-a1.done.json",
+      "path": "rejected-useroc-crash-volume-one/N95-useroc-crash-r3-jsonl-a1.done.json",
       "bytes": 553,
       "sha256": "220AEBFB3BD05F7F82C0500909509373D0752C6035AD35D5716388A271B3D55D"
     },
     {
-      "path": "rejected-useroc-crash-volume-one\\N95-useroc-crash-r3-jsonl-a1.stderr.txt",
+      "path": "rejected-useroc-crash-volume-one/N95-useroc-crash-r3-jsonl-a1.stderr.txt",
       "bytes": 0,
       "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
     },
     {
-      "path": "rejected-useroc-crash-volume-one\\N95-useroc-crash-r3-jsonl-a1.stdout.txt",
+      "path": "rejected-useroc-crash-volume-one/N95-useroc-crash-r3-jsonl-a1.stdout.txt",
       "bytes": 183,
       "sha256": "A2D8FD5CFD9087E54EDC1F35270F65A7046AFC5570D3FFDC430C6E77FF566122"
     },
     {
-      "path": "rejected-useroc-crash-volume-one\\N95-useroc-crash-r3-scenario.done.json",
+      "path": "rejected-useroc-crash-volume-one/N95-useroc-crash-r3-scenario.done.json",
       "bytes": 668,
       "sha256": "3D1D9D55DA5247095440ECA463A0105DC5A584B780DE55F94AC76F2F8D1C7D68"
     },
     {
-      "path": "rejected-useroc-crash-volume-one\\N95-useroc-crash-r3-scenario.stderr.txt",
+      "path": "rejected-useroc-crash-volume-one/N95-useroc-crash-r3-scenario.stderr.txt",
       "bytes": 0,
       "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
     },
     {
-      "path": "rejected-useroc-crash-volume-one\\N95-useroc-crash-r3-scenario.stdout.txt",
+      "path": "rejected-useroc-crash-volume-one/N95-useroc-crash-r3-scenario.stdout.txt",
       "bytes": 1639,
       "sha256": "4C8440597DDF0A6CEBCC9D8FF393E63BE9EDFF92180B7859FBCB62DE805B5E5C"
     },
     {
-      "path": "rejected-useroc-crash-volume-one\\N95-useroc-crash-r3.jsonl",
+      "path": "rejected-useroc-crash-volume-one/N95-useroc-crash-r3.jsonl",
       "bytes": 8624,
       "sha256": "657E1B9BFE17CEE80443FB33A1960811ACA2FE94095A331FF00DA2462BA414EB"
     },
     {
-      "path": "rejected-useroc-crash-volume-one\\N95-useroc-crash-r3.log",
+      "path": "rejected-useroc-crash-volume-one/N95-useroc-crash-r3.log",
       "bytes": 768,
       "sha256": "2D6BD6608F0A9530091BD6EA32D1C1D4D5AF4727F6BE87C61B1F5665185532E4"
     },
     {
-      "path": "rejected-useroc-crash-volume-one\\N95-useroc-crash-r3.result.json",
+      "path": "rejected-useroc-crash-volume-one/N95-useroc-crash-r3.result.json",
       "bytes": 637,
       "sha256": "6935095BEDD31983F5F26FDF43391BEF596C7066A058C56C6C4630873709D575"
     },
     {
-      "path": "rejected-useroc-crash-volume-one\\N95-useroc-crash-r3.txt",
+      "path": "rejected-useroc-crash-volume-one/N95-useroc-crash-r3.txt",
       "bytes": 358,
       "sha256": "35425AACEEBE26087200655356A543E5F2D6EEF1B4839B62EFFD827466C13939"
     },
     {
-      "path": "rejected-useroc-gt-late-volume\\N95-useroc-gt-r1-a1.jsonl",
+      "path": "rejected-useroc-gt-late-volume/N95-useroc-gt-r1-a1.jsonl",
       "bytes": 8691,
       "sha256": "0B445550BD13EA1D6338A45A2E5F1A3A874A59F17C2A9FD757917E35811833C9"
     },
     {
-      "path": "rejected-useroc-gt-late-volume\\N95-useroc-gt-r1-jsonl-a1.done.json",
+      "path": "rejected-useroc-gt-late-volume/N95-useroc-gt-r1-jsonl-a1.done.json",
       "bytes": 547,
       "sha256": "4901FB3E86819235B5717BEDD797E90117F8AD661E3A7B4F44104915181AD399"
     },
     {
-      "path": "rejected-useroc-gt-late-volume\\N95-useroc-gt-r1-jsonl-a1.stderr.txt",
+      "path": "rejected-useroc-gt-late-volume/N95-useroc-gt-r1-jsonl-a1.stderr.txt",
       "bytes": 0,
       "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
     },
     {
-      "path": "rejected-useroc-gt-late-volume\\N95-useroc-gt-r1-jsonl-a1.stdout.txt",
+      "path": "rejected-useroc-gt-late-volume/N95-useroc-gt-r1-jsonl-a1.stdout.txt",
       "bytes": 180,
       "sha256": "36CF37EE2AC5F0F965B4CBB02777CF0BA426AC679667BD4A1CCE1D0C71875ED9"
     },
     {
-      "path": "rejected-useroc-gt-late-volume\\N95-useroc-gt-r1-scenario.done.json",
+      "path": "rejected-useroc-gt-late-volume/N95-useroc-gt-r1-scenario.done.json",
       "bytes": 659,
       "sha256": "2C747FF7B44E5D0A417A979CE7A7E1B42CAC2F53ABF649D2AECD3D63EA5FF10B"
     },
     {
-      "path": "rejected-useroc-gt-late-volume\\N95-useroc-gt-r1-scenario.stderr.txt",
+      "path": "rejected-useroc-gt-late-volume/N95-useroc-gt-r1-scenario.stderr.txt",
       "bytes": 0,
       "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
     },
     {
-      "path": "rejected-useroc-gt-late-volume\\N95-useroc-gt-r1-scenario.stdout.txt",
+      "path": "rejected-useroc-gt-late-volume/N95-useroc-gt-r1-scenario.stdout.txt",
       "bytes": 1449,
       "sha256": "5CA880AB1716252976CBDF7C6218AF819A4A21036141C2DF916C0C784E2DB122"
     },
     {
-      "path": "rejected-useroc-gt-late-volume\\N95-useroc-gt-r1.jsonl",
+      "path": "rejected-useroc-gt-late-volume/N95-useroc-gt-r1.jsonl",
       "bytes": 8691,
       "sha256": "0B445550BD13EA1D6338A45A2E5F1A3A874A59F17C2A9FD757917E35811833C9"
     },
     {
-      "path": "rejected-useroc-gt-late-volume\\N95-useroc-gt-r1.log",
+      "path": "rejected-useroc-gt-late-volume/N95-useroc-gt-r1.log",
       "bytes": 752,
       "sha256": "54DC7979C1B2BA55DD2C69A9FC845B76EA4653259F53319D312CDAE4446A77E6"
     },
     {
-      "path": "rejected-useroc-gt-late-volume\\N95-useroc-gt-r1.txt",
+      "path": "rejected-useroc-gt-late-volume/N95-useroc-gt-r1.txt",
       "bytes": 336,
       "sha256": "9D77EA487770E3788F4A3FBAA7D3161217EF5FDF766270A63E8FA7797DC9CF48"
     },
     {
-      "path": "rejected-useroc-crash-wrong-image\\N95-useroc-crash-r3-a1.jsonl",
+      "path": "rejected-useroc-crash-wrong-image/N95-useroc-crash-r3-a1.jsonl",
       "bytes": 7937,
       "sha256": "AC9EC02B9406397F470C014F9117259A216844727BD572C3C24500D0A3790A1F"
     },
     {
-      "path": "rejected-useroc-crash-wrong-image\\N95-useroc-crash-r3-jsonl-a1.done.json",
+      "path": "rejected-useroc-crash-wrong-image/N95-useroc-crash-r3-jsonl-a1.done.json",
       "bytes": 553,
       "sha256": "AAFCCFF4484AD9E7B44626F4B44D2CC683CFDF41EFB5B7EECDD8080BCDB3B0C4"
     },
     {
-      "path": "rejected-useroc-crash-wrong-image\\N95-useroc-crash-r3-jsonl-a1.stderr.txt",
+      "path": "rejected-useroc-crash-wrong-image/N95-useroc-crash-r3-jsonl-a1.stderr.txt",
       "bytes": 0,
       "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
     },
     {
-      "path": "rejected-useroc-crash-wrong-image\\N95-useroc-crash-r3-jsonl-a1.stdout.txt",
+      "path": "rejected-useroc-crash-wrong-image/N95-useroc-crash-r3-jsonl-a1.stdout.txt",
       "bytes": 183,
       "sha256": "295FD0A9D3754FF7658BD2C4017F009B8DBE2B5387A37FC970467BA1F8AA294B"
     },
     {
-      "path": "rejected-useroc-crash-wrong-image\\N95-useroc-crash-r3-scenario.done.json",
+      "path": "rejected-useroc-crash-wrong-image/N95-useroc-crash-r3-scenario.done.json",
       "bytes": 668,
       "sha256": "513AE02EA57C4670FA9FE8C5263AF2E2F28852DF4E18E79A01EB479C1BE35110"
     },
     {
-      "path": "rejected-useroc-crash-wrong-image\\N95-useroc-crash-r3-scenario.stderr.txt",
+      "path": "rejected-useroc-crash-wrong-image/N95-useroc-crash-r3-scenario.stderr.txt",
       "bytes": 0,
       "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
     },
     {
-      "path": "rejected-useroc-crash-wrong-image\\N95-useroc-crash-r3-scenario.stdout.txt",
+      "path": "rejected-useroc-crash-wrong-image/N95-useroc-crash-r3-scenario.stdout.txt",
       "bytes": 1399,
       "sha256": "82256F94EB22B1E230465FE1C6527108BDBEED1461F146B7C5D0A09D8FE5D66A"
     },
     {
-      "path": "rejected-useroc-crash-wrong-image\\N95-useroc-crash-r3.jsonl",
+      "path": "rejected-useroc-crash-wrong-image/N95-useroc-crash-r3.jsonl",
       "bytes": 7937,
       "sha256": "AC9EC02B9406397F470C014F9117259A216844727BD572C3C24500D0A3790A1F"
     },
     {
-      "path": "rejected-useroc-crash-wrong-image\\N95-useroc-crash-r3.log",
+      "path": "rejected-useroc-crash-wrong-image/N95-useroc-crash-r3.log",
       "bytes": 610,
       "sha256": "DE4D340FD285BDA9626B438C51E316DEF94E577F11FE7D563447F82DC392B09B"
     },
     {
-      "path": "rejected-useroc-crash-wrong-image\\N95-useroc-crash-r3.txt",
+      "path": "rejected-useroc-crash-wrong-image/N95-useroc-crash-r3.txt",
       "bytes": 284,
       "sha256": "42441CDE793F0BF536936F5C96BE8D42F838FF8208ABF54924D7790AA6C5D5E5"
     },

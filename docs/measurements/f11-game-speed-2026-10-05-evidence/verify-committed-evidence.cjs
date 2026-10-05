@@ -5,7 +5,7 @@ const cp = require('child_process');
 const repo = path.resolve(__dirname, '../../..');
 const prefix = 'docs/measurements/f11-game-speed-2026-10-05-evidence/';
 const manifest = JSON.parse(fs.readFileSync(path.join(repo, prefix, 'export-verification.json'), 'utf8').replace(/^\uFEFF/, ''));
-const requests = manifest.copies.map(item => `HEAD:${prefix}${item.path}`).join('\n') + '\n';
+const requests = manifest.copies.map(item => `HEAD:${prefix}${item.path.replace(/\\/g, '/')}`).join('\n') + '\n';
 const result = cp.spawnSync('git', ['cat-file', '--batch'], {cwd: repo, input: requests, maxBuffer: 1024 * 1024 * 1024});
 if (result.status !== 0) throw new Error(result.stderr.toString());
 let offset = 0;

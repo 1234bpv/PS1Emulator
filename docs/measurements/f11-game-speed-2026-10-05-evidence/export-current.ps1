@@ -9,6 +9,7 @@ $destination="$repo/docs/measurements/f11-game-speed-2026-10-05-evidence"
 New-Item -ItemType Directory -Force $destination | Out-Null
 $copies=[Collections.Generic.List[object]]::new()
 function Copy-Proof([string]$source,[string]$relative){
+ $relative=$relative.Replace('\','/')
  $target=Join-Path $destination $relative
  New-Item -ItemType Directory -Force ([IO.Path]::GetDirectoryName($target)) | Out-Null
  [IO.File]::Copy($source,$target,$true)
