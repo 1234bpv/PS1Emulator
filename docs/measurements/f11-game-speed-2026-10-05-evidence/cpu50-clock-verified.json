@@ -10,8 +10,8 @@
   "mpuKhz": 495360,
   "busKhz": 165120,
   "dssKhz": 123840,
-  "log": "N95-cpu50-switch-clock.log",
-  "verifiedAt": "2026-10-05T20:22:07.9859373+03:00",
+  "log": "N95-return-cpu50-switch-clock.log",
+  "verifiedAt": "2026-10-05T21:01:31.6533334+03:00",
   "keepOnExit": true,
   "uiVersion": "2.3.0",
   "busGuardNotChanged": true

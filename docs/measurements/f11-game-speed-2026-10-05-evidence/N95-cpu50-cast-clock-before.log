@@ -1,5 +1,5 @@
 == ocprobe: DVFS probe, read-only ==
-UPTIME: 172393 s (2873 min) - ntick=172393411
+UPTIME: 2098 s (34 min) - ntick=2098219
 fast counter: 32768 Hz
 --- HAL ---
 ECPUSpeed(kHz) = 206438
@@ -9,7 +9,7 @@ ESystemTickPeriod = 15625
 ECPU = 0
 ECPUABI = 0
 EMemoryRAM = 125501440
-EMemoryRAMFree = 86654976
+EMemoryRAMFree = 88924160
 EMachineUid = 536882564
 EModel = 1112691795
 EManufacturer = 2

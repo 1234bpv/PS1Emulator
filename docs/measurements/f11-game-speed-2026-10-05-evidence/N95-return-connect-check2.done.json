@@ -1,0 +1,14 @@
+{
+  "name": "N95-return-connect-check2",
+  "started": "2026-10-05T21:05:27.4583352+03:00",
+  "finished": "2026-10-05T21:05:29.2463661+03:00",
+  "limitSec": 25,
+  "timeout": false,
+  "exitCode": 1,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-Info"
+  ]
+}

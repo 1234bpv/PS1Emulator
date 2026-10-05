@@ -1,0 +1,17 @@
+{
+  "name": "N95-cpu50-cast-upload-cast-gameplay.sav",
+  "started": "2026-10-05T20:22:38.7321161+03:00",
+  "finished": "2026-10-05T20:22:45.3698854+03:00",
+  "limitSec": 240,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-PutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed/states/cast-gameplay.sav",
+    "-Remote",
+    "E:\\PS1\\saves\\bench.sav"
+  ]
+}

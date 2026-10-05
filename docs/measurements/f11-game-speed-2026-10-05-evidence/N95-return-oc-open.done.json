@@ -1,0 +1,15 @@
+{
+  "name": "N95-return-oc-open",
+  "started": "2026-10-05T20:59:00.1177369+03:00",
+  "finished": "2026-10-05T20:59:04.2736653+03:00",
+  "limitSec": 60,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-Do",
+    "APP 0xE0001011; WAITFG e0001011 1000; SHOT E:\\tester\\N95-return-oc-open.bmp 1"
+  ]
+}

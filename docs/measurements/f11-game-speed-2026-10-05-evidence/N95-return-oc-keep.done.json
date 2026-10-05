@@ -1,0 +1,15 @@
+{
+  "name": "N95-return-oc-keep",
+  "started": "2026-10-05T20:59:29.6012177+03:00",
+  "finished": "2026-10-05T20:59:36.6944280+03:00",
+  "limitSec": 60,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-Do",
+    "KEY left press 15 100; SHOT E:\\tester\\N95-return-oc-keep.bmp 1"
+  ]
+}

@@ -1,4 +1,4 @@
-﻿param([switch]$Final)
+param([switch]$Final)
 $ErrorActionPreference='Stop'
 & "$PSScriptRoot/update-progress.ps1" | Out-Null
 $summary=Get-Content "$PSScriptRoot/summary-progress.json" -Raw | ConvertFrom-Json
@@ -36,7 +36,7 @@ $clockFiles=@(Get-ChildItem $PSScriptRoot -Filter '*clock*.log' | Where-Object {
 foreach($f in $clockFiles){Line ('- ['+$f.Name+'](f11-game-speed-2026-10-05-evidence/'+$f.Name+')')}
 Line '- [GT stock, регістри перед серією](f11-game-speed-2026-10-05-evidence/resume-n95-clock-before.log) — початкова назва журналу; прочитано 00:58 перед GT r1 о01:04.'
 Line
-if(-not @($summary.series | Where-Object label -like 'N95-cpu50-*').Count){Line 'N95-cpu50 ще не застосовувався. N95 залишається stock до завершення всіх штатних серій.'}
+if(-not (Test-Path "$PSScriptRoot/cpu50-clock-verified.json")){Line 'N95-cpu50 ще не застосовувався. N95 залишається stock до завершення всіх штатних серій.'}
 if(Test-Path "$PSScriptRoot/cpu50-clock-verified.json") {
  $oc=Get-Content "$PSScriptRoot/cpu50-clock-verified.json" -Raw | ConvertFrom-Json
  Line ("N95-cpu50: m=129, MPU=495360 кГц, CORE=990720 кГц, BUS=165120 кГц, L3=6, CM_CLKSEL1_CORE={0}. Перехід зроблено через ocgui після всіх N95-stock; KEEP увімкнений." -f $oc.core)

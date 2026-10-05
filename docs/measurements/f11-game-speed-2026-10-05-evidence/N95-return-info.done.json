@@ -1,0 +1,15 @@
+{
+  "name": "N95-return-info",
+  "started": "2026-10-05T20:53:25.7754477+03:00",
+  "finished": "2026-10-05T20:53:26.6945815+03:00",
+  "limitSec": 25,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-Do",
+    "INFO; PS ps1stage1; STATUS"
+  ]
+}

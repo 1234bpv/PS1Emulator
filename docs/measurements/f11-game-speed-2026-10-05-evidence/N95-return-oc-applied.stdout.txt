@@ -1,0 +1,5 @@
+[net] > KEY ok press 1 100
+[net] < OK key 0xa7 x1
+[net] > SHOT E:\tester\N95-return-oc-applied.bmp 1
+[net] < OK shot 230454 320x240 fb mode11
+[net] done

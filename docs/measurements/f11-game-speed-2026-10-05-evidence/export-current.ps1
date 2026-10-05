@@ -25,7 +25,7 @@ foreach($state in $states){
  if((Get-Item $source).Length -ne $state.bytes -or (Get-FileHash $source -Algorithm SHA256).Hash -ne $state.sha256){throw "Canonical state differs $($state.file)"}
  Copy-Proof $source "states/$($state.file)"
 }
-foreach($folder in @('rejected-cast-intro','rejected-cast-dsa-overlay')){
+foreach($folder in @('rejected-cast-intro','rejected-cast-dsa-overlay','interrupted-cpu50-2026-10-05-2027')){
  foreach($file in Get-ChildItem "$PSScriptRoot/$folder" -File -Recurse){
   Copy-Proof $file.FullName ([IO.Path]::GetRelativePath($PSScriptRoot,$file.FullName))
  }
@@ -38,7 +38,9 @@ $proof=[ordered]@{verifiedAt=(Get-Date).ToString('o');acceptedResultFiles=$summa
 $proof | ConvertTo-Json -Depth 10 | Set-Content "$destination/export-verification.json" -Encoding utf8
 [ordered]@{exportedAt=(Get-Date).ToString('o');acceptedRuns=$summary.acceptedRuns;triples=$summary.completedTriples;states=$states.Count;copiedFiles=$copies.Count;status='stopped-n95-unreachable';c5Restored=$true;n95RestorationPending=$true} | ConvertTo-Json | Set-Content "$destination/export-progress.json" -Encoding utf8
 @'
-# Докази F11, стан на 2026-10-05 20:34
+# Докази F11, стан на 2026-10-05 21:05
+
+Після увімкнення N95 користувачем доступ повернувся, регістри були stock. Попередній неповний JSONL отримано; він не містить завершення прогону. Через ocgui повторно встановлено й перевірено cpu50. Повторний перший Castlevania знову втратив зв'язок на тому самому етапі; сценарій, INFO та scan завершилися помилками. Після трьох перевірок звернення зупинено. Нових дійсних результатів немає. Артефакти першого інциденту — interrupted-cpu50-2026-10-05-2027/, поточного — кореневі N95-cpu50-cast-* і N95-return-*. Відновлення18 файлів N95 досі недоступне. Наступний крок після повернення доступу — повернення оригінальних файлів і перевірка фактичних регістрів.
 
 72 дійсні прогони, 24 трійки: усі 12 ігор на C5 і N95-stock. 12 прийнятих станів для повторення сцени й відеозйомки. N95 переведений у cpu50 (m129, CORE04360846, MPU2, L3=6, BUS165120), але перший сценарій утратив WiFi; жодного cpu50-прогону не прийнято. Після невдалих сценарію, INFO та сканування звернення до телефона припинено.
 

@@ -1,0 +1,17 @@
+{
+  "name": "N95-cpu50-cast-upload-stock-cast.txt",
+  "started": "2026-10-05T20:22:36.7293562+03:00",
+  "finished": "2026-10-05T20:22:38.7220782+03:00",
+  "limitSec": 240,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-PutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed/stock-cast.txt",
+    "-Remote",
+    "E:\\PS1\\cfg\\ps1_settings.txt"
+  ]
+}

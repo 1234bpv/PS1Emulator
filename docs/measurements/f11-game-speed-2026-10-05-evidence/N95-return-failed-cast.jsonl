@@ -1,0 +1,61 @@
+{"id":0,"ms":371,"event":"boot","error":null,"msg":"stage1 starting, mode=gui args=\"gui light blend dsa img\"Castlevania - Symphony of the Night (USA.pbp\" loadstate17500 frames18700 dumpat999999 limit150\""}
+{"id":1,"ms":1620,"event":"exeid","error":null,"msg":"src=file path=E:\\sys\\bin\\ps1stage1.exe size=1431280 crc32=51603f20"}
+{"id":2,"ms":1623,"event":"gpuspeed","error":null,"msg":"g_gpuSpeedPct=100"}
+{"id":3,"ms":1640,"event":"probe","error":null,"msg":"getappinfo=0"}
+{"id":4,"ms":1643,"event":"probe","error":null,"msg":"E:\\sys\\bin\\ps1stage1.exe"}
+{"id":5,"ms":1881,"event":"gui","error":null,"msg":"appui constructed"}
+{"id":6,"ms":2279,"event":"tilt","error":null,"msg":"active=0"}
+{"id":7,"ms":2536,"event":"menu","error":null,"msg":"machine=0x20002d84"}
+{"id":8,"ms":2542,"event":"menu","error":null,"msg":"geometry screen=320x240 lh=19 rows=10 rows_rotated=14"}
+{"id":9,"ms":2566,"event":"gui","error":null,"msg":"window attached, gl==0"}
+{"id":10,"ms":2688,"event":"focus","error":null,"msg":"fore=1"}
+{"id":11,"ms":2692,"event":"vol","error":null,"msg":"step=1"}
+{"id":12,"ms":2700,"event":"exc_handler","error":null,"msg":"rc=0"}
+{"id":13,"ms":2705,"event":"gpu_cfg","error":null,"msg":"pixskip=0 ilace=0 light=1 blend=1"}
+{"id":14,"ms":2711,"event":"gpu_init","error":null,"msg":"init=0"}
+{"id":15,"ms":2719,"event":"gpu_cbs","error":null,"msg":"frameskip=0"}
+{"id":16,"ms":2723,"event":"spu_init","error":null,"msg":"init=0"}
+{"id":17,"ms":2728,"event":"start","error":null,"msg":"stage1 begin (gui), frames=18700 cpu=drc input=0"}
+{"id":18,"ms":2733,"event":"hacks","error":null,"msg":"drc: ndrc=00000020 gtenf=0 cyclemul=175"}
+{"id":19,"ms":2744,"event":"core_msg","error":null,"msg":"psxMap: tried to map @80000000, got 0xce6b50\n"}
+{"id":20,"ms":2754,"event":"core_msg","error":null,"msg":"psxMap: tried to map @77000000, got 0xce6b50\n"}
+{"id":21,"ms":2760,"event":"core_msg","error":null,"msg":"psxMap: tried to map @1f800000, got 0xef6b58\n"}
+{"id":22,"ms":2768,"event":"core_msg","error":null,"msg":"psxMap: tried to map @1fc00000, got 0xf06b60\n"}
+{"id":23,"ms":2772,"event":"core","error":null,"msg":"Init new dynarec, ndrc size 1001000, pgsize 4096\n"}
+{"id":24,"ms":2813,"event":"core","error":null,"msg":"ndrc config: mul=175, ha=20, pex=0\n"}
+{"id":25,"ms":2818,"event":"core","error":null,"msg":"(0x78aad3a0) testing if we can run recompiled code @0x3200000...\n"}
+{"id":26,"ms":2823,"event":"core","error":null,"msg":"test passed.\n"}
+{"id":27,"ms":2826,"event":"core","error":null,"msg":"RAM is not directly mapped\n"}
+{"id":28,"ms":2829,"event":"core","error":null,"msg":"Mapped (RAM/scrp/ROM/LUTs/TC):\n"}
+{"id":29,"ms":2834,"event":"core","error":null,"msg":"0xce6b50/0xef6b58/0xf06b60/0x0/0x3200000\n"}
+{"id":30,"ms":2869,"event":"core_msg","error":null,"msg":"psxMap: tried to map @08000000, got 0xf86b68\n"}
+{"id":31,"ms":3020,"event":"core","error":null,"msg":"Loading memory card E:\\PS1\\saves\\card1.mcd\n"}
+{"id":32,"ms":3112,"event":"core","error":null,"msg":"Loading memory card E:\\PS1\\saves\\card2.mcd\n"}
+{"id":33,"ms":3381,"event":"core","error":null,"msg":"Loaded CD Image: E:\\PS1\\games\\Castlevania - Symphony of the Night (USA.pbp[+pbp] (398057383 bytes).\n"}
+{"id":34,"ms":3387,"event":"core","error":null,"msg":"Track 1 DATA  - Start 0:2:0, Length 50:55:45\n"}
+{"id":35,"ms":3390,"event":"core","error":null,"msg":"Track 2 AUDIO - Start 50:57:45, Length 4:11:20\n"}
+{"id":36,"ms":3394,"event":"core","error":null,"msg":"End 55:8:65 (sector 248165)\n"}
+{"id":37,"ms":3411,"event":"core","error":null,"msg":"CD-ROM Label: SLUS_00067                      \n"}
+{"id":38,"ms":3417,"event":"core","error":null,"msg":"CD-ROM ID: SLUS00067\n"}
+{"id":39,"ms":3420,"event":"core","error":null,"msg":"CD-ROM EXE Name: SLUS_000.67;1\n"}
+{"id":40,"ms":3431,"event":"disc","error":null,"msg":"drc: cdra_init=0 cdra_open=0 checkcdrom=0 region=0"}
+{"id":41,"ms":3436,"event":"gpu_open","error":null,"msg":"drc: open=0"}
+{"id":42,"ms":3441,"event":"spu_open","error":null,"msg":"drc: open=0"}
+{"id":43,"ms":3457,"event":"vol","error":null,"msg":"step=0"}
+{"id":44,"ms":3470,"event":"snd_open","error":null,"msg":"drc: rc=0"}
+{"id":45,"ms":3814,"event":"core_msg","error":null,"msg":"Loaded BIOS \"E:\\PS1\\bios/scph7502.bin\".\n"}
+{"id":46,"ms":3823,"event":"core","error":null,"msg":"ndrc: tc out=03200000 base=00000000 size=16777216\n"}
+{"id":47,"ms":3826,"event":"core","error":null,"msg":"Init new dynarec, ndrc size 1001000, pgsize 4096\n"}
+{"id":48,"ms":3866,"event":"core","error":null,"msg":"(0x78aad3a0) testing if we can run recompiled code @0x3200000...\n"}
+{"id":49,"ms":3871,"event":"core","error":null,"msg":"test passed.\n"}
+{"id":50,"ms":3875,"event":"core","error":null,"msg":"RAM is not directly mapped\n"}
+{"id":51,"ms":3878,"event":"core","error":null,"msg":"Mapped (RAM/scrp/ROM/LUTs/TC):\n"}
+{"id":52,"ms":3881,"event":"core","error":null,"msg":"0xce6b50/0xef6b58/0xf06b60/0xf86b68/0x3200000\n"}
+{"id":53,"ms":3899,"event":"core_msg","error":null,"msg":"psxMap: tried to map @08000000, got 0xf86b68\n"}
+{"id":54,"ms":4052,"event":"core","error":null,"msg":"BIOS: 19951204, 'CEX-3000/1001/1002 by K.S.', 'E'\n"}
+{"id":55,"ms":5000,"event":"reset","error":null,"msg":"drc: EmuReset ok, hle=0 type=NTSC"}
+{"id":56,"ms":5003,"event":"exec_begin","error":null,"msg":"drc: entering frame loop, 18700 frames"}
+{"id":57,"ms":5008,"event":"screen_init","error":null,"msg":"drc: rc=0 gui=1"}
+{"id":58,"ms":5013,"event":"fb","error":null,"msg":"drc: ok=1 hal=320x240 line=640B bpp=16 first=0 win=320x240"}
+{"id":59,"ms":5761,"event":"loadstate","error":null,"msg":"drc: frame=17500 rc=0 rewound=0 pc=80000080 cycle=2765499186 hsync=240 base=564480 start=2764984064"}
+{"id":60,"ms":5765,"event":"clocks","error":null,"msg":"start: known=0 reason=release-build"}

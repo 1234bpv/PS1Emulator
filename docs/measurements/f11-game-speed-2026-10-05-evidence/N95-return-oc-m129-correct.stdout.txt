@@ -1,0 +1,7 @@
+[net] > KEY up press 5 100
+[net] < OK key 0x10 x5
+[net] > KEY right press 5 100
+[net] < OK key 0x0f x5
+[net] > SHOT E:\tester\N95-return-oc-m129-correct.bmp 1
+[net] < OK shot 230454 320x240 fb mode11
+[net] done

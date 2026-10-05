@@ -1,0 +1,15 @@
+{
+  "name": "N95-return-oc-applied",
+  "started": "2026-10-05T21:01:03.6845182+03:00",
+  "finished": "2026-10-05T21:01:07.0601971+03:00",
+  "limitSec": 60,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-Do",
+    "KEY ok press 1 100; SHOT E:\\tester\\N95-return-oc-applied.bmp 1"
+  ]
+}
