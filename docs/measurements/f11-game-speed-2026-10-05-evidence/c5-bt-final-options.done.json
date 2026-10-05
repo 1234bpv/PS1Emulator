@@ -1,0 +1,15 @@
+{
+  "name": "c5-bt-final-options",
+  "started": "2026-10-05T20:22:46.7312560+03:00",
+  "finished": "2026-10-05T20:22:54.3489749+03:00",
+  "limitSec": 60,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\deploy_net-rfcomm.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-Do",
+    "WAITFG 10005951 1000; KEY lsk press 1 150; SLEEP 500; SHOT E:\\tester\\c5-bt-final-options.bmp 1"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "name": "N95-cpu50-cast-connect-check3-scan",
+  "started": "2026-10-05T20:27:26.7164720+03:00",
+  "finished": "2026-10-05T20:27:42.9520565+03:00",
+  "limitSec": 60,
+  "timeout": false,
+  "exitCode": 1,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Ip",
+    "scan",
+    "-Device",
+    "n95",
+    "-Info"
+  ]
+}

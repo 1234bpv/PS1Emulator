@@ -1,0 +1,14 @@
+{
+  "name": "N95-before-cpu50-info",
+  "started": "2026-10-05T20:12:59.7817268+03:00",
+  "finished": "2026-10-05T20:13:00.8469690+03:00",
+  "limitSec": 25,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-Info"
+  ]
+}

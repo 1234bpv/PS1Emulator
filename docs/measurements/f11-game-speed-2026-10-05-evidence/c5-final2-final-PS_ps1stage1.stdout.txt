@@ -1,0 +1,6 @@
+[net] direct RFCOMM C5 A8448113EA78 channel 13
+[net] serial COM12 @ 115200 baud
+[net] > PS ps1stage1
+[net] < OK ps 1
+[net] < 0 ps1stage1[e0001002]0001
+[net] done

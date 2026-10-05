@@ -1,0 +1,19 @@
+{
+  "label": "C5-warzone",
+  "repeat": 3,
+  "region": "NTSC",
+  "frames": 1200,
+  "ms": 25260,
+  "shownFrames": 400,
+  "shownFps": 15.835312747426762,
+  "ps1Fps": 47.50593824228029,
+  "speedPercent": 79.1765637371338,
+  "errors": 0,
+  "shutdown": "gui: frames=1200 ms=25260",
+  "pass": "drc: frames=1200 ms=25260 pc=80000080 cycle=1344460591 vblanks=1208 fsAdvised=0",
+  "loaded": "Loaded CD Image: E:\\PS1\\games\\Warzone 2100 (USA).pbp[+pbp] (414470047 bytes).\n",
+  "emuMs": null,
+  "shownMethod": "DSA direct FB pixB=4, stock fxaa=0, 240 rows per present",
+  "volume0ms": 1663,
+  "clockStartMs": 4601
+}

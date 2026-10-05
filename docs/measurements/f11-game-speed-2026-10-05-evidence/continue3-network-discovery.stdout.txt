@@ -1,0 +1,17 @@
+[net] scanning 192.168.46.0/24 for the daemon on port 2323 ...
+[net] scanning 192.168.246.0/24 for the daemon on port 2323 ...
+[net] scanning 192.168.56.0/24 for the daemon on port 2323 ...
+[net] scanning 192.168.3.0/24 for the daemon on port 2323 ...
+[net] found daemon at 192.168.3.22
+[net] > INFO
+[net] < OK info
+[net] < protocol 2
+[net] < screen 320x240
+[net] < ramfree 87851008
+[net] < tick 162972516 startTick 103328351 boot 0 by r
+[net] < ap Huawei
+[net] < drive C freekb 65692
+[net] < drive E freekb 1044880
+[net] < scriptlog E:\tester\N95-colin-nav7.log
+[net] < script DONE 20
+[net] done

@@ -1,0 +1,10 @@
+LOG N95-stock-continue3-trek-verify gameplay verification release alpha13
+-START E:\sys\bin\ps1stage1.exe gui light blend dsa img"Star Trek - Invasion (USA).pbp" loadstate23000 frames25000 dumpat23003 limit90
+-WAITFG e0001002 20000
+-KEY star press 2 100
+SLEEP 16000
+-SHOT E:\tester\N95-stock-continue3-trek-verify.bmp 2
+-ENDAPP 0xE0001002
+SLEEP 2000
+-KILL ps1stage1
+PS ps1stage1

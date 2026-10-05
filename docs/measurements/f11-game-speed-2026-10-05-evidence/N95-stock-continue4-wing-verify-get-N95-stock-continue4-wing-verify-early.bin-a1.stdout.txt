@@ -1,0 +1,3 @@
+[net] GET E:\PS1\logs\ps1_scr56003.bin -> D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\N95-stock-continue4-wing-verify-early.bin
+[net] got 307ÿ258 bytes
+[net] done

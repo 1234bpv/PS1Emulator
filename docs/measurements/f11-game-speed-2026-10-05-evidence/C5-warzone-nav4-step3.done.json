@@ -1,0 +1,19 @@
+{
+  "name": "C5-warzone-nav4-step3",
+  "started": "2026-10-05T18:11:55.2549725+03:00",
+  "finished": "2026-10-05T18:12:20.1109672+03:00",
+  "limitSec": 70,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\deploy_net-rfcomm.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-Scenario",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator/plans/runs/2026-10-05_game-speed/C5-warzone-nav4-step3.txt",
+    "-ScenarioTimeoutSec",
+    "50",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator/plans/runs/2026-10-05_game-speed/C5-warzone-nav4-step3.log"
+  ]
+}

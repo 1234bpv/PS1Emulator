@@ -1,0 +1,12 @@
+LOG Wing attempt5 step2 attend briefing
+WAITFG e0001002 1000
+-KEY 5 down
+SLEEP 500
+-KEY 5 up
+SLEEP 7000
+WAITFG e0001002 1000
+-KEY 8 down
+SLEEP 500
+-KEY 8 up
+SLEEP 8000
+-SHOT E:\tester\C5-wing-nav5-02.bmp 1

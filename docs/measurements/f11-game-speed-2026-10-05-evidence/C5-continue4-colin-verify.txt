@@ -1,0 +1,10 @@
+LOG C5-continue4-colin-verify gameplay verification release alpha13
+-START E:\sys\bin\ps1stage1.exe gui light blend dsa img"Colin McRae Rally 2.0 (USA) (En,Fr,Es).pbp" loadstate67000 frames69000 dumpat67003 limit90
+-WAITFG e0001002 20000
+-KEY star press 2 100
+SLEEP 12000
+-SHOT E:\tester\C5-continue4-colin-verify.bmp 2
+-ENDAPP 0xE0001002
+SLEEP 2000
+-KILL ps1stage1
+PS ps1stage1

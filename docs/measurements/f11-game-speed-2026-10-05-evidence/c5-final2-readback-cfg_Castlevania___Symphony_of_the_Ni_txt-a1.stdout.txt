@@ -1,0 +1,5 @@
+[net] direct RFCOMM C5 A8448113EA78 channel 13
+[net] serial COM12 @ 115200 baud
+[net] GET E:\PS1\cfg\Castlevania___Symphony_of_the_Ni.txt -> D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\c5-final-verified\cfg\Castlevania___Symphony_of_the_Ni.txt
+[net] got 314 bytes
+[net] done

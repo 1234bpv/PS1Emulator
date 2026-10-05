@@ -1,0 +1,8 @@
+Исключение при вызове "Write" с "3" аргументами: "Доступ к ликвидированному объекту невозможен.
+Имя объекта: "System.Net.Sockets.NetworkStream"."
+D:\VsCodeProjects\SymbianProjects\SymbianDeployDaemon\tools\deploy_net.ps1:283 знак:5
++     $stream.Write($b, 0, $b.Length)
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:) [], ParentContainsErrorRecordException
+    + FullyQualifiedErrorId : ObjectDisposedException
+ 

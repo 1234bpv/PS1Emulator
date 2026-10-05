@@ -1,0 +1,3 @@
+[net] > WAITFG 0xE0001011 15000
+[net] < ERR timeout
+…„“…†„…ˆ…: [net] -Do stopped at step 1/3 'WAITFG 0xE0001011 15000': ERR timeout

@@ -1,0 +1,17 @@
+{
+  "name": "N95-cpu50-ui-open-shot-a1",
+  "started": "2026-10-05T20:13:32.9342754+03:00",
+  "finished": "2026-10-05T20:13:33.4305682+03:00",
+  "limitSec": 45,
+  "timeout": false,
+  "exitCode": 1,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-GetFile",
+    "E:\\tester\\N95-cpu50-ui-open.bmp",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed/N95-cpu50-ui-open.bmp"
+  ]
+}

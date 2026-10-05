@@ -1,0 +1,17 @@
+{
+  "name": "N95-colin-nav8-state-a1",
+  "started": "2026-10-05T17:50:40.0584967+03:00",
+  "finished": "2026-10-05T17:50:42.0581310+03:00",
+  "limitSec": 45,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-GetFile",
+    "E:\\PS1\\saves\\bench.sav",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator/plans/runs/2026-10-05_game-speed/states/colin-nav8.sav"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "name": "N95-cpu50-locate-APP_0xE0001011",
+  "started": "2026-10-05T20:13:55.0453369+03:00",
+  "finished": "2026-10-05T20:13:55.5603861+03:00",
+  "limitSec": 25,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-Cmd",
+    "APP 0xE0001011"
+  ]
+}

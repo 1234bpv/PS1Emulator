@@ -1,0 +1,17 @@
+{
+  "name": "c5-final2-readback-saves_BENCH_SAV-a1",
+  "started": "2026-10-05T20:18:30.7561776+03:00",
+  "finished": "2026-10-05T20:18:44.8545823+03:00",
+  "limitSec": 60,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\deploy_net-rfcomm.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-GetFile",
+    "E:\\PS1\\saves\\BENCH.SAV",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\c5-final-verified\\saves\\BENCH.SAV"
+  ]
+}

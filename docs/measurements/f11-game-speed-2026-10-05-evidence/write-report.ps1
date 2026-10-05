@@ -4,6 +4,10 @@ $ErrorActionPreference='Stop'
 $summary=Get-Content "$PSScriptRoot/summary-progress.json" -Raw | ConvertFrom-Json
 $games=@(Get-Content "$PSScriptRoot/games.json" -Raw | ConvertFrom-Json)
 $states=@(Get-Content "$PSScriptRoot/states/manifest.json" -Raw | ConvertFrom-Json)
+if($Final) {
+ $audit=Get-Content "$PSScriptRoot/final-audit.json" -Raw | ConvertFrom-Json
+ if(-not $audit.complete -or $summary.acceptedRuns -ne 108 -or $summary.completedTriples -ne 36){throw 'Final report requires complete hardware audit and 108 valid runs'}
+}
 $repo=Resolve-Path "$PSScriptRoot/../../.."
 $target=Join-Path $repo 'docs/measurements/f11-game-speed-2026-10-05.md'
 $lines=[Collections.Generic.List[string]]::new()
@@ -28,11 +32,18 @@ Line 'На картках однакові дванадцять образів; 
 Line 'C5 штатний. N95-stock: m=86, ядро 330240 кГц, шина 165120 кГц,'
 Line 'L3=4, CM_CLKSEL1_CORE=04360644. Повні read-only ocprobe-журнали'
 Line 'до й після кожної завершеної трійки закінчуються == end ==.'
-$clockFiles=@(Get-ChildItem $PSScriptRoot -Filter '*clock*.log' | Where-Object {$_.Name -match 'N95-stock.*clock-(before|after)'})
+$clockFiles=@(Get-ChildItem $PSScriptRoot -Filter '*clock*.log' | Where-Object {$_.Name -match 'N95-(stock|cpu50).*clock-(before|after)'})
 foreach($f in $clockFiles){Line ('- ['+$f.Name+'](f11-game-speed-2026-10-05-evidence/'+$f.Name+')')}
+Line '- [GT stock, регістри перед серією](f11-game-speed-2026-10-05-evidence/resume-n95-clock-before.log) — початкова назва журналу; прочитано 00:58 перед GT r1 о01:04.'
 Line
 if(-not @($summary.series | Where-Object label -like 'N95-cpu50-*').Count){Line 'N95-cpu50 ще не застосовувався. N95 залишається stock до завершення всіх штатних серій.'}
-Line 'Телефони не перезавантажували. BUS GUARD увімкнений; boot.dat не змінювали.'
+if(Test-Path "$PSScriptRoot/cpu50-clock-verified.json") {
+ $oc=Get-Content "$PSScriptRoot/cpu50-clock-verified.json" -Raw | ConvertFrom-Json
+ Line ("N95-cpu50: m=129, MPU=495360 кГц, CORE=990720 кГц, BUS=165120 кГц, L3=6, CM_CLKSEL1_CORE={0}. Перехід зроблено через ocgui після всіх N95-stock; KEEP увімкнений." -f $oc.core)
+ Line '[Регістри після перемикання](f11-game-speed-2026-10-05-evidence/N95-cpu50-switch-clock.log).'
+}
+Line 'Телефони не перезавантажували. boot.dat не змінювали. У встановленому ocgui 2.3.0 немає окремого рядка BUS GUARD; жодного захисту не перемикали. Зміна L3 лише 4 → 6, шина до й після переходу 165120 кГц; зворотний перехід не робили.'
+Line 'Множник береться з фактичного CM_CLKSEL1_PLL[21:12], дільники — з CORE і MPU. Довідковий рядок stock у ocprobe описує початкові частоти й не є доказом поточного тактування; фактичні регістри наведені нижче нього. HAL ECPUSpeed також не використовували як частоту ядра.'
 Line
 Line 'Sound=ON, volume=0, профілі вимкнено. STAR x2 після WAITFG за UID'
 Line 'e0001002 дає vol step=0 перед clocks start; це перевіряється в кожному прогоні.'
@@ -95,6 +106,10 @@ Line 'Три попередні C5 Castlevania зі стану frame15000 вик
 Line 'завантаження на N95 показало вступ із вежами замку. Артефакти — rejected-cast-intro/.'
 Line 'Новий стан frame17500 показує Richter із HUD на сходах і використовується для нових серій.'
 Line 'Nav4 Cast не зберегла потрібний кадр; попередній bench не прийнято як новий стан.'
+Line 'Окремий C5 Cast proc38 виключено через BT-діалог: covered0/rgn5, показаний FPS не доведено.'
+Line 'Артефакти — rejected-cast-dsa-overlay/. Прийнята повторна трійка proc41–43 має covered1.'
+Line 'На час серій парний KOMPUTER у BTUI C5 тимчасово авторизований; початково він неавторизований.'
+if($Final){Line 'Після фінального зворотного читання файлів авторизацію KOMPUTER повернуто в початковий стан; PAVLO не змінювали. Доказ — c5-bt-authorization-restored.json і фінальний SHOT.'}else{Line 'Після фінального зворотного читання файлів цю авторизацію потрібно повернути; PAVLO не змінювали.'}
 Line
 Line 'Попередні великі GET C5 через віртуальний COM втрачали блоки по 1008 байтів'
 Line 'і чекали оголошеного розміру до таймауту. Це не означало відʼєднання телефона:'
@@ -103,8 +118,11 @@ Line 'з SHA256 8AA4F9A…62D13 і повний EXE з потрібним SHA256
 Line 'збережені; оригінальний deploy_net.ps1 не змінено.'
 Line 'WAIT зависав після виходу емулятора; відновлено лише демон командою RESTART.'
 Line 'Далі застосовуються SLEEP і ENDAPP/KILL/PS. WAITFG використовує UID, бо назва PS1 збігалася з демоном.'
+Line 'О15:43–15:59 запуск локального PowerShell затримувався на 5–6 хвилин; збережено маркери таймаутів.'
+Line 'О17:44 запуск відновився, INFO C5 і N95 відповіли, сценарій Trek nav3 підтверджено DONE29.'
+Line 'Ці локальні затримки не вважаються відключенням телефона чи виміряною швидкістю гри.'
 Line
-Line 'Незавершені клітинки таблиці наразі очікують замірів; вони не позначені як остаточно пропущені.'
+if($Final){Line 'Пропущених ігор немає: усі дванадцять мають по три дійсні прогони в кожній конфігурації.'}else{Line 'Незавершені клітинки таблиці наразі очікують замірів; вони не позначені як остаточно пропущені.'}
 Line 'Ліміт навігації — 10 спроб на гру; збої стенду — максимум три послідовні спроби.'
 Line
 Line '## Повернення файлів і артефакти'
@@ -114,20 +132,42 @@ Line 'c5-backup/n95-backup із SHA256. Попередню фазу поверн
 Line 'після успішного native GET C5 bench. Цей аудит не підтверджує поточних файлів:'
 Line 'для поточних серій знову встановлено тимчасові стани й налаштування.'
 if(-not $Final){Line '**Остаточне повернення й зворотне SHA256-читання ще попереду.**'}
-Line 'C5 після роботи залишиться з оновленим EXE; N95 після заключної cpu50-серії має залишитися cpu50.'
+if($Final){
+ Line 'Остаточне повернення перевірено зворотним читанням SHA-256: C5 14/14, N95 18/18 файлів і профілів ідентичні початковим. Початково відсутні тимчасові input/interp файли вилучено; відсутність підтверджена STAT.'
+ Line '[C5, 14 перевірок](f11-game-speed-2026-10-05-evidence/c5-final2-restoration-verification.json), [N95, 18 перевірок](f11-game-speed-2026-10-05-evidence/n95-final2-restoration-verification.json).'
+ Line 'EXE обох апаратів повторно прочитані й мають релізний SHA-256. C5 залишено з оновленим EXE. N95 залишено cpu50; фінальні регістри перевірені після повернення файлів. boot.dat ідентичний до й після розгону за SHA-256.'
+ Line '[Повний фінальний аудит](f11-game-speed-2026-10-05-evidence/final-audit.json).'
+}else{Line 'C5 після роботи залишиться з оновленим EXE; N95 після заключної cpu50-серії має залишитися cpu50.'}
 Line
 Line 'Сирі журнали, SHOT і стани: plans/runs/2026-10-05_game-speed/.'
 Line 'Копія для коміту — [evidence/](f11-game-speed-2026-10-05-evidence/);'
 Line '[машинне зведення](f11-game-speed-2026-10-05-evidence/summary-progress.json).'
-Line 'До завершення роботи копія evidence може відставати від поточного каталогу runs.'
+if(-not $Final){Line 'До завершення роботи копія evidence може відставати від поточного каталогу runs.'}
 Line
 Line '## Висновок'
 Line
-Line 'Жодна завершена дійсна серія поки не досягла повної швидкості PS1.'
-Line 'Внесок розгону ядра ще не виміряно. Нові прийняті стани придатні для повторних замірів і відеозйомки.'
+$full=@($summary.series | Where-Object {$_.repeatCount -eq 3 -and $_.speedMedian -ge 100})
+if($full.Count){Line ('Повної швидкості за медіаною досягли: '+(($full | ForEach-Object {"$($_.label) ($(Fmt $_.speedMedian)%)"}) -join ', ')+'.')}else{Line 'Жодна завершена дійсна серія не досягла повної швидкості PS1 за медіаною.'}
+if(@($summary.series | Where-Object label -like 'N95-cpu50-*').Count){
+ Line
+ Line '| Гра | Приріст швидкості cpu50 до stock | Оцінка за розкидом |'
+ Line '|---|---|---|'
+ foreach($g in $games){
+  $stock=@($summary.series | Where-Object {$_.label -eq "N95-stock-$($g.key)" -and $_.repeatCount -eq 3})
+  $cpu=@($summary.series | Where-Object {$_.label -eq "N95-cpu50-$($g.key)" -and $_.repeatCount -eq 3})
+  if($stock.Count -and $cpu.Count){
+   $gain=100*($cpu[0].speedMedian/$stock[0].speedMedian-1)
+   $assessment=if($cpu[0].speedMin -gt $stock[0].speedMax){'виграш перевищує розкид'}else{'діапазони перекриваються; різницю не розрізняємо'}
+   Line ("| {0} | +{1}% | {2} |" -f $g.key,(Fmt $gain),$assessment)
+  }
+ }
+ Line 'Приріст обчислено за швидкістю PS1 для однакових станів. Шина лишилася штатною; змінено частоту ядра. Показані FPS не доводять унікальність кожного кадру.'
+}else{Line 'Внесок розгону ядра ще не виміряно.'}
+Line 'Прийняті стани придатні для повторних замірів і відеозйомки.'
 [IO.File]::WriteAllLines($target,$lines,[Text.UTF8Encoding]::new($false))
 $f6=Join-Path $repo 'docs/measurements/f6-compat-matrix.md'
 $text=Get-Content $f6 -Raw
-$text=[regex]::Replace($text,'(?m)^Нові заміри alpha 1\.3:.*$',"Нові заміри alpha 1.3: [F11, 2026-10-05](f11-game-speed-2026-10-05.md) — тестування триває; $($summary.acceptedRuns) дійсних прогонів, транспорт C5 через прямий RFCOMM відновлено.")
+$statusText=if($Final){'завершено: 108 прогонів, 12 ігор на C5, N95-stock і N95-cpu50; оригінальні файли повернуто'}else{"тестування триває; $($summary.acceptedRuns) дійсних прогонів, транспорт C5 через прямий RFCOMM відновлено"}
+$text=[regex]::Replace($text,'(?m)^Нові заміри alpha 1\.3:.*$',"Нові заміри alpha 1.3: [F11, 2026-10-05](f11-game-speed-2026-10-05.md) — $statusText.")
 [IO.File]::WriteAllText($f6,$text,[Text.UTF8Encoding]::new($false))
 Write-Output $target

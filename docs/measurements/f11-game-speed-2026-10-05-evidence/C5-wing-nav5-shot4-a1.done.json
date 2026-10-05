@@ -1,0 +1,17 @@
+{
+  "name": "C5-wing-nav5-shot4-a1",
+  "started": "2026-10-05T18:48:51.3248469+03:00",
+  "finished": "2026-10-05T18:48:53.5594301+03:00",
+  "limitSec": 45,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\deploy_net-rfcomm.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-GetFile",
+    "E:\\tester\\C5-wing-nav5-04.bmp",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed/C5-wing-nav5-04.bmp"
+  ]
+}

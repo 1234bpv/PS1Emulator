@@ -1,0 +1,17 @@
+{
+  "name": "N95-wing-nav1-02.bmp-get-a1",
+  "started": "2026-10-05T18:22:48.4240874+03:00",
+  "finished": "2026-10-05T18:22:49.1391996+03:00",
+  "limitSec": 45,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-GetFile",
+    "E:\\tester\\wing-nav1-02.bmp",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed/N95-wing-nav1-02.bmp"
+  ]
+}

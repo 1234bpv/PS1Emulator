@@ -1,0 +1,14 @@
+{
+  "name": "continue3-network-discovery",
+  "started": "2026-10-05T17:45:14.6514863+03:00",
+  "finished": "2026-10-05T17:45:25.9374831+03:00",
+  "limitSec": 30,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Ip",
+    "scan",
+    "-Info"
+  ]
+}

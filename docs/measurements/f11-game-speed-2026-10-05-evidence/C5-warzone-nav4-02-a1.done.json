@@ -1,0 +1,17 @@
+{
+  "name": "C5-warzone-nav4-02-a1",
+  "started": "2026-10-05T18:11:09.0718553+03:00",
+  "finished": "2026-10-05T18:11:11.6287703+03:00",
+  "limitSec": 45,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\deploy_net-rfcomm.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-GetFile",
+    "E:\\tester\\warzone-nav4-02.bmp",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator/plans/runs/2026-10-05_game-speed/C5-warzone-nav4-02.bmp"
+  ]
+}

@@ -1,9 +1,10 @@
 {
-  "exportedAt": "2026-10-05T12:57:51.354Z",
-  "acceptedRuns": 48,
-  "triples": 16,
-  "states": 8,
-  "rootFilesCopied": 2720,
-  "status": "blocked-local-powershell",
-  "restorationPending": true
+  "exportedAt": "2026-10-05T20:37:00.5910918+03:00",
+  "acceptedRuns": 72,
+  "triples": 24,
+  "states": 12,
+  "copiedFiles": 4172,
+  "status": "stopped-n95-unreachable",
+  "c5Restored": true,
+  "n95RestorationPending": true
 }

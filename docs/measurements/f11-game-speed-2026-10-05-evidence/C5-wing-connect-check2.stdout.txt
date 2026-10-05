@@ -1,0 +1,18 @@
+[net] direct RFCOMM C5 A8448113EA78 channel 13
+[net] serial COM12 @ 115200 baud
+[net] > INFO
+[net] < OK info
+[net] < protocol 2
+[net] < screen 240x320
+[net] < ramfree 179691520
+[net] < tick 68646687 startTick 4537830 boot 0 by r
+[net] < drive C freekb 30368
+[net] < drive E freekb 10879760
+[net] < scriptlog E:\tester\C5-continue4-wing-verify.log
+[net] < script DONE 10
+[net] > PS ps1stage1
+[net] < OK ps 1
+[net] < 0 ps1stage1[e0001002]0001
+[net] > STATUS
+[net] < OK DONE 10
+[net] done

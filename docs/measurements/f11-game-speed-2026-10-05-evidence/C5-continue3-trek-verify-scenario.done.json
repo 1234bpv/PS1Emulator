@@ -1,0 +1,19 @@
+{
+  "name": "C5-continue3-trek-verify-scenario",
+  "started": "2026-10-05T17:46:48.3448542+03:00",
+  "finished": "2026-10-05T17:47:09.7236908+03:00",
+  "limitSec": 140,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\deploy_net-rfcomm.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-Scenario",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\C5-continue3-trek-verify.txt",
+    "-ScenarioTimeoutSec",
+    "110",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\C5-continue3-trek-verify.log"
+  ]
+}

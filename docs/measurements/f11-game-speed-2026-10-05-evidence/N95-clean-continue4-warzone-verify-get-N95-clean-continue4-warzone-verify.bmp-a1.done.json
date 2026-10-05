@@ -1,0 +1,17 @@
+{
+  "name": "N95-clean-continue4-warzone-verify-get-N95-clean-continue4-warzone-verify.bmp-a1",
+  "started": "2026-10-05T18:42:03.3861453+03:00",
+  "finished": "2026-10-05T18:42:04.9706753+03:00",
+  "limitSec": 45,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-GetFile",
+    "E:\\tester\\N95-clean-continue4-warzone-verify.bmp",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\N95-clean-continue4-warzone-verify.bmp"
+  ]
+}

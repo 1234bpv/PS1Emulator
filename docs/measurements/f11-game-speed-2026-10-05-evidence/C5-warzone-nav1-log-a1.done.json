@@ -1,0 +1,17 @@
+{
+  "name": "C5-warzone-nav1-log-a1",
+  "started": "2026-10-05T17:57:15.4623525+03:00",
+  "finished": "2026-10-05T17:57:16.1428694+03:00",
+  "limitSec": 45,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\deploy_net-rfcomm.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-GetFile",
+    "E:\\PS1\\logs\\ps1_stage1.jsonl",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\C5-warzone-nav1.jsonl"
+  ]
+}

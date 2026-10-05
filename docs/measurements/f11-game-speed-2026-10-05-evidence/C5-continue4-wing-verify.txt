@@ -1,0 +1,10 @@
+LOG C5-continue4-wing-verify gameplay verification release alpha13
+-START E:\sys\bin\ps1stage1.exe gui light blend dsa img"Wing Commander III - Heart of the Tiger (USA) (Disc 1).pbp" loadstate56000 frames58000 dumpat56003 limit90
+-WAITFG e0001002 20000
+-KEY star press 2 100
+SLEEP 10000
+-SHOT E:\tester\C5-continue4-wing-verify.bmp 2
+-ENDAPP 0xE0001002
+SLEEP 2000
+-KILL ps1stage1
+PS ps1stage1

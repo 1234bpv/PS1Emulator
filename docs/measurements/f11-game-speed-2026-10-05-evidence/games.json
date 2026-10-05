@@ -9,7 +9,9 @@
   {
     "key": "colin",
     "image": "Colin McRae Rally 2.0 (USA) (En,Fr,Es).pbp",
-    "size": 263206654
+    "size": 263206654,
+    "state": "colin-start.sav",
+    "frame": 67000
   },
   {
     "key": "colony",
@@ -58,17 +60,21 @@
     "image": "Star Trek - Invasion (USA).pbp",
     "size": 310075072,
     "state": "trek-flight.sav",
-    "frame": 14000
+    "frame": 23000
   },
   {
     "key": "warzone",
     "image": "Warzone 2100 (USA).pbp",
-    "size": 414470047
+    "size": 414470047,
+    "state": "warzone-start.sav",
+    "frame": 45000
   },
   {
     "key": "wing",
     "image": "Wing Commander III - Heart of the Tiger (USA) (Disc 1).pbp",
-    "size": 589288424
+    "size": 589288424,
+    "state": "wing-flight.sav",
+    "frame": 56000
   },
   {
     "key": "wipeout",

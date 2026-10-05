@@ -1,0 +1,34 @@
+LOG C5-warzone-nav3 navigation only; not a timing measurement
+-START E:\sys\bin\ps1stage1.exe gui rec light blend dsa img"Warzone 2100 (USA).pbp" loadstate20000 savestate24000 frames24001 dumpat999999 limit240
+-WAITFG e0001002 20000
+-KEY star press 2 100
+SLEEP 8000
+WAITFG e0001002 1000
+-KEY up down
+SLEEP 400
+-KEY up up
+SLEEP 3000
+WAITFG e0001002 1000
+-KEY 5 down
+SLEEP 400
+-KEY 5 up
+SLEEP 15000
+-SHOT E:\tester\warzone-nav3-01.bmp 1
+WAITFG e0001002 1000
+-KEY 5 down
+SLEEP 400
+-KEY 5 up
+SLEEP 15000
+-SHOT E:\tester\warzone-nav3-02.bmp 1
+WAITFG e0001002 1000
+-KEY 8 down
+SLEEP 400
+-KEY 8 up
+SLEEP 20000
+-SHOT E:\tester\warzone-nav3-03.bmp 1
+SLEEP 100000
+
+-ENDAPP 0xE0001002
+SLEEP 2000
+-KILL ps1stage1
+PS ps1stage1

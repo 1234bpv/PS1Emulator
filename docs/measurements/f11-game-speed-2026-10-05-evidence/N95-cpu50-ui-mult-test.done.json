@@ -1,0 +1,15 @@
+{
+  "name": "N95-cpu50-ui-mult-test",
+  "started": "2026-10-05T20:16:10.8488544+03:00",
+  "finished": "2026-10-05T20:16:14.1634963+03:00",
+  "limitSec": 60,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-Do",
+    "WAITFG e0001011 1000; KEY 9 press 1 100; KEY right press 1 150; SLEEP 500; SHOT E:\\tester\\N95-cpu50-ui-mult-test.bmp 1"
+  ]
+}

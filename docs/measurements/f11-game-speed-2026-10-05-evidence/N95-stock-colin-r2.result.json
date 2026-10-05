@@ -1,0 +1,19 @@
+{
+  "label": "N95-stock-colin",
+  "repeat": 2,
+  "region": "NTSC",
+  "frames": 1200,
+  "ms": 108066,
+  "shownFrames": 595,
+  "shownFps": 5.505894545925638,
+  "ps1Fps": 11.104325134639943,
+  "speedPercent": 18.507208557733236,
+  "errors": 0,
+  "shutdown": "gui: frames=1200 ms=108066",
+  "pass": "drc: frames=1200 ms=108066 pc=80000080 cycle=3945987890 vblanks=1208 fsAdvised=0",
+  "loaded": "Loaded CD Image: E:\\PS1\\games\\Colin McRae Rally 2.0 (USA) (En,Fr,Es).pbp[+pbp] (263206654 bytes).\n",
+  "emuMs": null,
+  "shownMethod": "DSA direct FB pixB=4, stock fxaa=0, 240 rows per present",
+  "volume0ms": 3748,
+  "clockStartMs": 7650
+}

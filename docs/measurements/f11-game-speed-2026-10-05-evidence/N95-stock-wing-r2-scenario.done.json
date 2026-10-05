@@ -1,0 +1,19 @@
+{
+  "name": "N95-stock-wing-r2-scenario",
+  "started": "2026-10-05T18:59:15.7902768+03:00",
+  "finished": "2026-10-05T19:00:53.3878533+03:00",
+  "limitSec": 220,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-Scenario",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\N95-stock-wing-r2.txt",
+    "-ScenarioTimeoutSec",
+    "200",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\N95-stock-wing-r2.log"
+  ]
+}

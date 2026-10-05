@@ -1,0 +1,9 @@
+[net] direct RFCOMM C5 A8448113EA78 channel 13
+[net] serial COM12 @ 115200 baud
+[net] > APP 0x10005951
+[net] < OK app foreground
+[net] > SLEEP 1000
+[net] < OK sleep 1000
+[net] > SHOT E:\tester\c5-bt-final-before.bmp 1
+[net] < OK shot 230454 240x320 fb mode11
+[net] done

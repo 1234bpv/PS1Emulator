@@ -1,0 +1,30 @@
+LOG C5-wing-nav6 navigation only; not a timing measurement
+-START E:\sys\bin\ps1stage1.exe gui rec light blend dsa img"Wing Commander III - Heart of the Tiger (USA) (Disc 1).pbp" loadstate50000 savestate56000 frames56001 dumpat999999 limit240
+-WAITFG e0001002 20000
+-KEY star press 2 100
+SLEEP 8000
+-SHOT E:\tester\wing-nav6-01.bmp 1
+WAITFG e0001002 1000
+-KEY 5 down
+SLEEP 500
+-KEY 5 up
+SLEEP 18000
+-SHOT E:\tester\wing-nav6-02.bmp 1
+WAITFG e0001002 1000
+-KEY 8 down
+SLEEP 500
+-KEY 8 up
+SLEEP 15000
+-SHOT E:\tester\wing-nav6-03.bmp 1
+WAITFG e0001002 1000
+-KEY 9 down
+SLEEP 10000
+-KEY 9 up
+SLEEP 10000
+-SHOT E:\tester\wing-nav6-04.bmp 1
+SLEEP 130000
+
+-ENDAPP 0xE0001002
+SLEEP 2000
+-KILL ps1stage1
+PS ps1stage1

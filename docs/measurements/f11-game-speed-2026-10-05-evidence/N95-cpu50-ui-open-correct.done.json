@@ -1,0 +1,15 @@
+{
+  "name": "N95-cpu50-ui-open-correct",
+  "started": "2026-10-05T20:14:25.9395596+03:00",
+  "finished": "2026-10-05T20:14:41.8974639+03:00",
+  "limitSec": 60,
+  "timeout": false,
+  "exitCode": 1,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-Do",
+    "WAITFG 0xE0001011 15000; SLEEP 1500; SHOT E:\\tester\\N95-cpu50-ui-open-correct.bmp 1"
+  ]
+}

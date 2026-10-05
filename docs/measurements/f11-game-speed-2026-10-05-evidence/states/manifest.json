@@ -75,5 +75,52 @@
     "proof": "C5-v2-rayman-verify-early.png; navigation SHOT C5-rayman-nav2-04.png",
     "shot": "N95-stock-rayman-verify.png",
     "earlyShot": "C5-v2-rayman-verify-early.png"
+  },
+  {
+    "game": "trek",
+    "file": "trek-flight.sav",
+    "loadFrame": 23000,
+    "bytes": 1835418,
+    "sha256": "68CF57B4983C7C6FE7C40FAD931D8D76703A624690D5D494D7CF4A7DCE0544F9",
+    "status": "accepted gameplay state",
+    "shot": "C5-clean-continue3-trek-verify.png",
+    "earlyShot": "C5-continue3-trek-verify-early.png",
+    "proof": "C5-clean-continue3-trek-verify.png; N95-stock-continue3-trek-verify-early.png; N95-clean-continue3-trek-verify.png"
+  },
+  {
+    "game": "colin",
+    "file": "colin-start.sav",
+    "loadFrame": 67000,
+    "bytes": 2061537,
+    "sha256": "8CDD564384D0AD17739A5512B1EA8C77F8EB5E6E848C26852AEC8AD872573D4B",
+    "status": "accepted gameplay state",
+    "navigationShot": "N95-colin-nav9-04.png",
+    "earlyShot": "N95-stock-continue3-colin-verify-early.png",
+    "proof": "Finland stage 1, player car on track, HUD timer 00:11:37; C5-continue4-colin-verify-early.png; C5-clean-continue4-colin-verify.png",
+    "shot": "N95-clean-continue3-colin-verify.png"
+  },
+  {
+    "game": "warzone",
+    "file": "warzone-start.sav",
+    "loadFrame": 45000,
+    "bytes": 1877951,
+    "sha256": "01A9000F16513001BD9A1F291B9E02B57D196ACEE2EEFF2BB53A99F7B660CDE7",
+    "status": "accepted gameplay state",
+    "navigationShot": "C5-warzone-nav5-03.png",
+    "earlyShot": "C5-continue3-warzone-verify-early.png",
+    "proof": "Normal campaign first mission, vehicles, terrain, resource 1500 and player cursor; N95-stock-continue4-warzone-verify-early.png; N95-clean-continue4-warzone-verify.png",
+    "shot": "C5-clean-continue3-warzone-verify.png"
+  },
+  {
+    "game": "wing",
+    "file": "wing-flight.sav",
+    "loadFrame": 56000,
+    "bytes": 1550798,
+    "sha256": "27728255081328CC19DB60D93031A1037632FE96CF7B58CCB9197B0B5B2312A7",
+    "status": "accepted gameplay state",
+    "navigationShot": "C5-wing-nav6-04.png",
+    "earlyShot": "C5-continue4-wing-verify-early.png",
+    "proof": "Player cockpit after takeoff, speed420, radar, weapon HUD; C5-continue4-wing-verify-early.png; N95-stock-continue4-wing-verify-early.png; C5-clean-retry4-wing-verify.png; N95-clean-continue4-wing-verify.png",
+    "shot": "C5-clean-retry4-wing-verify.png"
   }
 ]

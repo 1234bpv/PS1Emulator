@@ -11,5 +11,5 @@ for($attempt=1;$attempt -le 3;$attempt++) {
 }
 if($mark.timeout -or $mark.exitCode -ne 0){throw 'clock probe download incomplete'}
 $log=Get-Content "$PSScriptRoot\$Name.log" -Raw
-if($log -notmatch '== end ==' -or $log -notmatch "m=$Multiplier DPLL=" -or $log -notmatch "CM_CLKSEL1_CORE[^\r\n]*= $Core") {throw "clock registers do not match $Name"}
+& "$PSScriptRoot/check-clock-log.ps1" -Path "$PSScriptRoot/$Name.log" -Multiplier $Multiplier -Core $Core | ConvertTo-Json -Compress | Write-Output
 $log | Write-Output

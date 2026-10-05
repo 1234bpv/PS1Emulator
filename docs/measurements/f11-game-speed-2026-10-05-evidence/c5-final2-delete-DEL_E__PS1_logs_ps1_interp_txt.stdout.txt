@@ -1,0 +1,5 @@
+[net] direct RFCOMM C5 A8448113EA78 channel 13
+[net] serial COM12 @ 115200 baud
+[net] > DEL E:\PS1\logs\ps1_interp.txt
+[net] < ERR delete -1
+[net] done

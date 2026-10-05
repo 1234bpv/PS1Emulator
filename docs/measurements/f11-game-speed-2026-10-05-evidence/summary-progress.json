@@ -1,7 +1,7 @@
 {
-  "updated": "2026-10-05T15:38:10.7390944+03:00",
-  "acceptedRuns": 48,
-  "completedTriples": 16,
+  "updated": "2026-10-05T20:35:43.7025598+03:00",
+  "acceptedRuns": 72,
+  "completedTriples": 24,
   "series": [
     {
       "label": "C5-cast",
@@ -37,6 +37,42 @@
         "Loaded CD Image: E:\\PS1\\games\\Castlevania - Symphony of the Night (USA.pbp[+pbp] (398057383 bytes).\n",
         "Loaded CD Image: E:\\PS1\\games\\Castlevania - Symphony of the Night (USA.pbp[+pbp] (398057383 bytes).\n",
         "Loaded CD Image: E:\\PS1\\games\\Castlevania - Symphony of the Night (USA.pbp[+pbp] (398057383 bytes).\n"
+      ]
+    },
+    {
+      "label": "C5-colin",
+      "repeatCount": 3,
+      "region": "NTSC",
+      "ms": [
+        62539,
+        62438,
+        62618
+      ],
+      "shownFrames": [
+        595,
+        595,
+        595
+      ],
+      "fpsMedian": 9.514063224547883,
+      "fpsMin": 9.502060110511355,
+      "fpsMax": 9.52945321759185,
+      "speedMedian": 31.98004445226179,
+      "speedMin": 31.939697850458334,
+      "speedMax": 32.031775521317144,
+      "errors": [
+        0,
+        0,
+        0
+      ],
+      "pass": [
+        "drc: frames=1200 ms=62539 pc=80000080 cycle=3945987890 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=62438 pc=80000080 cycle=3945987890 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=62618 pc=80000080 cycle=3945987890 vblanks=1208 fsAdvised=0"
+      ],
+      "loaded": [
+        "Loaded CD Image: E:\\PS1\\games\\Colin McRae Rally 2.0 (USA) (En,Fr,Es).pbp[+pbp] (263206654 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Colin McRae Rally 2.0 (USA) (En,Fr,Es).pbp[+pbp] (263206654 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Colin McRae Rally 2.0 (USA) (En,Fr,Es).pbp[+pbp] (263206654 bytes).\n"
       ]
     },
     {
@@ -256,6 +292,114 @@
       ]
     },
     {
+      "label": "C5-trek",
+      "repeatCount": 3,
+      "region": "NTSC",
+      "ms": [
+        23623,
+        23858,
+        23601
+      ],
+      "shownFrames": [
+        600,
+        600,
+        600
+      ],
+      "fpsMedian": 25.39897557465182,
+      "fpsMin": 25.14879704920781,
+      "fpsMax": 25.42265158256006,
+      "speedMedian": 84.66325191550608,
+      "speedMin": 83.82932349735938,
+      "speedMax": 84.74217194186687,
+      "errors": [
+        0,
+        0,
+        0
+      ],
+      "pass": [
+        "drc: frames=1200 ms=23623 pc=80000080 cycle=2031675182 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=23858 pc=80000080 cycle=2031675182 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=23601 pc=80000080 cycle=2031675182 vblanks=1208 fsAdvised=0"
+      ],
+      "loaded": [
+        "Loaded CD Image: E:\\PS1\\games\\Star Trek - Invasion (USA).pbp[+pbp] (310075072 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Star Trek - Invasion (USA).pbp[+pbp] (310075072 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Star Trek - Invasion (USA).pbp[+pbp] (310075072 bytes).\n"
+      ]
+    },
+    {
+      "label": "C5-warzone",
+      "repeatCount": 3,
+      "region": "NTSC",
+      "ms": [
+        24291,
+        24285,
+        25260
+      ],
+      "shownFrames": [
+        400,
+        400,
+        400
+      ],
+      "fpsMedian": 16.46700424025359,
+      "fpsMin": 15.835312747426762,
+      "fpsMax": 16.471072678608195,
+      "speedMedian": 82.33502120126796,
+      "speedMin": 79.1765637371338,
+      "speedMax": 82.35536339304097,
+      "errors": [
+        0,
+        0,
+        0
+      ],
+      "pass": [
+        "drc: frames=1200 ms=24291 pc=80000080 cycle=1344460591 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=24285 pc=80000080 cycle=1344460591 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=25260 pc=80000080 cycle=1344460591 vblanks=1208 fsAdvised=0"
+      ],
+      "loaded": [
+        "Loaded CD Image: E:\\PS1\\games\\Warzone 2100 (USA).pbp[+pbp] (414470047 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Warzone 2100 (USA).pbp[+pbp] (414470047 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Warzone 2100 (USA).pbp[+pbp] (414470047 bytes).\n"
+      ]
+    },
+    {
+      "label": "C5-wing",
+      "repeatCount": 3,
+      "region": "NTSC",
+      "ms": [
+        19985,
+        20039,
+        19984
+      ],
+      "shownFrames": [
+        480,
+        480,
+        480
+      ],
+      "fpsMedian": 24.0180135101326,
+      "fpsMin": 23.95329108238934,
+      "fpsMax": 24.01921537229784,
+      "speedMedian": 100.07505629221916,
+      "speedMin": 99.80537950995559,
+      "speedMax": 100.080064051241,
+      "errors": [
+        0,
+        0,
+        0
+      ],
+      "pass": [
+        "drc: frames=1200 ms=19985 pc=80000080 cycle=3320140588 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=20039 pc=80000080 cycle=3320140588 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=19984 pc=80000080 cycle=3320140588 vblanks=1208 fsAdvised=0"
+      ],
+      "loaded": [
+        "Loaded CD Image: E:\\PS1\\games\\Wing Commander III - Heart of the Tiger (USA) (Disc 1).pbp[+pbp] (589288424 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Wing Commander III - Heart of the Tiger (USA) (Disc 1).pbp[+pbp] (589288424 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Wing Commander III - Heart of the Tiger (USA) (Disc 1).pbp[+pbp] (589288424 bytes).\n"
+      ]
+    },
+    {
       "label": "C5-wipeout",
       "repeatCount": 3,
       "region": "NTSC",
@@ -325,6 +469,42 @@
         "Loaded CD Image: E:\\PS1\\games\\Castlevania - Symphony of the Night (USA.pbp[+pbp] (398057383 bytes).\n",
         "Loaded CD Image: E:\\PS1\\games\\Castlevania - Symphony of the Night (USA.pbp[+pbp] (398057383 bytes).\n",
         "Loaded CD Image: E:\\PS1\\games\\Castlevania - Symphony of the Night (USA.pbp[+pbp] (398057383 bytes).\n"
+      ]
+    },
+    {
+      "label": "N95-stock-colin",
+      "repeatCount": 3,
+      "region": "NTSC",
+      "ms": [
+        108814,
+        108066,
+        108616
+      ],
+      "shownFrames": [
+        595,
+        595,
+        595
+      ],
+      "fpsMedian": 5.4780142888708845,
+      "fpsMin": 5.4680463910893815,
+      "fpsMax": 5.505894545925638,
+      "speedMedian": 18.41349340796936,
+      "speedMin": 18.379987869208005,
+      "speedMax": 18.507208557733236,
+      "errors": [
+        0,
+        0,
+        0
+      ],
+      "pass": [
+        "drc: frames=1200 ms=108814 pc=80000080 cycle=3945987890 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=108066 pc=80000080 cycle=3945987890 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=108616 pc=80000080 cycle=3945987890 vblanks=1208 fsAdvised=0"
+      ],
+      "loaded": [
+        "Loaded CD Image: E:\\PS1\\games\\Colin McRae Rally 2.0 (USA) (En,Fr,Es).pbp[+pbp] (263206654 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Colin McRae Rally 2.0 (USA) (En,Fr,Es).pbp[+pbp] (263206654 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Colin McRae Rally 2.0 (USA) (En,Fr,Es).pbp[+pbp] (263206654 bytes).\n"
       ]
     },
     {
@@ -541,6 +721,114 @@
         "Loaded CD Image: E:\\PS1\\games\\RC Helicopter (USA).pbp[+pbp] (12839268 bytes).\n",
         "Loaded CD Image: E:\\PS1\\games\\RC Helicopter (USA).pbp[+pbp] (12839268 bytes).\n",
         "Loaded CD Image: E:\\PS1\\games\\RC Helicopter (USA).pbp[+pbp] (12839268 bytes).\n"
+      ]
+    },
+    {
+      "label": "N95-stock-trek",
+      "repeatCount": 3,
+      "region": "NTSC",
+      "ms": [
+        47653,
+        48003,
+        47722
+      ],
+      "shownFrames": [
+        600,
+        600,
+        600
+      ],
+      "fpsMedian": 12.572817568417083,
+      "fpsMin": 12.499218798825073,
+      "fpsMax": 12.59102260088557,
+      "speedMedian": 41.909391894723605,
+      "speedMin": 41.66406266275025,
+      "speedMax": 41.97007533628523,
+      "errors": [
+        0,
+        0,
+        0
+      ],
+      "pass": [
+        "drc: frames=1200 ms=47653 pc=80000080 cycle=2031675182 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=48003 pc=80000080 cycle=2031675182 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=47722 pc=80000080 cycle=2031675182 vblanks=1208 fsAdvised=0"
+      ],
+      "loaded": [
+        "Loaded CD Image: E:\\PS1\\games\\Star Trek - Invasion (USA).pbp[+pbp] (310075072 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Star Trek - Invasion (USA).pbp[+pbp] (310075072 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Star Trek - Invasion (USA).pbp[+pbp] (310075072 bytes).\n"
+      ]
+    },
+    {
+      "label": "N95-stock-warzone",
+      "repeatCount": 3,
+      "region": "NTSC",
+      "ms": [
+        53940,
+        54261,
+        53867
+      ],
+      "shownFrames": [
+        400,
+        400,
+        400
+      ],
+      "fpsMedian": 7.415647015202077,
+      "fpsMin": 7.37177715117672,
+      "fpsMax": 7.425696623164461,
+      "speedMedian": 37.07823507601038,
+      "speedMin": 36.8588857558836,
+      "speedMax": 37.128483115822306,
+      "errors": [
+        0,
+        0,
+        0
+      ],
+      "pass": [
+        "drc: frames=1200 ms=53940 pc=80000080 cycle=1344460591 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=54261 pc=80000080 cycle=1344460591 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=53867 pc=80000080 cycle=1344460591 vblanks=1208 fsAdvised=0"
+      ],
+      "loaded": [
+        "Loaded CD Image: E:\\PS1\\games\\Warzone 2100 (USA).pbp[+pbp] (414470047 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Warzone 2100 (USA).pbp[+pbp] (414470047 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Warzone 2100 (USA).pbp[+pbp] (414470047 bytes).\n"
+      ]
+    },
+    {
+      "label": "N95-stock-wing",
+      "repeatCount": 3,
+      "region": "NTSC",
+      "ms": [
+        45244,
+        45306,
+        45566
+      ],
+      "shownFrames": [
+        480,
+        480,
+        480
+      ],
+      "fpsMedian": 10.594623228711429,
+      "fpsMin": 10.534170214633718,
+      "fpsMax": 10.609141543630095,
+      "speedMedian": 44.14426345296429,
+      "speedMin": 43.89237589430716,
+      "speedMax": 44.20475643179206,
+      "errors": [
+        0,
+        0,
+        0
+      ],
+      "pass": [
+        "drc: frames=1200 ms=45244 pc=80000080 cycle=3320140588 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=45306 pc=80000080 cycle=3320140588 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=45566 pc=80000080 cycle=3320140588 vblanks=1208 fsAdvised=0"
+      ],
+      "loaded": [
+        "Loaded CD Image: E:\\PS1\\games\\Wing Commander III - Heart of the Tiger (USA) (Disc 1).pbp[+pbp] (589288424 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Wing Commander III - Heart of the Tiger (USA) (Disc 1).pbp[+pbp] (589288424 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Wing Commander III - Heart of the Tiger (USA) (Disc 1).pbp[+pbp] (589288424 bytes).\n"
       ]
     },
     {

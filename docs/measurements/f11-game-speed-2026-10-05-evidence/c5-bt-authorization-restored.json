@@ -1,0 +1,13 @@
+{
+  "peer": "KOMPUTER",
+  "originalAuthorized": false,
+  "authorized": false,
+  "visuallyVerified": true,
+  "verifiedAt": "2026-10-05T20:26:28.4487479+03:00",
+  "before": "c5-bt-final-before.png",
+  "selectedAction": "c5-bt-final-untrust-selected.png",
+  "after": "c5-bt-final-restored.png",
+  "sameConnectionShotAndGet": true,
+  "otherPeer": "PAVLO unchanged",
+  "lastC5Connection": "c5-bt-final-untrust-and-proof.done.json"
+}

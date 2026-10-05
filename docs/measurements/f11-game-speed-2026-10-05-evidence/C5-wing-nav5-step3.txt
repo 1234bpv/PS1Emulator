@@ -1,0 +1,13 @@
+LOG Wing attempt5 step3 pick Hobbes and fly mission
+WAITFG e0001002 1000
+-KEY 5 down
+SLEEP 500
+-KEY 5 up
+SLEEP 10000
+-SHOT E:\tester\C5-wing-nav5-03.bmp 1
+WAITFG e0001002 1000
+-KEY 5 down
+SLEEP 500
+-KEY 5 up
+SLEEP 15000
+-SHOT E:\tester\C5-wing-nav5-04.bmp 1

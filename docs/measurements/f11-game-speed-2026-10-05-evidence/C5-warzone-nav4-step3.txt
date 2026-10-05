@@ -1,0 +1,7 @@
+LOG C5-warzone-nav4 confirm Normal difficulty; same running proc60
+WAITFG e0001002 1000
+KEY 5 down
+SLEEP 400
+KEY 5 up
+SLEEP 10000
+SHOT E:\tester\warzone-nav4-03.bmp 1

@@ -1,0 +1,12 @@
+[net] > INFO
+[net] < OK info
+[net] < protocol 2
+[net] < screen 320x240
+[net] < ramfree 87724032
+[net] < tick 171809325 startTick 103328351 boot 0 by r
+[net] < ap Huawei
+[net] < drive C freekb 65700
+[net] < drive E freekb 1032832
+[net] < scriptlog E:\tester\N95-stock-wing-r3.log
+[net] < script DONE 8
+[net] done

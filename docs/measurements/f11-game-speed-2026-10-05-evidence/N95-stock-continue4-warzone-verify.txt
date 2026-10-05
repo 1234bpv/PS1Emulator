@@ -1,0 +1,10 @@
+LOG N95-stock-continue4-warzone-verify gameplay verification release alpha13
+-START E:\sys\bin\ps1stage1.exe gui light blend dsa img"Warzone 2100 (USA).pbp" loadstate45000 frames47000 dumpat45003 limit90
+-WAITFG e0001002 20000
+-KEY star press 2 100
+SLEEP 15000
+-SHOT E:\tester\N95-stock-continue4-warzone-verify.bmp 2
+-ENDAPP 0xE0001002
+SLEEP 2000
+-KILL ps1stage1
+PS ps1stage1

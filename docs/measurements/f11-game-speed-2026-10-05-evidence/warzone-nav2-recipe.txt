@@ -1,0 +1,26 @@
+SLEEP 8000
+WAITFG e0001002 1000
+-KEY 8 down
+SLEEP 400
+-KEY 8 up
+SLEEP 15000
+-SHOT E:\tester\warzone-nav2-01.bmp 1
+WAITFG e0001002 1000
+-KEY 5 down
+SLEEP 400
+-KEY 5 up
+SLEEP 8000
+-SHOT E:\tester\warzone-nav2-02.bmp 1
+WAITFG e0001002 1000
+-KEY 5 down
+SLEEP 400
+-KEY 5 up
+SLEEP 15000
+-SHOT E:\tester\warzone-nav2-03.bmp 1
+WAITFG e0001002 1000
+-KEY 8 down
+SLEEP 400
+-KEY 8 up
+SLEEP 30000
+-SHOT E:\tester\warzone-nav2-04.bmp 1
+SLEEP 80000

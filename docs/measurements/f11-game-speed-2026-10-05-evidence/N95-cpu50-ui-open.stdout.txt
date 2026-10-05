@@ -1,0 +1,3 @@
+[net] > START E:\sys\bin\ocgui.exe
+[net] < ERR create -1
+…„“…†„…ˆ…: [net] -Do stopped at step 1/4 'START E:\sys\bin\ocgui.exe': ERR create -1

@@ -1,0 +1,18 @@
+{
+  "multiplier": 129,
+  "core": "04360846",
+  "pll": "00081400",
+  "mpuDivider": 2,
+  "l3Divider": 6,
+  "dssDivider": 8,
+  "dpllKhz": 495360,
+  "coreKhz": 990720,
+  "mpuKhz": 495360,
+  "busKhz": 165120,
+  "dssKhz": 123840,
+  "log": "N95-cpu50-switch-clock.log",
+  "verifiedAt": "2026-10-05T20:22:07.9859373+03:00",
+  "keepOnExit": true,
+  "uiVersion": "2.3.0",
+  "busGuardNotChanged": true
+}

@@ -1,0 +1,15 @@
+{
+  "name": "N95-cpu50-foreground-check",
+  "started": "2026-10-05T20:15:20.7519473+03:00",
+  "finished": "2026-10-05T20:15:23.7301997+03:00",
+  "limitSec": 30,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-Do",
+    "PS ocgui; FG; SHOT E:\\tester\\N95-cpu50-foreground-check.bmp 1"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "name": "c5-final2-delete-DEL_E__PS1_logs_ps1_interp_txt",
+  "started": "2026-10-05T20:18:18.1578925+03:00",
+  "finished": "2026-10-05T20:18:18.7006930+03:00",
+  "limitSec": 30,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\deploy_net-rfcomm.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-Cmd",
+    "DEL E:\\PS1\\logs\\ps1_interp.txt"
+  ]
+}

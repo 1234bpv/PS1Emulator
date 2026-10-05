@@ -1,0 +1,15 @@
+{
+  "name": "c5-bt-final-untrust-selected",
+  "started": "2026-10-05T20:23:41.3764313+03:00",
+  "finished": "2026-10-05T20:23:49.8066212+03:00",
+  "limitSec": 60,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\deploy_net-rfcomm.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-Do",
+    "WAITFG 10005951 1000; KEY down press 3 150; SLEEP 500; SHOT E:\\tester\\c5-bt-final-untrust-selected.bmp 1"
+  ]
+}

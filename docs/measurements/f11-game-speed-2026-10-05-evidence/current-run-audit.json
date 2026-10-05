@@ -1,0 +1,922 @@
+{
+  "verifiedAt": "2026-10-05T20:35:43.5837705+03:00",
+  "validRuns": 72,
+  "runChecks": [
+    {
+      "run": "C5-cast-r1",
+      "frames": 1200,
+      "guiMs": 34565,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 398057383,
+      "endCycle": "3442875179"
+    },
+    {
+      "run": "C5-cast-r2",
+      "frames": 1200,
+      "guiMs": 35309,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 398057383,
+      "endCycle": "3442875179"
+    },
+    {
+      "run": "C5-cast-r3",
+      "frames": 1200,
+      "guiMs": 35204,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 398057383,
+      "endCycle": "3442875179"
+    },
+    {
+      "run": "N95-stock-cast-r1",
+      "frames": 1200,
+      "guiMs": 64121,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 398057383,
+      "endCycle": "3442875179"
+    },
+    {
+      "run": "N95-stock-cast-r2",
+      "frames": 1200,
+      "guiMs": 63669,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 398057383,
+      "endCycle": "3442875179"
+    },
+    {
+      "run": "N95-stock-cast-r3",
+      "frames": 1200,
+      "guiMs": 64126,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 398057383,
+      "endCycle": "3442875179"
+    },
+    {
+      "run": "C5-colin-r1",
+      "frames": 1200,
+      "guiMs": 62539,
+      "shownFrames": 595,
+      "errorCount": 0,
+      "imageBytes": 263206654,
+      "endCycle": "3945987890"
+    },
+    {
+      "run": "C5-colin-r2",
+      "frames": 1200,
+      "guiMs": 62438,
+      "shownFrames": 595,
+      "errorCount": 0,
+      "imageBytes": 263206654,
+      "endCycle": "3945987890"
+    },
+    {
+      "run": "C5-colin-r3",
+      "frames": 1200,
+      "guiMs": 62618,
+      "shownFrames": 595,
+      "errorCount": 0,
+      "imageBytes": 263206654,
+      "endCycle": "3945987890"
+    },
+    {
+      "run": "N95-stock-colin-r1",
+      "frames": 1200,
+      "guiMs": 108814,
+      "shownFrames": 595,
+      "errorCount": 0,
+      "imageBytes": 263206654,
+      "endCycle": "3945987890"
+    },
+    {
+      "run": "N95-stock-colin-r2",
+      "frames": 1200,
+      "guiMs": 108066,
+      "shownFrames": 595,
+      "errorCount": 0,
+      "imageBytes": 263206654,
+      "endCycle": "3945987890"
+    },
+    {
+      "run": "N95-stock-colin-r3",
+      "frames": 1200,
+      "guiMs": 108616,
+      "shownFrames": 595,
+      "errorCount": 0,
+      "imageBytes": 263206654,
+      "endCycle": "3945987890"
+    },
+    {
+      "run": "C5-colony-r1",
+      "frames": 1200,
+      "guiMs": 30779,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 366364329,
+      "endCycle": "902715179"
+    },
+    {
+      "run": "C5-colony-r2",
+      "frames": 1200,
+      "guiMs": 30676,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 366364329,
+      "endCycle": "902715179"
+    },
+    {
+      "run": "C5-colony-r3",
+      "frames": 1200,
+      "guiMs": 31104,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 366364329,
+      "endCycle": "902715179"
+    },
+    {
+      "run": "N95-stock-colony-r1",
+      "frames": 1200,
+      "guiMs": 58023,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 366364329,
+      "endCycle": "902715179"
+    },
+    {
+      "run": "N95-stock-colony-r2",
+      "frames": 1200,
+      "guiMs": 57290,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 366364329,
+      "endCycle": "902715179"
+    },
+    {
+      "run": "N95-stock-colony-r3",
+      "frames": 1200,
+      "guiMs": 57924,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 366364329,
+      "endCycle": "902715179"
+    },
+    {
+      "run": "C5-crash-r1",
+      "frames": 1200,
+      "guiMs": 37961,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 478407220,
+      "endCycle": "3334898603"
+    },
+    {
+      "run": "C5-crash-r2",
+      "frames": 1200,
+      "guiMs": 37839,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 478407220,
+      "endCycle": "3334898603"
+    },
+    {
+      "run": "C5-crash-r3",
+      "frames": 1200,
+      "guiMs": 37866,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 478407220,
+      "endCycle": "3334898603"
+    },
+    {
+      "run": "N95-stock-crash-r1",
+      "frames": 1200,
+      "guiMs": 76309,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 478407220,
+      "endCycle": "3334898603"
+    },
+    {
+      "run": "N95-stock-crash-r2",
+      "frames": 1200,
+      "guiMs": 75450,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 478407220,
+      "endCycle": "3334898603"
+    },
+    {
+      "run": "N95-stock-crash-r3",
+      "frames": 1200,
+      "guiMs": 76178,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 478407220,
+      "endCycle": "3334898603"
+    },
+    {
+      "run": "C5-gt-r1",
+      "frames": 1200,
+      "guiMs": 34328,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 406756372,
+      "endCycle": "733371181"
+    },
+    {
+      "run": "C5-gt-r2",
+      "frames": 1200,
+      "guiMs": 34335,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 406756372,
+      "endCycle": "733371181"
+    },
+    {
+      "run": "C5-gt-r3",
+      "frames": 1200,
+      "guiMs": 34403,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 406756372,
+      "endCycle": "733371181"
+    },
+    {
+      "run": "N95-stock-gt-r1",
+      "frames": 1200,
+      "guiMs": 65242,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 406756372,
+      "endCycle": "733371181"
+    },
+    {
+      "run": "N95-stock-gt-r2",
+      "frames": 1200,
+      "guiMs": 64568,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 406756372,
+      "endCycle": "733371181"
+    },
+    {
+      "run": "N95-stock-gt-r3",
+      "frames": 1200,
+      "guiMs": 65358,
+      "shownFrames": 601,
+      "errorCount": 0,
+      "imageBytes": 406756372,
+      "endCycle": "733371181"
+    },
+    {
+      "run": "C5-nfs-r1",
+      "frames": 1200,
+      "guiMs": 42839,
+      "shownFrames": 590,
+      "errorCount": 0,
+      "imageBytes": 519772571,
+      "endCycle": "1970307884"
+    },
+    {
+      "run": "C5-nfs-r2",
+      "frames": 1200,
+      "guiMs": 42854,
+      "shownFrames": 590,
+      "errorCount": 0,
+      "imageBytes": 519772571,
+      "endCycle": "1970307884"
+    },
+    {
+      "run": "C5-nfs-r3",
+      "frames": 1200,
+      "guiMs": 42883,
+      "shownFrames": 590,
+      "errorCount": 0,
+      "imageBytes": 519772571,
+      "endCycle": "1970307884"
+    },
+    {
+      "run": "N95-stock-nfs-r1",
+      "frames": 1200,
+      "guiMs": 76728,
+      "shownFrames": 590,
+      "errorCount": 0,
+      "imageBytes": 519772571,
+      "endCycle": "1970307884"
+    },
+    {
+      "run": "N95-stock-nfs-r2",
+      "frames": 1200,
+      "guiMs": 76262,
+      "shownFrames": 590,
+      "errorCount": 0,
+      "imageBytes": 519772571,
+      "endCycle": "1970307884"
+    },
+    {
+      "run": "N95-stock-nfs-r3",
+      "frames": 1200,
+      "guiMs": 76714,
+      "shownFrames": 590,
+      "errorCount": 0,
+      "imageBytes": 519772571,
+      "endCycle": "1970307884"
+    },
+    {
+      "run": "C5-rayman-r1",
+      "frames": 1200,
+      "guiMs": 29263,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 498135871,
+      "endCycle": "1467195179"
+    },
+    {
+      "run": "C5-rayman-r2",
+      "frames": 1200,
+      "guiMs": 30303,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 498135871,
+      "endCycle": "1467195179"
+    },
+    {
+      "run": "C5-rayman-r3",
+      "frames": 1200,
+      "guiMs": 30367,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 498135871,
+      "endCycle": "1467195179"
+    },
+    {
+      "run": "N95-stock-rayman-r1",
+      "frames": 1200,
+      "guiMs": 50673,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 498135871,
+      "endCycle": "1467195179"
+    },
+    {
+      "run": "N95-stock-rayman-r2",
+      "frames": 1200,
+      "guiMs": 50497,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 498135871,
+      "endCycle": "1467195179"
+    },
+    {
+      "run": "N95-stock-rayman-r3",
+      "frames": 1200,
+      "guiMs": 51065,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 498135871,
+      "endCycle": "1467195179"
+    },
+    {
+      "run": "C5-rc-r1",
+      "frames": 1200,
+      "guiMs": 37632,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 12839268,
+      "endCycle": "2596155182"
+    },
+    {
+      "run": "C5-rc-r2",
+      "frames": 1200,
+      "guiMs": 37634,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 12839268,
+      "endCycle": "2596155182"
+    },
+    {
+      "run": "C5-rc-r3",
+      "frames": 1200,
+      "guiMs": 38618,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 12839268,
+      "endCycle": "2596155182"
+    },
+    {
+      "run": "N95-stock-rc-r1",
+      "frames": 1200,
+      "guiMs": 68217,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 12839268,
+      "endCycle": "2596155182"
+    },
+    {
+      "run": "N95-stock-rc-r2",
+      "frames": 1200,
+      "guiMs": 68595,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 12839268,
+      "endCycle": "2596155182"
+    },
+    {
+      "run": "N95-stock-rc-r3",
+      "frames": 1200,
+      "guiMs": 68196,
+      "shownFrames": 1200,
+      "errorCount": 0,
+      "imageBytes": 12839268,
+      "endCycle": "2596155182"
+    },
+    {
+      "run": "C5-trek-r1",
+      "frames": 1200,
+      "guiMs": 23623,
+      "shownFrames": 600,
+      "errorCount": 0,
+      "imageBytes": 310075072,
+      "endCycle": "2031675182"
+    },
+    {
+      "run": "C5-trek-r2",
+      "frames": 1200,
+      "guiMs": 23858,
+      "shownFrames": 600,
+      "errorCount": 0,
+      "imageBytes": 310075072,
+      "endCycle": "2031675182"
+    },
+    {
+      "run": "C5-trek-r3",
+      "frames": 1200,
+      "guiMs": 23601,
+      "shownFrames": 600,
+      "errorCount": 0,
+      "imageBytes": 310075072,
+      "endCycle": "2031675182"
+    },
+    {
+      "run": "N95-stock-trek-r1",
+      "frames": 1200,
+      "guiMs": 47653,
+      "shownFrames": 600,
+      "errorCount": 0,
+      "imageBytes": 310075072,
+      "endCycle": "2031675182"
+    },
+    {
+      "run": "N95-stock-trek-r2",
+      "frames": 1200,
+      "guiMs": 48003,
+      "shownFrames": 600,
+      "errorCount": 0,
+      "imageBytes": 310075072,
+      "endCycle": "2031675182"
+    },
+    {
+      "run": "N95-stock-trek-r3",
+      "frames": 1200,
+      "guiMs": 47722,
+      "shownFrames": 600,
+      "errorCount": 0,
+      "imageBytes": 310075072,
+      "endCycle": "2031675182"
+    },
+    {
+      "run": "C5-warzone-r1",
+      "frames": 1200,
+      "guiMs": 24291,
+      "shownFrames": 400,
+      "errorCount": 0,
+      "imageBytes": 414470047,
+      "endCycle": "1344460591"
+    },
+    {
+      "run": "C5-warzone-r2",
+      "frames": 1200,
+      "guiMs": 24285,
+      "shownFrames": 400,
+      "errorCount": 0,
+      "imageBytes": 414470047,
+      "endCycle": "1344460591"
+    },
+    {
+      "run": "C5-warzone-r3",
+      "frames": 1200,
+      "guiMs": 25260,
+      "shownFrames": 400,
+      "errorCount": 0,
+      "imageBytes": 414470047,
+      "endCycle": "1344460591"
+    },
+    {
+      "run": "N95-stock-warzone-r1",
+      "frames": 1200,
+      "guiMs": 53940,
+      "shownFrames": 400,
+      "errorCount": 0,
+      "imageBytes": 414470047,
+      "endCycle": "1344460591"
+    },
+    {
+      "run": "N95-stock-warzone-r2",
+      "frames": 1200,
+      "guiMs": 54261,
+      "shownFrames": 400,
+      "errorCount": 0,
+      "imageBytes": 414470047,
+      "endCycle": "1344460591"
+    },
+    {
+      "run": "N95-stock-warzone-r3",
+      "frames": 1200,
+      "guiMs": 53867,
+      "shownFrames": 400,
+      "errorCount": 0,
+      "imageBytes": 414470047,
+      "endCycle": "1344460591"
+    },
+    {
+      "run": "C5-wing-r1",
+      "frames": 1200,
+      "guiMs": 19985,
+      "shownFrames": 480,
+      "errorCount": 0,
+      "imageBytes": 589288424,
+      "endCycle": "3320140588"
+    },
+    {
+      "run": "C5-wing-r2",
+      "frames": 1200,
+      "guiMs": 20039,
+      "shownFrames": 480,
+      "errorCount": 0,
+      "imageBytes": 589288424,
+      "endCycle": "3320140588"
+    },
+    {
+      "run": "C5-wing-r3",
+      "frames": 1200,
+      "guiMs": 19984,
+      "shownFrames": 480,
+      "errorCount": 0,
+      "imageBytes": 589288424,
+      "endCycle": "3320140588"
+    },
+    {
+      "run": "N95-stock-wing-r1",
+      "frames": 1200,
+      "guiMs": 45244,
+      "shownFrames": 480,
+      "errorCount": 0,
+      "imageBytes": 589288424,
+      "endCycle": "3320140588"
+    },
+    {
+      "run": "N95-stock-wing-r2",
+      "frames": 1200,
+      "guiMs": 45306,
+      "shownFrames": 480,
+      "errorCount": 0,
+      "imageBytes": 589288424,
+      "endCycle": "3320140588"
+    },
+    {
+      "run": "N95-stock-wing-r3",
+      "frames": 1200,
+      "guiMs": 45566,
+      "shownFrames": 480,
+      "errorCount": 0,
+      "imageBytes": 589288424,
+      "endCycle": "3320140588"
+    },
+    {
+      "run": "C5-wipeout-r1",
+      "frames": 1200,
+      "guiMs": 28070,
+      "shownFrames": 600,
+      "errorCount": 0,
+      "imageBytes": 450941663,
+      "endCycle": "1354299190"
+    },
+    {
+      "run": "C5-wipeout-r2",
+      "frames": 1200,
+      "guiMs": 29202,
+      "shownFrames": 600,
+      "errorCount": 0,
+      "imageBytes": 450941663,
+      "endCycle": "1354299190"
+    },
+    {
+      "run": "C5-wipeout-r3",
+      "frames": 1200,
+      "guiMs": 29190,
+      "shownFrames": 600,
+      "errorCount": 0,
+      "imageBytes": 450941663,
+      "endCycle": "1354299190"
+    },
+    {
+      "run": "N95-stock-wipeout-r1",
+      "frames": 1200,
+      "guiMs": 56751,
+      "shownFrames": 600,
+      "errorCount": 0,
+      "imageBytes": 450941663,
+      "endCycle": "1354299190"
+    },
+    {
+      "run": "N95-stock-wipeout-r2",
+      "frames": 1200,
+      "guiMs": 57893,
+      "shownFrames": 600,
+      "errorCount": 0,
+      "imageBytes": 450941663,
+      "endCycle": "1354299190"
+    },
+    {
+      "run": "N95-stock-wipeout-r3",
+      "frames": 1200,
+      "guiMs": 56895,
+      "shownFrames": 600,
+      "errorCount": 0,
+      "imageBytes": 450941663,
+      "endCycle": "1354299190"
+    }
+  ],
+  "stateChecks": [
+    {
+      "game": "cast",
+      "file": "cast-gameplay.sav",
+      "sha256": "D7FE9DC17C0F9E254340ADA3AB7A920961958D73AD058DC87B9664847036B006",
+      "bytes": 1593381,
+      "loadFrame": 17500,
+      "visualProofAccepted": true
+    },
+    {
+      "game": "colin",
+      "file": "colin-start.sav",
+      "sha256": "8CDD564384D0AD17739A5512B1EA8C77F8EB5E6E848C26852AEC8AD872573D4B",
+      "bytes": 2061537,
+      "loadFrame": 67000,
+      "visualProofAccepted": true
+    },
+    {
+      "game": "colony",
+      "file": "colony-flight.sav",
+      "sha256": "4FBECEED3CE16D982523364A9D0A8224C2D4A2828044ECBF0A59B270BB50B8AA",
+      "bytes": 1582507,
+      "loadFrame": 13000,
+      "visualProofAccepted": true
+    },
+    {
+      "game": "crash",
+      "file": "crash-start.sav",
+      "sha256": "5FC5B6D32744A239016EDC7DDF65105923AC9222ED50C8356C457641AA17FCC6",
+      "bytes": 2196642,
+      "loadFrame": 4700,
+      "visualProofAccepted": true
+    },
+    {
+      "game": "gt",
+      "file": "gt-race.sav",
+      "sha256": "8AA4F9A1ED7C5C280204126C22FE9BC3BDE33263F1828DE56BE893EA37162D13",
+      "bytes": 1713024,
+      "loadFrame": 7700,
+      "visualProofAccepted": true
+    },
+    {
+      "game": "nfs",
+      "file": "nfs-start.sav",
+      "sha256": "167FBE04475651F2CA16FF4D51B7CA46121AC25468BCFC990E29CF8913D249D0",
+      "bytes": 1801625,
+      "loadFrame": 24000,
+      "visualProofAccepted": true
+    },
+    {
+      "game": "rayman",
+      "file": "rayman-start.sav",
+      "sha256": "081639BEF8A99A84255FB4C6676C4DA32C77F569F3657244258AADBFAD2B4020",
+      "bytes": 1679398,
+      "loadFrame": 14000,
+      "visualProofAccepted": true
+    },
+    {
+      "game": "rc",
+      "file": "rc-practice.sav",
+      "sha256": "C73034CA0E1DFD91A9E5D5674EE8970E57631A2B0AEDA8AE8893C55A550A837D",
+      "bytes": 1265475,
+      "loadFrame": 23000,
+      "visualProofAccepted": true
+    },
+    {
+      "game": "trek",
+      "file": "trek-flight.sav",
+      "sha256": "68CF57B4983C7C6FE7C40FAD931D8D76703A624690D5D494D7CF4A7DCE0544F9",
+      "bytes": 1835418,
+      "loadFrame": 23000,
+      "visualProofAccepted": true
+    },
+    {
+      "game": "warzone",
+      "file": "warzone-start.sav",
+      "sha256": "01A9000F16513001BD9A1F291B9E02B57D196ACEE2EEFF2BB53A99F7B660CDE7",
+      "bytes": 1877951,
+      "loadFrame": 45000,
+      "visualProofAccepted": true
+    },
+    {
+      "game": "wing",
+      "file": "wing-flight.sav",
+      "sha256": "27728255081328CC19DB60D93031A1037632FE96CF7B58CCB9197B0B5B2312A7",
+      "bytes": 1550798,
+      "loadFrame": 56000,
+      "visualProofAccepted": true
+    },
+    {
+      "game": "wipeout",
+      "file": "wipeout-driven2.sav",
+      "sha256": "627E0B813E29E4C537E99A6FEB7BE2868D6EC9B20C4AE6928016506AD1AB998A",
+      "bytes": 1683839,
+      "loadFrame": 8500,
+      "visualProofAccepted": true
+    }
+  ],
+  "clockChecks": [
+    {
+      "series": "N95-stock-cast",
+      "side": "before",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "N95-stock-cast-clock-before.log"
+    },
+    {
+      "series": "N95-stock-cast",
+      "side": "after",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "N95-stock-cast-clock-after.log"
+    },
+    {
+      "series": "N95-stock-colin",
+      "side": "before",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "N95-stock-colin-clock-before.log"
+    },
+    {
+      "series": "N95-stock-colin",
+      "side": "after",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "N95-stock-colin-clock-after.log"
+    },
+    {
+      "series": "N95-stock-colony",
+      "side": "before",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "N95-stock-colony-clock-before.log"
+    },
+    {
+      "series": "N95-stock-colony",
+      "side": "after",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "N95-stock-colony-clock-after.log"
+    },
+    {
+      "series": "N95-stock-crash",
+      "side": "before",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "N95-stock-crash-clock-before.log"
+    },
+    {
+      "series": "N95-stock-crash",
+      "side": "after",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "N95-stock-crash-clock-after.log"
+    },
+    {
+      "series": "N95-stock-gt",
+      "side": "before",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "resume-n95-clock-before.log"
+    },
+    {
+      "series": "N95-stock-gt",
+      "side": "after",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "N95-stock-gt-clock-after.log"
+    },
+    {
+      "series": "N95-stock-nfs",
+      "side": "before",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "N95-stock-nfs-clock-before.log"
+    },
+    {
+      "series": "N95-stock-nfs",
+      "side": "after",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "N95-stock-nfs-clock-after.log"
+    },
+    {
+      "series": "N95-stock-rayman",
+      "side": "before",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "N95-stock-rayman-clock-before.log"
+    },
+    {
+      "series": "N95-stock-rayman",
+      "side": "after",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "N95-stock-rayman-clock-after.log"
+    },
+    {
+      "series": "N95-stock-rc",
+      "side": "before",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "N95-stock-rc-clock-before.log"
+    },
+    {
+      "series": "N95-stock-rc",
+      "side": "after",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "N95-stock-rc-clock-after.log"
+    },
+    {
+      "series": "N95-stock-trek",
+      "side": "before",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "N95-stock-trek-clock-before.log"
+    },
+    {
+      "series": "N95-stock-trek",
+      "side": "after",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "N95-stock-trek-clock-after.log"
+    },
+    {
+      "series": "N95-stock-warzone",
+      "side": "before",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "N95-stock-warzone-clock-before.log"
+    },
+    {
+      "series": "N95-stock-warzone",
+      "side": "after",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "N95-stock-warzone-clock-after.log"
+    },
+    {
+      "series": "N95-stock-wing",
+      "side": "before",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "N95-stock-wing-clock-before.log"
+    },
+    {
+      "series": "N95-stock-wing",
+      "side": "after",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "N95-stock-wing-clock-after.log"
+    },
+    {
+      "series": "N95-stock-wipeout",
+      "side": "before",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "N95-stock-wipeout-clock-before.log"
+    },
+    {
+      "series": "N95-stock-wipeout",
+      "side": "after",
+      "multiplier": 86,
+      "core": "04360644",
+      "log": "N95-stock-wipeout-clock-after.log"
+    }
+  ]
+}

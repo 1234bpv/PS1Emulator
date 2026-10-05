@@ -1,0 +1,3 @@
+[net] > APP 0xE0001011
+[net] < OK app started tid=1419
+[net] done

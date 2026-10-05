@@ -1,0 +1,29 @@
+LOG N95-wing-nav1 navigation only; not a timing measurement
+-START E:\sys\bin\ps1stage1.exe gui rec light blend dsa img"Wing Commander III - Heart of the Tiger (USA) (Disc 1).pbp"  savestate2500 frames2501 dumpat999999 limit240
+-WAITFG e0001002 20000
+-KEY star press 2 100
+SLEEP 12000
+WAITFG e0001002 1000
+-KEY 8 down
+SLEEP 400
+-KEY 8 up
+SLEEP 15000
+-SHOT E:\tester\wing-nav1-01.bmp 1
+WAITFG e0001002 1000
+-KEY 5 down
+SLEEP 400
+-KEY 5 up
+SLEEP 15000
+-SHOT E:\tester\wing-nav1-02.bmp 1
+WAITFG e0001002 1000
+-KEY 8 down
+SLEEP 400
+-KEY 8 up
+SLEEP 20000
+-SHOT E:\tester\wing-nav1-03.bmp 1
+SLEEP 120000
+
+-ENDAPP 0xE0001002
+SLEEP 2000
+-KILL ps1stage1
+PS ps1stage1

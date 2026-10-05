@@ -1,0 +1,19 @@
+{
+  "name": "C5-trek-r2-scenario",
+  "started": "2026-10-05T17:50:03.9842815+03:00",
+  "finished": "2026-10-05T17:51:12.4215281+03:00",
+  "limitSec": 220,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\deploy_net-rfcomm.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-Scenario",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\C5-trek-r2.txt",
+    "-ScenarioTimeoutSec",
+    "200",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\C5-trek-r2.log"
+  ]
+}

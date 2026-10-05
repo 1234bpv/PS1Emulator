@@ -1,0 +1,17 @@
+{
+  "name": "c5-final2-readback-cfg_Castlevania___Symphony_of_the_Ni_txt-a1",
+  "started": "2026-10-05T20:18:18.7039757+03:00",
+  "finished": "2026-10-05T20:18:19.3094958+03:00",
+  "limitSec": 60,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\deploy_net-rfcomm.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-GetFile",
+    "E:\\PS1\\cfg\\Castlevania___Symphony_of_the_Ni.txt",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\c5-final-verified\\cfg\\Castlevania___Symphony_of_the_Ni.txt"
+  ]
+}

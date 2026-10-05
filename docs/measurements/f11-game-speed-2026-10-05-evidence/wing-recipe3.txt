@@ -1,0 +1,21 @@
+SLEEP 8000
+-SHOT E:\tester\wing-nav3-01.bmp 1
+WAITFG e0001002 1000
+-KEY 5 down
+SLEEP 500
+-KEY 5 up
+SLEEP 20000
+-SHOT E:\tester\wing-nav3-02.bmp 1
+WAITFG e0001002 1000
+-KEY 8 down
+SLEEP 500
+-KEY 8 up
+SLEEP 20000
+-SHOT E:\tester\wing-nav3-03.bmp 1
+WAITFG e0001002 1000
+-KEY 5 down
+SLEEP 500
+-KEY 5 up
+SLEEP 20000
+-SHOT E:\tester\wing-nav3-04.bmp 1
+SLEEP 130000

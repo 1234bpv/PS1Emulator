@@ -1,0 +1,85 @@
+{"id":0,"ms":44,"event":"boot","error":null,"msg":"stage1 starting, mode=gui args=\"gui light blend dsa img\"Warzone 2100 (USA).pbp\" loadstate45000 frames46200 dumpat999999 limit150\""}
+{"id":1,"ms":1179,"event":"exeid","error":null,"msg":"src=file path=E:\\sys\\bin\\ps1stage1.exe size=1431280 crc32=51603f20"}
+{"id":2,"ms":1182,"event":"gpuspeed","error":null,"msg":"g_gpuSpeedPct=100"}
+{"id":3,"ms":1190,"event":"probe","error":null,"msg":"getappinfo=0"}
+{"id":4,"ms":1193,"event":"probe","error":null,"msg":"E:\\sys\\bin\\ps1stage1.exe"}
+{"id":5,"ms":1386,"event":"gui","error":null,"msg":"appui constructed"}
+{"id":6,"ms":1646,"event":"tilt","error":null,"msg":"active=0"}
+{"id":7,"ms":1649,"event":"menu","error":null,"msg":"machine=0x2003555f"}
+{"id":8,"ms":1651,"event":"menu","error":null,"msg":"geometry screen=320x240 lh=23 rows=8 rows_rotated=11"}
+{"id":9,"ms":1658,"event":"gui","error":null,"msg":"window attached, gl==0"}
+{"id":10,"ms":1703,"event":"dsa","error":null,"msg":"abort reason=1"}
+{"id":11,"ms":1706,"event":"dsa","error":null,"msg":"restart reason=1 err=0 active=1"}
+{"id":12,"ms":1714,"event":"focus","error":null,"msg":"fore=1"}
+{"id":13,"ms":1718,"event":"vol","error":null,"msg":"step=1"}
+{"id":14,"ms":1727,"event":"exc_handler","error":null,"msg":"rc=0"}
+{"id":15,"ms":1730,"event":"gpu_cfg","error":null,"msg":"pixskip=0 ilace=0 light=1 blend=1"}
+{"id":16,"ms":1732,"event":"gpu_init","error":null,"msg":"init=0"}
+{"id":17,"ms":1741,"event":"gpu_cbs","error":null,"msg":"frameskip=0"}
+{"id":18,"ms":1747,"event":"spu_init","error":null,"msg":"init=0"}
+{"id":19,"ms":1755,"event":"start","error":null,"msg":"stage1 begin (gui), frames=46200 cpu=drc input=0"}
+{"id":20,"ms":1757,"event":"hacks","error":null,"msg":"drc: ndrc=00000020 gtenf=0 cyclemul=175"}
+{"id":21,"ms":1768,"event":"core_msg","error":null,"msg":"psxMap: tried to map @80000000, got 0xce1238\n"}
+{"id":22,"ms":1781,"event":"core_msg","error":null,"msg":"psxMap: tried to map @77000000, got 0xce1238\n"}
+{"id":23,"ms":1785,"event":"core_msg","error":null,"msg":"psxMap: tried to map @1f800000, got 0xef1240\n"}
+{"id":24,"ms":1795,"event":"core_msg","error":null,"msg":"psxMap: tried to map @1fc00000, got 0xf01248\n"}
+{"id":25,"ms":1804,"event":"core","error":null,"msg":"Init new dynarec, ndrc size 1001000, pgsize 4096\n"}
+{"id":26,"ms":1847,"event":"core","error":null,"msg":"ndrc config: mul=175, ha=20, pex=0\n"}
+{"id":27,"ms":1851,"event":"core","error":null,"msg":"(0x71f7d3a0) testing if we can run recompiled code @0x3200000...\n"}
+{"id":28,"ms":1853,"event":"core","error":null,"msg":"test passed.\n"}
+{"id":29,"ms":1862,"event":"core","error":null,"msg":"RAM is not directly mapped\n"}
+{"id":30,"ms":1865,"event":"core","error":null,"msg":"Mapped (RAM/scrp/ROM/LUTs/TC):\n"}
+{"id":31,"ms":1867,"event":"core","error":null,"msg":"0xce1238/0xef1240/0xf01248/0x0/0x3200000\n"}
+{"id":32,"ms":1903,"event":"core_msg","error":null,"msg":"psxMap: tried to map @08000000, got 0xf81250\n"}
+{"id":33,"ms":2013,"event":"core","error":null,"msg":"Loading memory card E:\\PS1\\saves\\card1.mcd\n"}
+{"id":34,"ms":2103,"event":"core","error":null,"msg":"Loading memory card E:\\PS1\\saves\\card2.mcd\n"}
+{"id":35,"ms":2412,"event":"core","error":null,"msg":"Loaded CD Image: E:\\PS1\\games\\Warzone 2100 (USA).pbp[+pbp] (414470047 bytes).\n"}
+{"id":36,"ms":2416,"event":"core","error":null,"msg":"Track 1 DATA  - Start 0:2:0, Length 66:30:32\n"}
+{"id":37,"ms":2418,"event":"core","error":null,"msg":"End 66:32:32 (sector 299432)\n"}
+{"id":38,"ms":2436,"event":"core","error":null,"msg":"CD-ROM Label: SLUS_00819                      \n"}
+{"id":39,"ms":2444,"event":"core","error":null,"msg":"CD-ROM ID: SLUS00819\n"}
+{"id":40,"ms":2446,"event":"core","error":null,"msg":"CD-ROM EXE Name: SLUS_008.19;1\n"}
+{"id":41,"ms":2450,"event":"disc","error":null,"msg":"drc: cdra_init=0 cdra_open=0 checkcdrom=0 region=0"}
+{"id":42,"ms":2452,"event":"gpu_open","error":null,"msg":"drc: open=0"}
+{"id":43,"ms":2454,"event":"spu_open","error":null,"msg":"drc: open=0"}
+{"id":44,"ms":2496,"event":"dsa","error":null,"msg":"abort reason=1"}
+{"id":45,"ms":2513,"event":"dsa","error":null,"msg":"restart reason=1 err=0 active=1"}
+{"id":46,"ms":2516,"event":"vol","error":null,"msg":"step=0"}
+{"id":47,"ms":2532,"event":"snd_open","error":null,"msg":"drc: rc=0"}
+{"id":48,"ms":2885,"event":"core_msg","error":null,"msg":"Loaded BIOS \"E:\\PS1\\bios/scph7502.bin\".\n"}
+{"id":49,"ms":2893,"event":"core","error":null,"msg":"ndrc: tc out=03200000 base=00000000 size=16777216\n"}
+{"id":50,"ms":2896,"event":"core","error":null,"msg":"Init new dynarec, ndrc size 1001000, pgsize 4096\n"}
+{"id":51,"ms":2956,"event":"core","error":null,"msg":"(0x71f7d3a0) testing if we can run recompiled code @0x3200000...\n"}
+{"id":52,"ms":2960,"event":"core","error":null,"msg":"test passed.\n"}
+{"id":53,"ms":2962,"event":"core","error":null,"msg":"RAM is not directly mapped\n"}
+{"id":54,"ms":2964,"event":"core","error":null,"msg":"Mapped (RAM/scrp/ROM/LUTs/TC):\n"}
+{"id":55,"ms":2966,"event":"core","error":null,"msg":"0xce1238/0xef1240/0xf01248/0xf81250/0x3200000\n"}
+{"id":56,"ms":2996,"event":"core_msg","error":null,"msg":"psxMap: tried to map @08000000, got 0xf81250\n"}
+{"id":57,"ms":3132,"event":"core","error":null,"msg":"BIOS: 19951204, 'CEX-3000/1001/1002 by K.S.', 'E'\n"}
+{"id":58,"ms":3743,"event":"reset","error":null,"msg":"drc: EmuReset ok, hle=0 type=NTSC"}
+{"id":59,"ms":3746,"event":"exec_begin","error":null,"msg":"drc: entering frame loop, 46200 frames"}
+{"id":60,"ms":3748,"event":"screen_init","error":null,"msg":"drc: rc=0 gui=1"}
+{"id":61,"ms":3750,"event":"fb","error":null,"msg":"drc: ok=1 hal=240x320 line=4096B bpp=16 first=0 win=320x240"}
+{"id":62,"ms":4640,"event":"loadstate","error":null,"msg":"drc: frame=45000 rc=0 rewound=0 pc=80000080 cycle=667084593 hsync=240 base=564480 start=666569472"}
+{"id":63,"ms":4646,"event":"clocks","error":null,"msg":"start: known=0 reason=release-build"}
+{"id":64,"ms":5298,"event":"loadstate","error":null,"msg":"drc: frame=45000 ran=564496 pc=80000080 vbl=9 hsync=240 base=564480 start=667133952 cyc=667649089"}
+{"id":65,"ms":5550,"event":"loadstate","error":null,"msg":"drc: frame=45001 ran=564461 pc=80000080 vbl=10 hsync=240 base=564480 start=667698432 cyc=668213550"}
+{"id":66,"ms":5626,"event":"loadstate","error":null,"msg":"drc: frame=45002 ran=564477 pc=80000080 vbl=11 hsync=240 base=564480 start=668262912 cyc=668778027"}
+{"id":67,"ms":24455,"event":"progress","error":null,"msg":"drc: frame 46000/46200 ms=19791 stackUnused=11592"}
+{"id":68,"ms":28955,"event":"clocks","error":null,"msg":"end: known=0 reason=release-build"}
+{"id":69,"ms":28980,"event":"wdsample","error":null,"msg":"drc: t=0s pc=800c9a34 cycle=667089440"}
+{"id":70,"ms":28982,"event":"wdsample","error":null,"msg":"drc: t=2s pc=80000080 cycle=822316586"}
+{"id":71,"ms":28985,"event":"wdsample","error":null,"msg":"drc: t=4s pc=80024ac8 cycle=1011639919"}
+{"id":72,"ms":28987,"event":"wdsample","error":null,"msg":"drc: t=6s pc=8002c48c cycle=1202261017"}
+{"id":73,"ms":28991,"event":"pass","error":null,"msg":"drc: frames=1200 ms=24291 pc=80000080 cycle=1344460591 vblanks=1208 fsAdvised=0"}
+{"id":74,"ms":29002,"event":"gpustats","error":null,"msg":"drc: gp0=1600 dataMem=400 dmaChain=800 gp1=3200"}
+{"id":75,"ms":29005,"event":"gpulibstats","error":null,"msg":"drc: disabled in release; gpustats remains active"}
+{"id":76,"ms":29008,"event":"vramstats","error":null,"msg":"drc: sysToVid=400,819200px vidToSys=0,0px vidToVid=400,800px"}
+{"id":77,"ms":29010,"event":"sndstats","error":null,"msg":"drc: feeds=1208 samples=1775632 maxAmp=-1 under=1 step=59691"}
+{"id":78,"ms":29012,"event":"dsa","error":null,"msg":"drc: active=1 gl=0 fbPlatform=1 pixB=4 strideB=8192 rows=96000/0/0/0/0 covered=1 fbOk=1 rowCopy=0 rgn=1,0,0,320,240 scr=320,240 tries=0 rgb24scaled=0 rgb24b16=0 rgb24src=0 rgb24dst=0"}
+{"id":79,"ms":29025,"event":"drawstats","error":null,"msg":"drc: polySpans=0 polyPix=0 polyTex=0 polyLit=0 polyBlend=0 spriteCalls=0 spritePix=0 spriteTex=0 tileCalls=0 tilePix=0 polyPrims=0 polyRows=0"}
+{"id":80,"ms":29126,"event":"screen","error":null,"msg":"drc: presented 1200 frames, held 0ms"}
+{"id":81,"ms":29141,"event":"core","error":null,"msg":"ndrc: tc out=0337df00 base=00000000 size=16777216\n"}
+{"id":82,"ms":34259,"event":"vram_dump","error":null,"msg":"rc=0"}
+{"id":83,"ms":34262,"event":"shutdown","error":null,"msg":"gui: frames=1200 ms=24291"}
+{"id":84,"ms":34409,"event":"exit","error":null,"msg":"gui returned 0"}

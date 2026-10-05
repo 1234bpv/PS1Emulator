@@ -12,6 +12,29 @@
 - Незакриті зауваження: РЕЛІЗ alpha 1.3 ОПУБЛІКОВАНО 2026-10-04: гілки злито в main/symbian, теги v1.3 в обох репозиторіях, GitHub Release v1.3 (prerelease) з обома SIS, хеші звірено завантаженням. Чотири сценарії меню пройдено на N95 2026-10-04 після злиття (див. розділ «Апаратне приймання 1.3»). ЦИКЛ 2026-10-01 ТРИВАЄ — див. розділ «Цикл огляду, меню й DSP, 2026-10-01» нижче: виправлення в гілці fix/review-2026-10-01 зібрані, але не перевірені на апараті; меню чекає рішення людини. F0–F10 виконано (11 з 11). Пункт 5 оригінального плану — злиття ADPCM+ADSR — відкладено після фізичного профілю: ізольований ADSR оцінено в 17–20 мс на 600 кадрів, але виграш від злиття буферів не виміряно; див. plans/optimisation-plan.md. O4-кеш FastCounter реалізовано, перевірено на N95 і закомічено як окрему зміну; точний виграш у швидкодії не доведено. Поза цим циклом лишається функціональне приймання B1 (CDDA в грі, mute/skip і save/load під час XA; живий звук у GT FMV перевірено) та дослідження інших ігор/апаратів.
 - Наступний крок: немає
 
+### Зупинка F11, 2026-10-05 20:27 — N95 недосяжний
+
+72 дійсні прогони/24 трійки: всі12 ігор C5 і N95-stock. Усі12 gameplayстанів прийняті, Wing56000 SHA27728255...2312A7, навігація6/10. C5 Wing19985/20039/19984ms, медіана24.018FPS/100.075%, endcycle3320140588 збігаєтьсяN95stock. Аудит72runs/12states/24stockclockchecks пройдено. C5 остаточно повернуто14/14SHA, input/interpвідсутні, EXE4CE2sysHash962048C4; KOMPUTERавторизаціюскасовановостанньомуBTсеансі20:24:42, SHOTlockgone, PAVLOнезмінений. До C5 більше не підключатися без потреби.
+
+N95 всіstockзавершеноbefore95/triple96–98/after99 Wing. BeforeOCprobe100stock. ocgui2.3.0зC:/sys/bin: APPчерезUIDнестворивdaemonproc; WAITFGприймаєпідрядокe0001011без0x. MULT129AUTO/L3=6/MPU2/KEEPтак; CONFIRM20:20 успіхlive129st0CORE04360846. Probe101 та castbefore102actualPLL00081400/CORE04360846/MPU2, ядро495360BUS165120DSS123840. ПеревіркиберутьactualPLL/CORE/MPU, анеісторичнийописstock. boot.datпрочитано68байт/SHA3522F5C7...1003FF3, не записували; окремогоBUSGUARDрядкаUIнемає, жодного захистунеперемикали.
+
+cpu50cast-r1сценарій20:22:48–20:26:23: SCRIPTзапущено, WAITFGтаSLEEP86126; сімвнутрішніхавтореконектівклієнта, ObjectDisposedException/System.Net.Sockets.NetworkStream, exit1. JSONL/повнийtrace/afterclockнеотримані; прогіннеприйнято. INFO20:26:53далаdaemon not respondingat192.168.3.22. scan20:27:26–20:27:42далаno daemon foundontheLAN. Після3перевіроктелефонибільшенеопитували. Причинувтратидоступу/зависання/ребутне доведено. taskComplete=false, cpu50valid0/36, поточні18файлівN95щеНЕповернуто. Останнімuploadбулиstock-Castlevania/settingsіcast-gameplaybench.
+
+Наступна дія після відновлення доступу користувачем: INFO/PS/STATUS N95, прочитати actual clocks без зміни тактування; якщоm129/L3=6 підтверджені — отримати E:/tester/N95-cpu50-cast-r1.log та E:/PS1/logs/ps1_stage1.jsonl, встановити фактичний procID (очікуванийcast103), перевірити1200/exit0/DSA/cycles/error0; тількипісляцьогоприйматиабоповторювати. Не запускати measure-cpu50-all.ps1 наосліп: врахуватиproc103іpossiblecompletedrun та зберегти старі failuremarkers підіншоюназвою. Далі всіcpu50трійкиbefore/afterрегістрів, фінальнеповернення18файлівN95/readbackSHA, GETboot.dat/exE, фінальнийcpu50clock, audit-final.ps1, write-report -Final, export/commitбезpush. Не зменшуватиL3, неREBOOT/RESTORESTOCK. До відновленнядоступу зупинка за правилом завдання; звіттаstand-stop.json описують блокер.
+
+### Продовження F11, 2026-10-05 17:44 — стенд відновився
+
+Локальний PowerShell запускається за 0,18 с. C5 INFO/PS відповіли,
+Trek nav3 SCRIPT DONE29; повний trace отримано. N95 знайдений scan INFO
+за тією самою 192.168.3.22, screen320x240, script N95-colin-nav7 DONE20.
+Перша перевірка дала хибну недосяжність через -Ip192.168.3.22:2323:
+клієнт очікує лише IP, порт2323 окремий/default. Далі лише явний plain IP.
+C5 Trek23000 прийнято: early FB proc52 і чистий SHOT proc53 підтвердили корабель/HUD. Трійка54–56 завершена23623/23858/23601ms, медіана25.399FPS/84.663%, error0, cycle2031675182. Новий стан1835418байт у manifest; загалом51 прогін/17 трійок. C5 Warzone nav1 proc57 починається.
+N95 Colin nav8 proc67/save62500 завершена1190204байт, SHOT показує Setup; nav9 proc68 load65000/save67000 триває(session14064):
+Nav9 proc68/save67000 завершена2061537байт; ранній FB proc69 підтвердив race/HUD, Finland stage1 timer00:11:37. Прийнято colin-start.sav/frame67000; nav9/10. Чистий SHOT proc70 завершено; перед серією probe71 m86 CORE04360644. Colin r1 proc72 завершив1200кадрів108814ms,5.468FPS/18.380%,error0,cycle3945987890. Трійка72–74 завершена108814/108066/108616ms, медіана5.478FPS/18.413%,error0,cycle3945987890. Probe71/75 stock. N95 Trek verify76 раннійFB збігається з C5; cleanSHOT77 підтвердив scene; probe78 stock, трійка79–81 завершена47653/48003/47722ms, медіана12.573FPS/41.909%,error0,cycle2031675182. Probe78/82 stock. Загалом57 прогонів/19 трійок. N95 Wing nav1 proc83 save2500 триває(session40877). C5 Warzone nav1–3/save4000/14000/24000 — меню. Nav4 proc60 interactive: right=logical UP у ландшафті також на C5; New Campaign->Normal. Save37000 rc0 size1224515, shutdown7001frames143725ms. Nav5 proc61/save45000 rc0 size1877951; SHOT показує карту/техніку/ресурс1500, verify62 раннійFB і чистий SHOT63 підтвердили карту/техніку/ресурс1500. Прийнято warzone-start.sav/load45000 SHA01A9000F...60CDE7; трійка C5-warzone64–66 триває(session29476).
+51 прийнятий прогін/17 трійок; 10 прийнятих станів. N95 stock, cpu50 не застосований.
+Фінальне відновлення файлів і C5 BT-авторизації лишається обов'язковим.
+Попередній розділ зупинки нижче — історичний, блокер більше не активний.
 ### Зупинка продовження: локальний PowerShell, 2026-10-05 15:56
 
 Прийнято 48 прогонів у 16 трійках для восьми ігор на C5/N95-stock.
@@ -893,3 +916,18 @@ S2 (bench) після серії; для гри людиною залити ре
 
 
 
+
+
+
+
+
+
+
+18:31: C5 Warzone64–66 завершена24291/24285/25260ms, медіана16.467FPS/82.335%, error0/cycle1344460591. Загалом60 прогонів/20 трійок. N95 Wing nav1 save2500=1152610байт, SHOT лише PSlogo/Loading; nav2 proc84 load10000/save13500 триває(session41264). C5 Colin verify67 early підтверджує ту саму Finlandstage1; clean68 триває(session нового worker).
+18:37: C5 Colin69–71 трійка завершена; ранній і чистий SHOT67/68 прийняті. N95 Wing nav2 save13500=1256101байт: інтерактивний ангар Go to FLIGHT CONTROL; nav3 proc85 load20000/save23500 триває(session12729). C5 наступнийproc72; Wing ще не прийнято як політ.
+18:46: N95 Warzone early86/clean87 підтверджені; probe88 stock, трійка89–91 триває(session15409), r1/r2 53940/54261ms,error0. C5 Wing nav4 proc72 save35000=1651233байт лише FlightControl/FlightDeck; nav5 proc73 interactive load40000/save47000 триває, Circle1 вибрав Attend BRIEFING (SHOT01), Cross і Start для брифінгу в step2(session82152).
+18:48: N95 Warzone89–91 завершена; clock88/92 stock. 66 прогонів/22 трійки. N95 наступнийproc93, лише Wing відсутній у stock; cpu50 ще не застосовано. C5 Wing nav5 proc73 Circle1->AttendBriefing, Cross/Start->PickHobbes; step3 Cross вибирає напарника й FlyMission.
+18:56: Wing nav6 proc74 save56000=1550798байт прийнята після early75/93 на C5/N95: політ позаангаром, швидкість420, радар, зброяHUD. SHA27728255...2312A7. clean76/94 тривають(sessions60577/новийN95). Усі12 канонічних gameplayстанів знайдено; Wing6/10 стартів.
+18:57: C5 cleanWing scénario connect WSA10060 avant START, donc aucunproc76. INFO/PS/STATUS check2 réussi en2s, ancienSCRIPT DONE10, pasdeprocessusvivant. Problème transitoire résolu; cleanWing retry proc76(sessionnew) démarre. N95 clean94 accepté SHOT; probe95 stock, Wing96–98 triple en cours(session24418), after99 prévu.
+20:21: C5 всі12трійок завершено, загалом72прогони/24трійки; final2ресторація14/14SHAідентичні, absencesSTATпідтверджені, EXE4CE2 і sysHash20байт962048C4 прочитані; BTKOMPUTERщеавторизований, требаостанньоюдієюповернути. N95stock всі12трійок, beforeOCprobe100stock. ocgui2.3APPзCsysbin, m129/L3=6AUTO/MPU2/KEEPтакпідготовлено, CONFIRMуспіхm129live129st0, CORE04360846l3=6dss1=8. Readonlyprobe101 підтвердив PLL00081400/CORE04360846/MPU00000002; ядро495360BUS165120кГц. Парсерпоправлено: береactualрегістри, неісторичнийstockопис. Даліcpu50beforeprobe102.
+20:25: C5 повернення остаточно завершено:14/14SHA, input/interpвідсутні, EXE4CE2, sysHash962048C4, KOMPUTERнеавторизованийякпочатково, lockgone наc5-bt-final-restored.png; sameconnectionDo+SHOT+GETостаннійBTсеанс, PAVLOнезмінений. N95cpu50castbeforeprobe102correct, r1clientPID8428started20:22:48 безstdout; bounded220sdeadline20:26:28, worker71213очікує, нестворюватиодночаснийphoneклієнт.

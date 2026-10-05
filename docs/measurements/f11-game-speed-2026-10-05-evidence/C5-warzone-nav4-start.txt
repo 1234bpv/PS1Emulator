@@ -1,0 +1,11 @@
+LOG C5-warzone-nav4 interactive navigation; not a timing measurement
+-START E:\sys\bin\ps1stage1.exe gui rec light blend dsa img"Warzone 2100 (USA).pbp" loadstate30000 savestate37000 frames37001 dumpat999999 limit240
+WAITFG e0001002 20000
+-KEY star press 2 100
+SLEEP 10000
+WAITFG e0001002 1000
+-KEY right down
+SLEEP 400
+-KEY right up
+SLEEP 2000
+SHOT E:\tester\warzone-nav4-01.bmp 1

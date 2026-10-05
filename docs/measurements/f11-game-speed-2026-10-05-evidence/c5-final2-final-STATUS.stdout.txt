@@ -1,0 +1,5 @@
+[net] direct RFCOMM C5 A8448113EA78 channel 13
+[net] serial COM12 @ 115200 baud
+[net] > STATUS
+[net] < OK DONE 8
+[net] done

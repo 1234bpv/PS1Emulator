@@ -1,0 +1,17 @@
+{
+  "name": "N95-colin-nav8-03.bmp-get-a1",
+  "started": "2026-10-05T17:50:39.3005436+03:00",
+  "finished": "2026-10-05T17:50:40.0539680+03:00",
+  "limitSec": 45,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-GetFile",
+    "E:\\tester\\colin-nav8-03.bmp",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator/plans/runs/2026-10-05_game-speed/N95-colin-nav8-03.bmp"
+  ]
+}

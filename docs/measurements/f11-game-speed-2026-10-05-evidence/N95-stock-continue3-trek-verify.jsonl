@@ -1,0 +1,66 @@
+{"id":0,"ms":401,"event":"boot","error":null,"msg":"stage1 starting, mode=gui args=\"gui light blend dsa img\"Star Trek - Invasion (USA).pbp\" loadstate23000 frames25000 dumpat23003 limit90\""}
+{"id":1,"ms":2266,"event":"exeid","error":null,"msg":"src=file path=E:\\sys\\bin\\ps1stage1.exe size=1431280 crc32=51603f20"}
+{"id":2,"ms":2270,"event":"gpuspeed","error":null,"msg":"g_gpuSpeedPct=100"}
+{"id":3,"ms":2292,"event":"probe","error":null,"msg":"getappinfo=0"}
+{"id":4,"ms":2295,"event":"probe","error":null,"msg":"E:\\sys\\bin\\ps1stage1.exe"}
+{"id":5,"ms":3264,"event":"gui","error":null,"msg":"appui constructed"}
+{"id":6,"ms":3473,"event":"tilt","error":null,"msg":"active=0"}
+{"id":7,"ms":3476,"event":"menu","error":null,"msg":"machine=0x20002d84"}
+{"id":8,"ms":3479,"event":"menu","error":null,"msg":"geometry screen=320x240 lh=19 rows=10 rows_rotated=14"}
+{"id":9,"ms":3489,"event":"gui","error":null,"msg":"window attached, gl==0"}
+{"id":10,"ms":3572,"event":"focus","error":null,"msg":"fore=1"}
+{"id":11,"ms":3576,"event":"vol","error":null,"msg":"step=1"}
+{"id":12,"ms":3579,"event":"vol","error":null,"msg":"step=0"}
+{"id":13,"ms":3590,"event":"exc_handler","error":null,"msg":"rc=0"}
+{"id":14,"ms":3594,"event":"gpu_cfg","error":null,"msg":"pixskip=0 ilace=0 light=1 blend=1"}
+{"id":15,"ms":3597,"event":"gpu_init","error":null,"msg":"init=0"}
+{"id":16,"ms":3606,"event":"gpu_cbs","error":null,"msg":"frameskip=0"}
+{"id":17,"ms":3614,"event":"spu_init","error":null,"msg":"init=0"}
+{"id":18,"ms":3619,"event":"start","error":null,"msg":"stage1 begin (gui), frames=25000 cpu=drc input=0"}
+{"id":19,"ms":3622,"event":"hacks","error":null,"msg":"drc: ndrc=00000020 gtenf=0 cyclemul=175"}
+{"id":20,"ms":3633,"event":"core_msg","error":null,"msg":"psxMap: tried to map @80000000, got 0xce6b38\n"}
+{"id":21,"ms":3646,"event":"core_msg","error":null,"msg":"psxMap: tried to map @77000000, got 0xce6b38\n"}
+{"id":22,"ms":3651,"event":"core_msg","error":null,"msg":"psxMap: tried to map @1f800000, got 0xef6b40\n"}
+{"id":23,"ms":3656,"event":"core_msg","error":null,"msg":"psxMap: tried to map @1fc00000, got 0xf06b48\n"}
+{"id":24,"ms":3659,"event":"core","error":null,"msg":"Init new dynarec, ndrc size 1001000, pgsize 4096\n"}
+{"id":25,"ms":3703,"event":"core","error":null,"msg":"ndrc config: mul=175, ha=20, pex=0\n"}
+{"id":26,"ms":3707,"event":"core","error":null,"msg":"(0x789e93a0) testing if we can run recompiled code @0x3200000...\n"}
+{"id":27,"ms":3710,"event":"core","error":null,"msg":"test passed.\n"}
+{"id":28,"ms":3713,"event":"core","error":null,"msg":"RAM is not directly mapped\n"}
+{"id":29,"ms":3718,"event":"core","error":null,"msg":"Mapped (RAM/scrp/ROM/LUTs/TC):\n"}
+{"id":30,"ms":3723,"event":"core","error":null,"msg":"0xce6b38/0xef6b40/0xf06b48/0x0/0x3200000\n"}
+{"id":31,"ms":3756,"event":"core_msg","error":null,"msg":"psxMap: tried to map @08000000, got 0xf86b50\n"}
+{"id":32,"ms":3967,"event":"core","error":null,"msg":"Loading memory card E:\\PS1\\saves\\card1.mcd\n"}
+{"id":33,"ms":4071,"event":"core","error":null,"msg":"Loading memory card E:\\PS1\\saves\\card2.mcd\n"}
+{"id":34,"ms":4379,"event":"core","error":null,"msg":"Loaded CD Image: E:\\PS1\\games\\Star Trek - Invasion (USA).pbp[+pbp] (310075072 bytes).\n"}
+{"id":35,"ms":4382,"event":"core","error":null,"msg":"Track 1 DATA  - Start 0:2:0, Length 64:13:21\n"}
+{"id":36,"ms":4385,"event":"core","error":null,"msg":"End 64:15:21 (sector 289146)\n"}
+{"id":37,"ms":4398,"event":"core","error":null,"msg":"CD-ROM Label: SLUS_00924                      \n"}
+{"id":38,"ms":4403,"event":"core","error":null,"msg":"CD-ROM ID: SLUS00924\n"}
+{"id":39,"ms":4406,"event":"core","error":null,"msg":"CD-ROM EXE Name: SLUS_009.24;1\n"}
+{"id":40,"ms":4413,"event":"disc","error":null,"msg":"drc: cdra_init=0 cdra_open=0 checkcdrom=0 region=0"}
+{"id":41,"ms":4418,"event":"gpu_open","error":null,"msg":"drc: open=0"}
+{"id":42,"ms":4423,"event":"spu_open","error":null,"msg":"drc: open=0"}
+{"id":43,"ms":4439,"event":"snd_open","error":null,"msg":"drc: rc=0"}
+{"id":44,"ms":4813,"event":"core_msg","error":null,"msg":"Loaded BIOS \"E:\\PS1\\bios/scph7502.bin\".\n"}
+{"id":45,"ms":4823,"event":"core","error":null,"msg":"ndrc: tc out=03200000 base=00000000 size=16777216\n"}
+{"id":46,"ms":4828,"event":"core","error":null,"msg":"Init new dynarec, ndrc size 1001000, pgsize 4096\n"}
+{"id":47,"ms":4870,"event":"core","error":null,"msg":"(0x789e93a0) testing if we can run recompiled code @0x3200000...\n"}
+{"id":48,"ms":4873,"event":"core","error":null,"msg":"test passed.\n"}
+{"id":49,"ms":4878,"event":"core","error":null,"msg":"RAM is not directly mapped\n"}
+{"id":50,"ms":4884,"event":"core","error":null,"msg":"Mapped (RAM/scrp/ROM/LUTs/TC):\n"}
+{"id":51,"ms":4887,"event":"core","error":null,"msg":"0xce6b38/0xef6b40/0xf06b48/0xf86b50/0x3200000\n"}
+{"id":52,"ms":4903,"event":"core_msg","error":null,"msg":"psxMap: tried to map @08000000, got 0xf86b50\n"}
+{"id":53,"ms":5115,"event":"core","error":null,"msg":"BIOS: 19951204, 'CEX-3000/1001/1002 by K.S.', 'E'\n"}
+{"id":54,"ms":6352,"event":"reset","error":null,"msg":"drc: EmuReset ok, hle=0 type=NTSC"}
+{"id":55,"ms":6356,"event":"exec_begin","error":null,"msg":"drc: entering frame loop, 25000 frames"}
+{"id":56,"ms":6359,"event":"screen_init","error":null,"msg":"drc: rc=0 gui=1"}
+{"id":57,"ms":6364,"event":"fb","error":null,"msg":"drc: ok=1 hal=320x240 line=640B bpp=16 first=0 win=320x240"}
+{"id":58,"ms":7394,"event":"loadstate","error":null,"msg":"drc: frame=23000 rc=0 rewound=0 pc=80000080 cycle=1354299179 hsync=240 base=564480 start=1353784064"}
+{"id":59,"ms":7399,"event":"clocks","error":null,"msg":"start: known=0 reason=release-build"}
+{"id":60,"ms":10654,"event":"loadstate","error":null,"msg":"drc: frame=23000 ran=564485 pc=80000080 vbl=9 hsync=240 base=564480 start=1354348544 cyc=1354863664"}
+{"id":61,"ms":10685,"event":"loadstate","error":null,"msg":"drc: frame=23001 ran=564475 pc=80000080 vbl=10 hsync=240 base=564480 start=1354913024 cyc=1355428139"}
+{"id":62,"ms":10733,"event":"loadstate","error":null,"msg":"drc: frame=23002 ran=564480 pc=80000080 vbl=11 hsync=240 base=564480 start=1355477504 cyc=1355992619"}
+{"id":63,"ms":13654,"event":"screen_dump","error":null,"msg":"frame=23003 rc=0 halAddr=0xcb400000"}
+{"id":64,"ms":18614,"event":"vram_dump","error":null,"msg":"frame=23003 rc=0"}
+{"id":65,"ms":20884,"event":"hal_dump","error":null,"msg":"frame=23003 rc=0"}

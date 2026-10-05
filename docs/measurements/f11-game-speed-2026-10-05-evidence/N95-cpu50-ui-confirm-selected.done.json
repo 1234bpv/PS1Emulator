@@ -1,0 +1,15 @@
+{
+  "name": "N95-cpu50-ui-confirm-selected",
+  "started": "2026-10-05T20:19:33.9100135+03:00",
+  "finished": "2026-10-05T20:19:37.7122179+03:00",
+  "limitSec": 60,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-Do",
+    "WAITFG e0001011 1000; KEY left press 1 200; SLEEP 500; SHOT E:\\tester\\N95-cpu50-ui-confirm-selected.bmp 1"
+  ]
+}

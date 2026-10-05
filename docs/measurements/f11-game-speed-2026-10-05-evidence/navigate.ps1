@@ -8,6 +8,8 @@ $name="$Label-$GameKey-nav$Attempt"
 $stock=(Get-Content "$PSScriptRoot\stock-template.txt" -Raw).Replace('Castlevania - Symphony of the Night (USA.pbp',$game.image)
 $stock | Set-Content "$PSScriptRoot\stock-$GameKey.txt" -Encoding ascii
 Invoke-BoundedNet -Name "$name-settings" -NetArgs ($link+@('-PutFile',"$PSScriptRoot\stock-$GameKey.txt",'-Remote','E:\PS1\cfg\ps1_settings.txt')) -LimitSec 30
+$settingsMarker=Get-Content "$PSScriptRoot\$name-settings.done.json" -Raw | ConvertFrom-Json
+if($settingsMarker.timeout -or $settingsMarker.exitCode -ne 0){throw 'navigation settings upload incomplete; scenario not started'}
 $load=if($LoadFrame -gt 0){"loadstate$LoadFrame"}else{''}
 $end=$SaveFrame+1
 $steps=Get-Content $Recipe -Raw

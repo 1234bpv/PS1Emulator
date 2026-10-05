@@ -1,0 +1,19 @@
+{
+  "label": "C5-trek",
+  "repeat": 2,
+  "region": "NTSC",
+  "frames": 1200,
+  "ms": 23858,
+  "shownFrames": 600,
+  "shownFps": 25.14879704920781,
+  "ps1Fps": 50.29759409841562,
+  "speedPercent": 83.82932349735938,
+  "errors": 0,
+  "shutdown": "gui: frames=1200 ms=23858",
+  "pass": "drc: frames=1200 ms=23858 pc=80000080 cycle=2031675182 vblanks=1208 fsAdvised=0",
+  "loaded": "Loaded CD Image: E:\\PS1\\games\\Star Trek - Invasion (USA).pbp[+pbp] (310075072 bytes).\n",
+  "emuMs": null,
+  "shownMethod": "DSA direct FB pixB=4, stock fxaa=0, 240 rows per present",
+  "volume0ms": 1725,
+  "clockStartMs": 4522
+}

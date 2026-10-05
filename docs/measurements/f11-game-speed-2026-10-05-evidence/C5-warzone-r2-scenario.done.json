@@ -1,0 +1,19 @@
+{
+  "name": "C5-warzone-r2-scenario",
+  "started": "2026-10-05T18:22:37.1784979+03:00",
+  "finished": "2026-10-05T18:23:45.6836480+03:00",
+  "limitSec": 220,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\deploy_net-rfcomm.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-Scenario",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\C5-warzone-r2.txt",
+    "-ScenarioTimeoutSec",
+    "200",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\C5-warzone-r2.log"
+  ]
+}

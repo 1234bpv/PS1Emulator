@@ -1,0 +1,80 @@
+{"id":0,"ms":415,"event":"boot","error":null,"msg":"stage1 starting, mode=gui args=\"gui light blend dsa img\"Warzone 2100 (USA).pbp\" loadstate45000 frames47000 dumpat45003 limit90\""}
+{"id":1,"ms":2144,"event":"exeid","error":null,"msg":"src=file path=E:\\sys\\bin\\ps1stage1.exe size=1431280 crc32=51603f20"}
+{"id":2,"ms":2147,"event":"gpuspeed","error":null,"msg":"g_gpuSpeedPct=100"}
+{"id":3,"ms":2166,"event":"probe","error":null,"msg":"getappinfo=0"}
+{"id":4,"ms":2169,"event":"probe","error":null,"msg":"E:\\sys\\bin\\ps1stage1.exe"}
+{"id":5,"ms":2534,"event":"gui","error":null,"msg":"appui constructed"}
+{"id":6,"ms":2744,"event":"tilt","error":null,"msg":"active=0"}
+{"id":7,"ms":2747,"event":"menu","error":null,"msg":"machine=0x20002d84"}
+{"id":8,"ms":2750,"event":"menu","error":null,"msg":"geometry screen=320x240 lh=19 rows=10 rows_rotated=14"}
+{"id":9,"ms":2761,"event":"gui","error":null,"msg":"window attached, gl==0"}
+{"id":10,"ms":2850,"event":"focus","error":null,"msg":"fore=1"}
+{"id":11,"ms":2854,"event":"vol","error":null,"msg":"step=1"}
+{"id":12,"ms":2857,"event":"vol","error":null,"msg":"step=0"}
+{"id":13,"ms":2868,"event":"exc_handler","error":null,"msg":"rc=0"}
+{"id":14,"ms":2872,"event":"gpu_cfg","error":null,"msg":"pixskip=0 ilace=0 light=1 blend=1"}
+{"id":15,"ms":2875,"event":"gpu_init","error":null,"msg":"init=0"}
+{"id":16,"ms":2886,"event":"gpu_cbs","error":null,"msg":"frameskip=0"}
+{"id":17,"ms":2893,"event":"spu_init","error":null,"msg":"init=0"}
+{"id":18,"ms":2898,"event":"start","error":null,"msg":"stage1 begin (gui), frames=47000 cpu=drc input=0"}
+{"id":19,"ms":2901,"event":"hacks","error":null,"msg":"drc: ndrc=00000020 gtenf=0 cyclemul=175"}
+{"id":20,"ms":2912,"event":"core_msg","error":null,"msg":"psxMap: tried to map @80000000, got 0xce6b28\n"}
+{"id":21,"ms":2925,"event":"core_msg","error":null,"msg":"psxMap: tried to map @77000000, got 0xce6b28\n"}
+{"id":22,"ms":2930,"event":"core_msg","error":null,"msg":"psxMap: tried to map @1f800000, got 0xef6b30\n"}
+{"id":23,"ms":2935,"event":"core_msg","error":null,"msg":"psxMap: tried to map @1fc00000, got 0xf06b38\n"}
+{"id":24,"ms":2938,"event":"core","error":null,"msg":"Init new dynarec, ndrc size 1001000, pgsize 4096\n"}
+{"id":25,"ms":2982,"event":"core","error":null,"msg":"ndrc config: mul=175, ha=20, pex=0\n"}
+{"id":26,"ms":2987,"event":"core","error":null,"msg":"(0x789e93a0) testing if we can run recompiled code @0x3200000...\n"}
+{"id":27,"ms":2990,"event":"core","error":null,"msg":"test passed.\n"}
+{"id":28,"ms":2993,"event":"core","error":null,"msg":"RAM is not directly mapped\n"}
+{"id":29,"ms":2998,"event":"core","error":null,"msg":"Mapped (RAM/scrp/ROM/LUTs/TC):\n"}
+{"id":30,"ms":3003,"event":"core","error":null,"msg":"0xce6b28/0xef6b30/0xf06b38/0x0/0x3200000\n"}
+{"id":31,"ms":3036,"event":"core_msg","error":null,"msg":"psxMap: tried to map @08000000, got 0xf86b40\n"}
+{"id":32,"ms":3245,"event":"core","error":null,"msg":"Loading memory card E:\\PS1\\saves\\card1.mcd\n"}
+{"id":33,"ms":3348,"event":"core","error":null,"msg":"Loading memory card E:\\PS1\\saves\\card2.mcd\n"}
+{"id":34,"ms":3675,"event":"core","error":null,"msg":"Loaded CD Image: E:\\PS1\\games\\Warzone 2100 (USA).pbp[+pbp] (414470047 bytes).\n"}
+{"id":35,"ms":3678,"event":"core","error":null,"msg":"Track 1 DATA  - Start 0:2:0, Length 66:30:32\n"}
+{"id":36,"ms":3681,"event":"core","error":null,"msg":"End 66:32:32 (sector 299432)\n"}
+{"id":37,"ms":3704,"event":"core","error":null,"msg":"CD-ROM Label: SLUS_00819                      \n"}
+{"id":38,"ms":3709,"event":"core","error":null,"msg":"CD-ROM ID: SLUS00819\n"}
+{"id":39,"ms":3712,"event":"core","error":null,"msg":"CD-ROM EXE Name: SLUS_008.19;1\n"}
+{"id":40,"ms":3720,"event":"disc","error":null,"msg":"drc: cdra_init=0 cdra_open=0 checkcdrom=0 region=0"}
+{"id":41,"ms":3725,"event":"gpu_open","error":null,"msg":"drc: open=0"}
+{"id":42,"ms":3730,"event":"spu_open","error":null,"msg":"drc: open=0"}
+{"id":43,"ms":3746,"event":"snd_open","error":null,"msg":"drc: rc=0"}
+{"id":44,"ms":4121,"event":"core_msg","error":null,"msg":"Loaded BIOS \"E:\\PS1\\bios/scph7502.bin\".\n"}
+{"id":45,"ms":4131,"event":"core","error":null,"msg":"ndrc: tc out=03200000 base=00000000 size=16777216\n"}
+{"id":46,"ms":4136,"event":"core","error":null,"msg":"Init new dynarec, ndrc size 1001000, pgsize 4096\n"}
+{"id":47,"ms":4178,"event":"core","error":null,"msg":"(0x789e93a0) testing if we can run recompiled code @0x3200000...\n"}
+{"id":48,"ms":4181,"event":"core","error":null,"msg":"test passed.\n"}
+{"id":49,"ms":4186,"event":"core","error":null,"msg":"RAM is not directly mapped\n"}
+{"id":50,"ms":4191,"event":"core","error":null,"msg":"Mapped (RAM/scrp/ROM/LUTs/TC):\n"}
+{"id":51,"ms":4194,"event":"core","error":null,"msg":"0xce6b28/0xef6b30/0xf06b38/0xf86b40/0x3200000\n"}
+{"id":52,"ms":4211,"event":"core_msg","error":null,"msg":"psxMap: tried to map @08000000, got 0xf86b40\n"}
+{"id":53,"ms":4423,"event":"core","error":null,"msg":"BIOS: 19951204, 'CEX-3000/1001/1002 by K.S.', 'E'\n"}
+{"id":54,"ms":5670,"event":"reset","error":null,"msg":"drc: EmuReset ok, hle=0 type=NTSC"}
+{"id":55,"ms":5673,"event":"exec_begin","error":null,"msg":"drc: entering frame loop, 47000 frames"}
+{"id":56,"ms":5676,"event":"screen_init","error":null,"msg":"drc: rc=0 gui=1"}
+{"id":57,"ms":5681,"event":"fb","error":null,"msg":"drc: ok=1 hal=320x240 line=640B bpp=16 first=0 win=320x240"}
+{"id":58,"ms":6783,"event":"loadstate","error":null,"msg":"drc: frame=45000 rc=0 rewound=0 pc=80000080 cycle=667084593 hsync=240 base=564480 start=666569472"}
+{"id":59,"ms":6788,"event":"clocks","error":null,"msg":"start: known=0 reason=release-build"}
+{"id":60,"ms":8310,"event":"loadstate","error":null,"msg":"drc: frame=45000 ran=564496 pc=80000080 vbl=9 hsync=240 base=564480 start=667133952 cyc=667649089"}
+{"id":61,"ms":8636,"event":"loadstate","error":null,"msg":"drc: frame=45001 ran=564461 pc=80000080 vbl=10 hsync=240 base=564480 start=667698432 cyc=668213550"}
+{"id":62,"ms":8765,"event":"loadstate","error":null,"msg":"drc: frame=45002 ran=564477 pc=80000080 vbl=11 hsync=240 base=564480 start=668262912 cyc=668778027"}
+{"id":63,"ms":10136,"event":"screen_dump","error":null,"msg":"frame=45003 rc=0 halAddr=0xcb400000"}
+{"id":64,"ms":15740,"event":"vram_dump","error":null,"msg":"frame=45003 rc=0"}
+{"id":65,"ms":16616,"event":"hal_dump","error":null,"msg":"frame=45003 rc=0"}
+{"id":66,"ms":27750,"event":"fb_pattern","error":null,"msg":"rb=0 match=64/64 bad=-1,-1 want=0xffffffff got=0xffffffff raw=0"}
+{"id":67,"ms":28454,"event":"clocks","error":null,"msg":"end: known=0 reason=release-build"}
+{"id":68,"ms":28477,"event":"wdsample","error":null,"msg":"drc: t=0s pc=800b60ac cycle=667111822"}
+{"id":69,"ms":28481,"event":"wdsample","error":null,"msg":"drc: t=2s pc=80000080 cycle=668778027"}
+{"id":70,"ms":28484,"event":"wdsample","error":null,"msg":"drc: t=4s pc=80000080 cycle=668778027"}
+{"id":71,"ms":28489,"event":"pass","error":null,"msg":"drc: frames=8 ms=21641 pc=80000080 cycle=671600449 vblanks=16 fsAdvised=0"}
+{"id":72,"ms":28494,"event":"gpustats","error":null,"msg":"drc: gp0=12 dataMem=3 dmaChain=6 gp1=24"}
+{"id":73,"ms":28497,"event":"gpulibstats","error":null,"msg":"drc: disabled in release; gpustats remains active"}
+{"id":74,"ms":28500,"event":"vramstats","error":null,"msg":"drc: sysToVid=3,6144px vidToSys=0,0px vidToVid=3,6px"}
+{"id":75,"ms":28505,"event":"sndstats","error":null,"msg":"drc: feeds=16 samples=23392 maxAmp=-1 under=1 step=16384"}
+{"id":76,"ms":28510,"event":"dsa","error":null,"msg":"drc: active=1 gl=0 fbPlatform=1 pixB=4 strideB=1280 rows=720/0/0/0/0 covered=1 fbOk=1 rowCopy=0 rgn=1,0,0,320,240 scr=320,240 tries=0 rgb24scaled=0 rgb24b16=0 rgb24src=0 rgb24dst=0"}
+{"id":77,"ms":28513,"event":"drawstats","error":null,"msg":"drc: polySpans=0 polyPix=0 polyTex=0 polyLit=0 polyBlend=0 spriteCalls=0 spritePix=0 spriteTex=0 tileCalls=0 tilePix=0 polyPrims=0 polyRows=0"}
+{"id":78,"ms":28992,"event":"screen","error":null,"msg":"drc: presented 8 frames, held 0ms"}
+{"id":79,"ms":29016,"event":"core","error":null,"msg":"ndrc: tc out=0336ea34 base=00000000 size=16777216\n"}

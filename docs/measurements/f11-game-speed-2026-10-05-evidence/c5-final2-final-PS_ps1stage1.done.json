@@ -1,0 +1,15 @@
+{
+  "name": "c5-final2-final-PS_ps1stage1",
+  "started": "2026-10-05T20:18:58.0441327+03:00",
+  "finished": "2026-10-05T20:18:58.6378097+03:00",
+  "limitSec": 30,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\deploy_net-rfcomm.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-Cmd",
+    "PS ps1stage1"
+  ]
+}

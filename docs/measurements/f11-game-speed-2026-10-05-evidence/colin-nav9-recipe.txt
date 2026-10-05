@@ -1,0 +1,25 @@
+SLEEP 15000
+WAITFG e0001002 1000
+-KEY down down
+SLEEP 400
+-KEY down up
+SLEEP 3000
+-SHOT E:\tester\colin-nav9-01.bmp 1
+WAITFG e0001002 1000
+-KEY down down
+SLEEP 400
+-KEY down up
+SLEEP 3000
+-SHOT E:\tester\colin-nav9-02.bmp 1
+WAITFG e0001002 1000
+-KEY 5 down
+SLEEP 400
+-KEY 5 up
+SLEEP 50000
+-SHOT E:\tester\colin-nav9-03.bmp 1
+WAITFG e0001002 1000
+-KEY 5 down
+SLEEP 20000
+-KEY 5 up
+-SHOT E:\tester\colin-nav9-04.bmp 1
+SLEEP 110000
