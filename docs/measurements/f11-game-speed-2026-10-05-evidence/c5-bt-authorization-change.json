@@ -1,0 +1,10 @@
+{
+  "peer": "KOMPUTER",
+  "originalAuthorized": false,
+  "temporaryAuthorized": true,
+  "restoreAfterMeasurements": true,
+  "before": "c5-bt-peer-options-v2.png",
+  "confirmation": "c5-bt-authorize-local-peer.png",
+  "after": "c5-bt-authorized.png",
+  "changedAt": "2026-10-05T15:19:32.0533796+03:00"
+}

@@ -1,0 +1,17 @@
+{
+  "name": "C5-clean-rayman-verify-settings",
+  "started": "2026-10-05T14:57:34.7537740+03:00",
+  "finished": "2026-10-05T14:57:46.1684228+03:00",
+  "limitSec": 30,
+  "timeout": false,
+  "exitCode": 1,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\deploy_net-rfcomm.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-PutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\stock-rayman.txt",
+    "-Remote",
+    "E:\\PS1\\cfg\\ps1_settings.txt"
+  ]
+}

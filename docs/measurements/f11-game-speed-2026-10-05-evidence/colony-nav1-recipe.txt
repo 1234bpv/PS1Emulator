@@ -1,0 +1,21 @@
+SLEEP 20000
+-SHOT E:\tester\colony-nav1-01.bmp 1
+-KEY 8 press 1 100
+SLEEP 8000
+-SHOT E:\tester\colony-nav1-02.bmp 1
+-KEY 5 press 1 100
+SLEEP 8000
+-SHOT E:\tester\colony-nav1-03.bmp 1
+-KEY 5 press 1 100
+SLEEP 8000
+-SHOT E:\tester\colony-nav1-04.bmp 1
+-KEY 8 press 1 100
+SLEEP 8000
+-SHOT E:\tester\colony-nav1-05.bmp 1
+-KEY 5 press 1 100
+SLEEP 15000
+-SHOT E:\tester\colony-nav1-06.bmp 1
+-KEY 5 press 1 100
+SLEEP 15000
+-SHOT E:\tester\colony-nav1-07.bmp 1
+SLEEP 100000

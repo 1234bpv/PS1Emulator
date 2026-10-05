@@ -1,0 +1,9 @@
+LOG C5 local Bluetooth dialog timing; not emulator benchmark
+SLEEP 15000
+FG
+WG
+-SHOT E:\tester\c5-bt-script-before.bmp 1
+-KEY lsk
+SLEEP 2000
+FG
+-SHOT E:\tester\c5-bt-script-after.bmp 1

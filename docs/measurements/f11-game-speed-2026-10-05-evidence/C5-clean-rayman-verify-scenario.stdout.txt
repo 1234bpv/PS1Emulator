@@ -1,0 +1,1 @@
+[net] direct RFCOMM C5 A8448113EA78 channel 13

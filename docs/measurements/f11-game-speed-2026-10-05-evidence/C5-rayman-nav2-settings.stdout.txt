@@ -1,0 +1,6 @@
+[net] direct RFCOMM C5 A8448113EA78 channel 13
+[net] serial COM12 @ 115200 baud
+[net] PUT D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\stock-rayman.txt -> E:\PS1\cfg\ps1_settings.txt (444 bytes)
+[net] .. 444/444
+[net] OK 444
+[net] done

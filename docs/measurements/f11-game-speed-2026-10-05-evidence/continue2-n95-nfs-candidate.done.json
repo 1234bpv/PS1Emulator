@@ -1,0 +1,17 @@
+{
+  "name": "continue2-n95-nfs-candidate",
+  "started": "2026-10-05T02:13:29.2834613+03:00",
+  "finished": "2026-10-05T02:13:31.6255921+03:00",
+  "limitSec": 90,
+  "timeout": false,
+  "exitCode": 1,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-PutFile",
+    "./plans/runs/2026-10-05_game-speed/states/nfs-nav1.sav",
+    "-Remote",
+    "E:\\PS1\\saves\\bench.sav"
+  ]
+}

@@ -1,0 +1,6 @@
+[net] direct RFCOMM C5 A8448113EA78 channel 13
+[net] serial COM12 @ 115200 baud
+[net] PUT D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\stock-wipeout.txt -> E:\PS1\cfg\ps1_settings.txt (445 bytes)
+[net] .. 445/445
+[net] OK 445
+[net] done

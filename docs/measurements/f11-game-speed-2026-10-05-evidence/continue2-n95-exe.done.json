@@ -1,0 +1,17 @@
+{
+  "name": "continue2-n95-exe",
+  "started": "2026-10-05T02:13:26.5522998+03:00",
+  "finished": "2026-10-05T02:13:29.2615291+03:00",
+  "limitSec": 40,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-GetFile",
+    "E:\\sys\\bin\\ps1stage1.exe",
+    "-OutFile",
+    "./plans/runs/2026-10-05_game-speed/continue2-n95-exe.exe"
+  ]
+}

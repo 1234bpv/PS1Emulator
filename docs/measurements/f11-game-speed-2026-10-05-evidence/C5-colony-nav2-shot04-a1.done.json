@@ -1,0 +1,17 @@
+{
+  "name": "C5-colony-nav2-shot04-a1",
+  "started": "2026-10-05T14:32:00.0155839+03:00",
+  "finished": "2026-10-05T14:32:01.0263399+03:00",
+  "limitSec": 45,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\deploy_net-rfcomm.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-GetFile",
+    "E:\\tester\\colony-nav2-04.bmp",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\C5-colony-nav2-04.bmp"
+  ]
+}

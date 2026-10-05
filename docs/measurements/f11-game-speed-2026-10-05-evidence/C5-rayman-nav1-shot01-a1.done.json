@@ -1,0 +1,17 @@
+{
+  "name": "C5-rayman-nav1-shot01-a1",
+  "started": "2026-10-05T14:46:39.8389673+03:00",
+  "finished": "2026-10-05T14:46:46.0988179+03:00",
+  "limitSec": 45,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\deploy_net-rfcomm.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-GetFile",
+    "E:\\tester\\rayman-nav1-01.bmp",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\C5-rayman-nav1-01.bmp"
+  ]
+}

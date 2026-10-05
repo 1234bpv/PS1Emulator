@@ -2,7 +2,9 @@
   {
     "key": "cast",
     "image": "Castlevania - Symphony of the Night (USA.pbp",
-    "size": 398057383
+    "size": 398057383,
+    "state": "cast-gameplay.sav",
+    "frame": 17500
   },
   {
     "key": "colin",
@@ -12,7 +14,9 @@
   {
     "key": "colony",
     "image": "Colony Wars (USA) (Disc 1).pbp",
-    "size": 366364329
+    "size": 366364329,
+    "state": "colony-flight.sav",
+    "frame": 13000
   },
   {
     "key": "crash",
@@ -31,22 +35,30 @@
   {
     "key": "nfs",
     "image": "Need for Speed - Porsche Unleashed (USA).pbp",
-    "size": 519772571
+    "size": 519772571,
+    "state": "nfs-start.sav",
+    "frame": 24000
   },
   {
     "key": "rayman",
     "image": "Rayman (USA).pbp",
-    "size": 498135871
+    "size": 498135871,
+    "state": "rayman-start.sav",
+    "frame": 14000
   },
   {
     "key": "rc",
     "image": "RC Helicopter (USA).pbp",
-    "size": 12839268
+    "size": 12839268,
+    "state": "rc-practice.sav",
+    "frame": 23000
   },
   {
     "key": "trek",
     "image": "Star Trek - Invasion (USA).pbp",
-    "size": 310075072
+    "size": 310075072,
+    "state": "trek-flight.sav",
+    "frame": 14000
   },
   {
     "key": "warzone",

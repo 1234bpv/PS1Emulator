@@ -1,0 +1,19 @@
+{
+  "name": "C5-serial-cast-verify-scenario",
+  "started": "2026-10-05T15:07:05.2340951+03:00",
+  "finished": "2026-10-05T15:07:22.7746023+03:00",
+  "limitSec": 140,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-Scenario",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\C5-serial-cast-verify.txt",
+    "-ScenarioTimeoutSec",
+    "110",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\C5-serial-cast-verify.log"
+  ]
+}

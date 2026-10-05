@@ -1,0 +1,12 @@
+[net] serial COM12 @ 115200 baud
+[net] > KEY down press 3 150
+[net] < OK key 0x11 x3
+[net] > KEY ok
+[net] < OK key 0xa7 x1
+[net] > SLEEP 1000
+[net] < OK sleep 1000
+[net] > SHOT E:\tester\c5-bt-authorize-local-peer.bmp 1
+[net] < OK shot 230454 240x320 fb mode11
+[net] GET E:\tester\c5-bt-authorize-local-peer.bmp -> D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\c5-bt-authorize-local-peer.bmp
+[net] got 230ÿ454 bytes
+[net] done

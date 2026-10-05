@@ -1,0 +1,19 @@
+{
+  "label": "C5-wipeout",
+  "repeat": 1,
+  "region": "NTSC",
+  "frames": 1200,
+  "ms": 28070,
+  "shownFrames": 600,
+  "shownFps": 21.375133594584966,
+  "ps1Fps": 42.75026718916993,
+  "speedPercent": 71.25044531528322,
+  "errors": 0,
+  "shutdown": "gui: frames=1200 ms=28070",
+  "pass": "drc: frames=1200 ms=28070 pc=80000080 cycle=1354299190 vblanks=1208 fsAdvised=0",
+  "loaded": "Loaded CD Image: E:\\PS1\\games\\WipEout (USA).pbp[+pbp] (450941663 bytes).\n",
+  "emuMs": null,
+  "shownMethod": "DSA direct FB pixB=4, stock fxaa=0, 240 rows per present",
+  "volume0ms": 2156,
+  "clockStartMs": 4970
+}

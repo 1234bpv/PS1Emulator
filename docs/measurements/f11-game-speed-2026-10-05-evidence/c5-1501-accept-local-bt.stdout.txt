@@ -1,0 +1,11 @@
+[net] direct RFCOMM C5 A8448113EA78 channel 13
+[net] serial COM12 @ 115200 baud
+[net] > KEY lsk
+[net] < OK key 0xa4 x1
+[net] > SLEEP 1000
+[net] < OK sleep 1000
+[net] > SHOT E:\tester\c5-bt-local-accepted.bmp 2
+[net] < OK shot 57654 120x160 fb mode11
+[net] GET E:\tester\c5-bt-local-accepted.bmp -> D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\c5-bt-local-accepted.bmp
+[net] got 57ÿ654 bytes
+[net] done

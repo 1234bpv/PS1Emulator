@@ -1,0 +1,7 @@
+Исключение при вызове "ReadByte" с "0" аргументами: "Bluetooth recv byte: WSA 10060"
+D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\deploy_net-rfcomm.ps1:261 знак:9
++         $b = $stream.ReadByte()
++         ~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:) [], ParentContainsErrorRecordException
+    + FullyQualifiedErrorId : IOException
+ 

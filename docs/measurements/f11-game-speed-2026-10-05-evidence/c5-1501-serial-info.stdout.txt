@@ -1,0 +1,13 @@
+[net] direct RFCOMM C5 A8448113EA78 channel 13
+[net] serial COM12 @ 115200 baud
+[net] > INFO
+[net] < OK info
+[net] < protocol 2
+[net] < screen 240x320
+[net] < ramfree 180047872
+[net] < tick 54465156 startTick 4537830 boot 0 by r
+[net] < drive C freekb 30416
+[net] < drive E freekb 10899104
+[net] < scriptlog E:\tester\C5-clean-v2-rayman-verify.log
+[net] < script DONE 10
+[net] done

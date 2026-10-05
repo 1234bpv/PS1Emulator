@@ -1,0 +1,17 @@
+{
+  "name": "C5-rayman-nav1-settings",
+  "started": "2026-10-05T14:42:39.6439163+03:00",
+  "finished": "2026-10-05T14:42:40.6745303+03:00",
+  "limitSec": 30,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\deploy_net-rfcomm.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-PutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\stock-rayman.txt",
+    "-Remote",
+    "E:\\PS1\\cfg\\ps1_settings.txt"
+  ]
+}

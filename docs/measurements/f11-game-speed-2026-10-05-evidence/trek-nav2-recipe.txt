@@ -1,0 +1,30 @@
+SLEEP 5000
+WAITFG e0001002 1000
+-KEY 8 press 1 100
+SLEEP 5000
+-SHOT E:\tester\trek-nav2-01.bmp 2
+WAITFG e0001002 1000
+-KEY 5 press 1 100
+SLEEP 8000
+-SHOT E:\tester\trek-nav2-02.bmp 2
+WAITFG e0001002 1000
+-KEY 5 press 1 100
+SLEEP 8000
+-SHOT E:\tester\trek-nav2-03.bmp 2
+WAITFG e0001002 1000
+-KEY 5 press 1 100
+SLEEP 8000
+-SHOT E:\tester\trek-nav2-04.bmp 2
+WAITFG e0001002 1000
+-KEY 5 press 1 100
+SLEEP 8000
+-SHOT E:\tester\trek-nav2-05.bmp 2
+WAITFG e0001002 1000
+-KEY 5 press 1 100
+SLEEP 8000
+-SHOT E:\tester\trek-nav2-06.bmp 2
+WAITFG e0001002 1000
+-KEY 5 press 1 100
+SLEEP 8000
+-SHOT E:\tester\trek-nav2-07.bmp 2
+SLEEP 120000

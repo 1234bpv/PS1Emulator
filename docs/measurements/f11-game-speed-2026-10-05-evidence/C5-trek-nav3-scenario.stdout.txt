@@ -1,0 +1,18 @@
+[net] direct RFCOMM C5 A8448113EA78 channel 13
+[net] serial COM12 @ 115200 baud
+[net] PUT D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\C5-trek-nav3.txt -> E:\tester\C5-trek-nav3.txt (655 bytes)
+[net] .. 655/655
+[net] OK 655
+[net] > SCRIPT E:\tester\C5-trek-nav3.txt E:\tester\C5-trek-nav3.log
+[net] < OK script E:\tester\C5-trek-nav3.log
+[net] OK RUNNING 3 -WAITFG e0001002 20000
+[net] OK RUNNING 5 SLEEP 8000
+[net] OK RUNNING 8 SLEEP 12000
+[net] OK RUNNING 10 SLEEP 5000
+[net] OK RUNNING 11 -SHOT E:\tester\trek-nav3-01.bmp 2
+[net] OK RUNNING 14 SLEEP 2000
+[net] OK RUNNING 16 SLEEP 5000
+[net] OK RUNNING 17 -SHOT E:\tester\trek-nav3-02.bmp 2
+[net] OK RUNNING 20 SLEEP 3000
+[net] OK RUNNING 22 SLEEP 5000
+[net] OK RUNNING 24 SLEEP 130000

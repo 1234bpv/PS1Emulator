@@ -1,0 +1,19 @@
+{
+  "name": "c5-bt-peer-options",
+  "started": "2026-10-05T15:17:03.6633703+03:00",
+  "finished": "2026-10-05T15:17:12.3872573+03:00",
+  "limitSec": 30,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\deploy_net-serial-control.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-Do",
+    "KEY lsk; SLEEP 1000; SHOT E:\\tester\\c5-bt-peer-options.bmp 1",
+    "-GetFile",
+    "E:\\tester\\c5-bt-peer-options.bmp",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\c5-bt-peer-options.bmp"
+  ]
+}

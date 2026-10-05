@@ -1,0 +1,19 @@
+{
+  "name": "c5-bt-ui-open",
+  "started": "2026-10-05T15:16:15.0693394+03:00",
+  "finished": "2026-10-05T15:16:23.1987131+03:00",
+  "limitSec": 35,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\deploy_net-serial-control.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-Do",
+    "APP 0x10005951; SLEEP 2000; SHOT E:\\tester\\c5-bt-ui-open.bmp 1",
+    "-GetFile",
+    "E:\\tester\\c5-bt-ui-open.bmp",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\c5-bt-ui-open.bmp"
+  ]
+}

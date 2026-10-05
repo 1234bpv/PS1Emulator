@@ -1,0 +1,10 @@
+[net] serial COM12 @ 115200 baud
+[net] > APP 0x10005951
+[net] < OK app foreground
+[net] > SLEEP 2000
+[net] < OK sleep 2000
+[net] > SHOT E:\tester\c5-bt-ui-open.bmp 1
+[net] < OK shot 230454 240x320 fb mode11
+[net] GET E:\tester\c5-bt-ui-open.bmp -> D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\c5-bt-ui-open.bmp
+[net] got 230ÿ454 bytes
+[net] done

@@ -1,0 +1,17 @@
+{
+  "name": "C5-trek-nav2-settings",
+  "started": "2026-10-05T15:35:06.5055734+03:00",
+  "finished": "2026-10-05T15:35:08.9652357+03:00",
+  "limitSec": 30,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\deploy_net-rfcomm.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-PutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\stock-trek.txt",
+    "-Remote",
+    "E:\\PS1\\cfg\\ps1_settings.txt"
+  ]
+}

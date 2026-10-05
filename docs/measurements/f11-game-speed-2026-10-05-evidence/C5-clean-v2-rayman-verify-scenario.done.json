@@ -1,0 +1,19 @@
+{
+  "name": "C5-clean-v2-rayman-verify-scenario",
+  "started": "2026-10-05T14:59:09.3031559+03:00",
+  "finished": "2026-10-05T14:59:24.7402710+03:00",
+  "limitSec": 140,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\deploy_net-rfcomm.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-Scenario",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\C5-clean-v2-rayman-verify.txt",
+    "-ScenarioTimeoutSec",
+    "110",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\C5-clean-v2-rayman-verify.log"
+  ]
+}

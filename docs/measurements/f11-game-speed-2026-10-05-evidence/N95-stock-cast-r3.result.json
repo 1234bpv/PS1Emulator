@@ -1,0 +1,19 @@
+{
+  "label": "N95-stock-cast",
+  "repeat": 3,
+  "region": "NTSC",
+  "frames": 1200,
+  "ms": 64126,
+  "shownFrames": 1200,
+  "shownFps": 18.713158469263636,
+  "ps1Fps": 18.713158469263636,
+  "speedPercent": 31.18859744877273,
+  "errors": 0,
+  "shutdown": "gui: frames=1200 ms=64126",
+  "pass": "drc: frames=1200 ms=64126 pc=80000080 cycle=3442875179 vblanks=1208 fsAdvised=0",
+  "loaded": "Loaded CD Image: E:\\PS1\\games\\Castlevania - Symphony of the Night (USA.pbp[+pbp] (398057383 bytes).\n",
+  "emuMs": null,
+  "shownMethod": "DSA direct FB pixB=4, stock fxaa=0, 240 rows per present",
+  "volume0ms": 3741,
+  "clockStartMs": 7446
+}

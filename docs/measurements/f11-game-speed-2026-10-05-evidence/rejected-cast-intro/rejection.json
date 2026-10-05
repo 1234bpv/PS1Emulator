@@ -1,0 +1,8 @@
+{
+  "loadFrame": 15000,
+  "state": "cast-start.sav",
+  "status": "invalid gameplay timing",
+  "excludedResults": 3,
+  "proof": "N95-stock-cast-verify.png",
+  "reason": "N95 repeat-load screenshot shows castle introductory scene. C5 late screenshot reached HUD but did not prove gameplay at start of the saved state."
+}

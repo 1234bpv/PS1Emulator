@@ -1,0 +1,17 @@
+{
+  "name": "N95-rc-nav1-shot01-a1",
+  "started": "2026-10-05T02:45:35.3037738+03:00",
+  "finished": "2026-10-05T02:45:37.5957270+03:00",
+  "limitSec": 45,
+  "timeout": false,
+  "exitCode": 1,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-GetFile",
+    "E:\\tester\\rc-nav1-01.bmp",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\N95-rc-nav1-01.bmp"
+  ]
+}

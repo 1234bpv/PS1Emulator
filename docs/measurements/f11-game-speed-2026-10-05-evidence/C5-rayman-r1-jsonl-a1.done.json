@@ -1,0 +1,17 @@
+{
+  "name": "C5-rayman-r1-jsonl-a1",
+  "started": "2026-10-05T14:54:36.5422845+03:00",
+  "finished": "2026-10-05T14:54:37.9020829+03:00",
+  "limitSec": 45,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\deploy_net-rfcomm.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-GetFile",
+    "E:\\PS1\\logs\\ps1_stage1.jsonl",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\C5-rayman-r1-a1.jsonl"
+  ]
+}

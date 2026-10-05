@@ -1,0 +1,30 @@
+LOG C5-colony-nav1 navigation only; not a timing measurement
+-START E:\sys\bin\ps1stage1.exe gui rec light blend dsa img"Colony Wars (USA) (Disc 1).pbp"  savestate5000 frames5001 dumpat999999 limit240
+-WAITFG e0001002 20000
+-KEY star press 2 100
+SLEEP 20000
+-SHOT E:\tester\colony-nav1-01.bmp 1
+-KEY 8 press 1 100
+SLEEP 8000
+-SHOT E:\tester\colony-nav1-02.bmp 1
+-KEY 5 press 1 100
+SLEEP 8000
+-SHOT E:\tester\colony-nav1-03.bmp 1
+-KEY 5 press 1 100
+SLEEP 8000
+-SHOT E:\tester\colony-nav1-04.bmp 1
+-KEY 8 press 1 100
+SLEEP 8000
+-SHOT E:\tester\colony-nav1-05.bmp 1
+-KEY 5 press 1 100
+SLEEP 15000
+-SHOT E:\tester\colony-nav1-06.bmp 1
+-KEY 5 press 1 100
+SLEEP 15000
+-SHOT E:\tester\colony-nav1-07.bmp 1
+SLEEP 100000
+
+-ENDAPP 0xE0001002
+SLEEP 2000
+-KILL ps1stage1
+PS ps1stage1

@@ -1,0 +1,19 @@
+{
+  "name": "C5-cast-r1-scenario",
+  "started": "2026-10-05T15:09:36.2205887+03:00",
+  "finished": "2026-10-05T15:10:48.0349149+03:00",
+  "limitSec": 220,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-Scenario",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\C5-cast-r1.txt",
+    "-ScenarioTimeoutSec",
+    "200",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\C5-cast-r1.log"
+  ]
+}

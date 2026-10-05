@@ -1,0 +1,19 @@
+{
+  "label": "C5-rc",
+  "repeat": 1,
+  "region": "NTSC",
+  "frames": 1200,
+  "ms": 37632,
+  "shownFrames": 1200,
+  "shownFps": 31.887755102040817,
+  "ps1Fps": 31.887755102040817,
+  "speedPercent": 53.14625850340136,
+  "errors": 0,
+  "shutdown": "gui: frames=1200 ms=37632",
+  "pass": "drc: frames=1200 ms=37632 pc=80000080 cycle=2596155182 vblanks=1208 fsAdvised=0",
+  "loaded": "Loaded CD Image: E:\\PS1\\games\\RC Helicopter (USA).pbp[+pbp] (12839268 bytes).\n",
+  "emuMs": null,
+  "shownMethod": "DSA direct FB pixB=4, stock fxaa=0, 240 rows per present",
+  "volume0ms": 1717,
+  "clockStartMs": 4120
+}

@@ -1,0 +1,19 @@
+{
+  "name": "c5-1501-accept-local-bt",
+  "started": "2026-10-05T15:01:27.3741807+03:00",
+  "finished": "2026-10-05T15:01:36.6810158+03:00",
+  "limitSec": 35,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\deploy_net-rfcomm.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-Do",
+    "KEY lsk; SLEEP 1000; SHOT E:\\tester\\c5-bt-local-accepted.bmp 2",
+    "-GetFile",
+    "E:\\tester\\c5-bt-local-accepted.bmp",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\c5-bt-local-accepted.bmp"
+  ]
+}

@@ -1,0 +1,20 @@
+SLEEP 8000
+WAITFG e0001002 1000
+-KEY 6 down
+SLEEP 12000
+-KEY 6 up
+SLEEP 5000
+-SHOT E:\tester\trek-nav3-01.bmp 2
+WAITFG e0001002 1000
+-KEY right down
+SLEEP 2000
+-KEY right up
+SLEEP 5000
+-SHOT E:\tester\trek-nav3-02.bmp 2
+WAITFG e0001002 1000
+-KEY 5 down
+SLEEP 3000
+-KEY 5 up
+SLEEP 5000
+-SHOT E:\tester\trek-nav3-03.bmp 2
+SLEEP 130000

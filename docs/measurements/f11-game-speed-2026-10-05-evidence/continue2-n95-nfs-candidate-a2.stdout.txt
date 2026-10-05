@@ -1,0 +1,8 @@
+[net] PUT D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\states\nfs-nav1.sav -> E:\PS1\saves\bench.sav (1ÿ423ÿ891 bytes)
+[net] .. 262ÿ144/1ÿ423ÿ891
+[net] .. 524ÿ288/1ÿ423ÿ891
+[net] .. 786ÿ432/1ÿ423ÿ891
+[net] .. 1ÿ048ÿ576/1ÿ423ÿ891
+[net] .. 1ÿ310ÿ720/1ÿ423ÿ891
+[net] OK 1423891
+[net] done

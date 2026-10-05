@@ -1,0 +1,102 @@
+{"id":0,"ms":152,"event":"boot","error":null,"msg":"stage1 starting, mode=gui args=\"gui rec light blend dsa img\"Star Trek - Invasion (USA).pbp\" loadstate10000 savestate14000 frames14001 dumpat999999 limit240\""}
+{"id":1,"ms":1312,"event":"exeid","error":null,"msg":"src=file path=E:\\sys\\bin\\ps1stage1.exe size=1431280 crc32=51603f20"}
+{"id":2,"ms":1315,"event":"gpuspeed","error":null,"msg":"g_gpuSpeedPct=100"}
+{"id":3,"ms":1323,"event":"probe","error":null,"msg":"getappinfo=0"}
+{"id":4,"ms":1325,"event":"probe","error":null,"msg":"E:\\sys\\bin\\ps1stage1.exe"}
+{"id":5,"ms":1534,"event":"gui","error":null,"msg":"appui constructed"}
+{"id":6,"ms":1799,"event":"tilt","error":null,"msg":"active=0"}
+{"id":7,"ms":1802,"event":"menu","error":null,"msg":"machine=0x2003555f"}
+{"id":8,"ms":1804,"event":"menu","error":null,"msg":"geometry screen=320x240 lh=23 rows=8 rows_rotated=11"}
+{"id":9,"ms":1811,"event":"gui","error":null,"msg":"window attached, gl==0"}
+{"id":10,"ms":1856,"event":"dsa","error":null,"msg":"abort reason=1"}
+{"id":11,"ms":1864,"event":"dsa","error":null,"msg":"restart reason=1 err=0 active=1"}
+{"id":12,"ms":1868,"event":"focus","error":null,"msg":"fore=1"}
+{"id":13,"ms":1871,"event":"vol","error":null,"msg":"step=1"}
+{"id":14,"ms":1874,"event":"vol","error":null,"msg":"step=0"}
+{"id":15,"ms":1883,"event":"exc_handler","error":null,"msg":"rc=0"}
+{"id":16,"ms":1886,"event":"gpu_cfg","error":null,"msg":"pixskip=0 ilace=0 light=1 blend=1"}
+{"id":17,"ms":1888,"event":"gpu_init","error":null,"msg":"init=0"}
+{"id":18,"ms":1902,"event":"gpu_cbs","error":null,"msg":"frameskip=0"}
+{"id":19,"ms":1908,"event":"spu_init","error":null,"msg":"init=0"}
+{"id":20,"ms":1911,"event":"start","error":null,"msg":"stage1 begin (gui), frames=14001 cpu=drc input=1"}
+{"id":21,"ms":1913,"event":"hacks","error":null,"msg":"drc: ndrc=00000020 gtenf=0 cyclemul=175"}
+{"id":22,"ms":1924,"event":"core_msg","error":null,"msg":"psxMap: tried to map @80000000, got 0xce16d0\n"}
+{"id":23,"ms":1938,"event":"core_msg","error":null,"msg":"psxMap: tried to map @77000000, got 0xce16d0\n"}
+{"id":24,"ms":1948,"event":"core_msg","error":null,"msg":"psxMap: tried to map @1f800000, got 0xef16d8\n"}
+{"id":25,"ms":1953,"event":"core_msg","error":null,"msg":"psxMap: tried to map @1fc00000, got 0xf016e0\n"}
+{"id":26,"ms":1956,"event":"core","error":null,"msg":"Init new dynarec, ndrc size 1001000, pgsize 4096\n"}
+{"id":27,"ms":1998,"event":"core","error":null,"msg":"ndrc config: mul=175, ha=20, pex=0\n"}
+{"id":28,"ms":2001,"event":"core","error":null,"msg":"(0x71f7d3a0) testing if we can run recompiled code @0x3200000...\n"}
+{"id":29,"ms":2010,"event":"core","error":null,"msg":"test passed.\n"}
+{"id":30,"ms":2013,"event":"core","error":null,"msg":"RAM is not directly mapped\n"}
+{"id":31,"ms":2015,"event":"core","error":null,"msg":"Mapped (RAM/scrp/ROM/LUTs/TC):\n"}
+{"id":32,"ms":2017,"event":"core","error":null,"msg":"0xce16d0/0xef16d8/0xf016e0/0x0/0x3200000\n"}
+{"id":33,"ms":2053,"event":"core_msg","error":null,"msg":"psxMap: tried to map @08000000, got 0xf816e8\n"}
+{"id":34,"ms":2171,"event":"core","error":null,"msg":"Loading memory card E:\\PS1\\saves\\card1.mcd\n"}
+{"id":35,"ms":2252,"event":"core","error":null,"msg":"Loading memory card E:\\PS1\\saves\\card2.mcd\n"}
+{"id":36,"ms":2523,"event":"core","error":null,"msg":"Loaded CD Image: E:\\PS1\\games\\Star Trek - Invasion (USA).pbp[+pbp] (310075072 bytes).\n"}
+{"id":37,"ms":2527,"event":"core","error":null,"msg":"Track 1 DATA  - Start 0:2:0, Length 64:13:21\n"}
+{"id":38,"ms":2529,"event":"core","error":null,"msg":"End 64:15:21 (sector 289146)\n"}
+{"id":39,"ms":2547,"event":"core","error":null,"msg":"CD-ROM Label: SLUS_00924                      \n"}
+{"id":40,"ms":2551,"event":"core","error":null,"msg":"CD-ROM ID: SLUS00924\n"}
+{"id":41,"ms":2553,"event":"core","error":null,"msg":"CD-ROM EXE Name: SLUS_009.24;1\n"}
+{"id":42,"ms":2556,"event":"disc","error":null,"msg":"drc: cdra_init=0 cdra_open=0 checkcdrom=0 region=0"}
+{"id":43,"ms":2558,"event":"gpu_open","error":null,"msg":"drc: open=0"}
+{"id":44,"ms":2560,"event":"spu_open","error":null,"msg":"drc: open=0"}
+{"id":45,"ms":2609,"event":"dsa","error":null,"msg":"abort reason=1"}
+{"id":46,"ms":2620,"event":"dsa","error":null,"msg":"restart reason=1 err=0 active=1"}
+{"id":47,"ms":2635,"event":"snd_open","error":null,"msg":"drc: rc=0"}
+{"id":48,"ms":2985,"event":"core_msg","error":null,"msg":"Loaded BIOS \"E:\\PS1\\bios/scph7502.bin\".\n"}
+{"id":49,"ms":2993,"event":"core","error":null,"msg":"ndrc: tc out=03200000 base=00000000 size=16777216\n"}
+{"id":50,"ms":2996,"event":"core","error":null,"msg":"Init new dynarec, ndrc size 1001000, pgsize 4096\n"}
+{"id":51,"ms":3056,"event":"core","error":null,"msg":"(0x71f7d3a0) testing if we can run recompiled code @0x3200000...\n"}
+{"id":52,"ms":3059,"event":"core","error":null,"msg":"test passed.\n"}
+{"id":53,"ms":3061,"event":"core","error":null,"msg":"RAM is not directly mapped\n"}
+{"id":54,"ms":3063,"event":"core","error":null,"msg":"Mapped (RAM/scrp/ROM/LUTs/TC):\n"}
+{"id":55,"ms":3065,"event":"core","error":null,"msg":"0xce16d0/0xef16d8/0xf016e0/0xf816e8/0x3200000\n"}
+{"id":56,"ms":3095,"event":"core_msg","error":null,"msg":"psxMap: tried to map @08000000, got 0xf816e8\n"}
+{"id":57,"ms":3233,"event":"core","error":null,"msg":"BIOS: 19951204, 'CEX-3000/1001/1002 by K.S.', 'E'\n"}
+{"id":58,"ms":3845,"event":"reset","error":null,"msg":"drc: EmuReset ok, hle=0 type=NTSC"}
+{"id":59,"ms":3847,"event":"exec_begin","error":null,"msg":"drc: entering frame loop, 14001 frames"}
+{"id":60,"ms":3850,"event":"screen_init","error":null,"msg":"drc: rc=0 gui=1"}
+{"id":61,"ms":3858,"event":"fb","error":null,"msg":"drc: ok=1 hal=240x320 line=4096B bpp=16 first=0 win=320x240"}
+{"id":62,"ms":3895,"event":"input","error":null,"msg":"record open=1"}
+{"id":63,"ms":4704,"event":"loadstate","error":null,"msg":"drc: frame=10000 rc=0 rewound=0 pc=80000080 cycle=1697906479 hsync=240 base=564480 start=1697391360"}
+{"id":64,"ms":4710,"event":"clocks","error":null,"msg":"start: known=0 reason=release-build"}
+{"id":65,"ms":4838,"event":"loadstate","error":null,"msg":"drc: frame=10000 ran=564481 pc=80000080 vbl=9 hsync=240 base=564480 start=1697955840 cyc=1698470960"}
+{"id":66,"ms":4955,"event":"loadstate","error":null,"msg":"drc: frame=10001 ran=564481 pc=80000080 vbl=10 hsync=240 base=564480 start=1698520320 cyc=1699035441"}
+{"id":67,"ms":5002,"event":"loadstate","error":null,"msg":"drc: frame=10002 ran=564477 pc=80000080 vbl=11 hsync=240 base=564480 start=1699084800 cyc=1699599918"}
+{"id":68,"ms":18444,"event":"progress","error":null,"msg":"drc: frame 11000/14001 ms=13719 stackUnused=11592"}
+{"id":69,"ms":38988,"event":"progress","error":null,"msg":"drc: frame 12000/14001 ms=34262 stackUnused=11592"}
+{"id":70,"ms":38991,"event":"vout_geom","error":null,"msg":"frame=12000 upd=3214 gpulibUpd=1214 src=512x240 dst=320x240 off=0,0 gp0=7604 dma=2429 fbDirty=1 fbDirtyArea=0 status=0x54042228 scr=512x240 src=0,0 voutOff=0 stale=0 fbPages=0/1 fb0=0xce700000 fb1=0x0"}
+{"id":71,"ms":55956,"event":"progress","error":null,"msg":"drc: frame 13000/14001 ms=51230 stackUnused=11592"}
+{"id":72,"ms":83024,"event":"progress","error":null,"msg":"drc: frame 14000/14001 ms=78299 stackUnused=11592"}
+{"id":73,"ms":92950,"event":"savestate","error":null,"msg":"frame=14000 rc=0 size=1843593 cycle=3955826475 hsync=240 base=564480 start=3955311360"}
+{"id":74,"ms":93919,"event":"clocks","error":null,"msg":"end: known=0 reason=release-build"}
+{"id":75,"ms":93977,"event":"wdsample","error":null,"msg":"drc: t=0s pc=80000080 cycle=1698470960"}
+{"id":76,"ms":93981,"event":"wdsample","error":null,"msg":"drc: t=2s pc=8003d744 cycle=2079152356"}
+{"id":77,"ms":93991,"event":"wdsample","error":null,"msg":"drc: t=4s pc=800136d0 cycle=2242091167"}
+{"id":78,"ms":94080,"event":"wdsample","error":null,"msg":"drc: t=6s pc=80042b48 cycle=2390736844"}
+{"id":79,"ms":94169,"event":"wdsample","error":null,"msg":"drc: t=8s pc=80000080 cycle=2578495277"}
+{"id":80,"ms":94254,"event":"wdsample","error":null,"msg":"drc: t=10s pc=800136d0 cycle=2752381145"}
+{"id":81,"ms":94294,"event":"wdsample","error":null,"msg":"drc: t=12s pc=8004bc4c cycle=2992264020"}
+{"id":82,"ms":94324,"event":"wdsample","error":null,"msg":"drc: t=14s pc=80045f84 cycle=3202944134"}
+{"id":83,"ms":94326,"event":"wdsample","error":null,"msg":"drc: t=16s pc=80000080 cycle=3372718649"}
+{"id":84,"ms":94328,"event":"wdsample","error":null,"msg":"drc: t=18s pc=800136d0 cycle=3533621626"}
+{"id":85,"ms":94331,"event":"wdsample","error":null,"msg":"drc: t=20s pc=80022070 cycle=3661732398"}
+{"id":86,"ms":94333,"event":"wdsample","error":null,"msg":"drc: t=22s pc=800137ec cycle=3776348029"}
+{"id":87,"ms":94340,"event":"wdsample","error":null,"msg":"drc: t=24s pc=8003d9d0 cycle=3894966094"}
+{"id":88,"ms":94342,"event":"wdsample","error":null,"msg":"drc: t=26s pc=80000080 cycle=3955826475"}
+{"id":89,"ms":94344,"event":"wdsample","error":null,"msg":"drc: t=28s pc=80000080 cycle=3956390964"}
+{"id":90,"ms":94346,"event":"pass","error":null,"msg":"drc: frames=4001 ms=89194 pc=80000080 cycle=3956390964 vblanks=4009 fsAdvised=0"}
+{"id":91,"ms":94348,"event":"gpustats","error":null,"msg":"drc: gp0=8613 dataMem=389 dmaChain=4988 gp1=13305"}
+{"id":92,"ms":94356,"event":"gpulibstats","error":null,"msg":"drc: disabled in release; gpustats remains active"}
+{"id":93,"ms":94358,"event":"vramstats","error":null,"msg":"drc: sysToVid=783,1055089px vidToSys=15,49164px vidToVid=0,0px"}
+{"id":94,"ms":94360,"event":"sndstats","error":null,"msg":"drc: feeds=4009 samples=5893100 maxAmp=-1 under=10 step=16384"}
+{"id":95,"ms":94363,"event":"dsa","error":null,"msg":"drc: active=1 gl=0 fbPlatform=1 pixB=4 strideB=8192 rows=438000/179040/0/0/0 covered=1 fbOk=1 rowCopy=0 rgn=1,0,0,320,240 scr=320,240 tries=0 rgb24scaled=0 rgb24b16=0 rgb24src=0 rgb24dst=0"}
+{"id":96,"ms":94368,"event":"drawstats","error":null,"msg":"drc: polySpans=0 polyPix=0 polyTex=0 polyLit=0 polyBlend=0 spriteCalls=0 spritePix=0 spriteTex=0 tileCalls=0 tilePix=0 polyPrims=0 polyRows=0"}
+{"id":97,"ms":94522,"event":"screen","error":null,"msg":"drc: presented 4001 frames, held 0ms"}
+{"id":98,"ms":94544,"event":"core","error":null,"msg":"ndrc: tc out=036106b0 base=00000000 size=16777216\n"}
+{"id":99,"ms":100106,"event":"vram_dump","error":null,"msg":"rc=0"}
+{"id":100,"ms":100190,"event":"shutdown","error":null,"msg":"gui: frames=4001 ms=89194"}
+{"id":101,"ms":100338,"event":"exit","error":null,"msg":"gui returned 0"}

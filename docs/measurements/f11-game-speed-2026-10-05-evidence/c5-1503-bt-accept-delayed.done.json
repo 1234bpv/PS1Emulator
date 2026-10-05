@@ -1,0 +1,19 @@
+{
+  "name": "c5-1503-bt-accept-delayed",
+  "started": "2026-10-05T15:03:43.4304619+03:00",
+  "finished": "2026-10-05T15:04:01.6271083+03:00",
+  "limitSec": 35,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\deploy_net-rfcomm.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-Do",
+    "SLEEP 3000; KEY lsk; SLEEP 1000; SHOT E:\\tester\\c5-bt-accept-delayed.bmp 1",
+    "-GetFile",
+    "E:\\tester\\c5-bt-accept-delayed.bmp",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\c5-bt-accept-delayed.bmp"
+  ]
+}

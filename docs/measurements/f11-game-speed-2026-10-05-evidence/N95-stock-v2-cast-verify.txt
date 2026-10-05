@@ -1,0 +1,10 @@
+LOG N95-stock-v2-cast-verify gameplay verification release alpha13
+-START E:\sys\bin\ps1stage1.exe gui light blend dsa img"Castlevania - Symphony of the Night (USA.pbp" loadstate17500 frames20000 dumpat17503 limit90
+-WAITFG e0001002 20000
+-KEY star press 2 100
+SLEEP 25000
+-SHOT E:\tester\N95-stock-v2-cast-verify.bmp 2
+-ENDAPP 0xE0001002
+SLEEP 2000
+-KILL ps1stage1
+PS ps1stage1

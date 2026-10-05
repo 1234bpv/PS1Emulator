@@ -1,0 +1,8 @@
+LOG C5-cast-r1 1200 PS1 frames stock release volume zero
+-START E:\sys\bin\ps1stage1.exe gui light blend dsa img"Castlevania - Symphony of the Night (USA.pbp" loadstate17500 frames18700 dumpat999999 limit150
+-WAITFG e0001002 20000
+-KEY star press 2 100
+SLEEP 65000
+-ENDAPP 0xE0001002
+-KILL ps1stage1
+PS ps1stage1

@@ -1,0 +1,17 @@
+{
+  "name": "C5-serial-cast-verify-get-C5-serial-cast-verify.jsonl-a1",
+  "started": "2026-10-05T15:07:23.9283764+03:00",
+  "finished": "2026-10-05T15:08:08.9522874+03:00",
+  "limitSec": 45,
+  "timeout": true,
+  "exitCode": -1,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-GetFile",
+    "E:\\PS1\\logs\\ps1_stage1.jsonl",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\C5-serial-cast-verify.jsonl"
+  ]
+}

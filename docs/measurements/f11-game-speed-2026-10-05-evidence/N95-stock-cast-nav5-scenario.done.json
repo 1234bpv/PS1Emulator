@@ -1,0 +1,19 @@
+{
+  "name": "N95-stock-cast-nav5-scenario",
+  "started": "2026-10-05T14:33:46.3453734+03:00",
+  "finished": "2026-10-05T14:36:22.5922025+03:00",
+  "limitSec": 330,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-Scenario",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\N95-stock-cast-nav5.txt",
+    "-ScenarioTimeoutSec",
+    "300",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\N95-stock-cast-nav5.log"
+  ]
+}

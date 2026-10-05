@@ -1,0 +1,14 @@
+{
+  "name": "c5-1458-info-check",
+  "started": "2026-10-05T14:58:33.1663329+03:00",
+  "finished": "2026-10-05T14:58:35.7628377+03:00",
+  "limitSec": 25,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\deploy_net-rfcomm.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-Info"
+  ]
+}

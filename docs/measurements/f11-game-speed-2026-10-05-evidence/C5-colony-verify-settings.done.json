@@ -1,0 +1,17 @@
+{
+  "name": "C5-colony-verify-settings",
+  "started": "2026-10-05T14:33:53.7326551+03:00",
+  "finished": "2026-10-05T14:33:56.9665825+03:00",
+  "limitSec": 30,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\deploy_net-rfcomm.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-PutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\stock-colony.txt",
+    "-Remote",
+    "E:\\PS1\\cfg\\ps1_settings.txt"
+  ]
+}

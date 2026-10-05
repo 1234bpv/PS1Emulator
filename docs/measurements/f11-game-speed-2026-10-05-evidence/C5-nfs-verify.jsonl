@@ -1,0 +1,95 @@
+{"id":0,"ms":380,"event":"boot","error":null,"msg":"stage1 starting, mode=gui args=\"gui light blend dsa img\"Need for Speed - Porsche Unleashed (USA).pbp\" loadstate24000 frames26000 dumpat999999 limit90\""}
+{"id":1,"ms":1595,"event":"exeid","error":null,"msg":"src=file path=E:\\sys\\bin\\ps1stage1.exe size=1431280 crc32=51603f20"}
+{"id":2,"ms":1599,"event":"gpuspeed","error":null,"msg":"g_gpuSpeedPct=100"}
+{"id":3,"ms":1606,"event":"probe","error":null,"msg":"getappinfo=0"}
+{"id":4,"ms":1608,"event":"probe","error":null,"msg":"E:\\sys\\bin\\ps1stage1.exe"}
+{"id":5,"ms":1815,"event":"gui","error":null,"msg":"appui constructed"}
+{"id":6,"ms":2071,"event":"tilt","error":null,"msg":"active=0"}
+{"id":7,"ms":2074,"event":"menu","error":null,"msg":"machine=0x2003555f"}
+{"id":8,"ms":2077,"event":"menu","error":null,"msg":"geometry screen=320x240 lh=23 rows=8 rows_rotated=11"}
+{"id":9,"ms":2083,"event":"gui","error":null,"msg":"window attached, gl==0"}
+{"id":10,"ms":2128,"event":"dsa","error":null,"msg":"abort reason=1"}
+{"id":11,"ms":2135,"event":"dsa","error":null,"msg":"restart reason=1 err=0 active=1"}
+{"id":12,"ms":2139,"event":"focus","error":null,"msg":"fore=1"}
+{"id":13,"ms":2143,"event":"vol","error":null,"msg":"step=1"}
+{"id":14,"ms":2146,"event":"vol","error":null,"msg":"step=0"}
+{"id":15,"ms":2154,"event":"exc_handler","error":null,"msg":"rc=0"}
+{"id":16,"ms":2157,"event":"gpu_cfg","error":null,"msg":"pixskip=0 ilace=0 light=1 blend=1"}
+{"id":17,"ms":2160,"event":"gpu_init","error":null,"msg":"init=0"}
+{"id":18,"ms":2169,"event":"gpu_cbs","error":null,"msg":"frameskip=0"}
+{"id":19,"ms":2178,"event":"spu_init","error":null,"msg":"init=0"}
+{"id":20,"ms":2181,"event":"start","error":null,"msg":"stage1 begin (gui), frames=26000 cpu=drc input=0"}
+{"id":21,"ms":2184,"event":"hacks","error":null,"msg":"drc: ndrc=00000020 gtenf=0 cyclemul=175"}
+{"id":22,"ms":2195,"event":"core_msg","error":null,"msg":"psxMap: tried to map @80000000, got 0xce1240\n"}
+{"id":23,"ms":2208,"event":"core_msg","error":null,"msg":"psxMap: tried to map @77000000, got 0xce1240\n"}
+{"id":24,"ms":2215,"event":"core_msg","error":null,"msg":"psxMap: tried to map @1f800000, got 0xef1248\n"}
+{"id":25,"ms":2220,"event":"core_msg","error":null,"msg":"psxMap: tried to map @1fc00000, got 0xf01250\n"}
+{"id":26,"ms":2222,"event":"core","error":null,"msg":"Init new dynarec, ndrc size 1001000, pgsize 4096\n"}
+{"id":27,"ms":2264,"event":"core","error":null,"msg":"ndrc config: mul=175, ha=20, pex=0\n"}
+{"id":28,"ms":2267,"event":"core","error":null,"msg":"(0x71f293a0) testing if we can run recompiled code @0x3200000...\n"}
+{"id":29,"ms":2274,"event":"core","error":null,"msg":"test passed.\n"}
+{"id":30,"ms":2277,"event":"core","error":null,"msg":"RAM is not directly mapped\n"}
+{"id":31,"ms":2280,"event":"core","error":null,"msg":"Mapped (RAM/scrp/ROM/LUTs/TC):\n"}
+{"id":32,"ms":2282,"event":"core","error":null,"msg":"0xce1240/0xef1248/0xf01250/0x0/0x3200000\n"}
+{"id":33,"ms":2320,"event":"core_msg","error":null,"msg":"psxMap: tried to map @08000000, got 0xf81258\n"}
+{"id":34,"ms":2434,"event":"core","error":null,"msg":"Loading memory card E:\\PS1\\saves\\card1.mcd\n"}
+{"id":35,"ms":2517,"event":"core","error":null,"msg":"Loading memory card E:\\PS1\\saves\\card2.mcd\n"}
+{"id":36,"ms":2847,"event":"core","error":null,"msg":"Loaded CD Image: E:\\PS1\\games\\Need for Speed - Porsche Unleashed (USA).pbp[+pbp] (519772571 bytes).\n"}
+{"id":37,"ms":2851,"event":"core","error":null,"msg":"Track 1 DATA  - Start 0:2:0, Length 29:52:40\n"}
+{"id":38,"ms":2853,"event":"core","error":null,"msg":"Track 2 AUDIO - Start 29:54:40, Length 1:52:26\n"}
+{"id":39,"ms":2860,"event":"core","error":null,"msg":"Track 3 AUDIO - Start 31:46:66, Length 2:8:49\n"}
+{"id":40,"ms":2862,"event":"core","error":null,"msg":"Track 4 AUDIO - Start 33:55:40, Length 2:23:30\n"}
+{"id":41,"ms":2864,"event":"core","error":null,"msg":"Track 5 AUDIO - Start 36:18:70, Length 2:1:36\n"}
+{"id":42,"ms":2866,"event":"core","error":null,"msg":"Track 6 AUDIO - Start 38:20:31, Length 2:14:41\n"}
+{"id":43,"ms":2868,"event":"core","error":null,"msg":"Track 7 AUDIO - Start 40:34:72, Length 2:21:33\n"}
+{"id":44,"ms":2875,"event":"core","error":null,"msg":"Track 8 AUDIO - Start 42:56:30, Length 2:18:61\n"}
+{"id":45,"ms":2877,"event":"core","error":null,"msg":"Track 9 AUDIO - Start 45:15:16, Length 2:21:19\n"}
+{"id":46,"ms":2879,"event":"core","error":null,"msg":"Track 10 AUDIO - Start 47:36:35, Length 2:31:43\n"}
+{"id":47,"ms":2881,"event":"core","error":null,"msg":"Track 11 AUDIO - Start 50:8:3, Length 2:32:50\n"}
+{"id":48,"ms":2883,"event":"core","error":null,"msg":"Track 12 AUDIO - Start 52:40:53, Length 2:28:27\n"}
+{"id":49,"ms":2890,"event":"core","error":null,"msg":"Track 13 AUDIO - Start 55:9:5, Length 2:22:34\n"}
+{"id":50,"ms":2892,"event":"core","error":null,"msg":"Track 14 AUDIO - Start 57:31:39, Length 2:34:0\n"}
+{"id":51,"ms":2894,"event":"core","error":null,"msg":"Track 15 AUDIO - Start 60:5:39, Length 2:4:18\n"}
+{"id":52,"ms":2896,"event":"core","error":null,"msg":"End 62:9:57 (sector 279732)\n"}
+{"id":53,"ms":2904,"event":"core","error":null,"msg":"CD-ROM Label: NFS_NTSC                        \n"}
+{"id":54,"ms":2914,"event":"core","error":null,"msg":"CD-ROM ID: SLUS01104\n"}
+{"id":55,"ms":2916,"event":"core","error":null,"msg":"CD-ROM EXE Name: SLUS_011.04;1\n"}
+{"id":56,"ms":2919,"event":"disc","error":null,"msg":"drc: cdra_init=0 cdra_open=0 checkcdrom=0 region=0"}
+{"id":57,"ms":2922,"event":"gpu_open","error":null,"msg":"drc: open=0"}
+{"id":58,"ms":2924,"event":"spu_open","error":null,"msg":"drc: open=0"}
+{"id":59,"ms":2965,"event":"dsa","error":null,"msg":"abort reason=1"}
+{"id":60,"ms":2979,"event":"dsa","error":null,"msg":"restart reason=1 err=0 active=1"}
+{"id":61,"ms":2995,"event":"snd_open","error":null,"msg":"drc: rc=0"}
+{"id":62,"ms":3350,"event":"core_msg","error":null,"msg":"Loaded BIOS \"E:\\PS1\\bios/scph7502.bin\".\n"}
+{"id":63,"ms":3358,"event":"core","error":null,"msg":"ndrc: tc out=03200000 base=00000000 size=16777216\n"}
+{"id":64,"ms":3361,"event":"core","error":null,"msg":"Init new dynarec, ndrc size 1001000, pgsize 4096\n"}
+{"id":65,"ms":3421,"event":"core","error":null,"msg":"(0x71f293a0) testing if we can run recompiled code @0x3200000...\n"}
+{"id":66,"ms":3425,"event":"core","error":null,"msg":"test passed.\n"}
+{"id":67,"ms":3427,"event":"core","error":null,"msg":"RAM is not directly mapped\n"}
+{"id":68,"ms":3429,"event":"core","error":null,"msg":"Mapped (RAM/scrp/ROM/LUTs/TC):\n"}
+{"id":69,"ms":3431,"event":"core","error":null,"msg":"0xce1240/0xef1248/0xf01250/0xf81258/0x3200000\n"}
+{"id":70,"ms":3454,"event":"core_msg","error":null,"msg":"psxMap: tried to map @08000000, got 0xf81258\n"}
+{"id":71,"ms":3587,"event":"core","error":null,"msg":"BIOS: 19951204, 'CEX-3000/1001/1002 by K.S.', 'E'\n"}
+{"id":72,"ms":4197,"event":"reset","error":null,"msg":"drc: EmuReset ok, hle=0 type=NTSC"}
+{"id":73,"ms":4200,"event":"exec_begin","error":null,"msg":"drc: entering frame loop, 26000 frames"}
+{"id":74,"ms":4202,"event":"screen_init","error":null,"msg":"drc: rc=0 gui=1"}
+{"id":75,"ms":4204,"event":"fb","error":null,"msg":"drc: ok=1 hal=240x320 line=4096B bpp=16 first=0 win=320x240"}
+{"id":76,"ms":5013,"event":"loadstate","error":null,"msg":"drc: frame=24000 rc=0 rewound=0 pc=80000080 cycle=1292931886 hsync=240 base=564480 start=1292416768"}
+{"id":77,"ms":5018,"event":"clocks","error":null,"msg":"start: known=0 reason=release-build"}
+{"id":78,"ms":5769,"event":"loadstate","error":null,"msg":"drc: frame=24000 ran=564559 pc=80000080 vbl=9 hsync=240 base=564480 start=1292981248 cyc=1293496445"}
+{"id":79,"ms":6676,"event":"loadstate","error":null,"msg":"drc: frame=24001 ran=564399 pc=80000080 vbl=10 hsync=240 base=564480 start=1293545728 cyc=1294060844"}
+{"id":80,"ms":6785,"event":"loadstate","error":null,"msg":"drc: frame=24002 ran=564479 pc=80000080 vbl=11 hsync=240 base=564480 start=1294110208 cyc=1294625323"}
+{"id":81,"ms":30365,"event":"clocks","error":null,"msg":"end: known=0 reason=release-build"}
+{"id":82,"ms":30388,"event":"wdsample","error":null,"msg":"drc: t=0s pc=80000080 cycle=1292933068"}
+{"id":83,"ms":30391,"event":"wdsample","error":null,"msg":"drc: t=2s pc=80061264 cycle=1372234857"}
+{"id":84,"ms":30414,"event":"wdsample","error":null,"msg":"drc: t=4s pc=80086220 cycle=1480918887"}
+{"id":85,"ms":30416,"event":"wdsample","error":null,"msg":"drc: t=6s pc=80015808 cycle=1589945479"}
+{"id":86,"ms":30418,"event":"pass","error":null,"msg":"drc: frames=670 ms=25328 pc=80000080 cycle=1671133483 vblanks=678 fsAdvised=0"}
+{"id":87,"ms":30421,"event":"gpustats","error":null,"msg":"drc: gp0=0 dataMem=0 dmaChain=1319 gp1=2627"}
+{"id":88,"ms":30433,"event":"gpulibstats","error":null,"msg":"drc: disabled in release; gpustats remains active"}
+{"id":89,"ms":30436,"event":"vramstats","error":null,"msg":"drc: sysToVid=0,0px vidToSys=0,0px vidToVid=992,131998px"}
+{"id":90,"ms":30439,"event":"sndstats","error":null,"msg":"drc: feeds=678 samples=996532 maxAmp=-1 under=1 step=16945"}
+{"id":91,"ms":30441,"event":"dsa","error":null,"msg":"drc: active=1 gl=0 fbPlatform=1 pixB=4 strideB=8192 rows=0/78720/0/0/0 covered=1 fbOk=1 rowCopy=0 rgn=1,0,0,320,240 scr=320,240 tries=0 rgb24scaled=0 rgb24b16=0 rgb24src=0 rgb24dst=0"}
+{"id":92,"ms":30450,"event":"drawstats","error":null,"msg":"drc: polySpans=0 polyPix=0 polyTex=0 polyLit=0 polyBlend=0 spriteCalls=0 spritePix=0 spriteTex=0 tileCalls=0 tilePix=0 polyPrims=0 polyRows=0"}
+{"id":93,"ms":30567,"event":"screen","error":null,"msg":"drc: presented 670 frames, held 0ms"}
+{"id":94,"ms":30577,"event":"core","error":null,"msg":"ndrc: tc out=0343a76c base=00000000 size=16777216\n"}

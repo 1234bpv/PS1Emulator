@@ -1,0 +1,18 @@
+SLEEP 25000
+-SHOT E:\tester\rc-nav1-01.bmp 1
+-KEY 8 press 1 100
+SLEEP 10000
+-SHOT E:\tester\rc-nav1-02.bmp 1
+-KEY 5 press 1 100
+SLEEP 12000
+-SHOT E:\tester\rc-nav1-03.bmp 1
+-KEY 5 press 1 100
+SLEEP 15000
+-SHOT E:\tester\rc-nav1-04.bmp 1
+-KEY 5 press 1 100
+SLEEP 15000
+-SHOT E:\tester\rc-nav1-05.bmp 1
+-KEY 8 press 1 100
+SLEEP 20000
+-SHOT E:\tester\rc-nav1-06.bmp 1
+SLEEP 130000

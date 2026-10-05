@@ -1,0 +1,9 @@
+﻿{
+    "expected":  1713024,
+    "received":  1708992,
+    "elapsedMs":  27228,
+    "complete":  false,
+    "error":  "TimeoutException: Время ожидания операции истекло.",
+    "method":  "Buffered",
+    "handshake":  "RequestToSend"
+}

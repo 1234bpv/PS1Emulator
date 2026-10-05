@@ -1,0 +1,10 @@
+LOG N95-stock-rayman-verify gameplay verification release alpha13
+-START E:\sys\bin\ps1stage1.exe gui light blend dsa img"Rayman (USA).pbp" loadstate14000 frames20000 dumpat999999 limit90
+-WAITFG e0001002 20000
+-KEY star press 2 100
+SLEEP 8000
+-SHOT E:\tester\N95-stock-rayman-verify.bmp 2
+-ENDAPP 0xE0001002
+SLEEP 2000
+-KILL ps1stage1
+PS ps1stage1

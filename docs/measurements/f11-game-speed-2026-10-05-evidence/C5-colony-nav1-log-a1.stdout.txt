@@ -1,0 +1,5 @@
+[net] direct RFCOMM C5 A8448113EA78 channel 13
+[net] serial COM12 @ 115200 baud
+[net] GET E:\PS1\logs\ps1_stage1.jsonl -> D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\C5-colony-nav1.jsonl
+[net] got 14ÿ311 bytes
+[net] done

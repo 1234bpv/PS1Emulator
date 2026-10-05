@@ -1,0 +1,20 @@
+SLEEP 5000
+-KEY 8 press 2 1500
+SLEEP 5000
+-SHOT E:\tester\colin-nav2-01.bmp 2
+-KEY 5 press 2 1500
+SLEEP 5000
+-SHOT E:\tester\colin-nav2-02.bmp 2
+-KEY 8 press 1 100
+SLEEP 8000
+-SHOT E:\tester\colin-nav2-03.bmp 2
+-KEY 5 press 1 100
+SLEEP 10000
+-SHOT E:\tester\colin-nav2-04.bmp 2
+-KEY 5 press 1 100
+SLEEP 15000
+-SHOT E:\tester\colin-nav2-05.bmp 2
+-KEY 5 press 1 100
+SLEEP 15000
+-SHOT E:\tester\colin-nav2-06.bmp 2
+SLEEP 140000

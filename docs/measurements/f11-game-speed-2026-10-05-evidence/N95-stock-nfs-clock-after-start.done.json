@@ -1,0 +1,15 @@
+{
+  "name": "N95-stock-nfs-clock-after-start",
+  "started": "2026-10-05T02:40:45.9480359+03:00",
+  "finished": "2026-10-05T02:40:48.5451490+03:00",
+  "limitSec": 25,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-Do",
+    "START E:\\sys\\bin\\ocprobe.exe patcher engine; SLEEP 2000"
+  ]
+}

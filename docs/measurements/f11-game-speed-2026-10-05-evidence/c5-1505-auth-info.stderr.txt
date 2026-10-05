@@ -1,0 +1,7 @@
+Исключение при вызове "Open" с "1" аргументами: "Bluetooth connect C5: WSA 10060"
+D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\deploy_net-rfcomm.ps1:164 знак:12
++     return [C5RfcommStream]::Open([uint32]$channels[0])
++            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:) [], ParentContainsErrorRecordException
+    + FullyQualifiedErrorId : IOException
+ 

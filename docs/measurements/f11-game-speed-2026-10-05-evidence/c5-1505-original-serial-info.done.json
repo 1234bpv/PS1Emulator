@@ -1,0 +1,19 @@
+{
+  "name": "c5-1505-original-serial-info",
+  "started": "2026-10-05T15:05:48.8451721+03:00",
+  "finished": "2026-10-05T15:05:58.7666503+03:00",
+  "limitSec": 35,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed/deploy_net-serial-control.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-Do",
+    "INFO; SLEEP 4000; SHOT E:\\tester\\c5-original-serial.bmp 2",
+    "-GetFile",
+    "E:\\tester\\c5-original-serial.bmp",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\c5-original-serial.bmp"
+  ]
+}

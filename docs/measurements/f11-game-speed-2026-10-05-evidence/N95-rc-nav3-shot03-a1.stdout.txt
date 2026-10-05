@@ -1,0 +1,3 @@
+[net] GET E:\tester\rc-nav3-03.bmp -> D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\N95-rc-nav3-03.bmp
+[net] got 230ÿ454 bytes
+[net] done

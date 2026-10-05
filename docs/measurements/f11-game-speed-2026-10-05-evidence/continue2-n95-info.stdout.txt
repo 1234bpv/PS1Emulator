@@ -1,0 +1,16 @@
+[net] > INFO
+[net] < OK info
+[net] < protocol 2
+[net] < screen 320x240
+[net] < ramfree 88055808
+[net] < tick 107027829 startTick 103328351 boot 0 by r
+[net] < ap Huawei
+[net] < drive C freekb 65748
+[net] < drive E freekb 1059488
+[net] < scriptlog E:\tester\N95-stock-nfs-nav1.log
+[net] < script DONE 29
+[net] > STATUS
+[net] < OK DONE 29
+[net] > PS ps1stage1
+[net] < OK ps 0
+[net] done

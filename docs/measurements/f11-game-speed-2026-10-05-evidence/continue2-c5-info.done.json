@@ -1,0 +1,15 @@
+{
+  "name": "continue2-c5-info",
+  "started": "2026-10-05T02:10:43.4141714+03:00",
+  "finished": "2026-10-05T02:10:45.2038526+03:00",
+  "limitSec": 25,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-Do",
+    "INFO; STATUS; PS ps1stage1"
+  ]
+}

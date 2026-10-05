@@ -1,0 +1,10 @@
+[net] serial COM12 @ 115200 baud
+[net] > KEY lsk
+[net] < OK key 0xa4 x1
+[net] > SLEEP 1000
+[net] < OK sleep 1000
+[net] > SHOT E:\tester\c5-bt-peer-options.bmp 1
+[net] < OK shot 230454 240x320 fb mode11
+[net] GET E:\tester\c5-bt-peer-options.bmp -> D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\c5-bt-peer-options.bmp
+[net] got 230ÿ454 bytes
+[net] done

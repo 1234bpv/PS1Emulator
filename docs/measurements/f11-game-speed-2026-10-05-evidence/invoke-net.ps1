@@ -3,6 +3,7 @@ $script:RunRoot = $PSScriptRoot
 $script:NetClient = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..\..\..\SymbianDeployDaemon\tools\deploy_net.ps1'))
 function Invoke-BoundedNet {
     param([string]$Name, [string[]]$NetArgs, [int]$LimitSec = 45, [string]$ClientPath = $script:NetClient)
+    if($ClientPath -eq $script:NetClient -and $NetArgs -contains '-Com' -and $NetArgs -contains 'COM12' -and (Test-Path "$PSScriptRoot\c5-rfcomm-verified.json")) { $ClientPath = Join-Path $PSScriptRoot 'deploy_net-rfcomm.ps1' }
     $stdout = Join-Path $script:RunRoot "$Name.stdout.txt"
     $stderr = Join-Path $script:RunRoot "$Name.stderr.txt"
     $marker = Join-Path $script:RunRoot "$Name.done.json"
@@ -17,3 +18,4 @@ function Invoke-BoundedNet {
     Get-Content -LiteralPath $stdout,$stderr
     $result | ConvertTo-Json -Compress
 }
+

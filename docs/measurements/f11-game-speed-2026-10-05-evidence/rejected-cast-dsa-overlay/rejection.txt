@@ -1,0 +1,1 @@
+Castlevania frame17500 is gameplay, but this run has covered=0, rgn=5 after BT dialog: cannot derive displayed FPS. 1200 PS1 frames38835ms,error0,cycle3442875179. Excluded from accepted series.

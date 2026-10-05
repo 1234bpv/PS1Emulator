@@ -1,0 +1,9 @@
+﻿{
+    "expected":  1713024,
+    "received":  1711008,
+    "elapsedMs":  28035,
+    "complete":  false,
+    "error":  "TimeoutException: Время ожидания операции истекло.",
+    "method":  "BaseStream",
+    "handshake":  "None"
+}

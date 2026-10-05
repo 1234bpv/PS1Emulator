@@ -1,0 +1,17 @@
+{
+  "name": "C5-cast-nav3-put-menu",
+  "started": "2026-10-05T02:39:17.0705087+03:00",
+  "finished": "2026-10-05T02:39:42.5754234+03:00",
+  "limitSec": 180,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\deploy_net-rfcomm.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-PutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\states\\cast-nav1.sav",
+    "-Remote",
+    "E:\\PS1\\saves\\bench.sav"
+  ]
+}

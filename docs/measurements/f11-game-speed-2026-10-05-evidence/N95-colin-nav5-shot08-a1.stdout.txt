@@ -1,0 +1,3 @@
+[net] GET E:\tester\colin-nav5-08.bmp -> D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed/N95-colin-nav5-08.bmp
+[net] got 57ÿ654 bytes
+[net] done

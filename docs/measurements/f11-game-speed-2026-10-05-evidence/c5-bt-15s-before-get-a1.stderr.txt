@@ -1,0 +1,7 @@
+GET failed: ERR open -1
+D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\deploy_net-rfcomm.ps1:499 знак:40
++     if (-not $resp.StartsWith("OK")) { throw "GET failed: $resp" }
++                                        ~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : OperationStopped: (GET failed: ERR open -1:String) [], RuntimeException
+    + FullyQualifiedErrorId : GET failed: ERR open -1
+ 

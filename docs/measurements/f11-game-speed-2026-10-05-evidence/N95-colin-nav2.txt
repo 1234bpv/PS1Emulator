@@ -1,0 +1,29 @@
+LOG N95-colin-nav2 navigation only; not a timing measurement
+-START E:\sys\bin\ps1stage1.exe gui rec light blend dsa img"Colin McRae Rally 2.0 (USA) (En,Fr,Es).pbp" loadstate10000 savestate14000 frames14001 dumpat999999 limit240
+-WAITFG e0001002 20000
+-KEY star press 2 100
+SLEEP 5000
+-KEY 8 press 2 1500
+SLEEP 5000
+-SHOT E:\tester\colin-nav2-01.bmp 2
+-KEY 5 press 2 1500
+SLEEP 5000
+-SHOT E:\tester\colin-nav2-02.bmp 2
+-KEY 8 press 1 100
+SLEEP 8000
+-SHOT E:\tester\colin-nav2-03.bmp 2
+-KEY 5 press 1 100
+SLEEP 10000
+-SHOT E:\tester\colin-nav2-04.bmp 2
+-KEY 5 press 1 100
+SLEEP 15000
+-SHOT E:\tester\colin-nav2-05.bmp 2
+-KEY 5 press 1 100
+SLEEP 15000
+-SHOT E:\tester\colin-nav2-06.bmp 2
+SLEEP 140000
+
+-ENDAPP 0xE0001002
+SLEEP 2000
+-KILL ps1stage1
+PS ps1stage1

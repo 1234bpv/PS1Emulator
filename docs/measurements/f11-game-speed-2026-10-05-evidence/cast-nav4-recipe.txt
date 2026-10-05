@@ -1,0 +1,3 @@
+SLEEP 50000
+-SHOT E:\tester\cast-nav4-01.bmp 1
+SLEEP 70000

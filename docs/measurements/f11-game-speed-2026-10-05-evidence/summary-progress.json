@@ -1,52 +1,583 @@
-[
-  {
-    "label": "C5-crash",
-    "runs": 3,
-    "medianMs": 37866,
-    "medianFps": 15.871758305603972,
-    "medianSpeed": 52.81783129984683,
-    "minFps": 15.832038144411369,
-    "maxFps": 15.88308359100399,
-    "errors": 0.0
-  },
-  {
-    "label": "C5-gt",
-    "runs": 3,
-    "medianMs": 34335,
-    "medianFps": 17.50400465996796,
-    "medianSpeed": 58.2495995340032,
-    "minFps": 17.469406737784496,
-    "maxFps": 17.507573992076438,
-    "errors": 0.0
-  },
-  {
-    "label": "N95-stock-crash",
-    "runs": 3,
-    "medianMs": 76178,
-    "medianFps": 7.889416892016068,
-    "medianSpeed": 26.254299141484417,
-    "minFps": 7.87587309491672,
-    "maxFps": 7.965540092776673,
-    "errors": 0.0
-  },
-  {
-    "label": "N95-stock-gt",
-    "runs": 3,
-    "medianMs": 65242,
-    "medianFps": 9.211857392477238,
-    "medianSpeed": 30.655099475797797,
-    "minFps": 9.195507818476697,
-    "maxFps": 9.3080163548507,
-    "errors": 0.0
-  },
-  {
-    "label": "N95-stock-wipeout",
-    "runs": 3,
-    "medianMs": 56895,
-    "medianFps": 10.545742156604271,
-    "medianSpeed": 35.15247385534757,
-    "minFps": 10.363947282054825,
-    "maxFps": 10.57250092509383,
-    "errors": 0.0
-  }
-]
+{
+  "updated": "2026-10-05T15:38:10.7390944+03:00",
+  "acceptedRuns": 48,
+  "completedTriples": 16,
+  "series": [
+    {
+      "label": "C5-cast",
+      "repeatCount": 3,
+      "region": "NTSC",
+      "ms": [
+        34565,
+        35309,
+        35204
+      ],
+      "shownFrames": [
+        1200,
+        1200,
+        1200
+      ],
+      "fpsMedian": 34.087035564140436,
+      "fpsMin": 33.985669376079755,
+      "fpsMax": 34.717199479242005,
+      "speedMedian": 56.81172594023406,
+      "speedMin": 56.642782293466254,
+      "speedMax": 57.86199913207001,
+      "errors": [
+        0,
+        0,
+        0
+      ],
+      "pass": [
+        "drc: frames=1200 ms=34565 pc=80000080 cycle=3442875179 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=35309 pc=80000080 cycle=3442875179 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=35204 pc=80000080 cycle=3442875179 vblanks=1208 fsAdvised=0"
+      ],
+      "loaded": [
+        "Loaded CD Image: E:\\PS1\\games\\Castlevania - Symphony of the Night (USA.pbp[+pbp] (398057383 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Castlevania - Symphony of the Night (USA.pbp[+pbp] (398057383 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Castlevania - Symphony of the Night (USA.pbp[+pbp] (398057383 bytes).\n"
+      ]
+    },
+    {
+      "label": "C5-colony",
+      "repeatCount": 3,
+      "region": "NTSC",
+      "ms": [
+        30779,
+        30676,
+        31104
+      ],
+      "shownFrames": [
+        601,
+        601,
+        601
+      ],
+      "fpsMedian": 19.52630039962312,
+      "fpsMin": 19.32227366255144,
+      "fpsMax": 19.591863345938194,
+      "speedMedian": 64.97936905032653,
+      "speedMin": 64.30041152263375,
+      "speedMax": 65.19754857217369,
+      "errors": [
+        0,
+        0,
+        0
+      ],
+      "pass": [
+        "drc: frames=1200 ms=30779 pc=80000080 cycle=902715179 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=30676 pc=80000080 cycle=902715179 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=31104 pc=80000080 cycle=902715179 vblanks=1208 fsAdvised=0"
+      ],
+      "loaded": [
+        "Loaded CD Image: E:\\PS1\\games\\Colony Wars (USA) (Disc 1).pbp[+pbp] (366364329 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Colony Wars (USA) (Disc 1).pbp[+pbp] (366364329 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Colony Wars (USA) (Disc 1).pbp[+pbp] (366364329 bytes).\n"
+      ]
+    },
+    {
+      "label": "C5-crash",
+      "repeatCount": 3,
+      "region": "NTSC",
+      "ms": [
+        37961,
+        37839,
+        37866
+      ],
+      "shownFrames": [
+        601,
+        601,
+        601
+      ],
+      "fpsMedian": 15.871758305603972,
+      "fpsMin": 15.832038144411369,
+      "fpsMax": 15.88308359100399,
+      "speedMedian": 52.81783129984683,
+      "speedMin": 52.68565106293301,
+      "speedMax": 52.855519437617275,
+      "errors": [
+        0,
+        0,
+        0
+      ],
+      "pass": [
+        "drc: frames=1200 ms=37961 pc=80000080 cycle=3334898603 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=37839 pc=80000080 cycle=3334898603 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=37866 pc=80000080 cycle=3334898603 vblanks=1208 fsAdvised=0"
+      ],
+      "loaded": [
+        "Loaded CD Image: E:\\PS1\\games\\Crash Bandicoot (USA).pbp[+pbp] (478407220 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Crash Bandicoot (USA).pbp[+pbp] (478407220 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Crash Bandicoot (USA).pbp[+pbp] (478407220 bytes).\n"
+      ]
+    },
+    {
+      "label": "C5-gt",
+      "repeatCount": 3,
+      "region": "NTSC",
+      "ms": [
+        34328,
+        34335,
+        34403
+      ],
+      "shownFrames": [
+        601,
+        601,
+        601
+      ],
+      "fpsMedian": 17.50400465996796,
+      "fpsMin": 17.469406737784496,
+      "fpsMax": 17.507573992076438,
+      "speedMedian": 58.2495995340032,
+      "speedMin": 58.134465017585676,
+      "speedMax": 58.26147751106968,
+      "errors": [
+        0,
+        0,
+        0
+      ],
+      "pass": [
+        "drc: frames=1200 ms=34328 pc=80000080 cycle=733371181 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=34335 pc=80000080 cycle=733371181 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=34403 pc=80000080 cycle=733371181 vblanks=1208 fsAdvised=0"
+      ],
+      "loaded": [
+        "Loaded CD Image: E:\\PS1\\games\\gt.pbp[+pbp] (406756372 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\gt.pbp[+pbp] (406756372 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\gt.pbp[+pbp] (406756372 bytes).\n"
+      ]
+    },
+    {
+      "label": "C5-nfs",
+      "repeatCount": 3,
+      "region": "NTSC",
+      "ms": [
+        42839,
+        42854,
+        42883
+      ],
+      "shownFrames": [
+        590,
+        590,
+        590
+      ],
+      "fpsMedian": 13.767676296261726,
+      "fpsMin": 13.758365785975794,
+      "fpsMax": 13.77249702374005,
+      "speedMedian": 46.67008913987026,
+      "speedMin": 46.63852808805354,
+      "speedMax": 46.68643058894932,
+      "errors": [
+        0,
+        0,
+        0
+      ],
+      "pass": [
+        "drc: frames=1200 ms=42839 pc=80000080 cycle=1970307884 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=42854 pc=80000080 cycle=1970307884 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=42883 pc=80000080 cycle=1970307884 vblanks=1208 fsAdvised=0"
+      ],
+      "loaded": [
+        "Loaded CD Image: E:\\PS1\\games\\Need for Speed - Porsche Unleashed (USA).pbp[+pbp] (519772571 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Need for Speed - Porsche Unleashed (USA).pbp[+pbp] (519772571 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Need for Speed - Porsche Unleashed (USA).pbp[+pbp] (519772571 bytes).\n"
+      ]
+    },
+    {
+      "label": "C5-rayman",
+      "repeatCount": 3,
+      "region": "NTSC",
+      "ms": [
+        29263,
+        30303,
+        30367
+      ],
+      "shownFrames": [
+        1200,
+        1200,
+        1200
+      ],
+      "fpsMedian": 39.6000396000396,
+      "fpsMin": 39.51658049856752,
+      "fpsMax": 41.00741550763763,
+      "speedMedian": 66.000066000066,
+      "speedMin": 65.86096749761253,
+      "speedMax": 68.34569251272939,
+      "errors": [
+        0,
+        0,
+        0
+      ],
+      "pass": [
+        "drc: frames=1200 ms=29263 pc=80000080 cycle=1467195179 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=30303 pc=80000080 cycle=1467195179 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=30367 pc=80000080 cycle=1467195179 vblanks=1208 fsAdvised=0"
+      ],
+      "loaded": [
+        "Loaded CD Image: E:\\PS1\\games\\Rayman (USA).pbp[+pbp] (498135871 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Rayman (USA).pbp[+pbp] (498135871 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Rayman (USA).pbp[+pbp] (498135871 bytes).\n"
+      ]
+    },
+    {
+      "label": "C5-rc",
+      "repeatCount": 3,
+      "region": "NTSC",
+      "ms": [
+        37632,
+        37634,
+        38618
+      ],
+      "shownFrames": [
+        1200,
+        1200,
+        1200
+      ],
+      "fpsMedian": 31.88606047722804,
+      "fpsMin": 31.073592625200682,
+      "fpsMax": 31.887755102040817,
+      "speedMedian": 53.143434128713395,
+      "speedMin": 51.78932104200114,
+      "speedMax": 53.14625850340136,
+      "errors": [
+        0,
+        0,
+        0
+      ],
+      "pass": [
+        "drc: frames=1200 ms=37632 pc=80000080 cycle=2596155182 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=37634 pc=80000080 cycle=2596155182 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=38618 pc=80000080 cycle=2596155182 vblanks=1208 fsAdvised=0"
+      ],
+      "loaded": [
+        "Loaded CD Image: E:\\PS1\\games\\RC Helicopter (USA).pbp[+pbp] (12839268 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\RC Helicopter (USA).pbp[+pbp] (12839268 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\RC Helicopter (USA).pbp[+pbp] (12839268 bytes).\n"
+      ]
+    },
+    {
+      "label": "C5-wipeout",
+      "repeatCount": 3,
+      "region": "NTSC",
+      "ms": [
+        28070,
+        29202,
+        29190
+      ],
+      "shownFrames": [
+        600,
+        600,
+        600
+      ],
+      "fpsMedian": 20.554984583761563,
+      "fpsMin": 20.546537908362442,
+      "fpsMax": 21.375133594584966,
+      "speedMedian": 68.51661527920521,
+      "speedMin": 68.48845969454148,
+      "speedMax": 71.25044531528322,
+      "errors": [
+        0,
+        0,
+        0
+      ],
+      "pass": [
+        "drc: frames=1200 ms=28070 pc=80000080 cycle=1354299190 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=29202 pc=80000080 cycle=1354299190 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=29190 pc=80000080 cycle=1354299190 vblanks=1208 fsAdvised=0"
+      ],
+      "loaded": [
+        "Loaded CD Image: E:\\PS1\\games\\WipEout (USA).pbp[+pbp] (450941663 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\WipEout (USA).pbp[+pbp] (450941663 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\WipEout (USA).pbp[+pbp] (450941663 bytes).\n"
+      ]
+    },
+    {
+      "label": "N95-stock-cast",
+      "repeatCount": 3,
+      "region": "NTSC",
+      "ms": [
+        64121,
+        63669,
+        64126
+      ],
+      "shownFrames": [
+        1200,
+        1200,
+        1200
+      ],
+      "fpsMedian": 18.714617675956394,
+      "fpsMin": 18.713158469263636,
+      "fpsMax": 18.847476794044198,
+      "speedMedian": 31.191029459927325,
+      "speedMin": 31.18859744877273,
+      "speedMax": 31.412461323406994,
+      "errors": [
+        0,
+        0,
+        0
+      ],
+      "pass": [
+        "drc: frames=1200 ms=64121 pc=80000080 cycle=3442875179 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=63669 pc=80000080 cycle=3442875179 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=64126 pc=80000080 cycle=3442875179 vblanks=1208 fsAdvised=0"
+      ],
+      "loaded": [
+        "Loaded CD Image: E:\\PS1\\games\\Castlevania - Symphony of the Night (USA.pbp[+pbp] (398057383 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Castlevania - Symphony of the Night (USA.pbp[+pbp] (398057383 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Castlevania - Symphony of the Night (USA.pbp[+pbp] (398057383 bytes).\n"
+      ]
+    },
+    {
+      "label": "N95-stock-colony",
+      "repeatCount": 3,
+      "region": "NTSC",
+      "ms": [
+        58023,
+        57290,
+        57924
+      ],
+      "shownFrames": [
+        601,
+        601,
+        601
+      ],
+      "fpsMedian": 10.375664664042539,
+      "fpsMin": 10.357961498026645,
+      "fpsMax": 10.490486995985338,
+      "speedMedian": 34.52800220979214,
+      "speedMin": 34.469089843682674,
+      "speedMax": 34.910106475824755,
+      "errors": [
+        0,
+        0,
+        0
+      ],
+      "pass": [
+        "drc: frames=1200 ms=58023 pc=80000080 cycle=902715179 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=57290 pc=80000080 cycle=902715179 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=57924 pc=80000080 cycle=902715179 vblanks=1208 fsAdvised=0"
+      ],
+      "loaded": [
+        "Loaded CD Image: E:\\PS1\\games\\Colony Wars (USA) (Disc 1).pbp[+pbp] (366364329 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Colony Wars (USA) (Disc 1).pbp[+pbp] (366364329 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Colony Wars (USA) (Disc 1).pbp[+pbp] (366364329 bytes).\n"
+      ]
+    },
+    {
+      "label": "N95-stock-crash",
+      "repeatCount": 3,
+      "region": "NTSC",
+      "ms": [
+        76309,
+        75450,
+        76178
+      ],
+      "shownFrames": [
+        601,
+        601,
+        601
+      ],
+      "fpsMedian": 7.889416892016068,
+      "fpsMin": 7.87587309491672,
+      "fpsMax": 7.965540092776673,
+      "speedMedian": 26.254299141484417,
+      "speedMin": 26.209228269273613,
+      "speedMax": 26.507620941020544,
+      "errors": [
+        0,
+        0,
+        0
+      ],
+      "pass": [
+        "drc: frames=1200 ms=76309 pc=80000080 cycle=3334898603 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=75450 pc=80000080 cycle=3334898603 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=76178 pc=80000080 cycle=3334898603 vblanks=1208 fsAdvised=0"
+      ],
+      "loaded": [
+        "Loaded CD Image: E:\\PS1\\games\\Crash Bandicoot (USA).pbp[+pbp] (478407220 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Crash Bandicoot (USA).pbp[+pbp] (478407220 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Crash Bandicoot (USA).pbp[+pbp] (478407220 bytes).\n"
+      ]
+    },
+    {
+      "label": "N95-stock-gt",
+      "repeatCount": 3,
+      "region": "NTSC",
+      "ms": [
+        65242,
+        64568,
+        65358
+      ],
+      "shownFrames": [
+        601,
+        601,
+        601
+      ],
+      "fpsMedian": 9.211857392477238,
+      "fpsMin": 9.195507818476697,
+      "fpsMax": 9.3080163548507,
+      "speedMedian": 30.655099475797797,
+      "speedMin": 30.60069157562961,
+      "speedMax": 30.975096022797672,
+      "errors": [
+        0,
+        0,
+        0
+      ],
+      "pass": [
+        "drc: frames=1200 ms=65242 pc=80000080 cycle=733371181 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=64568 pc=80000080 cycle=733371181 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=65358 pc=80000080 cycle=733371181 vblanks=1208 fsAdvised=0"
+      ],
+      "loaded": [
+        "Loaded CD Image: E:\\PS1\\games\\gt.pbp[+pbp] (406756372 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\gt.pbp[+pbp] (406756372 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\gt.pbp[+pbp] (406756372 bytes).\n"
+      ]
+    },
+    {
+      "label": "N95-stock-nfs",
+      "repeatCount": 3,
+      "region": "NTSC",
+      "ms": [
+        76728,
+        76262,
+        76714
+      ],
+      "shownFrames": [
+        590,
+        590,
+        590
+      ],
+      "fpsMedian": 7.6909038767369715,
+      "fpsMin": 7.68950057345428,
+      "fpsMax": 7.736487372479085,
+      "speedMedian": 26.070860599108375,
+      "speedMin": 26.066103638828068,
+      "speedMax": 26.225380923657916,
+      "errors": [
+        0,
+        0,
+        0
+      ],
+      "pass": [
+        "drc: frames=1200 ms=76728 pc=80000080 cycle=1970307884 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=76262 pc=80000080 cycle=1970307884 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=76714 pc=80000080 cycle=1970307884 vblanks=1208 fsAdvised=0"
+      ],
+      "loaded": [
+        "Loaded CD Image: E:\\PS1\\games\\Need for Speed - Porsche Unleashed (USA).pbp[+pbp] (519772571 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Need for Speed - Porsche Unleashed (USA).pbp[+pbp] (519772571 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Need for Speed - Porsche Unleashed (USA).pbp[+pbp] (519772571 bytes).\n"
+      ]
+    },
+    {
+      "label": "N95-stock-rayman",
+      "repeatCount": 3,
+      "region": "NTSC",
+      "ms": [
+        50673,
+        50497,
+        51065
+      ],
+      "shownFrames": [
+        1200,
+        1200,
+        1200
+      ],
+      "fpsMedian": 23.681250370019537,
+      "fpsMin": 23.499461470674632,
+      "fpsMax": 23.76378794779888,
+      "speedMedian": 39.468750616699225,
+      "speedMin": 39.16576911779105,
+      "speedMax": 39.60631324633147,
+      "errors": [
+        0,
+        0,
+        0
+      ],
+      "pass": [
+        "drc: frames=1200 ms=50673 pc=80000080 cycle=1467195179 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=50497 pc=80000080 cycle=1467195179 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=51065 pc=80000080 cycle=1467195179 vblanks=1208 fsAdvised=0"
+      ],
+      "loaded": [
+        "Loaded CD Image: E:\\PS1\\games\\Rayman (USA).pbp[+pbp] (498135871 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Rayman (USA).pbp[+pbp] (498135871 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\Rayman (USA).pbp[+pbp] (498135871 bytes).\n"
+      ]
+    },
+    {
+      "label": "N95-stock-rc",
+      "repeatCount": 3,
+      "region": "NTSC",
+      "ms": [
+        68217,
+        68595,
+        68196
+      ],
+      "shownFrames": [
+        1200,
+        1200,
+        1200
+      ],
+      "fpsMedian": 17.590923083688818,
+      "fpsMin": 17.49398644216051,
+      "fpsMax": 17.596339961288052,
+      "speedMedian": 29.31820513948136,
+      "speedMin": 29.15664407026751,
+      "speedMax": 29.32723326881342,
+      "errors": [
+        0,
+        0,
+        0
+      ],
+      "pass": [
+        "drc: frames=1200 ms=68217 pc=80000080 cycle=2596155182 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=68595 pc=80000080 cycle=2596155182 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=68196 pc=80000080 cycle=2596155182 vblanks=1208 fsAdvised=0"
+      ],
+      "loaded": [
+        "Loaded CD Image: E:\\PS1\\games\\RC Helicopter (USA).pbp[+pbp] (12839268 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\RC Helicopter (USA).pbp[+pbp] (12839268 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\RC Helicopter (USA).pbp[+pbp] (12839268 bytes).\n"
+      ]
+    },
+    {
+      "label": "N95-stock-wipeout",
+      "repeatCount": 3,
+      "region": "NTSC",
+      "ms": [
+        56751,
+        57893,
+        56895
+      ],
+      "shownFrames": [
+        600,
+        600,
+        600
+      ],
+      "fpsMedian": 10.545742156604271,
+      "fpsMin": 10.363947282054825,
+      "fpsMax": 10.57250092509383,
+      "speedMedian": 35.15247385534757,
+      "speedMin": 34.54649094018275,
+      "speedMax": 35.24166975031277,
+      "errors": [
+        0,
+        0,
+        0
+      ],
+      "pass": [
+        "drc: frames=1200 ms=56751 pc=80000080 cycle=1354299190 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=57893 pc=80000080 cycle=1354299190 vblanks=1208 fsAdvised=0",
+        "drc: frames=1200 ms=56895 pc=80000080 cycle=1354299190 vblanks=1208 fsAdvised=0"
+      ],
+      "loaded": [
+        "Loaded CD Image: E:\\PS1\\games\\WipEout (USA).pbp[+pbp] (450941663 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\WipEout (USA).pbp[+pbp] (450941663 bytes).\n",
+        "Loaded CD Image: E:\\PS1\\games\\WipEout (USA).pbp[+pbp] (450941663 bytes).\n"
+      ]
+    }
+  ]
+}

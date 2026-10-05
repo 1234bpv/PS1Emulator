@@ -1,0 +1,19 @@
+{
+  "name": "C5-v2-colony-verify-scenario",
+  "started": "2026-10-05T14:37:15.1730720+03:00",
+  "finished": "2026-10-05T14:37:49.1077343+03:00",
+  "limitSec": 140,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\deploy_net-rfcomm.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-Scenario",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\C5-v2-colony-verify.txt",
+    "-ScenarioTimeoutSec",
+    "110",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\C5-v2-colony-verify.log"
+  ]
+}

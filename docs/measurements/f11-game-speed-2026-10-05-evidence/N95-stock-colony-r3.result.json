@@ -1,0 +1,19 @@
+{
+  "label": "N95-stock-colony",
+  "repeat": 3,
+  "region": "NTSC",
+  "frames": 1200,
+  "ms": 57924,
+  "shownFrames": 601,
+  "shownFps": 10.375664664042539,
+  "ps1Fps": 20.716801325875284,
+  "speedPercent": 34.52800220979214,
+  "errors": 0,
+  "shutdown": "gui: frames=1200 ms=57924",
+  "pass": "drc: frames=1200 ms=57924 pc=80000080 cycle=902715179 vblanks=1208 fsAdvised=0",
+  "loaded": "Loaded CD Image: E:\\PS1\\games\\Colony Wars (USA) (Disc 1).pbp[+pbp] (366364329 bytes).\n",
+  "emuMs": null,
+  "shownMethod": "DSA direct FB pixB=4, stock fxaa=0, 240 rows per present",
+  "volume0ms": 3883,
+  "clockStartMs": 7619
+}

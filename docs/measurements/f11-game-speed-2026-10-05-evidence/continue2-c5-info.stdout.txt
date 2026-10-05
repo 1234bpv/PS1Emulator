@@ -1,0 +1,17 @@
+[net] serial COM12 @ 115200 baud
+[net] > INFO
+[net] < OK info
+[net] < protocol 2
+[net] < screen 240x320
+[net] < ramfree 180826112
+[net] < tick 8243616 startTick 4537830 boot 0 by r
+[net] < drive C freekb 30464
+[net] < drive E freekb 10906936
+[net] < scriptlog E:\tester\C5-cast-nav2.log
+[net] < script DONE 30
+[net] > STATUS
+[net] < OK DONE 30
+[net] > PS ps1stage1
+[net] < OK ps 1
+[net] < 0 ps1stage1[e0001002]0001
+[net] done

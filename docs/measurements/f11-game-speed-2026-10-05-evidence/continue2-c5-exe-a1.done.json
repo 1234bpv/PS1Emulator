@@ -1,0 +1,17 @@
+{
+  "name": "continue2-c5-exe-a1",
+  "started": "2026-10-05T02:32:12.0716177+03:00",
+  "finished": "2026-10-05T02:32:25.5215195+03:00",
+  "limitSec": 45,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\deploy_net-rfcomm.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-GetFile",
+    "E:\\sys\\bin\\ps1stage1.exe",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\continue2-c5-exe.exe"
+  ]
+}

@@ -1,0 +1,24 @@
+SLEEP 20000
+-KEY 8 press 1 100
+SLEEP 8000
+-SHOT E:\tester\rayman-nav1-01.bmp 2
+-KEY 5 press 1 100
+SLEEP 8000
+-SHOT E:\tester\rayman-nav1-02.bmp 2
+-KEY 8 press 1 100
+SLEEP 8000
+-SHOT E:\tester\rayman-nav1-03.bmp 2
+-KEY 5 press 1 100
+SLEEP 12000
+-SHOT E:\tester\rayman-nav1-04.bmp 2
+-KEY 8 press 1 100
+SLEEP 12000
+-SHOT E:\tester\rayman-nav1-05.bmp 2
+-KEY 5 press 1 100
+SLEEP 15000
+-KEY right down
+SLEEP 3000
+-KEY right up
+SLEEP 12000
+-SHOT E:\tester\rayman-nav1-06.bmp 2
+SLEEP 100000

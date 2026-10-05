@@ -1,0 +1,17 @@
+{
+  "name": "C5-serial-cast-verify-get-C5-serial-cast-verify.bmp-a1",
+  "started": "2026-10-05T15:07:22.7898944+03:00",
+  "finished": "2026-10-05T15:07:23.9233852+03:00",
+  "limitSec": 45,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-GetFile",
+    "E:\\tester\\C5-serial-cast-verify.bmp",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\C5-serial-cast-verify.bmp"
+  ]
+}

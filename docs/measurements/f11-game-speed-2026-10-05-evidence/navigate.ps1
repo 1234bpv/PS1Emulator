@@ -23,7 +23,9 @@ SLEEP 2000
 PS ps1stage1
 "@ | Set-Content "$PSScriptRoot\$name.txt" -Encoding ascii
 Invoke-BoundedNet -Name "$name-scenario" -NetArgs ($link+@('-Scenario',"$PSScriptRoot\$name.txt",'-ScenarioTimeoutSec','300','-OutFile',"$PSScriptRoot\$name.log")) -LimitSec 330
-Invoke-BoundedNet -Name "$name-log" -NetArgs ($link+@('-GetFile','E:\PS1\logs\ps1_stage1.jsonl','-OutFile',"$PSScriptRoot\$name.jsonl")) -LimitSec 45
+& "$PSScriptRoot\get-file.ps1" -Name "$name-log" -Kind $Kind -Address $Address -Remote 'E:\PS1\logs\ps1_stage1.jsonl' -Local "$PSScriptRoot\$name.jsonl" -LimitSec 45
 $events=@(Get-Content "$PSScriptRoot\$name.jsonl" | ForEach-Object {$_ | ConvertFrom-Json})
 $events | Where-Object { $_.event -eq 'savestate' -or $_.error -or $_.event -eq 'shutdown'} | ConvertTo-Json -Compress | Write-Output
+if(-not @($events | Where-Object { $_.event -eq 'savestate' -and $_.msg -match "frame=$SaveFrame rc=0 size=[1-9]" }).Count) {throw "navigation did not save frame $SaveFrame; phone bench remains previous state"}
 # Shots are downloaded independently after DONE. bench stays on the phone for next navigation attempt.
+

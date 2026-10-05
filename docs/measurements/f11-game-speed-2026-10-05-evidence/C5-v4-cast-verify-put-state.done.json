@@ -1,0 +1,17 @@
+{
+  "name": "C5-v4-cast-verify-put-state",
+  "started": "2026-10-05T15:01:58.5947883+03:00",
+  "finished": "2026-10-05T15:02:20.9191204+03:00",
+  "limitSec": 240,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\deploy_net-rfcomm.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-PutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\states\\cast-gameplay.sav",
+    "-Remote",
+    "E:\\PS1\\saves\\bench.sav"
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "verifiedAt": "2026-10-05T02:32:11.6783609+03:00",
+  "mac": "A8448113EA78",
+  "marker": "continue2-c5-native-corrected.done.json",
+  "transport": "native RFCOMM",
+  "bytes": 1713024,
+  "channel": 13,
+  "sha256": "8AA4F9A1ED7C5C280204126C22FE9BC3BDE33263F1828DE56BE893EA37162D13"
+}

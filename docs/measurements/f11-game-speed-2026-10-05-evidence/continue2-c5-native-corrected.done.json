@@ -1,0 +1,19 @@
+{
+  "name": "continue2-c5-native-corrected",
+  "started": "2026-10-05T02:26:28.1150492+03:00",
+  "finished": "2026-10-05T02:26:44.3815928+03:00",
+  "limitSec": 60,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\deploy_net-rfcomm.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-Do",
+    "INFO; STATUS",
+    "-GetFile",
+    "E:\\PS1\\saves\\BENCH.SAV",
+    "-OutFile",
+    "./plans/runs/2026-10-05_game-speed/continue2-c5-bench-native.sav"
+  ]
+}

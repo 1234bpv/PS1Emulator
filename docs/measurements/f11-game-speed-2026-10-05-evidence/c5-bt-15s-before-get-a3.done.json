@@ -1,0 +1,17 @@
+{
+  "name": "c5-bt-15s-before-get-a3",
+  "started": "2026-10-05T15:12:44.5400285+03:00",
+  "finished": "2026-10-05T15:12:45.4315980+03:00",
+  "limitSec": 45,
+  "timeout": false,
+  "exitCode": 1,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\deploy_net-rfcomm.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-GetFile",
+    "E:\\tester\\c5-bt-15s-before.bmp",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed/c5-bt-15s-before.bmp"
+  ]
+}

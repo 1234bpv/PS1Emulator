@@ -1,0 +1,22 @@
+SLEEP 14000
+-SHOT E:\tester\nfs-nav2-01.bmp 1
+-KEY 5 press 1 100
+SLEEP 8000
+-SHOT E:\tester\nfs-nav2-02.bmp 1
+-KEY 5 press 1 100
+SLEEP 8000
+-SHOT E:\tester\nfs-nav2-03.bmp 1
+-KEY 5 press 1 100
+SLEEP 8000
+-SHOT E:\tester\nfs-nav2-04.bmp 1
+-KEY 5 press 1 100
+SLEEP 8000
+-SHOT E:\tester\nfs-nav2-05.bmp 1
+-KEY 5 press 1 100
+SLEEP 15000
+-SHOT E:\tester\nfs-nav2-06.bmp 1
+-KEY 5 down
+SLEEP 20000
+-KEY 5 up
+-SHOT E:\tester\nfs-nav2-07.bmp 1
+SLEEP 100000

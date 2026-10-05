@@ -1,0 +1,48 @@
+{
+  "verifiedAt": "2026-10-05T12:59:24.524Z",
+  "acceptedResultFiles": 48,
+  "canonicalStateHashes": [
+    {
+      "game": "gt",
+      "sha256": "8AA4F9A1ED7C5C280204126C22FE9BC3BDE33263F1828DE56BE893EA37162D13",
+      "bytes": 1713024
+    },
+    {
+      "game": "crash",
+      "sha256": "5FC5B6D32744A239016EDC7DDF65105923AC9222ED50C8356C457641AA17FCC6",
+      "bytes": 2196642
+    },
+    {
+      "game": "wipeout",
+      "sha256": "627E0B813E29E4C537E99A6FEB7BE2868D6EC9B20C4AE6928016506AD1AB998A",
+      "bytes": 1683839
+    },
+    {
+      "game": "nfs",
+      "sha256": "167FBE04475651F2CA16FF4D51B7CA46121AC25468BCFC990E29CF8913D249D0",
+      "bytes": 1801625
+    },
+    {
+      "game": "rc",
+      "sha256": "C73034CA0E1DFD91A9E5D5674EE8970E57631A2B0AEDA8AE8893C55A550A837D",
+      "bytes": 1265475
+    },
+    {
+      "game": "cast",
+      "sha256": "D7FE9DC17C0F9E254340ADA3AB7A920961958D73AD058DC87B9664847036B006",
+      "bytes": 1593381
+    },
+    {
+      "game": "colony",
+      "sha256": "4FBECEED3CE16D982523364A9D0A8224C2D4A2828044ECBF0A59B270BB50B8AA",
+      "bytes": 1582507
+    },
+    {
+      "game": "rayman",
+      "sha256": "081639BEF8A99A84255FB4C6676C4DA32C77F569F3657244258AADBFAD2B4020",
+      "bytes": 1679398
+    }
+  ],
+  "checkState": "last passed 2026-10-05 15:13, rerun unavailable due local startup delays",
+  "phoneRestoration": "pending"
+}

@@ -1,0 +1,19 @@
+{
+  "label": "N95-stock-rayman",
+  "repeat": 2,
+  "region": "NTSC",
+  "frames": 1200,
+  "ms": 50497,
+  "shownFrames": 1200,
+  "shownFps": 23.76378794779888,
+  "ps1Fps": 23.76378794779888,
+  "speedPercent": 39.60631324633147,
+  "errors": 0,
+  "shutdown": "gui: frames=1200 ms=50497",
+  "pass": "drc: frames=1200 ms=50497 pc=80000080 cycle=1467195179 vblanks=1208 fsAdvised=0",
+  "loaded": "Loaded CD Image: E:\\PS1\\games\\Rayman (USA).pbp[+pbp] (498135871 bytes).\n",
+  "emuMs": null,
+  "shownMethod": "DSA direct FB pixB=4, stock fxaa=0, 240 rows per present",
+  "volume0ms": 3855,
+  "clockStartMs": 8064
+}

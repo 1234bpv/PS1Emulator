@@ -1,0 +1,33 @@
+LOG C5-rayman-nav1 navigation only; not a timing measurement
+-START E:\sys\bin\ps1stage1.exe gui rec light blend dsa img"Rayman (USA).pbp"  savestate5000 frames5001 dumpat999999 limit240
+-WAITFG e0001002 20000
+-KEY star press 2 100
+SLEEP 20000
+-KEY 8 press 1 100
+SLEEP 8000
+-SHOT E:\tester\rayman-nav1-01.bmp 2
+-KEY 5 press 1 100
+SLEEP 8000
+-SHOT E:\tester\rayman-nav1-02.bmp 2
+-KEY 8 press 1 100
+SLEEP 8000
+-SHOT E:\tester\rayman-nav1-03.bmp 2
+-KEY 5 press 1 100
+SLEEP 12000
+-SHOT E:\tester\rayman-nav1-04.bmp 2
+-KEY 8 press 1 100
+SLEEP 12000
+-SHOT E:\tester\rayman-nav1-05.bmp 2
+-KEY 5 press 1 100
+SLEEP 15000
+-KEY right down
+SLEEP 3000
+-KEY right up
+SLEEP 12000
+-SHOT E:\tester\rayman-nav1-06.bmp 2
+SLEEP 100000
+
+-ENDAPP 0xE0001002
+SLEEP 2000
+-KILL ps1stage1
+PS ps1stage1

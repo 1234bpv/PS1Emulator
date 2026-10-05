@@ -1,0 +1,19 @@
+{
+  "name": "c5-1505-auth-info",
+  "started": "2026-10-05T15:05:05.2967833+03:00",
+  "finished": "2026-10-05T15:05:10.7989598+03:00",
+  "limitSec": 35,
+  "timeout": false,
+  "exitCode": 1,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\deploy_net-rfcomm.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-Do",
+    "INFO; SLEEP 4000; SHOT E:\\tester\\c5-auth-info.bmp 2",
+    "-GetFile",
+    "E:\\tester\\c5-auth-info.bmp",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\c5-auth-info.bmp"
+  ]
+}

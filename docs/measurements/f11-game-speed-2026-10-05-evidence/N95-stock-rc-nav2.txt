@@ -1,0 +1,28 @@
+LOG N95-stock-rc-nav2 navigation only; not a timing measurement
+-START E:\sys\bin\ps1stage1.exe gui rec light blend dsa img"RC Helicopter (USA).pbp" loadstate10000 savestate13000 frames13001 dumpat999999 limit240
+-WAITFG e0001002 20000
+-KEY star press 2 100
+SLEEP 8000
+-KEY 8 press 1 100
+SLEEP 10000
+-SHOT E:\tester\rc-nav2-01.bmp 1
+-KEY 5 press 1 100
+SLEEP 12000
+-SHOT E:\tester\rc-nav2-02.bmp 1
+-KEY 5 press 1 100
+SLEEP 15000
+-SHOT E:\tester\rc-nav2-03.bmp 1
+-KEY 5 press 1 100
+SLEEP 15000
+-SHOT E:\tester\rc-nav2-04.bmp 1
+-KEY 5 down
+SLEEP 5000
+-KEY 5 up
+SLEEP 15000
+-SHOT E:\tester\rc-nav2-05.bmp 1
+SLEEP 90000
+
+-ENDAPP 0xE0001002
+SLEEP 2000
+-KILL ps1stage1
+PS ps1stage1

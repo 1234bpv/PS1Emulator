@@ -1,0 +1,17 @@
+{
+  "name": "C5-trek-nav2-05.bmp-get-a1",
+  "started": "2026-10-05T15:38:34.0637337+03:00",
+  "finished": "2026-10-05T15:38:35.0704511+03:00",
+  "limitSec": 45,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\deploy_net-rfcomm.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-GetFile",
+    "E:\\tester\\trek-nav2-05.bmp",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed/C5-trek-nav2-05.bmp"
+  ]
+}

@@ -1,0 +1,8 @@
+[serial-get] OK 1713024
+[serial-get] 262144/1713024
+[serial-get] 524288/1713024
+[serial-get] 786432/1713024
+[serial-get] 1048576/1713024
+[serial-get] 1310720/1713024
+[serial-get] 1572864/1713024
+{"expected":1713024,"received":1708992,"elapsedMs":27228,"complete":false,"error":"TimeoutException: Время ожидания операции истекло.","method":"Buffered","handshake":"RequestToSend"}

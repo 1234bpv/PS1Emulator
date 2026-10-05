@@ -1,0 +1,17 @@
+{
+  "name": "C5-clean-v2-rayman-verify-get-C5-clean-v2-rayman-verify.bmp-a1",
+  "started": "2026-10-05T14:59:24.7534782+03:00",
+  "finished": "2026-10-05T14:59:25.7045311+03:00",
+  "limitSec": 45,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\deploy_net-rfcomm.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-GetFile",
+    "E:\\tester\\C5-clean-v2-rayman-verify.bmp",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\C5-clean-v2-rayman-verify.bmp"
+  ]
+}

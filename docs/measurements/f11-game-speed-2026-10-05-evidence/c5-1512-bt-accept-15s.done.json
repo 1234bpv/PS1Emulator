@@ -1,0 +1,19 @@
+{
+  "name": "c5-1512-bt-accept-15s",
+  "started": "2026-10-05T15:12:22.3038814+03:00",
+  "finished": "2026-10-05T15:12:35.9807555+03:00",
+  "limitSec": 55,
+  "timeout": false,
+  "exitCode": 1,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\deploy_net-rfcomm.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-Do",
+    "SLEEP 15000; FG; WG; SHOT E:\\tester\\c5-bt-15s-before.bmp 1; KEY lsk; SLEEP 2000; FG; SHOT E:\\tester\\c5-bt-15s-after.bmp 1",
+    "-GetFile",
+    "E:\\tester\\c5-bt-15s-after.bmp",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\c5-bt-15s-after.bmp"
+  ]
+}

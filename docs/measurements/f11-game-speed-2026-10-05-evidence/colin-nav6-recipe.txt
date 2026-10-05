@@ -1,0 +1,27 @@
+SLEEP 12000
+WAITFG e0001002 1000
+-KEY 5 press 1 100
+SLEEP 8000
+-SHOT E:\tester\colin-nav6-01.bmp 2
+WAITFG e0001002 1000
+-KEY 5 press 1 100
+SLEEP 8000
+-SHOT E:\tester\colin-nav6-02.bmp 2
+WAITFG e0001002 1000
+-KEY 5 press 1 100
+SLEEP 8000
+-SHOT E:\tester\colin-nav6-03.bmp 2
+WAITFG e0001002 1000
+-KEY 5 press 1 100
+SLEEP 10000
+-SHOT E:\tester\colin-nav6-04.bmp 2
+WAITFG e0001002 1000
+-KEY 5 press 1 100
+SLEEP 20000
+-SHOT E:\tester\colin-nav6-05.bmp 2
+WAITFG e0001002 1000
+-KEY 5 down
+SLEEP 20000
+-KEY 5 up
+-SHOT E:\tester\colin-nav6-06.bmp 2
+SLEEP 100000

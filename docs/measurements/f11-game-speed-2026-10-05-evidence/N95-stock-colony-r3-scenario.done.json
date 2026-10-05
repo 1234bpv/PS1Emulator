@@ -1,0 +1,19 @@
+{
+  "name": "N95-stock-colony-r3-scenario",
+  "started": "2026-10-05T14:53:20.8673436+03:00",
+  "finished": "2026-10-05T14:55:21.5792931+03:00",
+  "limitSec": 220,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-Scenario",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\N95-stock-colony-r3.txt",
+    "-ScenarioTimeoutSec",
+    "200",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\N95-stock-colony-r3.log"
+  ]
+}

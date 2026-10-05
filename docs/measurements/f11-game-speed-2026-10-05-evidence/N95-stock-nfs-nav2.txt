@@ -1,0 +1,31 @@
+LOG N95-stock-nfs-nav2 navigation only; not a timing measurement
+-START E:\sys\bin\ps1stage1.exe gui rec light blend dsa img"Need for Speed - Porsche Unleashed (USA).pbp" loadstate20000 savestate24000 frames24001 dumpat999999 limit240
+-WAITFG e0001002 20000
+-KEY star press 2 100
+SLEEP 14000
+-SHOT E:\tester\nfs-nav2-01.bmp 1
+-KEY 5 press 1 100
+SLEEP 8000
+-SHOT E:\tester\nfs-nav2-02.bmp 1
+-KEY 5 press 1 100
+SLEEP 8000
+-SHOT E:\tester\nfs-nav2-03.bmp 1
+-KEY 5 press 1 100
+SLEEP 8000
+-SHOT E:\tester\nfs-nav2-04.bmp 1
+-KEY 5 press 1 100
+SLEEP 8000
+-SHOT E:\tester\nfs-nav2-05.bmp 1
+-KEY 5 press 1 100
+SLEEP 15000
+-SHOT E:\tester\nfs-nav2-06.bmp 1
+-KEY 5 down
+SLEEP 20000
+-KEY 5 up
+-SHOT E:\tester\nfs-nav2-07.bmp 1
+SLEEP 100000
+
+-ENDAPP 0xE0001002
+SLEEP 2000
+-KILL ps1stage1
+PS ps1stage1

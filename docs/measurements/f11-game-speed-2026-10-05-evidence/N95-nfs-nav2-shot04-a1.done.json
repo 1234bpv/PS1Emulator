@@ -1,0 +1,17 @@
+{
+  "name": "N95-nfs-nav2-shot04-a1",
+  "started": "2026-10-05T02:19:54.1414882+03:00",
+  "finished": "2026-10-05T02:19:54.8782806+03:00",
+  "limitSec": 45,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-GetFile",
+    "E:\\tester\\nfs-nav2-04.bmp",
+    "-OutFile",
+    "./plans/runs/2026-10-05_game-speed/N95-nfs-nav2-04.bmp"
+  ]
+}

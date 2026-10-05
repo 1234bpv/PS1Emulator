@@ -1,0 +1,9 @@
+[net] PUT D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\states\rayman-start.sav -> E:\PS1\saves\bench.sav (1ÿ679ÿ398 bytes)
+[net] .. 262ÿ144/1ÿ679ÿ398
+[net] .. 524ÿ288/1ÿ679ÿ398
+[net] .. 786ÿ432/1ÿ679ÿ398
+[net] .. 1ÿ048ÿ576/1ÿ679ÿ398
+[net] .. 1ÿ310ÿ720/1ÿ679ÿ398
+[net] .. 1ÿ572ÿ864/1ÿ679ÿ398
+[net] OK 1679398
+[net] done

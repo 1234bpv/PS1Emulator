@@ -1,0 +1,17 @@
+{
+  "name": "N95-stock-cast-nav4-log-a1",
+  "started": "2026-10-05T14:32:19.2070405+03:00",
+  "finished": "2026-10-05T14:32:20.4126041+03:00",
+  "limitSec": 45,
+  "timeout": false,
+  "exitCode": 0,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\SymbianDeployDaemon\\tools\\deploy_net.ps1",
+  "args": [
+    "-Ip",
+    "192.168.3.22",
+    "-GetFile",
+    "E:\\PS1\\logs\\ps1_stage1.jsonl",
+    "-OutFile",
+    "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\N95-stock-cast-nav4.jsonl"
+  ]
+}

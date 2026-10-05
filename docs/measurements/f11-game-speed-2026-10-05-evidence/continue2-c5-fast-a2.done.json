@@ -1,0 +1,21 @@
+{
+  "name": "continue2-c5-fast-a2",
+  "started": "2026-10-05T02:15:28.1797112+03:00",
+  "finished": "2026-10-05T02:15:55.7000633+03:00",
+  "limitSec": 60,
+  "timeout": false,
+  "exitCode": 1,
+  "client": "D:\\VsCodeProjects\\SymbianProjects\\PS1Emulator\\plans\\runs\\2026-10-05_game-speed\\serial-get.ps1",
+  "args": [
+    "-Com",
+    "COM12",
+    "-Remote",
+    "E:\\PS1\\saves\\BENCH.SAV",
+    "-OutFile",
+    "./plans/runs/2026-10-05_game-speed/continue2-c5-bench-buffered.sav",
+    "-Method",
+    "Buffered",
+    "-Handshake",
+    "RequestToSend"
+  ]
+}

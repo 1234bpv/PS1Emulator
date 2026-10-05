@@ -1,0 +1,10 @@
+{
+  "started": "2026-10-05T12:55:46.444Z",
+  "finished": "2026-10-05T12:56:01.473Z",
+  "status": null,
+  "signal": "SIGTERM",
+  "error": "spawnSync C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe ETIMEDOUT",
+  "stdout": "",
+  "stderr": "",
+  "change": "child-only PSModulePath restricted to existing Windows modules"
+}

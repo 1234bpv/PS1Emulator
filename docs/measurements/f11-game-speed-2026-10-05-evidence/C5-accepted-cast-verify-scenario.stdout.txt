@@ -1,0 +1,36 @@
+[net] serial COM12 @ 115200 baud
+[net] PUT D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\C5-accepted-cast-verify.txt -> E:\tester\C5-accepted-cast-verify.txt (379 bytes)
+[net] .. 379/379
+[net] OK 379
+[net] > SCRIPT E:\tester\C5-accepted-cast-verify.txt E:\tester\C5-accepted-cast-verify.log
+[net] < OK script E:\tester\C5-accepted-cast-verify.log
+[net] OK RUNNING 3 -WAITFG e0001002 20000
+[net] OK RUNNING 5 SLEEP 12000
+[net] OK RUNNING 8 SLEEP 2000
+[net] OK DONE 10
+[net] GET E:\tester\C5-accepted-cast-verify.log -> D:\VsCodeProjects\SymbianProjects\PS1Emulator\plans\runs\2026-10-05_game-speed\C5-accepted-cast-verify.log
+[net] got 754 bytes
+[log] [1 @55278329] LOG C5-accepted-cast-verify gameplay verification release alpha13
+[log] C5-accepted-cast-verify gameplay verification release alpha13
+[log] [2 @55278346] -START E:\sys\bin\ps1stage1.exe gui light blend dsa img"Castlevania - Symphony of the Night (USA.pbp" loadstate17500 fra
+[log] OK proc 39
+[log] [3 @55278868] -WAITFG e0001002 20000
+[log] ERR timeout
+[log] [4 @55299091] -KEY star press 2 100
+[log] OK key 0x85 x2
+[log] [5 @55299325] SLEEP 12000
+[log] OK sleep 12000
+[log] [6 @55311355] -SHOT E:\tester\C5-accepted-cast-verify.bmp 2
+[log] OK shot 57654 120x160 fb mode11
+[log] [7 @55312660] -ENDAPP 0xE0001002
+[log] OK endapp
+[log] [8 @55312675] SLEEP 2000
+[log] OK sleep 2000
+[log] [9 @55314734] -KILL ps1stage1
+[log] OK kill 1 matched 1
+[log] [10 @55314841] PS ps1stage1
+[log] OK ps 1
+[log] 0 ps1stage1[e0001002]0001
+[log] END
+[log] --- DONE 10
+[net] done
