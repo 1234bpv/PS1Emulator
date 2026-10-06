@@ -32,6 +32,7 @@ int LoadState(const char *file);
 
 // Outside extern "C": import interface is C++ (classes, references).
 #include "imgconv.h"
+#include "zlib.h"
 #ifdef PS1_BENCH
 #include "ocengine.h"
 #endif
@@ -1053,6 +1054,10 @@ static long CALLBACK spuFreeze(int aMode, SPUFreeze_t *aHdr, unsigned short **aR
 
 // Flag enabled by "savefuncs" argument - see comment near hook.
 static TBool g_saveFuncsOverride;
+// SaveState ignores every write result, so a full card used to report success
+// over a truncated slot. The wrappers below record the first failure here.
+static struct PcsxSaveFuncs g_stateBase;
+static TBool g_stateIoErr;
 static const TInt KSaveBufferSize = 64 * 1024;
 
 struct TSaveFile
@@ -1364,6 +1369,7 @@ static void symbianSaveClose(void *file)
 		if (err != KErrNone)
 			{
 			logEvent("save", "SAVE_FLUSH_FAIL", "close flush failed err=%d", err);
+			g_stateIoErr = ETrue;
 			}
 		}
 
@@ -1372,7 +1378,30 @@ static void symbianSaveClose(void *file)
 	delete f;
 	}
 
+static int checkedStateWrite(void *file, const void *buf, u32 len)
+	{
+	const int r = g_stateBase.write(file, buf, len);
+	if (r != (int)len)
+		g_stateIoErr = ETrue;
+	return r;
+	}
+
+// zlib only: gzclose writes the last compressed block and reports its result.
+static void checkedStateClose(void *file)
+	{
+	if (gzclose((gzFile)file) != Z_OK)
+		g_stateIoErr = ETrue;
+	}
+
 } // extern "C"
+
+// True if a state write failed since the previous call; clears the flag.
+extern "C" TBool ps1StateIoFailed()
+	{
+	const TBool r = g_stateIoErr;
+	g_stateIoErr = EFalse;
+	return r;
+	}
 
 static void bindStubPlugins()
 	{
@@ -1417,6 +1446,10 @@ static void bindStubPlugins()
 		SaveFuncs.seek  = symbianSaveSeek;
 		SaveFuncs.close = symbianSaveClose;
 		}
+	else
+		SaveFuncs.close = checkedStateClose;
+	g_stateBase = SaveFuncs;
+	SaveFuncs.write = checkedStateWrite;
 	}
 
 // --- Entry point ------------------------------------------------------------

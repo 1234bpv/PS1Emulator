@@ -65,6 +65,7 @@ extern "C" void voutSymbianSetTiltMap(int aSide, int aPitch, int aDead, int aSen
 extern "C" int voutSymbianTiltActive(void);
 extern "C" int ps1TiltCli(void);
 extern "C" int ps1KeyProbeCli(void);
+TBool ps1StateIoFailed();
 void voutSymbianSetKeyMap(const int *aScan, const int *aAlt, int aCount,
 	unsigned int aToggle);
 int  voutSymbianPadButtons(void);
@@ -546,19 +547,16 @@ static TBool nextSection(const TDesC &aBuf, TInt &aPos, TPtrC &aKey, TPtrC &aInl
 		}
 	}
 
-// Help texts live on the card, not in the EXE: long text in fifteen languages does not
+// Help texts live on the card, not in the EXE: long text in every language does not
 // fit the hex-array scheme of i18n.cpp, and a translation then needs no rebuild.
 const TInt KHelpMax = 96 * 1024;
-
-static const char *const KHelpCode[ELangIdCount] =
-	{ "en", "uk", "zh", "de", "fr", "es", "ru", "pt", "it", "pl", "tr", "ja", "hi", "ar", "ko" };
 
 // UTF-8 file to UTF-16 with the CRs removed, so the parser only ever sees LF.
 static HBufC *loadHelpFile(TInt aLang)
 	{
 	TFileName path(KHelpDir);
 	TBuf<4> code;
-	code.Copy(TPtrC8((const TUint8 *)KHelpCode[aLang]));
+	code.Copy(TPtrC8((const TUint8 *)I18nLanguageCode(aLang)));
 	path.Append(code);
 	path.Append(_L(".txt"));
 	RFs fs;
@@ -1258,11 +1256,28 @@ void CPs1Container::DoSaveState()
 		fs.MkDirAll(KSavesDir);
 		fs.Close();
 		}
+	// Written beside the slot and renamed over it only when complete, so a full
+	// card or a failed write keeps the previous state instead of truncating it.
 	TFileName path;
 	StatePath(path, iStateSlot);
+	TFileName tmp(path);
+	tmp.Append(_L(".new"));
 	TBuf8<KMaxFileName + 1> path8;
-	path8.Copy(path);
-	const int r = SaveState((const char *)path8.PtrZ());
+	path8.Copy(tmp);
+	ps1StateIoFailed();
+	int r = SaveState((const char *)path8.PtrZ());
+	if (r == 0 && ps1StateIoFailed())
+		r = KErrWrite;
+	if (fs.Connect() == KErrNone)
+		{
+		if (r == 0)
+			r = fs.Replace(tmp, path);
+		if (r != 0)
+			fs.Delete(tmp);
+		fs.Close();
+		}
+	else if (r == 0)
+		r = KErrGeneral;
 	if (r == 0)
 		{
 		iStatusMsg.Format(Tr(EStrStateSaveOk), iStateSlot);

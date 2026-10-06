@@ -467,6 +467,7 @@ static RCriticalSection g_lock;
 static TBool g_lockOk;
 static TConvStat g_stat;
 static volatile TInt g_cancel;
+static const volatile TInt KNoCancel = 0;
 static RThread g_worker;
 static TBool g_workerOk;
 
@@ -758,10 +759,13 @@ static TInt readFull(MConvSrc &aSrc, TUint8 *aBuf, TInt aLen)
 	return got;
 	}
 
-// Copy entry (compression failed or requested by user).
+// Copy entry (compression failed or requested by user). Only the worker
+// reports progress and obeys cancel: the UI thread's BIOS extraction must not
+// leave the import state at EConvRun or inherit a cancel from an old import.
 static TInt copyEntry(RFs &aFs, MConvVol &aVol, const TDesC &aName,
-                      const TDesC &aDstPath, TInt aTotal)
+                      const TDesC &aDstPath, TInt aTotal, TBool aWorker = ETrue)
 	{
+	const volatile TInt *cancel = aWorker ? &g_cancel : &KNoCancel;
 	MConvSrc *src = NULL;
 	TInt r = aVol.Open(aName, src);
 	if (r != KErrNone)
@@ -776,25 +780,25 @@ static TInt copyEntry(RFs &aFs, MConvVol &aVol, const TDesC &aName,
 	const TInt KBuf = 64 * 1024;
 	TUint8 *buf = (TUint8 *)User::Alloc(KBuf);
 	TInt done = 0;
-	while (buf && r == KErrNone && !g_cancel)
+	while (buf && r == KErrNone && !*cancel)
 		{
 		const TInt n = src->Read(buf, KBuf);
 		if (n < 0) { r = n; break; }
 		if (!n) break;
 		r = out.Write(TPtrC8(buf, n));
 		done += n;
-		if (aTotal > 0)
+		if (aWorker && aTotal > 0)
 			setStat(EConvRun, (TInt)((TInt64)done * 100 / aTotal), NULL, NULL);
 		}
 	if (!buf)
 		r = KErrNoMemory;
 	// A truncated source ends the stream quietly; the caller deletes it on success.
-	if (r == KErrNone && !g_cancel && aTotal > 0 && done != aTotal)
+	if (r == KErrNone && !*cancel && aTotal > 0 && done != aTotal)
 		r = KErrCorrupt;
 	User::Free(buf);
 	out.Close();
 	delete src;
-	if (g_cancel && r == KErrNone)
+	if (*cancel && r == KErrNone)
 		r = KErrCancel;
 	if (r != KErrNone)
 		aFs.Delete(aDstPath);
@@ -1412,7 +1416,7 @@ TInt ConvExtractOne(RFs &aFs, const TDesC &aPath, const TDesC &aMember,
 
 	TInt sz = 0;
 	vol->Size(name, sz);
-	r = copyEntry(aFs, *vol, name, dst, sz);
+	r = copyEntry(aFs, *vol, name, dst, sz, EFalse);
 	delete vol;
 	if (r == KErrNone)
 		aOutName.Copy(base.Left(aOutName.MaxLength()));

@@ -415,7 +415,8 @@ TInt C7zVol::ScanL(RFs &aFs, const TDesC &aPath)
 		e.iMethod = (TInt)folder.Coders[0].MethodID;
 		if (e.iMethod != K_LZMA && e.iMethod != K_LZMA2 && e.iMethod != K_COPY)
 			continue;
-		e.iPropsOffs = (TInt)folder.Coders[0].PropsOffset;
+		// PropsOffset counts from this folder's coder record, iProps holds them all.
+		e.iPropsOffs = (TInt)(db.db.FoCodersOffsets[fo] + folder.Coders[0].PropsOffset);
 		e.iPropsSize = folder.Coders[0].PropsSize;
 
 		// SzArEx_GetFolderStreamPos is only declared in 7z.h with no body in SDK -
