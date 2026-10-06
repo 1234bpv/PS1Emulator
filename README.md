@@ -65,6 +65,13 @@ The emulator offers the following:
 | Nokia C5-00.2 | S60 3rd FP2 | ARM11, about 600 MHz | none | all twelve games measured |
 | Nokia 701 | Symbian Belle FP2 | BCM2763, 1 GHz | VideoCore IV | a target, the emulator has not been run on it yet |
 
+Adaptation to more phones is planned: the touch-screen Nokia phones with the
+Broadcom BCM2727 and BCM2763 chips, such as the Nokia N8, E7, 701 and 808, and
+the Symbian 9.4 phones, such as the Nokia 5800 and N97. Most of them have few
+or no game-friendly hardware keys, so the main work there is on-screen
+controls and the screen sizes these phones use. Because this is a hobby
+project, there is no schedule for it.
+
 The N95 8GB and the E90 are built on the same chip, so what is measured on one
 of them applies to the other, except where the E90's slower factory memory bus
 matters. The C5-00.2 has no 3D chip at all; the software rasteriser and direct
@@ -208,10 +215,22 @@ offers ready layouts (`Default`, `Racing`, `Fighting`, `RPG`), and
 `Keyboard: C5` additionally maps `2`, `4`, `6` and `8` to the D-pad for the
 C5-00.2's keypad.
 
-On the N95, `Tilt control` turns the accelerometer into an analogue stick. The
-way the phone is held when tilt control is switched on becomes the neutral
-position; dead zone, sensitivity, axis assignment and inversion are
-adjustable.
+### Tilt control
+
+On phones with an accelerometer the game can be steered by tilting the phone.
+`Tilt control` in the `Controls` section turns the accelerometer into the
+analogue stick of a DualShock controller, which suits racing and flying games
+best. The way the phone is held at the moment tilt control is switched on
+becomes the neutral position, so it can be played lying on a table or held at
+an angle. Four settings appear while it is on: which stick axis follows
+sideways tilt, which follows forward-and-back tilt (either can be inverted or
+switched off), the dead zone around the neutral position, and the sensitivity.
+The buttons stay on their keys while tilt is on.
+
+Tilt control works on the Nokia N95 8GB, where it has been tested. The E90 and
+the C5-00.2 have no accelerometer the emulator can find; there the setting
+switches itself back to `off`. Other phones with an accelerometer have not been
+tried yet.
 
 ## Settings
 
@@ -293,6 +312,13 @@ adjustments, as described in [Controls](#controls).
   conflicts with GPL-2.0.
 
 CHD images are not supported.
+
+Compression is done on the phone itself, so no computer is needed to prepare a
+game. `Add games...` in the `Game` section searches the memory card for disc
+images and archives, unpacks the archives and writes each game as a compressed
+`.pbp` next to it. A `.pbp` takes about two thirds of the space of the raw
+image (Gran Turismo: 454 MB instead of 694 MB) and costs only about 1.4% of
+speed to read during play, as measured on the N95.
 
 ## Questions and problems
 
