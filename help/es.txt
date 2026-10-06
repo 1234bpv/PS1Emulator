@@ -1,0 +1,167 @@
+# Textos de ayuda de PS1Emulator, español (también fallback para otros idiomas). UTF-8.
+# Las secciones comienzan con [clave] al principio de una línea.
+#   [hint.<id>] una frase mostrada en la barra de estado para la fila de menú seleccionada.
+#   [topic.<id>] Título, luego el texto: un párrafo por línea, una línea en blanco es un espacio.
+# Los números son mediciones en un Nokia N95 8GB, no promesas: dependen del juego.
+
+[hint.start] Inicia el juego seleccionado con los ajustes de abajo. Primero se comprueban la imagen de disco y la BIOS.
+[hint.resume] Vuelve al juego exactamente donde lo dejaste.
+[hint.restart] Opciones con * cambiadas: el juego se reinicia y se pierde el progreso no guardado. Guarda un estado antes.
+[hint.exit] Guarda los ajustes y cierra el emulador. La partida en curso se pierde salvo que guardes un estado.
+
+[hint.sec.game] OK abre o cierra la sección: el juego, estados guardados e importación de juegos.
+[hint.game] La imagen de disco para jugar. OK abre el explorador de archivos. Cambiarla requiere reiniciar el juego.
+[hint.savestate] Guarda la partida en curso en la ranura mostrada (Izq/Der: 1-5). [*] tras la ranura indica que está ocupada y se sobrescribirá, [ ] que está vacía.
+[hint.loadstate] Carga la ranura mostrada. Se perderá el progreso posterior a ese punto guardado.
+[hint.add] Importa juegos de la tarjeta: imágenes y archivos zip, rar o 7z, opcionalmente comprimidos a PBP.
+
+[hint.sec.video] OK abre o cierra la sección: escalado, suavizado de bordes, contador de fotogramas y ajustes de imagen.
+[hint.smooth] Promedia píxeles al reducir una imagen de 640 de ancho. Desactivado ahorró 4.6% de tiempo en una traza medida.
+[hint.fxaa] Suaviza los bordes dentados de figuras 3D; mayor es más fuerte. Cuesta velocidad: cerca de 17% menos fotogramas en una traza de prueba.
+[hint.fps] Muestra la tasa de fotogramas sobre la imagen. Útil para valorar el efecto de otros ajustes.
+[hint.light] Iluminación 3D. Desactivado es más rápido pero se pierde el sombreado: 5.6% menos ciclos de CPU en una escena medida de Gran Turismo.
+[hint.blend] Semitransparencia (cristal, brillos, sombras). Desactivado es más rápido, pero dichos objetos se ven mal.
+[hint.dirty] No redibuja una imagen que el juego no ha cambiado. Medido: 6.7 ms ahorrados por fotograma, sin pérdida de calidad.
+[hint.dsa] Escribe el fotograma directo en el búfer de pantalla. Medido: 0.93 ms ahorrados por fotograma. Requiere reiniciar.
+[hint.gl] Muestra la imagen mediante OpenGL ES del teléfono. En una escena medida de 320x240 fue más lento que sin él. Requiere reiniciar.
+[hint.swdraw] Solo con Salida GL. Sí: el rasterizador por software dibuja y GL solo muestra el fotograma. No: dibuja el chip gráfico.
+[hint.ilace] Dibuja solo una de cada dos líneas. Más rápido, pero reduce a la mitad el detalle vertical.
+[hint.pixskip] Omite píxeles no visibles en modos de alta resolución horizontal. Un poco más rápido.
+
+[hint.sec.speed] OK abre o cierra la sección: salto de fotogramas y ajustes del procesador. La mayoría requiere reiniciar.
+[hint.gpuskip] No dibuja algunos fotogramas. Auto deja que el núcleo decida. En una traza de carreras 1 dio +27% de velocidad pero 37% menos fotogramas mostrados.
+[hint.cpu] Dynarec recompila código de PS1 a ARM y es el modo rápido. El intérprete es el modo lento. Requiere reiniciar.
+[hint.gtenf] Omite cálculos de indicadores del coprocesador geométrico. En Gran Turismo fue 6% más lento, porque la geometría cambia. Requiere reiniciar.
+[hint.cycle] Velocidad del procesador emulado de PS1 en porcentaje. Valores más bajos van más ligeros pero pueden alterar la sincronización del juego. Se aplica al instante.
+
+[hint.sec.sound] OK abre o cierra la sección: salida de sonido y tono.
+[hint.sound] Salida de sonido. Desactivado quita el sonido y ahorra tiempo de procesador en la ruta de audio. Requiere reiniciar el juego.
+[hint.wsola] Cuando el juego va por debajo de la velocidad normal, alarga el sonido sin cambiar su tono. Cuesta cerca del 6% del tiempo de fotograma en el N95 en una medición. Requiere reiniciar.
+
+[hint.sec.input] OK abre o cierra la sección: distribuciones de teclas, asignación de controles y control por inclinación.
+[hint.preset] Sustituye todas las asignaciones de teclas por una distribución lista. Izq/Der elige, OK aplica. Tus asignaciones se perderán.
+[hint.keybase] Distribución base: N95 es la predeterminada; C5 también acepta 2, 4, 6, 8 como segunda tecla para las direcciones. OK la aplica y sustituye las asignaciones.
+[hint.keys] Abre la asignación de teclas: OK, luego pulsa la tecla. Izq/Der activa o desactiva Mantener para un botón.
+[hint.tilt] Conduce con la inclinación del teléfono (acelerómetro). La posición al volver al juego se toma como punto neutro.
+[hint.tiltside] Eje de palanca que sigue la inclinación lateral (LX, LY, RX, RY; un signo menos lo invierte). Por defecto LX.
+[hint.tiltpitch] Eje de palanca que sigue la inclinación adelante-atrás (LX, LY, RX, RY; un signo menos lo invierte). Por defecto LY.
+[hint.tiltdead] Una inclinación menor a esto se ignora. De 0 a 40, por defecto 10.
+[hint.tiltsens] Intensidad con la que la palanca sigue la inclinación: 40% a 300%, por defecto 100%.
+
+[hint.sec.system] OK abre o cierra la sección: idioma, BIOS, perfiles por juego y restauración.
+[hint.lang] El idioma del menú. Cambia al instante. Los textos de ayuda lo siguen; se usa inglés donde falte un texto.
+[hint.bios] Volcado de BIOS de E:\PS1\bios. Sin él se ejecuta el sustituto integrado (HLE) y la compatibilidad es menor. Requiere reiniciar.
+[hint.profile] Sí: cada juego conserva sus propios ajustes en E:\PS1\cfg, como teclas y velocidad. No: una sola configuración para todos.
+[hint.reset] Restablece todos los ajustes a sus valores por defecto, incluidas teclas e idioma. Pulsa OK dos veces. No afecta a las partidas guardadas.
+
+[hint.help] Abre la ayuda: configuración inicial, controles, guardado, solución de problemas y descripción de cada opción del menú.
+
+[topic.setup] Configuración inicial
+Este tema abre la página de configuración inicial, la misma que el emulador muestra al iniciarse por primera vez.
+
+[topic.play] Controles en el juego
+Teclas del menú: Arriba y Abajo mueven, Izquierda y Derecha cambian un valor, OK abre una opción o la conmuta, C y la tecla de selección derecha vuelven atrás.
+
+Navegación en el menú principal: Arriba y Abajo pasan cíclicamente de la última fila a la primera. Derecha en el encabezado de una sección la abre e Izquierda la cierra; abrir una sección cierra la otra. C dentro de una sección la cierra y deja el cursor sobre su encabezado. OK en una fila de valor lo cambia exactamente igual que Derecha.
+
+En el juego, la tecla de selección derecha abre el menú y pausa el juego. La tecla de selección izquierda hace una captura de pantalla. Cuando entra una llamada o cambias a otra aplicación, el juego se pausa y el menú se abre automáticamente.
+
+Teclas por defecto: el mando de dirección mueve; OK o 5 es Cruz; 0 es Círculo; 7 es Cuadrado; 9 es Triángulo; 1 es L1; 3 es R1; 4 es L2; 6 es R2; 2 es Select; 8 es Start.
+
+Ambas bases se dirigen con el mando de dirección. La fila Teclado en CONTROLES elige la distribución base: N95 es la predeterminada; C5 también acepta 2, 4, 6 y 8 en el teclado numérico como segunda tecla para las cuatro direcciones, para quienes les resulte más cómodo.
+
+El volumen se cambia con las teclas laterales de volumen, o con # (más alto) y * (más bajo), a menos que dichas teclas estén asignadas a un botón.
+
+Cada botón se puede asignar en Controles... : OK en un botón, luego pulsa la tecla. Izquierda y Derecha activan Mantener: un botón mantenido permanece pulsado hasta volver a presionarlo, lo cual resulta ideal para acelerar en carreras.
+
+Control por inclinación (CONTROLES) dirige con la inclinación del teléfono. Requiere un teléfono con acelerómetro, como el N95; el E90 y el C5-00.2 no lo tienen.
+
+La posición neutra se toma cada vez que vuelves al juego desde el menú. Para recalibrar, abre el menú con la tecla de selección derecha, sujeta el teléfono como desees jugar y elige Reanudar.
+
+[topic.saves] Guardado
+Un estado guardado almacena toda la partida en un instante. Abre JUEGO, elige Guardar estado, selecciona una ranura con Izquierda y Derecha (1 a 5) y pulsa OK. [*] tras el número de ranura indica que ya contiene un estado, [ ] indica que está vacía. Cargar estado lo restaura.
+
+Guardar estado y Cargar estado aparecen solo mientras un juego está en ejecución y es el seleccionado.
+
+Los archivos de estado están en E:\PS1\saves, nombrados según el juego y la ranura. Las tarjetas de memoria del juego, card1.mcd y card2.mcd, están en la misma carpeta: guardan las partidas que el propio juego escribe. Un estado y una tarjeta de memoria son independientes entre sí.
+
+Las opciones marcadas con * requieren reiniciar el juego. El progreso no guardado se perderá, así que guarda un estado antes de cambiarlas.
+
+[topic.slow] Si el juego va lento
+Cambia una opción a la vez y observa el Contador FPS (VIDEO).
+
+Primero las opciones más ligeras. Dibujo directo y Saltar fotogramas iguales deberían dejarse activadas: no cuestan calidad. Escala suave desactivada ahorró 4.6% de tiempo en una traza medida y solo suaviza líneas finas.
+
+Luego Salto fotogramas. Auto es el más suave. Un valor fijo de 1 dio 27% más velocidad de emulación en una carrera medida, pero se mostraron 37% menos fotogramas.
+
+Después las que reducen la calidad de imagen: Suavizado bordes desactivado, Iluminación 3D desactivada (5.6% menos ciclos de CPU en una escena medida), Transparencia desactivada, Hack entrelazado, Salto de píxeles. Bajar Velocidad CPU PS1 aligera la carga pero puede alterar la sincronización del juego.
+
+No esperes mejoría de estas: Modo rápido GTE fue 6% más lento en Gran Turismo; Salida GL fue más lenta que la ruta por software en una escena medida de 320x240. Mantén CPU en dynarec: el intérprete es el modo lento.
+
+[topic.nosound] Sin sonido o sin imagen
+Sin sonido: comprueba que Sonido (en la sección SONIDO) esté activado y que el juego se haya reiniciado tras cambiarlo. Sube el volumen con las teclas laterales, # o *. Si Conservar tono está activado, prueba a desactivarlo.
+
+Sin imagen o pantalla negra: pulsa la tecla de selección derecha y consulta la pantalla de error. Imagen de disco o BIOS no encontrada significa que faltan los archivos: consulta Archivos en la tarjeta. Si la imagen se ve mal tras un cambio, desactiva Dibujo directo o Salida GL y reinicia el juego.
+
+Sin BIOS: el juego se ejecuta entonces con el sustituto integrado (HLE). Muchos juegos arrancan, pero la compatibilidad es menor. Coloca un volcado de BIOS en E:\PS1\bios o elige uno en SISTEMA, BIOS.
+
+Las imágenes de disco se listan en los formatos bin, img, iso, pbp, cbn y cbin. Un archivo cue no aparece en el explorador de juegos: el núcleo lo deduce del bin por su nombre, así que consérvalos juntos. La importación sí lista archivos cue.
+
+[topic.files] Archivos en la tarjeta
+E:\PS1\games contiene las imágenes de disco. Añadir juegos... permite importarlas desde cualquier lugar de la tarjeta.
+
+E:\PS1\bios contiene el volcado de BIOS. El nombre por defecto es scph7502.bin. Se puede elegir un volcado o un archivo zip, rar o 7z con él en SISTEMA, BIOS.
+
+E:\PS1\saves contiene los estados guardados y las tarjetas de memoria.
+
+E:\PS1\cfg contiene ps1_settings.txt, los ajustes globales, y un pequeño archivo para cada juego con su propia configuración.
+
+E:\PS1\help contiene estos textos: un archivo por idioma, nombrado con el código de idioma (en.txt, uk.txt), en UTF-8. Si falta un archivo o una clave, se recurre al inglés.
+
+E:\PS1\logs contiene los registros de ejecución.
+
+[topic.game] Juego
+Juego: la imagen de disco para jugar. OK abre el explorador de archivos en la carpeta del juego actual. Elegir otro disco mientras se ejecuta un juego requiere reiniciar.
+
+Guardar estado y Cargar estado: consulta el tema Guardado.
+
+Añadir juegos...: importa juegos de la tarjeta. Marca archivos o ficheros comprimidos con OK, inicia con la tecla de selección izquierda. Puedes empaquetarlos a PBP, lo que ahorra cerca del 40% pero descarta datos de corrección de errores y no se puede deshacer, y puedes borrar los originales. Importar el disco del juego en ejecución lo cierra.
+
+[topic.video] Video
+Escala suave: promedia píxeles al reducir una imagen de 640 de ancho.
+
+Suavizado bordes: suaviza los bordes dentados de figuras 3D, nivel 1 a 5.
+
+Contador FPS: muestra la tasa de fotogramas sobre la imagen.
+
+El resto de la sección: Iluminación 3D (sombreado de texturas), Transparencia (objetos semitransparentes), Saltar fotogramas iguales (no redibuja una imagen sin cambios), Dibujo directo (escribe directo en el búfer de pantalla, requiere reiniciar), Salida GL (muestra la imagen mediante OpenGL ES, requiere reiniciar), Dibujo por software (solo con GL: qué rasterizador dibuja), Hack entrelazado (solo líneas alternas) y Salto de píxeles (omite píxeles no visibles en modos de alta resolución horizontal).
+
+[topic.speed] Velocidad
+Salto fotogramas: no dibuja algunos fotogramas. Auto deja que el núcleo decida cada fotograma; 1 a 3 omiten esa cantidad de fotogramas entre los dibujados.
+
+El resto de la sección: CPU (dynarec o intérprete, requiere reiniciar), Modo rápido GTE (requiere reiniciar) y Velocidad CPU PS1.
+
+Velocidad CPU PS1 se muestra en porcentaje de la velocidad normal. Valores más bajos dan al juego menos trabajo por fotograma y pueden alterar su sincronización. Se aplica al instante.
+
+[topic.sound] Sonido
+Sonido: salida de sonido activada o desactivada, requiere reiniciar.
+
+Conservar tono: cuando el juego va por debajo de la velocidad normal, el sonido se alarga sin cambiar el tono. Consume tiempo de procesador y requiere reiniciar.
+
+[topic.input] Controles
+Preajuste control: Defecto, Carreras, Lucha o RPG. OK sustituye todas las asignaciones de teclas.
+
+Teclado: N95 (la distribución por defecto) o C5 (la misma, más 2, 4, 6, 8 como segunda tecla para las direcciones). OK sustituye todas las asignaciones de teclas.
+
+Controles...: asigna cada botón de PS1 a una tecla; Izquierda y Derecha activan o desactivan Mantener.
+
+Control por inclinación y sus cuatro ajustes: el eje para inclinación lateral, el eje para inclinación adelante-atrás, la zona muerta (0 a 40) y la sensibilidad (40% a 300%).
+
+[topic.system] Sistema
+Idioma: el idioma del menú y de estos textos, cambia al instante.
+
+BIOS: el volcado de BIOS a utilizar, requiere reiniciar. El valor por defecto es scph7502.bin.
+
+Perfil por juego: activado mantiene un archivo de ajustes independiente para cada juego.
+
+Restaurar ajustes: restablece todo a los valores por defecto; pulsa OK dos veces.

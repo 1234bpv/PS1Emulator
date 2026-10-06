@@ -1,0 +1,167 @@
+# Textos de ajuda do PS1Emulator, português. UTF-8.
+# As seções começam com [chave] no início da linha.
+#   [hint.<id>] uma frase exibida na linha de status para a linha selecionada do menu.
+#   [topic.<id>] Título, depois o texto: um parágrafo por linha, linha em branco separa.
+# Os números são medições em um Nokia N95 8GB, não promessas: dependem do jogo.
+
+[hint.start] Inicia o jogo selecionado com as configurações abaixo. A imagem de disco e a BIOS são verificadas primeiro.
+[hint.resume] Retorna ao jogo exatamente de onde você parou.
+[hint.restart] Linhas marcadas com * mudaram: o jogo reinicia e o progresso não salvo é perdido. Salve um estado antes.
+[hint.exit] Salva as configurações e fecha o emulador. O jogo em execução é perdido se não salvar um estado.
+
+[hint.sec.game] OK abre ou fecha a seção: o jogo, estados salvos e importação de jogos.
+[hint.game] A imagem de disco para jogar. OK abre o navegador de arquivos. Alterá-la requer reiniciar o jogo.
+[hint.savestate] Salva o jogo em execução no slot exibido (Esquerda/Direita: 1-5). [*] após o slot indica que está em uso e será substituído, [ ] indica que está vazio.
+[hint.loadstate] Carrega o slot exibido. O progresso feito após esse salvamento é perdido.
+[hint.add] Importa jogos do cartão: imagens e arquivos zip, rar ou 7z, opcionalmente compactados para PBP.
+
+[hint.sec.video] OK abre ou fecha a seção: escala, suavização de bordas, contador de quadros e opções de imagem.
+[hint.smooth] Calcula a média dos pixels ao reduzir uma imagem de 640 de largura. Deslig poupou 4.6% do tempo em um teste medido.
+[hint.fxaa] Suaviza as bordas serrilhadas de formas 3D; maior é mais forte. Custa velocidade: cerca de 17% menos quadros em um teste.
+[hint.fps] Mostra a taxa de quadros sobre a imagem. Útil para avaliar o que as outras opções fazem.
+[hint.light] Iluminação 3D. Deslig é mais rápido, mas o sombreamento é perdido: 5.6% menos ciclos de CPU em cena medida de Gran Turismo.
+[hint.blend] Semitransparência (vidro, brilhos, sombras). Deslig é mais rápido, mas esses objetos ficam incorretos.
+[hint.dirty] Não redesenha uma imagem inalterada pelo jogo. Medição: 6.7 ms poupados por quadro, sem perda de qualidade.
+[hint.dsa] Grava o quadro direto no buffer de tela. Medição: 0.93 ms poupados por quadro. Requer reiniciar o jogo.
+[hint.gl] Exibe a imagem através do OpenGL ES do telefone. Em uma cena de 320x240 medida foi mais lento que sem ele. Requer reiniciar.
+[hint.swdraw] Apenas com Saída GL. Lig: o rasterizador por software desenha e GL só exibe o quadro. Deslig: o chip gráfico desenha.
+[hint.ilace] Desenha apenas linhas alternadas. Mais rápido, mas reduz pela metade o detalhe vertical.
+[hint.pixskip] Pula pixels que não são visíveis em modos de alta resolução horizontal. Um pouco mais rápido.
+
+[hint.sec.speed] OK abre ou fecha a seção: pulo de quadros e opções do processador. A maioria requer reiniciar.
+[hint.gpuskip] Deixa de desenhar alguns quadros. Auto deixa o núcleo decidir. Em teste de corrida 1 deu +27% de taxa de emulação, mas 37% menos quadros exibidos.
+[hint.cpu] Dynarec recompila código de PS1 para ARM e é o modo rápido. O interpretador é o modo lento. Requer reiniciar.
+[hint.gtenf] Ignora alguns cálculos de sinalizadores do coprocessador de geometria. No Gran Turismo foi 6% mais lento, pois a geometria muda. Requer reiniciar.
+[hint.cycle] Velocidade do processador PS1 emulado em porcentagem. Menor roda mais leve no telefone, mas pode alterar o tempo do jogo. Aplica-se na hora.
+
+[hint.sec.sound] OK abre ou fecha a seção: saída de som e tom.
+[hint.sound] Saída de som. Deslig remove o som e poupa o tempo de processador do canal de áudio. Requer reiniciar o jogo.
+[hint.wsola] Quando o jogo roda abaixo da velocidade máxima, estica o som sem alterar seu tom. Custa cerca de 6% do tempo de quadro no N95 em medição. Requer reiniciar.
+
+[hint.sec.input] OK abre ou fecha a seção: esquemas de teclas, atribuição de teclas e controle por inclinação.
+[hint.preset] Substitui todas as atribuições de teclas por um esquema pronto. Esquerda/Direita escolhe, OK aplica. Suas próprias atribuições serão perdidas.
+[hint.keybase] O esquema base: N95 é o padrão; C5 também aceita 2, 4, 6, 8 como segunda tecla para as direções. OK aplica e substitui as atribuições.
+[hint.keys] Abre a página de atribuição de teclas: OK e pressione a tecla. Esquerda/Direita ativa ou desativa segurar para o botão.
+[hint.tilt] Direciona com a inclinação do telefone (acelerômetro). A posição em que você segura o telefone ao voltar ao jogo é a posição neutra.
+[hint.tiltside] O eixo analógico que segue a inclinação lateral (LX, LY, RX, RY; o sinal de menos inverte). Padrão LX.
+[hint.tiltpitch] O eixo analógico que segue a inclinação frente-trás (LX, LY, RX, RY; o sinal de menos inverte). Padrão LY.
+[hint.tiltdead] Inclinação menor que esta é ignorada. De 0 a 40, padrão 10.
+[hint.tiltsens] A intensidade com que o analógico segue a inclinação: 40% a 300%, padrão 100%.
+
+[hint.sec.system] OK abre ou fecha a seção: idioma, BIOS, perfis por jogo e redefinição.
+[hint.lang] O idioma do menu. Muda imediatamente. Os textos de ajuda o acompanham; o inglês é usado onde faltar texto.
+[hint.bios] A cópia da BIOS de E:\PS1\bios. Sem ela, o substituto integrado (HLE) é executado e a compatibilidade é pior. Requer reiniciar.
+[hint.profile] Lig: cada jogo mantém seus próprios ajustes em E:\PS1\cfg, como teclas e opções de velocidade. Deslig: um conjunto para todos os jogos.
+[hint.reset] Restaura todos os ajustes para o padrão, incluindo teclas e idioma. Pressione OK duas vezes. Salvamentos não são afetados.
+
+[hint.help] Abre a ajuda: configuração inicial, controles, salvamento, solução de problemas e descrição de cada linha do menu.
+
+[topic.setup] Configuração inicial
+Este tópico abre a página de configuração inicial, a mesma exibida pelo emulador na primeira execução.
+
+[topic.play] Controles no jogo
+Teclas do menu: Cima e Baixo movem, Esquerda e Direita alteram um valor, OK abre uma linha ou a alterna, C e a tecla de seleção direita voltam.
+
+Navegação no menu principal: Cima e Baixo circulam da última linha para a primeira. Direita no cabeçalho de uma seção abre-o e Esquerda fecha-o; abrir uma seção fecha a outra. C dentro de uma seção fecha-a e deixa o cursor no seu cabeçalho. OK em uma linha de valor altera-o exatamente como Direita faz.
+
+No jogo, a tecla de seleção direita abre o menu e pausa o jogo. A tecla de seleção esquerda faz uma captura de tela. Quando uma chamada é recebida ou você alterna para outro aplicativo, o jogo é pausado e o menu abre sozinho.
+
+Teclas padrão: o direcional move; OK ou 5 é Cruz; 0 é Círculo; 7 é Quadrado; 9 é Triângulo; 1 é L1; 3 é R1; 4 é L2; 6 é R2; 2 é Select; 8 é Start.
+
+Ambas as bases controlam com o direcional. A linha Teclado em Controles escolhe o esquema base: N95 é o padrão; C5 também aceita 2, 4, 6 e 8 no teclado numérico como segunda tecla para as quatro direções, para quem achar mais prático.
+
+O volume é alterado com as teclas laterais de volume, ou com # (mais alto) e * (mais baixo), a menos que essas teclas estejam atribuídas a um botão.
+
+Cada botão pode ser atribuído em Controles... : OK em um botão e pressione a tecla. Esquerda e Direita ativam segurar: um botão mantido permanece pressionado até ser pressionado novamente, ideal para o acelerador em corrida.
+
+Controlo por inclinação (Controles) direciona com a inclinação do telefone. Requer um telefone com acelerômetro, como o N95; o E90 e o C5-00.2 não possuem.
+
+A posição neutra é definida cada vez que você volta ao jogo a partir do menu. Para recalibrar, abra o menu com a tecla de seleção direita, segure o telefone na posição que deseja jogar e escolha Continuar.
+
+[topic.saves] Salvamento
+Um estado salvo armazena todo o jogo em determinado momento. Abra Jogo, escolha Salvar estado, selecione um slot com Esquerda e Direita (1 a 5) e pressione OK. [*] após o número do slot indica que o slot já contém um estado, [ ] indica que está vazio. Carregar estado restaura-o.
+
+Salvar estado e Carregar estado aparecem apenas enquanto um jogo está em execução e é o selecionado.
+
+Os arquivos de estado ficam em E:\PS1\saves, nomeados pelo jogo e pelo slot. Os cartões de memória do jogo, card1.mcd e card2.mcd, ficam na mesma pasta: contêm os salvamentos gravados pelo próprio jogo. Um estado e um cartão de memória são independentes um do outro.
+
+Linhas marcadas com * requerem reiniciar o jogo. O progresso não salvo será perdido, portanto salve um estado antes de alterá-las.
+
+[topic.slow] Se o jogo estiver lento
+Altere uma coisa por vez e observe o Contador FPS (Vídeo).
+
+Primeiro as mais leves. Desenho direto e Pular quadros iguais devem ficar ligados: não custam qualidade. Escala suave deslig poupou 4.6% do tempo em teste medido e apenas suaviza linhas finas.
+
+Depois Pulo de quadros. Auto é o mais suave. O valor fixo 1 deu 27% mais velocidade de emulação em corrida medida, mas 37% menos quadros foram exibidos.
+
+Depois as que afetam a imagem: Suavizar bordas deslig, Iluminação 3D deslig (5.6% menos ciclos de CPU em cena medida), Transparência deslig, Hack entrelaçado, Salto de pixels. Velocidade CPU PS1 menor alivia a carga, mas pode prejudicar o tempo do jogo.
+
+Não espere ajuda destas: Modo rápido GTE foi 6% mais lento no Gran Turismo; Saída GL foi mais lenta que a rasterização por software em cena medida de 320x240. Mantenha CPU em dynarec: o interpretador é o modo lento.
+
+[topic.nosound] Sem som ou sem imagem
+Sem som: verifique se Som (na seção Som) está ligado e se o jogo foi reiniciado após alterá-lo. Aumente o volume com as teclas laterais, # ou *. Se Preservar tom estiver ligado, tente desligá-lo.
+
+Sem imagem ou tela preta: pressione a tecla de seleção direita e veja a tela de erro. Imagem de disco ou BIOS não encontrada significa que os arquivos estão ausentes: consulte Arquivos no cartão. Se a imagem ficar incorreta após uma alteração, desligue Desenho direto ou Saída GL e reinicie o jogo.
+
+Sem BIOS: o jogo então roda com o substituto integrado (HLE). Muitos jogos iniciam, mas a compatibilidade é pior. Coloque uma cópia da BIOS em E:\PS1\bios ou escolha uma em Sistema, BIOS.
+
+Imagens de disco são listadas nos formatos bin, img, iso, pbp, cbn e cbin. Um arquivo cue não é listado no navegador de jogos: o núcleo o deduz a partir do bin pelo nome, portanto mantenha ambos juntos. A importação lista arquivos cue.
+
+[topic.files] Arquivos no cartão
+E:\PS1\games armazena as imagens de disco. Adicionar jogos... permite importá-las de qualquer local do cartão.
+
+E:\PS1\bios armazena a cópia da BIOS. O nome padrão é scph7502.bin. Uma cópia ou um arquivo zip, rar ou 7z com uma pode ser escolhido em Sistema, BIOS.
+
+E:\PS1\saves armazena os estados salvos e os cartões de memória.
+
+E:\PS1\cfg armazena ps1_settings.txt, as configurações globais, e um pequeno arquivo para cada jogo com seus próprios ajustes.
+
+E:\PS1\help armazena estes textos: um arquivo por idioma, nomeado pelo código do idioma (en.txt, uk.txt), em UTF-8. Arquivo ausente ou chave ausente recorre ao inglês.
+
+E:\PS1\logs armazena os registros de execução.
+
+[topic.game] Jogo
+Jogo: a imagem de disco para jogar. OK abre o navegador de arquivos na pasta do jogo atual. Escolher outro disco enquanto um jogo está em execução requer reiniciar.
+
+Salvar estado e Carregar estado: consulte o tópico Salvamento.
+
+Adicionar jogos...: importa jogos do cartão. Marque arquivos ou arquivos compactados com OK, inicie com a tecla de seleção esquerda. Você pode compactá-los para PBP, o que poupa cerca de 40%, mas descarta os dados de correção de erros e não pode ser desfeito, e você pode excluir os originais. Importar o disco do jogo em execução fecha-o.
+
+[topic.video] Vídeo
+Escala suave: calcula a média dos pixels ao reduzir uma imagem de 640 de largura.
+
+Suavizar bordas: suaviza as bordas serrilhadas de formas 3D, nível 1 a 5.
+
+Contador FPS: mostra a taxa de quadros sobre a imagem.
+
+O restante da seção: Iluminação 3D (sombreamento de texturas), Transparência (objetos semitransparentes), Pular quadros iguais (não redesenha imagem inalterada), Desenho direto (grava direto no buffer de tela, requer reiniciar), Saída GL (exibe a imagem via OpenGL ES, requer reiniciar), Desenho por software (apenas com GL: qual rasterizador desenha), Hack entrelaçado (apenas linhas alternadas) e Salto de pixels (pula pixels que não são visíveis em modos de alta resolução horizontal).
+
+[topic.speed] Velocidade
+Pulo de quadros: deixa de desenhar alguns quadros. Auto deixa o núcleo decidir a cada quadro; 1 a 3 pula essa quantidade de quadros entre os desenhados.
+
+O restante da seção: CPU (dynarec ou interpretador, requer reiniciar), Modo rápido GTE (requer reiniciar) e Velocidade CPU PS1.
+
+Velocidade CPU PS1 é exibida em porcentagem da velocidade normal. Valores menores dão ao jogo menos trabalho por quadro e podem afetar o tempo dele. Aplica-se na hora.
+
+[topic.sound] Som
+Som: saída de som ligada ou desligada, requer reiniciar.
+
+Preservar tom: quando o jogo roda abaixo da velocidade máxima, o som é esticado sem alterar o tom. Custa tempo de processador e requer reiniciar.
+
+[topic.input] Controles
+Predefinição: Padrão, Corrida, Luta ou RPG. OK substitui todas as atribuições de teclas.
+
+Teclado: N95 (o esquema padrão) ou C5 (o mesmo, mais 2, 4, 6, 8 como segunda tecla para as direções). OK substitui todas as atribuições de teclas.
+
+Controles...: atribua cada botão do PS1 a uma tecla; Esquerda e Direita ativam ou desativam segurar.
+
+Controlo por inclinação e suas quatro opções: o eixo para inclinação lateral, o eixo para inclinação frente-trás, a zona morta (0 a 40) e a sensibilidade (40% a 300%).
+
+[topic.system] Sistema
+Idioma: o idioma do menu e destes textos, muda imediatamente.
+
+BIOS: a cópia da BIOS a usar, requer reiniciar. O padrão é scph7502.bin.
+
+Perfil por jogo: lig mantém um arquivo de configurações separado para cada jogo.
+
+Redefinir ajustes: retorna tudo aos padrões; pressione OK duas vezes.

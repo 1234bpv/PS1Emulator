@@ -1,0 +1,167 @@
+# PS1Emulator pagalbos tekstai, lietuvių kalba. UTF-8.
+# Skyriai prasideda [raktu] eilutės pradžioje.
+#   [hint.<id>] vienas sakinys būsenos juostoje pasirinktai meniu eilutei.
+#   [topic.<id>] Antraštė, toliau tekstas: viena pastraipa eilutėje, tuščia eilutė yra tarpas.
+# Skaičiai yra matavimai su Nokia N95 8GB, o ne pažadai: jie priklauso nuo žaidimo.
+
+[hint.start] Paleidžia pasirinktą žaidimą su toliau pateiktais nustatymais. Pirmiausia patikrinamas disko atvaizdas ir BIOS.
+[hint.resume] Grąžina į žaidimą tiksliai ten, kur sustojote.
+[hint.restart] Eilutės, pažymėtos *, pakeistos: žaidimas prasideda iš pradžių, o neišsaugota pažanga prarandama. Pirmiausia išsaugokite būseną.
+[hint.exit] Išsaugo nustatymus ir uždaro emuliatorių. Veikiantis žaidimas prarandamas, nebent išsaugojote būseną.
+
+[hint.sec.game] OK atidaro arba uždaro skyrių: žaidimas, išsaugotos būsenos ir žaidimų importavimas.
+[hint.game] Disko atvaizdas žaidimui. OK atidaro failų naršyklę. Pakeitus reikia paleisti žaidimą iš naujo.
+[hint.savestate] Išsaugo veikiantį žaidimą rodomoje vietoje (Kairė/Dešinė: 1-5). [*] po vietos reiškia, kad ji užimta ir bus perrašyta, [ ] reiškia, kad ji tuščia.
+[hint.loadstate] Įkelia rodomą vietą. Pažanga po to išsaugojimo prarandama.
+[hint.add] Importuoja žaidimus iš kortelės: atvaizdus ir zip, rar ar 7z archyvus, pasirinktinai supakuotus į PBP.
+
+[hint.sec.video] OK atidaro arba uždaro skyrių: mastelio keitimas, kraštų glodinimas, kadrų skaitiklis ir vaizdo jungikliai.
+[hint.smooth] Suvidurkina pikselius, kai 640 pločio vaizdas sumažinamas. Išjungus sutaupyta 4.6% veikimo laiko matuotame įraše.
+[hint.fxaa] Išlygina 3D formų dantytus kraštus; aukštesnis lygis stipresnis. Kainuoja greitį: maždaug 17% mažiau kadrų bandomajame įraše.
+[hint.fps] Rodo kadrų dažnį virš vaizdo. Naudinga vertinant, ką daro kiti jungikliai.
+[hint.light] 3D apšvietimas. Išjungus greičiau, bet prarandamas šešėliavimas: 5.6% mažiau CPU ciklų matuotoje Gran Turismo scenoje.
+[hint.blend] Dalinis skaidrumas (stiklas, švytėjimas, šešėliai). Išjungus greičiau, bet tokie objektai atrodo neteisingai.
+[hint.dirty] Nepiešia iš naujo vaizdo, kurio žaidimas nepakeitė. Išmatuota: sutaupyta 6.7 ms kadrui, kokybė nenukenčia.
+[hint.dsa] Rašo kadrą tiesiai į ekrano buferį. Išmatuota: sutaupyta 0.93 ms kadrui. Reikia paleisti žaidimą iš naujo.
+[hint.gl] Rodo vaizdą per telefono OpenGL ES. Vienoje matuotoje 320x240 scenoje buvo lėčiau nei be jo. Reikia paleisti iš naujo.
+[hint.swdraw] Tik su GL išvestimi. Įjungta: programinis rasterizatorius piešia, o GL tik parodo kadrą. Išjungta: piešia grafikos lustas.
+[hint.ilace] Piešia tik kas antrą eilutę. Greičiau, bet perpus sumažina vertikalų detalumą.
+[hint.pixskip] Praleidžia pikselius, kurie nematomi dideliu horizontaliu skiriamumu veikiančiuose režimuose. Šiek tiek greičiau.
+
+[hint.sec.speed] OK atidaro arba uždaro skyrių: kadrų praleidimas ir procesoriaus nustatymai. Daugumai jų reikia paleisti iš naujo.
+[hint.gpuskip] Nepiešia kai kurių kadrų. Auto leidžia branduoliui nuspręsti. Lenktynių įraše reikšmė 1 davė +27% emuliacijos greičio, bet 37% mažiau rodomų kadrų.
+[hint.cpu] Dynarec perkompiliuoja PS1 kodą į ARM ir yra greitasis režimas. Interpretatorius yra lėtasis režimas. Reikia paleisti iš naujo.
+[hint.gtenf] Praleidžia dalį geometrijos koprocesoriaus vėliavėlių skaičiavimo. Gran Turismo buvo 6% lėčiau, nes geometrija keičiasi. Reikia paleisti iš naujo.
+[hint.cycle] Emuliuojamo PS1 procesoriaus greitis procentais. Mažesnė reikšmė mažiau apkrauna telefoną, bet gali sutrikdyti žaidimo laiko skaičiavimą. Taikoma iš karto.
+
+[hint.sec.sound] OK atidaro arba uždaro skyrių: garso išvestis ir tonas.
+[hint.sound] Garso išvestis. Išjungus garsas dingsta ir sutaupomas garso kelio procesoriaus laikas. Reikia paleisti žaidimą iš naujo.
+[hint.wsola] Kai žaidimas veikia lėčiau nei visu greičiu, ištempia garsą nekeisdamas jo tono. Matavime kainavo maždaug 6% kadro laiko N95. Reikia paleisti iš naujo.
+
+[hint.sec.input] OK atidaro arba uždaro skyrių: klavišų išdėstymai, klavišų priskyrimas ir valdymas pakreipimu.
+[hint.preset] Pakeičia visus klavišų priskyrimus paruoštu išdėstymu. Kairė/Dešinė renkasi, OK pritaiko. Jūsų priskyrimai prarandami.
+[hint.keybase] Pagrindinis išdėstymas: N95 yra numatytasis; C5 kryptims taip pat priima 2, 4, 6, 8 kaip antrą klavišą. OK jį pritaiko ir pakeičia priskyrimus.
+[hint.keys] Atidaro klavišų priskyrimo puslapį: OK, tada spauskite klavišą. Kairė/Dešinė įjungia arba išjungia mygtuko laikymą.
+[hint.tilt] Valdo telefono pakreipimu (akselerometras). Telefono laikymo padėtis, kai grįžtate į žaidimą, yra neutrali padėtis.
+[hint.tiltside] Lazdelės ašis, sekanti pakreipimą į šoną (LX, LY, RX, RY; minusas ją apverčia). Numatyta LX.
+[hint.tiltpitch] Lazdelės ašis, sekanti pakreipimą pirmyn ir atgal (LX, LY, RX, RY; minusas ją apverčia). Numatyta LY.
+[hint.tiltdead] Už šią reikšmę mažesnis pakreipimas ignoruojamas. Nuo 0 iki 40, numatyta 10.
+[hint.tiltsens] Kaip stipriai lazdelė seka pakreipimą: nuo 40% iki 300%, numatyta 100%.
+
+[hint.sec.system] OK atidaro arba uždaro skyrių: kalba, BIOS, žaidimų profiliai ir atstatymas.
+[hint.lang] Meniu kalba. Pasikeičia iš karto. Pagalbos tekstai jai paklūsta; kur teksto trūksta, naudojama anglų kalba.
+[hint.bios] BIOS kopija iš E:\PS1\bios. Be jos veikia įmontuotas pakaitalas (HLE), o suderinamumas blogesnis. Reikia paleisti iš naujo.
+[hint.profile] Įjungta: kiekvienas žaidimas E:\PS1\cfg saugo savo nustatymus, pavyzdžiui, klavišus ir greičio jungiklius. Išjungta: vienas rinkinys visiems žaidimams.
+[hint.reset] Grąžina visus nustatymus į numatytuosius, įskaitant klavišus ir kalbą. Spauskite OK du kartus. Išsaugojimai neliečiami.
+
+[hint.help] Atidaro pagalbą: pirmasis nustatymas, valdymas, išsaugojimas, problemų sprendimas ir kiekvienos meniu eilutės aprašas.
+
+[topic.setup] Pirmasis nustatymas
+Ši tema atidaro pirmojo nustatymo puslapį, tą patį, kurį emuliatorius rodo pirmą kartą paleistas.
+
+[topic.play] Valdymas žaidime
+Meniu klavišai: Aukštyn ir Žemyn juda, Kairė ir Dešinė keičia reikšmę, OK atidaro eilutę arba ją perjungia, C ir dešinysis programinis klavišas grįžta atgal.
+
+Naršymas pagrindiniame meniu: Aukštyn ir Žemyn pereina ratu nuo paskutinės eilutės prie pirmos. Dešinė ant skyriaus antraštės jį atidaro, o Kairė uždaro; atidarius vieną skyrių, kitas užsidaro. C skyriuje jį uždaro ir palieka žymeklį ant jo antraštės. OK ant reikšmės eilutės pakeičia ją lygiai kaip Dešinė.
+
+Žaidime dešinysis programinis klavišas atidaro meniu ir sustabdo žaidimą. Kairysis programinis klavišas daro ekrano nuotrauką. Kai ateina skambutis arba perjungiate į kitą programą, žaidimas sustoja, o meniu atsidaro pats.
+
+Numatytieji klavišai: kryptų klavišai juda; OK arba 5 yra Kryžius; 0 yra Apskritimas; 7 yra Kvadratas; 9 yra Trikampis; 1 yra L1; 3 yra R1; 4 yra L2; 6 yra R2; 2 yra Select; 8 yra Start.
+
+Abu pagrindai valdomi kryptų klavišais. Eilutė Klaviatūra skyriuje Valdymas parenka pagrindinį išdėstymą: N95 yra numatytasis; C5 keturioms kryptims taip pat priima 2, 4, 6 ir 8 skaičių klaviatūroje kaip antrą klavišą, tiems, kam jie patogesni.
+
+Garsumas keičiamas šoniniais garsumo klavišais arba # (garsiau) ir * (tyliau), nebent tie klavišai priskirti mygtukui.
+
+Kiekvieną mygtuką galima priskirti per Valdymas...: OK ant mygtuko, tada spauskite klavišą. Kairė ir Dešinė įjungia laikymą: laikomas mygtukas lieka nuspaustas, kol jį paspausite dar kartą, tai tinka greičio pedalui lenktynėse.
+
+Pakreipimo valdymas (Valdymas) valdo telefono pakreipimu. Jam reikia telefono su akselerometru, pavyzdžiui, N95; E90 ir C5-00.2 jo neturi.
+
+Neutrali padėtis nustatoma kaskart grįžus į žaidimą iš meniu. Norėdami perkalibruoti, atidarykite meniu dešiniuoju programiniu klavišu, laikykite telefoną taip, kaip norite žaisti, ir pasirinkite Tęsti.
+
+[topic.saves] Išsaugojimas
+Išsaugota būsena įrašo visą žaidimą vienu momentu. Atidarykite Žaidimas, pasirinkite Išsaugoti būseną, Kairė ir Dešinė parinkite vietą (nuo 1 iki 5) ir spauskite OK. [*] po vietos numerio reiškia, kad vietoje jau yra būsena, [ ] reiškia, kad ji tuščia. Įkelti būseną ją atkuria.
+
+Išsaugoti būseną ir Įkelti būseną atsiranda tik kai žaidimas veikia ir yra pasirinktas.
+
+Būsenų failai yra E:\PS1\saves, pavadinti pagal žaidimą ir vietą. Žaidimo atminties kortelės card1.mcd ir card2.mcd yra tame pačiame aplanke: jose yra išsaugojimai, kuriuos žaidimas rašo pats. Būsena ir atminties kortelė nepriklauso viena nuo kitos.
+
+Eilutėms, pažymėtoms *, reikia paleisti žaidimą iš naujo. Neišsaugota pažanga prarandama, todėl prieš keisdami jas išsaugokite būseną.
+
+[topic.slow] Jei žaidimas lėtas
+Keiskite po vieną dalyką ir stebėkite FPS skaitiklį (Vaizdas).
+
+Pirmiausia pigios galimybės. Tiesioginis piešimas ir Praleisti tuos pačius turėtų likti įjungti: jie nekainuoja kokybės. Išjungtas Glodus mastelis sutaupė 4.6% veikimo laiko matuotame įraše ir tik suminkština smulkias linijas.
+
+Tada Kadrų praleidimas. Auto yra švelniausias. Fiksuota reikšmė 1 davė 27% didesnį emuliacijos greitį matuotose lenktynėse, bet parodyta 37% mažiau kadrų.
+
+Tada tos, kurios kainuoja vaizdo kokybę: išjungti Kraštų glodinimas, 3D apšvietimas (5.6% mažiau CPU ciklų matuotoje scenoje), Skaidrumas, Eilučių triukas, Pikselių praleidimas. Mažesnis PS1 CPU greitis palengvina apkrovą, bet gali sutrikdyti žaidimo laiko skaičiavimą.
+
+Iš šių pagalbos nesitikėkite: GTE greitasis režimas Gran Turismo buvo 6% lėtesnis; GL išvestis matuotoje 320x240 scenoje buvo lėtesnė už programinį kelią. Palikite CPU ties dynarec: interpretatorius yra lėtasis režimas.
+
+[topic.nosound] Nėra garso arba vaizdo
+Nėra garso: patikrinkite, ar Garsas (skyriuje Garsas) įjungtas ir ar žaidimas buvo paleistas iš naujo po pakeitimo. Padidinkite garsumą šoniniais klavišais, # arba *. Jei įjungta Išlaikyti toną, pabandykite ją išjungti.
+
+Nėra vaizdo arba juodas ekranas: spauskite dešinįjį programinį klavišą ir patikrinkite klaidos puslapį. Disko atvaizdas arba BIOS nerastas reiškia, kad trūksta failų: žr. Failai kortelėje. Jei po pakeitimo vaizdas neteisingas, išjunkite Tiesioginis piešimas arba GL išvestis ir paleiskite žaidimą iš naujo.
+
+Nėra BIOS: tada žaidimas veikia su įmontuotu pakaitalu (HLE). Daug žaidimų pasileidžia, bet suderinamumas blogesnis. Įdėkite BIOS kopiją į E:\PS1\bios arba pasirinkite ją skyriuje Sistema, BIOS.
+
+Disko atvaizdai išvardijami formatais bin, img, iso, pbp, cbn ir cbin. Cue failas žaidimų naršyklėje neišvardijamas: branduolys jį išveda iš bin pagal pavadinimą, todėl laikykite abu kartu. Importavimas cue failus išvardija.
+
+[topic.files] Failai kortelėje
+E:\PS1\games yra disko atvaizdai. Pridėti žaidimų... leidžia juos importuoti iš bet kurios kortelės vietos.
+
+E:\PS1\bios yra BIOS kopija. Numatytasis pavadinimas yra scph7502.bin. Kopiją arba zip, rar ar 7z archyvą su ja galima pasirinkti skyriuje Sistema, BIOS.
+
+E:\PS1\saves yra išsaugotos būsenos ir atminties kortelės.
+
+E:\PS1\cfg yra ps1_settings.txt, bendrieji nustatymai, ir po vieną nedidelį failą kiekvienam žaidimui su jo paties nustatymais.
+
+E:\PS1\help yra šie tekstai: po vieną failą kiekvienai kalbai, pavadintą kalbos kodu (en.txt, uk.txt), UTF-8 koduotės. Trūkstamas failas ar raktas pakeičiamas anglišku.
+
+E:\PS1\logs yra veikimo žurnalai.
+
+[topic.game] Žaidimas
+Žaidimas: disko atvaizdas žaidimui. OK atidaro failų naršyklę dabartinio žaidimo aplanke. Pasirinkus kitą diską žaidimui veikiant, reikia paleisti iš naujo.
+
+Išsaugoti būseną ir Įkelti būseną: žr. temą Išsaugojimas.
+
+Pridėti žaidimų...: importuoja žaidimus iš kortelės. Pažymėkite failus ar archyvus OK, pradėkite kairiuoju programiniu klavišu. Galite supakuoti juos į PBP, kas sutaupo apie 40%, bet pašalina klaidų taisymo duomenis ir negali būti atšaukta, taip pat galite ištrinti originalus. Importavus veikiančio žaidimo diską, jis uždaromas.
+
+[topic.video] Vaizdas
+Glodus mastelis: suvidurkina pikselius, kai 640 pločio vaizdas sumažinamas.
+
+Kraštų glodinimas: išlygina 3D formų dantytus kraštus, nuo 1 iki 5 lygio.
+
+FPS skaitiklis: rodo kadrų dažnį virš vaizdo.
+
+Likę skyriaus nustatymai: 3D apšvietimas (tekstūrų šešėliavimas), Skaidrumas (daliniai skaidrūs objektai), Praleisti tuos pačius (nepiešia iš naujo nepakitusio vaizdo), Tiesioginis piešimas (rašo tiesiai į ekrano buferį, reikia paleisti iš naujo), GL išvestis (rodo vaizdą per OpenGL ES, reikia paleisti iš naujo), Progr. piešimas (tik su GL: kuris rasterizatorius piešia), Eilučių triukas (tik kas antra eilutė) ir Pikselių praleidimas (praleidžia pikselius, kurie nematomi dideliu horizontaliu skiriamumu veikiančiuose režimuose).
+
+[topic.speed] Greitis
+Kadrų praleidimas: nepiešia kai kurių kadrų. Auto leidžia branduoliui spręsti kiekvienam kadrui; 1 iki 3 praleidžia tiek kadrų tarp nupieštų.
+
+Likę skyriaus nustatymai: CPU (dynarec ar interpretatorius, reikia paleisti iš naujo), GTE greitasis režimas (reikia paleisti iš naujo) ir PS1 CPU greitis.
+
+PS1 CPU greitis rodomas normalaus greičio procentais. Mažesnės reikšmės suteikia žaidimui mažiau darbo kadrui ir gali sugadinti jo laiko skaičiavimą. Taikoma iš karto.
+
+[topic.sound] Garsas
+Garsas: garso išvestis įjungta arba išjungta, reikia paleisti iš naujo.
+
+Išlaikyti toną: kai žaidimas veikia lėčiau nei visu greičiu, garsas ištempiamas nekeičiant tono. Tai kainuoja procesoriaus laiką ir reikia paleisti iš naujo.
+
+[topic.input] Valdymas
+Valdymo šablonas: Numatytasis, Lenktynės, Kovos arba RPG. OK pakeičia visus klavišų priskyrimus.
+
+Klaviatūra: N95 (numatytasis išdėstymas) arba C5 (tas pats, plius 2, 4, 6, 8 kaip antras klavišas kryptims). OK pakeičia visus klavišų priskyrimus.
+
+Valdymas...: priskirkite kiekvieną PS1 mygtuką klavišui; Kairė ir Dešinė įjungia arba išjungia laikymą.
+
+Pakreipimo valdymas ir jo keturi nustatymai: ašis pakreipimui į šoną, ašis pakreipimui pirmyn ir atgal, nejautros zona (nuo 0 iki 40) ir jautrumas (nuo 40% iki 300%).
+
+[topic.system] Sistema
+Kalba: meniu ir šių tekstų kalba, pasikeičia iš karto.
+
+BIOS: naudojama BIOS kopija, reikia paleisti iš naujo. Numatytoji yra scph7502.bin.
+
+Žaidimo profilis: įjungta išsaugo atskirą nustatymų failą kiekvienam žaidimui.
+
+Atstatyti nustatymus: grąžina viską į numatytąsias reikšmes; spauskite OK du kartus.

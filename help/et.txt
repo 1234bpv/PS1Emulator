@@ -1,0 +1,167 @@
+# PS1Emulator abiteksid, eesti keel (et). UTF-8.
+# Jaotised algavad rea alguses märgiga [võti].
+#   [hint.<id>] üks lause, mis kuvatakse olekureal valitud menüürea kohta.
+#   [topic.<id>] Pealkiri, seejärel tekst: üks lõik rea kohta, tühi rida on vahe.
+# Numbrid on mõõtmised Nokia N95 8GB telefoniga, mitte lubadused: need sõltuvad mängust.
+
+[hint.start] Käivitab valitud mängu allpool toodud seadetega. Esmalt kontrollitakse plaadikujutist ja BIOS-t.
+[hint.resume] Naaseb mängu täpselt sinna, kus pooleli jäi.
+[hint.restart] Tähisega * read muutusid: mäng algab otsast ja salvestamata edenemine kaob. Salvesta enne olek.
+[hint.exit] Salvestab seaded ja sulgeb emulaatori. Käiv mäng kaob, kui olekut ei salvestatud.
+
+[hint.sec.game] OK avab või sulgeb jaotise: mäng, olekud ja mängude importimine.
+[hint.game] Mängitav plaadikujutis. OK avab failibrauseri. Muutmine nõuab mängu taaskäivitust.
+[hint.savestate] Salvestab käiva mängu näidatud pesasse (Left/Right: 1-5). [*] pesa järel tähendab, et see on kasutatud ja kirjutatakse üle, [ ] tähendab, et see on tühi.
+[hint.loadstate] Laadib näidatud pesa. Pärast seda salvestust tehtud edenemine kaob.
+[hint.add] Impordib mänge kaardilt: kujutised ja zip-, rar- või 7z-arhiivid, soovi korral PBP-ks pakituna.
+
+[hint.sec.video] OK avab või sulgeb jaotise: skaleerimine, servade silumine, kaadriloendur ja pildi lülitid.
+[hint.smooth] Keskmistab piksleid, kui 640-piksline pilt skaleeritakse alla. Väljalülitamine säästis mõõtmisel 4,6% tööajast.
+[hint.fxaa] Silub 3D kujundite sakilisi servi; suurem on tugevam. Maksab kiirust: mõõtmisel umbes 17% vähem kaadreid.
+[hint.fps] Näitab kaadrisagedust pildi peal. Kasulik hindamaks, mida teised lülitid teevad.
+[hint.light] 3D valgustus. Väljalülitamine on kiirem, kuid varjutus kaob: mõõdetud Gran Turismo stseenis 5,6% vähem CPU tsükleid.
+[hint.blend] Poolläbipaistvus (klaas, helendused, varjud). Väljalülitamine on kiirem, kuid sellised objektid näevad valed välja.
+[hint.dirty] Ei joonista pilti, mida mäng ei muutnud. Mõõdetud: 6,7 ms kokkuhoid kaadri kohta, kvaliteet ei kannata.
+[hint.dsa] Kirjutab kaadri otse ekraanipuhvrisse. Mõõdetud: 0,93 ms kokkuhoid kaadri kohta. Nõuab mängu taaskäivitust.
+[hint.gl] Näitab pilti telefoni OpenGL ES kaudu. Ühel mõõdetud 320x240 stseenis oli aeglasem kui ilma. Nõuab taaskäivitust.
+[hint.swdraw] Ainult GL-väljundiga. Sees: tarkvarajoonis joonistab ja GL ainult näitab kaadrit. Väljas: graafikakiip joonistab.
+[hint.ilace] Joonistab ainult igat teist rida. Kiirem, kuid poolitab vertikaalse detailsuse.
+[hint.pixskip] Jätab vahele piksleid, mis ei ole nähtavad kõrge horisontaalse eraldusvõime režiimides. Veidi kiirem.
+
+[hint.sec.speed] OK avab või sulgeb jaotise: kaadri vahelejätt ja protsessori seaded. Enamik neist nõuab taaskäivitust.
+[hint.gpuskip] Ei joonista osa kaadreid. Auto laseb tuumal otsustada. Võidusõidumõõtmisel andis 1 +27% emuleerimiskiirust, kuid 37% vähem näidatud kaadreid.
+[hint.cpu] Dynarec kompileerib PS1 koodi ARM-i jaoks ümber ja on kiire režiim. Interpretaator on aeglane režiim. Nõuab taaskäivitust.
+[hint.gtenf] Jätab geomeetriakaasprotsessori mõned lipuarvutused vahele. Gran Turismos oli 6% aeglasem, sest geomeetria muutub. Nõuab taaskäivitust.
+[hint.cycle] Emuleeritava PS1 protsessori kiirus protsentides. Madalam on telefonile kergem, kuid võib häirida mängu ajastust. Rakendub kohe.
+
+[hint.sec.sound] OK avab või sulgeb jaotise: heliväljund ja helikõrgus.
+[hint.sound] Heliväljund. Väljas eemaldab heli ja säästab heliraja protsessoriaega. Nõuab mängu taaskäivitust.
+[hint.wsola] Kui mäng töötab alla täiskiiruse, venitab heli helikõrgust muutmata. Maksab N95 mõõtmisel umbes 6% kaadriajast. Nõuab taaskäivitust.
+
+[hint.sec.input] OK avab või sulgeb jaotise: nupupaigutused, nuppude määramine ja kallutusjuhtimine.
+[hint.preset] Asendab kõik nupumäärangud valmis paigutusega. Left/Right valivad, OK rakendab. Sinu määrangud kaovad.
+[hint.keybase] Baaspaigutus: N95 on vaikimisi; C5 aktsepteerib ka 2, 4, 6, 8 teise nupuna suundade jaoks. OK rakendab ja asendab määrangud.
+[hint.keys] Avab nupumäärangu lehe: OK, seejärel vajuta nuppu. Left/Right lülitavad nupu jaoks Hoia sisse või välja.
+[hint.tilt] Juhib telefoni kallutamisega (kiirendusandur). Positsioon, kuidas hoiad telefoni mängu juurde naastes, on neutraalne asend.
+[hint.tiltside] Juhtkangitelg, mis järgib külgsuunalist kallutust (LX, LY, RX, RY; miinus pöörab ümber). Vaikimisi LX.
+[hint.tiltpitch] Juhtkangitelg, mis järgib ette-taha kallutust (LX, LY, RX, RY; miinus pöörab ümber). Vaikimisi LY.
+[hint.tiltdead] Sellest väiksem kallutus ignoreeritakse. 0 kuni 40, vaikimisi 10.
+[hint.tiltsens] Kui tugevalt juhtkang kallutust järgib: 40% kuni 300%, vaikimisi 100%.
+
+[hint.sec.system] OK avab või sulgeb jaotise: keel, BIOS, mängupõhised profiilid ja lähtestamine.
+[hint.lang] Menüü keel. Muutub kohe. Abiteksid järgivad seda; puuduva teksti korral kasutatakse inglise keelt.
+[hint.bios] BIOS-i tõmmis kaustast E:\PS1\bios. Ilma selleta käivitub sisseehitatud asendaja (HLE) ja ühilduvus on halvem. Nõuab taaskäivitust.
+[hint.profile] Sees: iga mäng hoiab oma seadeid kaustas E:\PS1\cfg, näiteks nuppe ja kiiruslüliteid. Väljas: üks seadistus kõigile mängudele.
+[hint.reset] Taastab kõik seaded vaikeväärtustele, sh nupud ja keel. Vajuta OK kaks korda. Salvestusi ei puudutata.
+
+[hint.help] Avab abi: esmaseadistus, juhtimine, salvestamine, veaotsing ja iga menüürea kirjeldus.
+
+[topic.setup] Esmaseadistus
+See teema avab esmaseadistuse lehe - sama, mida emulaator näitab esimesel käivitusel.
+
+[topic.play] Juhtimine mängus
+Menüünupud: Üles ja Alla liiguvad, Left ja Right muudavad väärtust, OK avab rea või lülitab seda, C ja parem tarkvaranupp lähevad tagasi.
+
+Põhimenüüs navigeerimine: Üles ja Alla kerivad viimaselt realt esimesele. Right jaotisepäisel avab selle ja Left sulgeb; ühe jaotise avamine sulgeb teise. C jaotises sulgeb selle ja jätab kursori päisele. OK väärtusreal muudab seda täpselt nagu Right.
+
+Mängus avab parem tarkvaranupp menüü ja peatab mängu. Vasak tarkvaranupp teeb ekraanipildi. Kõne saabudes või teisele rakendusele lülitudes mäng peatub ja menüü avaneb iseenesest.
+
+Vaikenupud: D-pad liigutab; OK või 5 on Rist; 0 on Ring; 7 on Ruut; 9 on Kolmnurk; 1 on L1; 3 on R1; 4 on L2; 6 on R2; 2 on Select; 8 on Start.
+
+Mõlemad baaspaigutused juhivad D-padiga. Rida Klaviatuur jaotises Nupud valib baaspaigutuse: N95 on vaikimisi; C5 aktsepteerib ka 2, 4, 6 ja 8 numbriklahvistikul teise nupuna nelja suuna jaoks, neile, kellele need on mugavamad.
+
+Helitugevust muudetakse külje helitugevusnuppudega või klahvidega # (valjemaks) ja * (vaiksemaks), kui need klahvid pole nupule määratud.
+
+Iga nuppu saab määrata jaotises Nupud...: OK nupul, seejärel vajuta klahvi. Left ja Right lülitavad sisse Hoia: hoitud nupp jääb vajutatuks, kuni uuesti vajutad, mis sobib võidusõidus gaasipedaaliks.
+
+Kallutusjuhtimine (Juhtimine) juhib telefoni kallutamisega. Selleks on vaja kiirendusanduriga telefoni, nagu N95; E90-l ja C5-00.2-l seda ei ole.
+
+Neutraalne asend võetakse iga kord, kui naased menüüst mängu juurde. Uuesti kalibreerimiseks ava menüü parema tarkvaranupuga, hoia telefoni nii, nagu soovid mängida, ja vali Jätka.
+
+[topic.saves] Salvestamine
+Olekusalvestus talletab kogu mängu ühel hetkel. Ava Mäng, vali Salvesta olek, vali pesaga Left ja Right (1 kuni 5) ja vajuta OK. [*] pesanumbri järel tähendab, et pesas on juba olek, [ ] tähendab, et see on tühi. Laadi olek taastab selle.
+
+Salvesta olek ja Laadi olek ilmuvad ainult siis, kui mäng töötab ja on valitud.
+
+Olekufailid asuvad kaustas E:\PS1\saves, nimetatud mängu ja pesa järgi. Mängu mälukaardid card1.mcd ja card2.mcd on samas kaustas: need hoiavad salvestusi, mida mäng ise kirjutab. Olek ja mälukaart on üksteisest sõltumatud.
+
+Read tähisega * vajavad mängu taaskäivitust. Salvestamata edenemine kaob, nii et salvesta olek enne nende muutmist.
+
+[topic.slow] Kui mäng on aeglane
+Muuda korraga ühte asja ja jälgi FPS-näitu (Video).
+
+Esmalt odavad variandid. Otsejoonis ja Sama kaadri vahele peaksid jääma sisselülitatuks: need ei maksa kvaliteeti. Sujuv skaleerimine väljas säästis mõõtmisel 4,6% tööajast ja pehmendab ainult peeneid jooni.
+
+Seejärel Kaadri vahelejätt. Auto on leebeim. Fikseeritud väärtus 1 andis mõõdetud võidusõidus 27% rohkem emuleerimiskiirust, kuid 37% vähem näidatud kaadreid.
+
+Seejärel pildile kulukad: Servade silumine väljas, 3D valgustus väljas (mõõdetud stseenis 5,6% vähem CPU tsükleid), Läbipaistvus väljas, Reavahe trikk, Piksli vahelejätt. Madalam PS1 CPU kiirus kergendab koormust, kuid võib häirida mängu ajastust.
+
+Neist pole abi oodata: GTE kiireim oli Gran Turismos 6% aeglasem; GL-väljund oli mõõdetud 320x240 stseenis aeglasem kui tarkvaratee. Hoia CPU dynarec peal: interpretaator on aeglane režiim.
+
+[topic.nosound] Heli või pilti ei ole
+Heli puudub: kontrolli, kas Heli (jaotises Heli) on sees ja et mäng käivitati pärast muutmist uuesti. Tõsta helitugevust küljeklahvidega, # või *. Kui Helikõrguse kaitse on sees, proovi see välja lülitada.
+
+Pilti ei ole või must ekraan: vajuta paremat tarkvaranuppu ja vaata vealehte. Plaadikujutist või BIOS-t ei leitud tähendab, et failid puuduvad: vaata teemat Failid kaardil. Kui pilt on pärast muudatust vale, lülita välja Otsejoonis või GL-väljund ja taaskäivita mäng.
+
+BIOS puudub: mäng töötab siis sisseehitatud asendajaga (HLE). Paljud mängud käivituvad, kuid ühilduvus on halvem. Pane BIOS-i tõmmis kausta E:\PS1\bios või vali see jaotises Süsteem, BIOS.
+
+Plaadikujutised on loetletud vormingutes bin, img, iso, pbp, cbn ja cbin. Cue-faili mängubrauseris ei näidata: tuum tuletab selle bin-failist nime järgi, nii et hoia mõlemad koos. Import näitab cue-faile.
+
+[topic.files] Failid kaardil
+E:\PS1\games hoiab plaadikujutisi. Lisa mänge võimaldab neid importida kaardi suvalisest kohast.
+
+E:\PS1\bios hoiab BIOS-i tõmmist. Vaikenimi on scph7502.bin. Tõmmise või zip-, rar- või 7z-arhiivi saab valida jaotises Süsteem, BIOS.
+
+E:\PS1\saves hoiab olekusalvestusi ja mälukaarte.
+
+E:\PS1\cfg hoiab faili ps1_settings.txt (üldseaded) ja iga mängu jaoks väikest faili oma seadetega.
+
+E:\PS1\help hoiab neid tekste: üks fail keele kohta, nimetatud keelekoodi järgi (en.txt, uk.txt), UTF-8 kodeeringus. Puuduv fail või võti langeb tagasi inglise keelele.
+
+E:\PS1\logs hoiab tööloge.
+
+[topic.game] Mäng
+Mäng: mängitav plaadikujutis. OK avab failibrauseri praeguse mängu kaustas. Teise plaadi valimine käiva mängu ajal nõuab taaskäivitust.
+
+Salvesta olek ja Laadi olek: vaata teemat Salvestamine.
+
+Lisa mänge...: impordib mänge kaardilt. Märgi faile või arhiive nupuga OK, alusta vasaku tarkvaranupuga. Saad need pakkida PBP-ks, mis säästab umbes 40%, kuid kustutab veaparandusandmed ja ei ole taastatav, ning saad kustutada originaalid. Käiva mängu plaadi importimine sulgeb selle.
+
+[topic.video] Video
+Sujuv skaleerimine: keskmistab piksleid, kui 640-piksline pilt skaleeritakse alla.
+
+Servade silumine: silub 3D kujundite sakilisi servi, tase 1 kuni 5.
+
+FPS-näit: näitab kaadrisagedust pildi peal.
+
+Ülejäänud jaotis: 3D valgustus (tekstuuride varjutus), Läbipaistvus (poolläbipaistvad objektid), Sama kaadri vahele (muutmata pilti ei joonistata), Otsejoonis (kirjutab otse ekraanipuhvrisse, nõuab taaskäivitust), GL-väljund (näitab pilti OpenGL ES kaudu, nõuab taaskäivitust), Tarkvarajoonis (ainult GL-ga: milline rasteriseerija joonistab), Reavahe trikk (ainult igat teist rida) ja Piksli vahelejätt (jätab vahele piksleid, mis ei ole kõrge horisontaalse eraldusvõime režiimides nähtavad).
+
+[topic.speed] Kiirus
+Kaadri vahelejätt: ei joonista osa kaadreid. Auto laseb tuumal iga kaadri kohta otsustada; 1 kuni 3 jätavad nii mitu kaadrit joonistatud kaadrite vahele.
+
+Ülejäänud jaotis: CPU (dynarec või interpretaator, nõuab taaskäivitust), GTE kiireim (nõuab taaskäivitust) ja PS1 CPU kiirus.
+
+PS1 CPU kiirus on näidatud protsentides normaalkiirusest. Madalamad väärtused annavad mängule vähem tööd kaadri kohta ja võivad rikkuda ajastust. Rakendub kohe.
+
+[topic.sound] Heli
+Heli: heliväljund sees või väljas, nõuab taaskäivitust.
+
+Helikõrguse kaitse: kui mäng töötab alla täiskiiruse, venitatakse heli helikõrgust muutmata. See maksab protsessoriaega ja nõuab taaskäivitust.
+
+[topic.input] Juhtimine
+Nuppude eelseade: Vaikimisi, Võidusõit, Võitlus või RPG. OK asendab kõik nupumäärangud.
+
+Klaviatuur: N95 (vaikepaigutus) või C5 (sama, pluss 2, 4, 6, 8 teise nupuna suundade jaoks). OK asendab kõik nupumäärangud.
+
+Nupud...: määra iga PS1 nupp klahvile; Left ja Right lülitavad Hoia sisse või välja.
+
+Kallutusjuhtimine ja selle neli seadet: telg külgsuunalise kallutuse jaoks, telg ette-taha kallutuse jaoks, surnud ala (0 kuni 40) ja tundlikkus (40% kuni 300%).
+
+[topic.system] Süsteem
+Keel: menüü ja nende tekstide keel, muutub kohe.
+
+BIOS: kasutatav BIOS-i tõmmis, nõuab taaskäivitust. Vaikimisi scph7502.bin.
+
+Mängu profiil: sees hoiab iga mängu jaoks eraldi seadefaili.
+
+Lähtesta seaded: taastab kõik vaikeväärtused; vajuta OK kaks korda.

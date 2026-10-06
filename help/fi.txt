@@ -1,0 +1,167 @@
+# PS1Emulator-ohjetekstit, suomi. UTF-8.
+# Osiot alkavat rivin alussa olevalla tunnisteella [avain].
+#   [hint.<id>] yksi virke, joka näkyy tilarivillä valitulle valikkoriville.
+#   [topic.<id>] Otsikko ja sitten teksti: yksi kappale riviä kohden, tyhjä rivi on väli.
+# Numerot ovat mittauksia Nokia N95 8GB -puhelimella, eivät lupauksia: ne riippuvat pelistä.
+
+[hint.start] Käynnistää valitun pelin alla olevilla asetuksilla. Levykuva ja BIOS tarkistetaan ensin.
+[hint.resume] Palaa peliin täsmälleen siitä, mihin jäit.
+[hint.restart] Tähdellä (*) merkityt rivit muuttuivat: peli alkaa alusta ja tallentamaton edistyminen menetetään. Tallenna ensin tila.
+[hint.exit] Tallentaa asetukset ja sulkee emulaattorin. Käynnissä oleva peli menetetään, ellet tallentanut tilaa.
+
+[hint.sec.game] OK avaa tai sulkee osion: peli, tallennetut tilat ja pelien tuonti.
+[hint.game] Pelattava levykuva. OK avaa tiedostoselaimen. Sen muuttaminen vaatii pelin uudelleenkäynnistyksen.
+[hint.savestate] Tallentaa käynnissä olevan pelin näytettyyn paikkaan (Vasen/Oikea: 1-5). [*] paikan perässä tarkoittaa sen olevan käytössä ja korvautuvan, [ ] tarkoittaa sen olevan tyhjä.
+[hint.loadstate] Lataa näytetyn paikan. Kyseisen tallennuksen jälkeen tehty edistyminen menetetään.
+[hint.add] Tuo pelejä muistikortilta: levykuvat sekä zip-, rar- tai 7z-arkistot, valinnaisesti PBP-muotoon pakattuina.
+
+[hint.sec.video] OK avaa tai sulkee osion: skaalaus, reunapehmennys, kuvataajuusmittari ja kuva-asetukset.
+[hint.smooth] Laskee pikseleiden keskiarvon, kun 640 pikseliä leveää kuvaa pienennetään. Pois säästi 4.6% suoritusajasta mitatussa ajossa.
+[hint.fxaa] Pehmentää 3D-muotojen rosoisia reunoja; suurempi on voimakkaampi. Hidastaa nopeutta: noin 17% vähemmän ruutuja testiajossa.
+[hint.fps] Näyttää kuvataajuuden kuvan päällä. Hyödyllinen muiden kytkimien vaikutuksen arvioimiseen.
+[hint.light] 3D-valaistus. Pois on nopeampi, mutta varjostus häviää: 5.6% vähemmän CPU-syklejä mitatussa Gran Turismo -kohtauksessa.
+[hint.blend] Puoliläpinäkyvyys (lasi, hehku, varjot). Pois on nopeampi, mutta kyseiset kohteet näyttävät vääriltä.
+[hint.dirty] Ei piirrä uudelleen kuvaa, jota peli ei muuttanut. Mitattu: 6.7 ms säästö ruutua kohti ilman laadun heikkenemistä.
+[hint.dsa] Kirjoittaa kuvaruudun suoraan näyttöpuskuriin. Mitattu: 0.93 ms säästö ruutua kohti. Vaatii pelin uudelleenkäynnistyksen.
+[hint.gl] Näyttää kuvan puhelimen OpenGL ES:n kautta. Eräässä mitatussa 320x240-kohtauksessa se oli hitaampi kuin ilman sitä. Vaatii uudelleenkäynnistyksen.
+[hint.swdraw] Vain GL-ulostulon kanssa. Päällä: ohjelmistorasteroija piirtää ja GL vain näyttää ruudun. Pois: grafiikkapiiri piirtää.
+[hint.ilace] Piirtää vain joka toisen rivin. Nopeampi, mutta puolittaa pystysuuntaisen tarkkuuden.
+[hint.pixskip] Ohittaa pikselit, jotka eivät näy korkean vaakaresoluution tiloissa. Hieman nopeampi.
+
+[hint.sec.speed] OK avaa tai sulkee osion: ruudunohitus ja suoritinasetukset. Useimmat niistä vaativat uudelleenkäynnistyksen.
+[hint.gpuskip] Jättää osan ruuduista piirtämättä. Auto antaa ytimen päättää. Kilpa-ajoajossa 1 toi +27% emulointinopeutta, mutta 37% vähemmän näytettyjä ruutuja.
+[hint.cpu] Dynarec kääntää PS1-koodin ARM-koodiksi ja on nopea tila. Tulkki on hidas tila. Vaatii uudelleenkäynnistyksen.
+[hint.gtenf] Ohittaa osan geometriakoprosessorin lippulaskennasta. Pelissä Gran Turismo se oli 6% hitaampi, koska geometria muuttuu. Vaatii uudelleenkäynnistyksen.
+[hint.cycle] Emuloidun PS1-suorittimen nopeus prosentteina. Pienempi kuormittaa puhelinta vähemmän, mutta voi sekoittaa pelin ajoituksen. Tulee voimaan heti.
+
+[hint.sec.sound] OK avaa tai sulkee osion: äänentoisto ja sävelkorkeus.
+[hint.sound] Äänentoisto. Pois poistaa äänen ja säästää äänireitin suoritinaikaa. Vaatii pelin uudelleenkäynnistyksen.
+[hint.wsola] Kun peli pyörii alle täyden nopeuden, venyttää ääntä muuttamatta sen sävelkorkeutta. Kuluttaa mittauksessa noin 6% ruutuajasta mallilla N95. Vaatii uudelleenkäynnistyksen.
+
+[hint.sec.input] OK avaa tai sulkee osion: näppäinasettelut, näppäinmääritykset ja kallistusohjaus.
+[hint.preset] Korvaa kaikki näppäinmääritykset valmiilla asettelulla. Vasen/Oikea valitsee, OK ottaa käyttöön. Omat määritykset menetetään.
+[hint.keybase] Perusasettelu: N95 on oletus; C5 hyväksyy myös numerot 2, 4, 6, 8 toisina suuntanäppäiminä. OK ottaa sen käyttöön ja korvaa määritykset.
+[hint.keys] Avaa näppäinmäärityssivun: OK, paina sitten näppäintä. Vasen/Oikea ottaa Pidon käyttöön tai pois painikkeelta.
+[hint.tilt] Ohjaa puhelimen kallistuksella (kiihtyvyysanturi). Asento, jossa pitelet puhelinta palatessasi peliin, on neutraaliasento.
+[hint.tiltside] Ohjainsauvan akseli, joka seuraa sivukallistusta (LX, LY, RX, RY; miinus kääntää sen). Oletus LX.
+[hint.tiltpitch] Ohjainsauvan akseli, joka seuraa eteen- ja taaksekallistusta (LX, LY, RX, RY; miinus kääntää sen). Oletus LY.
+[hint.tiltdead] Tätä pienempi kallistus jätetään huomiotta. Väliltä 0-40, oletus 10.
+[hint.tiltsens] Kuinka voimakkaasti ohjainsauva seuraa kallistusta: 40% - 300%, oletus 100%.
+
+[hint.sec.system] OK avaa tai sulkee osion: kieli, BIOS, peliprofiilit ja palautus.
+[hint.lang] Valikon kieli. Vaihtuu heti. Ohjetekstit seuraavat sitä; englantia käytetään siellä, mistä teksti puuttuu.
+[hint.bios] BIOS-vedos kansiosta E:\PS1\bios. Ilman sitä toimii sisäänrakennettu korvike (HLE) ja yhteensopivuus on heikompi. Vaatii uudelleenkäynnistyksen.
+[hint.profile] Päällä: jokainen peli säilyttää omat asetuksensa kansiossa E:\PS1\cfg, kuten näppäimet ja nopeuskytkimet. Pois: samat asetukset kaikille peleille.
+[hint.reset] Palauttaa kaikki asetukset oletusarvoihinsa, mukaan lukien näppäimet ja kielen. Paina OK kahdesti. Tallennuksiin ei kosketa.
+
+[hint.help] Avaa ohjeen: alkuasetukset, ohjaus, tallentaminen, vianmääritys ja jokaisen valikkorivin kuvaus.
+
+[topic.setup] Alkuasetukset
+Tämä aihe avaa alkuasetussivun, saman jonka emulaattori näyttää ensimmäisellä käynnistyskerralla.
+
+[topic.play] Ohjaus pelissä
+Valikkonäppäimet: Ylös ja Alas siirtävät, Vasen ja Oikea muuttavat arvoa, OK avaa rivin tai vaihtaa sen, C ja oikea valintanäppäin palaavat takaisin.
+
+Päävalikon selaaminen: Ylös ja Alas kiertävät viimeiseltä riviltä ensimmäiselle. Oikea osion otsikossa avaa sen ja Vasen sulkee sen; yhden osion avaaminen sulkee toisen. C osion sisällä sulkee sen ja jättää kohdistimen sen otsikkoon. OK arvorivillä muuttaa sitä täsmälleen samalla tavalla kuin Oikea.
+
+Pelissä oikea valintanäppäin avaa valikon ja keskeyttää pelin. Vasen valintanäppäin ottaa ruutukaappauksen. Puhelun saapuessa tai kun siirryt toiseen sovellukseen, peli keskeytyy ja valikko aukeaa itsestään.
+
+Oletusnäppäimet: suuntaohjain liikuttaa; OK tai 5 on Risti; 0 on Ympyrä; 7 on Neliö; 9 on Kolmio; 1 on L1; 3 on R1; 4 on L2; 6 on R2; 2 on Select; 8 on Start.
+
+Molemmat pohjat ohjaavat suuntaohjaimella. Rivi Näppäimistö osiossa Ohjaus valitsee perusasettelun: N95 on oletus; C5 hyväksyy myös numerot 2, 4, 6 ja 8 numeronäppäimistöltä toissijaisina näppäiminä neljälle suunnalle niille, joille ne ovat kätevämmät.
+
+Äänenvoimakkuutta muutetaan sivun äänenvoimakkuusnäppäimillä tai näppäimillä # (kovemmalle) ja * (hiljemmalle), ellei näitä näppäimiä ole määritetty painikkeelle.
+
+Jokainen painike voidaan määrittää kohdassa Ohjaus... : OK painikkeen kohdalla ja paina sitten näppäintä. Vasen ja Oikea kytkevät Pidon päälle: pitoon asetettu painike pysyy painettuna, kunnes painat sitä uudelleen, mikä sopii kaasupainikkeeksi ajopeleissä.
+
+Kallistusohjaus (Ohjaus) ohjaa puhelimen kallistuksella. Se vaatii puhelimen, jossa on kiihtyvyysanturi, kuten N95; mallissa E90 ja C5-00.2 sitä ei ole.
+
+Neutraaliasento luetaan joka kerta, kun palaat peliin valikosta. Kalibroi uudelleen avaamalla valikko oikealla valintanäppäimellä, pitele puhelinta haluamassasi peliasennossa ja valitse Jatka.
+
+[topic.saves] Tallentaminen
+Tallennettu tila tallentaa koko pelin yhdellä hetkellä. Avaa Peli, valitse Tallenna tila, valitse paikka vasemmalla ja oikealla (1-5) ja paina OK. [*] paikan numeron perässä tarkoittaa paikan jo sisältävän tilan, [ ] tarkoittaa sen olevan tyhjä. Lataa tila palauttaa sen.
+
+Tallenna tila ja Lataa tila näkyvät vain silloin, kun peli on käynnissä ja se on valittuna.
+
+Tilatiedostot ovat kansiossa E:\PS1\saves, nimettyinä pelin ja paikan mukaan. Pelin muistikortit, card1.mcd ja card2.mcd, ovat samassa kansiossa: ne sisältävät tallennukset, jotka peli itse kirjoittaa. Tila ja muistikortti ovat toisistaan riippumattomia.
+
+Tähdellä (*) merkityt rivit vaativat pelin uudelleenkäynnistyksen. Tallentamaton edistyminen menetetään, joten tallenna tila ennen niiden muuttamista.
+
+[topic.slow] Jos peli on hidas
+Muuta yhtä asiaa kerrallaan ja tarkkaile FPS-mittaria (Video).
+
+Ensin helpot säädöt. Suorapiirto ja Ohita samat kuvat kannattaa pitää päällä: ne eivät heikennä laatua. Pehmeä skaalaus pois päältä säästi 4.6% suoritusajasta mitatussa ajossa ja se vain pehmentää ohuita viivoja.
+
+Sitten Ruudunohitus. Auto on hellävaraisin. Kiinteä arvo 1 toi 27% enemmän emulointinopeutta mitatussa kilpa-ajossa, mutta 37% vähemmän ruutuja näytettiin.
+
+Sitten kuvanlaatuun vaikuttavat: Reunapehmennys pois, 3D-valaistus pois (5.6% vähemmän CPU-syklejä mitatussa kohtauksessa), Läpinäkyvyys pois, Lomitus-hack, Pikseliohitus. Matalampi PS1 CPU-nopeus keventää kuormaa, mutta voi sekoittaa pelin ajoituksen.
+
+Älä odota apua näistä: GTE-pikatila oli 6% hitaampi pelissä Gran Turismo; GL-ulostulo oli hitaampi kuin ohjelmistoreitti mitatussa 320x240-kohtauksessa. Pidä CPU tilassa dynarec: tulkki on hidas tila.
+
+[topic.nosound] Ei ääntä tai ei kuvaa
+Ei ääntä: tarkista, että Ääni (Ääni-osiossa) on päällä ja että peli käynnistettiin uudelleen sen muuttamisen jälkeen. Nosta äänenvoimakkuutta sivunäppäimillä, #- tai *-näppäimellä. Jos Säilytä sävelkorkeus on päällä, kokeile laittaa se pois päältä.
+
+Ei kuvaa tai musta ruutu: paina oikeaa valintanäppäintä ja tarkista virhesivu. Levykuvaa tai BIOSia ei löydy tarkoittaa, että tiedostot puuttuvat: katso Tiedostot muistikortilla. Jos kuva on virheellinen muutoksen jälkeen, poista Suorapiirto tai GL-ulostulo käytöstä ja käynnistä peli uudelleen.
+
+Ei BIOSia: peli toimii tällöin sisäänrakennetulla korvikkeella (HLE). Monet pelit käynnistyvät, mutta yhteensopivuus on heikompi. Aseta BIOS-vedos kansioon E:\PS1\bios tai valitse sellainen kohdasta Järjestelmä, BIOS.
+
+Levykuvat luetellaan muodoissa bin, img, iso, pbp, cbn ja cbin. Cue-tiedostoa ei luetteloida peliselaimessa: ydin päättelee sen bin-tiedostosta nimen mukaan, joten säilytä molemmat yhdessä. Tuonti luetteloi myös cue-tiedostot.
+
+[topic.files] Tiedostot muistikortilla
+E:\PS1\games sisältää levykuvat. Lisää pelejä sallii niiden tuomisen mistä tahansa muistikortilta.
+
+E:\PS1\bios sisältää BIOS-vedoksen. Oletusnimi on scph7502.bin. Vedos tai sellaisen sisältävä zip-, rar- tai 7z-arkisto voidaan valita kohdasta Järjestelmä, BIOS.
+
+E:\PS1\saves sisältää tallennetut tilat ja muistikortit.
+
+E:\PS1\cfg sisältää tiedoston ps1_settings.txt, yleisasetukset sekä pienen tiedoston kullekin omilla asetuksillaan olevalle pelille.
+
+E:\PS1\help sisältää nämä tekstit: yksi tiedosto kieltä kohti, nimettynä kielikoodin mukaan (en.txt, uk.txt), UTF-8-muodossa. Puuttuva tiedosto tai puuttuva avain korvautuu englannilla.
+
+E:\PS1\logs sisältää suorituslokit.
+
+[topic.game] Peli
+Peli: pelattava levykuva. OK avaa tiedostoselaimen nykyisen pelin kansiossa. Toisen levyn valitseminen pelin ollessa käynnissä vaatii uudelleenkäynnistyksen.
+
+Tallenna tila ja Lataa tila: katso aihe Tallentaminen.
+
+Lisää pelejä...: tuo pelejä muistikortilta. Merkitse tiedostot tai arkistot OK:lla, aloita vasemmalla valintanäppäimellä. Voit pakata ne PBP-muotoon, mikä säästää noin 40%, mutta poistaa virheenkorjaustiedot eikä sitä voi perua, ja voit poistaa alkuperäiset. Käynnissä olevan pelin levyn tuominen sulkee sen.
+
+[topic.video] Video
+Pehmeä skaalaus: laskee pikseleiden keskiarvon, kun 640 pikseliä leveää kuvaa pienennetään.
+
+Reunapehmennys: pehmentää 3D-muotojen rosoisia reunoja, tasot 1-5.
+
+FPS-mittari: näyttää kuvataajuuden kuvan päällä.
+
+Loput osiosta: 3D-valaistus (pintojen varjostus), Läpinäkyvyys (puoliläpinäkyvät kohteet), Ohita samat kuvat (ei piirrä muuttumatonta kuvaa uudelleen), Suorapiirto (kirjoittaa suoraan näyttöpuskuriin, vaatii uudelleenkäynnistyksen), GL-ulostulo (näyttää kuvan OpenGL ES:n kautta, vaatii uudelleenkäynnistyksen), Ohjelmistopiirto (vain GL:n kanssa: mikä rasteroija piirtää), Lomitus-hack (vain joka toinen rivi) ja Pikseliohitus (ohittaa pikselit, jotka eivät näy korkean vaakaresoluution tiloissa).
+
+[topic.speed] Nopeus
+Ruudunohitus: jättää osan ruuduista piirtämättä. Auto antaa ytimen päättää kunkin ruudun kohdalla; 1-3 ohittaa niin monta ruutua piirrettyjen välillä.
+
+Loput osiosta: CPU (dynarec tai tulkki, vaatii uudelleenkäynnistyksen), GTE-pikatila (vaatii uudelleenkäynnistyksen) ja PS1 CPU-nopeus.
+
+PS1 CPU-nopeus näytetään prosentteina normaalinopeudesta. Pienemmät arvot keventävät työtä ruutua kohti ja voivat sekoittaa pelin ajoituksen. Se tulee voimaan heti.
+
+[topic.sound] Ääni
+Ääni: äänentoisto päällä tai pois, vaatii uudelleenkäynnistyksen.
+
+Säilytä sävelkorkeus: kun peli pyörii alle täyden nopeuden, ääntä venytetään muuttamatta sen sävelkorkeutta. Se kuluttaa suoritinaikaa ja vaatii uudelleenkäynnistyksen.
+
+[topic.input] Ohjaus
+Ohjausprofiili: Oletus, Racing, Fighting tai RPG. OK korvaa kaikki näppäinmääritykset.
+
+Näppäimistö: N95 (oletusasettelu) tai C5 (sama sekä 2, 4, 6, 8 toisina suuntanäppäiminä). OK korvaa kaikki näppäinmääritykset.
+
+Ohjaus...: määritä kukin PS1-painike näppäimelle; Vasen ja Oikea ottavat Pidon käyttöön tai pois.
+
+Kallistusohjaus ja sen neljä asetusta: akseli sivukallistukselle, akseli eteen- ja taaksekallistukselle, kuollut alue (0-40) ja herkkyys (40%-300%).
+
+[topic.system] Järjestelmä
+Kieli: valikon ja näiden tekstien kieli, vaihtuu heti.
+
+BIOS: käytettävä BIOS-vedos, vaatii uudelleenkäynnistyksen. Oletus on scph7502.bin.
+
+Peliprofiili: päällä säilyttää erillisen asetustiedoston kullekin pelille.
+
+Palauta asetukset: palauttaa kaiken oletusarvoihin; paina OK kahdesti.

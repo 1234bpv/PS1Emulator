@@ -1,0 +1,167 @@
+# PS1Emulator-helpteksten, Nederlands (tevens de reserve voor elke andere taal). UTF-8.
+# Secties beginnen met [sleutel] aan het begin van een regel.
+#   [hint.<id>] één zin op de statusregel voor de geselecteerde menuregel.
+#   [topic.<id>] Titel, daarna de tekst: één alinea per regel, een lege regel is een witregel.
+# Getallen zijn metingen op een Nokia N95 8GB, geen beloften: ze hangen af van het spel.
+
+[hint.start] Start het geselecteerde spel met de onderstaande instellingen. De schijfkopie en het BIOS worden eerst gecontroleerd.
+[hint.resume] Keert precies terug naar het spel waar u gebleven was.
+[hint.restart] Regels gemarkeerd met * zijn gewijzigd: het spel start opnieuw en niet-opgeslagen voortgang gaat verloren. Sla eerst een status op.
+[hint.exit] Slaat de instellingen op en sluit de emulator. Een actief spel gaat verloren, tenzij u een status hebt opgeslagen.
+
+[hint.sec.game] OK opent of sluit de sectie: het spel, statussen opslaan en spellen importeren.
+[hint.game] De schijfkopie om te spelen. OK opent de bestandsbrowser. Wijzigen vereist een herstart van het spel.
+[hint.savestate] Slaat het actieve spel op in het getoonde slot (Links/Rechts: 1-5). [*] achter het slot betekent dat het bezet is en wordt overschreven, [ ] betekent dat het leeg is.
+[hint.loadstate] Laadt het getoonde slot. Voortgang geboekt na dat opslagpunt gaat verloren.
+[hint.add] Importeert spellen vanaf de kaart: schijfkopieën en zip-, rar- of 7z-archieven, optioneel verpakt naar PBP.
+
+[hint.sec.video] OK opent of sluit de sectie: schalen, randverzachting, de frameteller en de beeldopties.
+[hint.smooth] Berekent het gemiddelde van pixels bij het verkleinen van een 640 breed beeld. Uit bespaarde 4.6% rekentijd in een gemeten sessie.
+[hint.fxaa] Maakt kartelranden van 3D-vormen vloeiender; hoger is sterker. Kost snelheid: ongeveer 17% minder frames in een testmeting.
+[hint.fps] Toont de beeldsnelheid over het beeld. Handig om te beoordelen wat de andere opties doen.
+[hint.light] 3D-verlichting. Uit is sneller maar de schaduwwerking verdwijnt: 5.6% minder CPU-cycli in een gemeten Gran Turismo-scène.
+[hint.blend] Halftransparantie (glas, gloed, schaduwen). Uit is sneller, maar dergelijke objecten zien er verkeerd uit.
+[hint.dirty] Tekent een beeld niet opnieuw als het spel dit niet veranderd heeft. Gemeten: 6.7 ms bespaard per frame, zonder kwaliteitsverlies.
+[hint.dsa] Schrijft het frame rechtstreeks naar de schermbuffer. Gemeten: 0.93 ms bespaard per frame. Vereist een herstart van het spel.
+[hint.gl] Toont het beeld via OpenGL ES van de telefoon. In een gemeten 320x240-scène was dit trager dan zonder. Vereist een herstart.
+[hint.swdraw] Alleen bij GL-uitvoer. Aan: de softwarerasterizer tekent en GL toont alleen het frame. Uit: de grafische chip tekent.
+[hint.ilace] Tekent slechts om de andere regel. Sneller, maar halveert het verticale detail.
+[hint.pixskip] Slaat pixels over die niet zichtbaar zijn in modi met hoge horizontale resolutie. Iets sneller.
+
+[hint.sec.speed] OK opent of sluit de sectie: frames overslaan en de processorinstellingen. De meeste vereisen een herstart.
+[hint.gpuskip] Tekent sommige frames niet. Auto laat de kern beslissen. Bij een race-test gaf 1 +27% emulatiesnelheid, maar 37% minder getoonde frames.
+[hint.cpu] Dynarec hercompileert PS1-code naar ARM en is de snelle modus. De interpreter is de trage modus. Vereist een herstart.
+[hint.gtenf] Slaat een deel van de vlagberekeningen van de geometrie-coprocessor over. In Gran Turismo was dit 6% trager, omdat de geometrie verandert. Vereist een herstart.
+[hint.cycle] Snelheid van de geëmuleerde PS1-processor in procenten. Lager draait lichter op de telefoon, maar kan de speltiming verstoren. Geldt direct.
+
+[hint.sec.sound] OK opent of sluit de sectie: geluidsuitvoer en toonhoogte.
+[hint.sound] Geluidsuitvoer. Uit schakelt het geluid uit en bespaart processortijd van het audiopad. Vereist een herstart van het spel.
+[hint.wsola] Rekt het geluid uit zonder de toonhoogte te wijzigen wanneer het spel onder volle snelheid draait. Kost volgens een meting ca. 6% van een frametijd op de N95. Vereist een herstart.
+
+[hint.sec.input] OK opent of sluit de sectie: toetsindelingen, toetstoewijzing en kantelbesturing.
+[hint.preset] Vervangt alle toetstoewijzingen door een kant-en-klaar schema. Links/Rechts kiest, OK past toe. Uw eigen toewijzingen gaan verloren.
+[hint.keybase] De basisindeling: N95 is de standaard; C5 accepteert ook 2, 4, 6, 8 als tweede toets voor de richtingen. OK past dit toe en vervangt de toewijzingen.
+[hint.keys] Opent de pagina voor toetstoewijzing: OK, druk daarna op de toets. Links/Rechts schakelt Vasthouden voor een knop in of uit.
+[hint.tilt] Stuurt via het kantelen van de telefoon (versnellingsmeter). De houding van de telefoon bij terugkeer naar het spel is de neutrale stand.
+[hint.tiltside] De stick-as die zijwaartse kanteling volgt (LX, LY, RX, RY; een minteken keert dit om). Standaard LX.
+[hint.tiltpitch] De stick-as die voor- en achterwaartse kanteling volgt (LX, LY, RX, RY; een minteken keert dit om). Standaard LY.
+[hint.tiltdead] Kanteling kleiner dan dit wordt genegeerd. Van 0 tot 40, standaard 10.
+[hint.tiltsens] Hoe sterk de stick de kanteling volgt: 40% tot 300%, standaard 100%.
+
+[hint.sec.system] OK opent of sluit de sectie: taal, BIOS, profielen per spel en herstel.
+[hint.lang] De taal van het menu. Verandert direct. De helpteksten volgen dit; Engels wordt gebruikt waar een tekst ontbreekt.
+[hint.bios] De BIOS-dump uit E:\PS1\bios. Zonder deze draait de ingebouwde vervanger (HLE) en is de compatibiliteit minder. Vereist een herstart.
+[hint.profile] Aan: elk spel behoudt zijn eigen instellingen in E:\PS1\cfg, zoals toetsen en snelheidsopties. Uit: één set voor alle spellen.
+[hint.reset] Zet elke instelling terug naar de standaardwaarde, inclusief toetsen en taal. Druk tweemaal op OK. Opgeslagen statussen blijven onaangeroerd.
+
+[hint.help] Opent de help: eerste configuratie, besturing, opslaan, probleemoplossing en een beschrijving van elke menuregel.
+
+[topic.setup] Eerste configuratie
+Dit onderwerp opent de pagina voor de eerste configuratie, dezelfde die de emulator bij de eerste start toont.
+
+[topic.play] Besturing in het spel
+De menutoetsen: Omhoog en Omlaag verplaatsen, Links en Rechts wijzigen een waarde, OK opent een regel of schakelt deze om, C en de rechter selectietoets gaan terug.
+
+Navigatie in het hoofdmenu: Omhoog en Omlaag lopen door van de laatste regel naar de eerste. Rechts op een sectietitel opent deze en Links sluit deze; het openen van de ene sectie sluit de andere. C binnen een sectie sluit deze en laat de cursor op de titel staan. OK op een waarderegel wijzigt deze precies zoals Rechts.
+
+In het spel opent de rechter selectietoets het menu en pauzeert het spel. De linker selectietoets maakt een schermopname. Wanneer er een oproep binnenkomt of u naar een andere applicatie overschakelt, pauzeert het spel en opent het menu vanzelf.
+
+Standaardtoetsen: de navigatietoets beweegt; OK of 5 is Kruis; 0 is Cirkel; 7 is Vierkant; 9 is Driehoek; 1 is L1; 3 is R1; 4 is L2; 6 is R2; 2 is Select; 8 is Start.
+
+Beide basisschema's sturen met de navigatietoets. De regel Toetsenbord in Besturing kiest de basisindeling: N95 is de standaard; C5 accepteert ook 2, 4, 6 en 8 op het numerieke toetsenblok als tweede toets voor de vier richtingen, voor wie dat handiger vindt.
+
+Het volume wordt gewijzigd met de volumetoetsen aan de zijkant, of met # (luider) en * (stiller), tenzij die toetsen aan een knop zijn toegewezen.
+
+Elke knop kan worden toegewezen in Besturing... : OK op een knop, druk daarna op de toets. Links en Rechts schakelen Vasthouden in: een vastgehouden knop blijft ingedrukt totdat u er weer op drukt, wat geschikt is voor het gaspedaal bij het racen.
+
+Kantelbesturing (Besturing) stuurt met het kantelen van de telefoon. Dit vereist een telefoon met een versnellingsmeter, zoals de N95; de E90 en de C5-00.2 hebben er geen.
+
+De neutrale stand wordt bepaald telkens wanneer u vanuit het menu terugkeert naar het spel. Om opnieuw te kalibreren opent u het menu met de rechter selectietoets, houdt u de telefoon vast zoals u wilt spelen en kiest u Hervatten.
+
+[topic.saves] Opslaan
+Een opgeslagen status bewaart het hele spel op één moment. Open Spel, kies Status opslaan, kies een slot met Links en Rechts (1 tot 5) en druk op OK. [*] achter het slotnummer betekent dat het slot al een status bevat, [ ] betekent dat het leeg is. Status laden herstelt deze.
+
+Status opslaan en Status laden verschijnen alleen terwijl een spel actief is en dit spel is geselecteerd.
+
+De statusbestanden staan in E:\PS1\saves, vernoemd naar het spel en het slot. De geheugenkaarten van het spel, card1.mcd en card2.mcd, staan in dezelfde map: zij bevatten de opgeslagen data die het spel zelf wegschrijft. Een status en een geheugenkaart zijn onafhankelijk van elkaar.
+
+Regels gemarkeerd met * vereisen een herstart van het spel. Niet-opgeslagen voortgang gaat verloren, dus sla een status op voordat u ze wijzigt.
+
+[topic.slow] Als het spel traag is
+Verander één ding tegelijk en let op de FPS-teller (Video).
+
+Eerst de voordelige opties. Direct draw en Gelijke frames overslaan moeten aan blijven: ze kosten geen kwaliteit. Vloeiend schalen uit bespaarde 4.6% rekentijd in een gemeten sessie en verzacht alleen fijne lijnen.
+
+Dan Frameskip. Auto is het soepelst. Een vaste waarde van 1 gaf 27% meer emulatiesnelheid in een gemeten race, maar er werden 37% minder frames getoond.
+
+Dan degene die ten koste gaan van het beeld: Randverzachting uit, 3D-verlichting uit (5.6% minder CPU-cycli in een gemeten scène), Transparantie uit, Interlace-hack, Pixel-skip. Een lagere PS1-CPU-snelheid verlicht de belasting, maar kan de timing van het spel verstoren.
+
+Verwacht hier geen hulp van: Snelle GTE-modus was 6% trager in Gran Turismo; GL-uitvoer was trager dan het softwarepad in een gemeten 320x240-scène. Houd CPU op dynarec: de interpreter is de trage modus.
+
+[topic.nosound] Geen geluid of geen beeld
+Geen geluid: controleer of Geluid (in de sectie Geluid) aan staat en of het spel na het wijzigen is herstart. Verhoog het volume met de zijtoetsen, # of *. Als Toonhoogte behouden aan staat, probeer dit dan uit te schakelen.
+
+Geen beeld of een zwart scherm: druk op de rechter selectietoets en controleer de foutpagina. Schijfkopie of BIOS niet gevonden betekent dat de bestanden ontbreken: zie Bestanden op de kaart. Als het beeld na een wijziging niet klopt, schakel dan Direct draw of GL-uitvoer uit en herstart het spel.
+
+Geen BIOS: het spel draait dan op de ingebouwde vervanger (HLE). Veel spellen starten, maar de compatibiliteit is minder. Plaats een BIOS-dump in E:\PS1\bios of kies er een in Systeem, BIOS.
+
+Schijfkopieën worden weergegeven in de indelingen bin, img, iso, pbp, cbn en cbin. Een cue-bestand wordt niet getoond in de spelbrowser: de kern leidt dit op basis van de naam af van de bin, dus bewaar beide bij elkaar. Importeren toont wel cue-bestanden.
+
+[topic.files] Bestanden op de kaart
+E:\PS1\games bevat de schijfkopieën. Met Spellen toevoegen kunt u ze overal vandaan op de kaart importeren.
+
+E:\PS1\bios bevat de BIOS-dump. De standaardnaam is scph7502.bin. Een dump of een zip-, rar- of 7z-archief met een dump kan worden gekozen in Systeem, BIOS.
+
+E:\PS1\saves bevat de opgeslagen statussen en de geheugenkaarten.
+
+E:\PS1\cfg bevat ps1_settings.txt, de algemene instellingen, en een klein bestand voor elk spel met eigen instellingen.
+
+E:\PS1\help bevat deze teksten: één bestand per taal, vernoemd naar de taalcode (en.txt, uk.txt), in UTF-8. Bij een ontbrekend bestand of een ontbrekende sleutel wordt teruggevallen op het Engels.
+
+E:\PS1\logs bevat de uitvoerlogboeken.
+
+[topic.game] Spel
+Spel: de schijfkopie om te spelen. OK opent de bestandsbrowser in de map van het huidige spel. Het kiezen van een andere schijf terwijl een spel draait, vereist een herstart.
+
+Status opslaan en Status laden: zie het onderwerp Opslaan.
+
+Spellen toevoegen...: importeert spellen vanaf de kaart. Markeer bestanden of archieven met OK, start met de linker selectietoets. U kunt ze inpakken naar PBP, wat ongeveer 40% bespaart maar foutcorrectiegegevens verwijdert en niet ongedaan kan worden gemaakt, en u kunt de originelen verwijderen. Het importeren van de schijf van het actieve spel sluit dit spel.
+
+[topic.video] Video
+Vloeiend schalen: berekent het gemiddelde van pixels wanneer een 640 breed beeld wordt verkleind.
+
+Randverzachting: maakt kartelranden van 3D-vormen vloeiender, niveau 1 tot 5.
+
+FPS-teller: toont de beeldsnelheid over het beeld.
+
+De rest van de sectie: 3D-verlichting (schaduwwerking van texturen), Transparantie (half-transparante objecten), Gelijke frames overslaan (geen hertekening van een ongewijzigd beeld), Direct draw (schrijft rechtstreeks naar de schermbuffer, vereist een herstart), GL-uitvoer (toont het beeld via OpenGL ES, vereist een herstart), Software-rendering (alleen bij GL: welke rasterizer tekent), Interlace-hack (alleen om de andere regel) en Pixel-skip (slaat pixels over die niet zichtbaar zijn in modi met hoge horizontale resolutie).
+
+[topic.speed] Snelheid
+Frameskip: tekent sommige frames niet. Auto laat de kern dit per frame bepalen; 1 tot 3 slaat dat aantal frames over tussen getekende frames.
+
+De rest van de sectie: CPU (dynarec of interpreter, vereist een herstart), Snelle GTE-modus (vereist een herstart) en PS1-CPU-snelheid.
+
+PS1-CPU-snelheid wordt weergegeven in procenten van de normale snelheid. Lagere waarden geven het spel minder werk per frame en kunnen de timing verstoren. Geldt direct.
+
+[topic.sound] Geluid
+Geluid: geluidsuitvoer aan of uit, vereist een herstart.
+
+Toonhoogte behouden: wanneer het spel onder volle snelheid draait, wordt het geluid uitgerekt zonder de toonhoogte te veranderen. Het kost processortijd en vereist een herstart.
+
+[topic.input] Besturing
+Besturingsprofiel: Standaard, Racen, Vechten of RPG. OK vervangt alle toetstoewijzingen.
+
+Toetsenbord: N95 (de standaardindeling) of C5 (hetzelfde, plus 2, 4, 6, 8 als tweede toets voor de richtingen). OK vervangt alle toetstoewijzingen.
+
+Besturing...: wijs elke PS1-knop toe aan een toets; Links en Rechts schakelen Vasthouden in of uit.
+
+Kantelbesturing en de vier instellingen ervan: de as voor zijwaartse kanteling, de as voor voor- en achterwaartse kanteling, de dode zone (0 tot 40) en de gevoeligheid (40% tot 300%).
+
+[topic.system] Systeem
+Taal: de taal van het menu en van deze teksten, verandert direct.
+
+BIOS: de te gebruiken BIOS-dump, vereist een herstart. Standaard is scph7502.bin.
+
+Profiel per spel: aan behoudt een apart instellingenbestand voor elk spel.
+
+Herstel instellingen: zet alles terug naar de standaardwaarden; druk tweemaal op OK.

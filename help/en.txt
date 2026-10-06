@@ -42,7 +42,7 @@
 [hint.preset] Replaces all key assignments with a ready layout. Left/Right choose, OK applies. Your own assignments are lost.
 [hint.keybase] The base layout: N95 is the default one; C5 also accepts 2, 4, 6, 8 as a second key for the directions. OK applies it and replaces the assignments.
 [hint.keys] Opens the key assignment page: OK, then press the key. Left/Right turn Hold on or off for a button.
-[hint.tilt] Steers with the tilt of the phone (accelerometer). Only for phones that have the sensor.
+[hint.tilt] Steers with the tilt of the phone (accelerometer). The way you hold the phone when you return to the game is the neutral position.
 [hint.tiltside] The stick axis that follows sideways tilt (LX, LY, RX, RY; a minus reverses it). Default LX.
 [hint.tiltpitch] The stick axis that follows forward and backward tilt (LX, LY, RX, RY; a minus reverses it). Default LY.
 [hint.tiltdead] Tilt smaller than this is ignored. From 0 to 40, default 10.
@@ -74,7 +74,9 @@ Volume is changed with the side volume keys, or with # (louder) and * (quieter),
 
 Every button can be assigned in Controls... : OK on a button, then press the key. Left and Right turn Hold on: a held button stays pressed until you press it again, which suits the accelerator in a race.
 
-Tilt control (Controls) steers with the tilt of the phone. It needs a phone with an accelerometer.
+Tilt control (Controls) steers with the tilt of the phone. It needs a phone with an accelerometer, such as the N95; the E90 and the C5-00.2 have none.
+
+The neutral position is taken each time you return to the game from the menu. To recalibrate, open the menu with the right soft key, hold the phone the way you want to play and choose Resume.
 
 [topic.saves] Saving
 A save state stores the whole game at one moment. Open Game, choose Save state, pick a slot with Left and Right (1 to 5) and press OK. [*] after the slot number means the slot already holds a state, [ ] means it is empty. Load state restores it.

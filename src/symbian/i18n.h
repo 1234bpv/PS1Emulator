@@ -173,6 +173,24 @@ enum TLangId
 	ELangIdHindi,
 	ELangIdArabic,
 	ELangIdKorean,
+	ELangIdCzech,
+	ELangIdDutch,
+	ELangIdSwedish,
+	ELangIdRomanian,
+	ELangIdHungarian,
+	ELangIdGreek,
+	ELangIdFinnish,
+	ELangIdDanish,
+	ELangIdNorwegian,
+	ELangIdSlovak,
+	ELangIdBulgarian,
+	ELangIdCroatian,
+	ELangIdSlovenian,
+	ELangIdSerbian,
+	ELangIdEstonian,
+	ELangIdLatvian,
+	ELangIdLithuanian,
+	ELangIdCatalan,
 	ELangIdCount
 	};
 
@@ -180,6 +198,8 @@ const TDesC &Tr(TInt aId);
 void I18nSetLanguage(TInt aLang);
 TInt I18nLanguageCount();
 const TDesC &I18nLanguageName(TInt aLang);
+// Short code of the language, the name of its help file: "en", "uk", ...
+const char *I18nLanguageCode(TInt aLang);
 TInt I18nDetectLanguage();
 
 #endif // I18N_H

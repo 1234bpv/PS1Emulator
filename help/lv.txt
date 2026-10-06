@@ -1,0 +1,167 @@
+# PS1Emulator palīdzības teksti, angļu valodā (arī rezerves variants visām citām valodām). UTF-8.
+# Sadaļas sākas ar [atslēga] rindas sākumā.
+#   [hint.<id>] viens teikums, kas redzams statusa rindā izvēlētajai izvēlnes rindai.
+#   [topic.<id>] Virsraksts, tad teksts: viena rindkopa rindā, tukša rinda ir atstarpe.
+# Skaitļi ir mērījumi Nokia N95 8GB, nevis solījumi: tie atkarīgi no spēles.
+
+[hint.start] Palaiž izvēlēto spēli ar zemāk norādītajiem iestatījumiem. Vispirms tiek pārbaudīts diska attēls un BIOS.
+[hint.resume] Atgriež spēli tieši tur, kur to pametāt.
+[hint.restart] Ar * atzīmētās rindas ir mainītas: spēle sāksies no sākuma un nesaglabātais progress tiks zaudēts. Vispirms saglabājiet stāvokli.
+[hint.exit] Saglabā iestatījumus un aizver emulatoru. Darbojošā spēle tiks zaudēta, ja nesaglabāsiet stāvokli.
+
+[hint.sec.game] OK atver vai aizver sadaļu: spēle, saglabātie stāvokļi un spēļu importēšana.
+[hint.game] Spēlējamais diska attēls. OK atver failu pārlūku. Maiņai nepieciešama spēles restartēšana.
+[hint.savestate] Saglabā darbojošos spēli parādītajā vietā (Pa kreisi/Pa labi: 1-5). [*] aiz vietas nozīmē, ka tā ir aizņemta un tiks pārrakstīta, [ ] nozīmē, ka tā ir tukša.
+[hint.loadstate] Ielādē parādīto vietu. Progress, kas gūts pēc šīs saglabāšanas, tiks zaudēts.
+[hint.add] Importē spēles no kartes: attēlus un zip, rar vai 7z arhīvus, pēc izvēles saspiežot uz PBP.
+
+[hint.sec.video] OK atver vai aizver sadaļu: mērogošana, malu izlīdzināšana, kadru skaitītājs un attēla slēdži.
+[hint.smooth] Vidēšo pikseļus, kad 640 pikseļu platu attēlu samazina. Izslēgts ietaupīja 4,6% darbības laika izmērītā ierakstā.
+[hint.fxaa] Izlīdzina 3D formu robainās malas; jo augstāks, jo stiprāks. Maksā ātrumu: aptuveni 17% mazāk kadru testa ierakstā.
+[hint.fps] Rāda kadru ātrumu virs attēla. Noder, lai novērtētu, ko dara pārējie slēdži.
+[hint.light] 3D apgaismojums. Izslēgts ir ātrāk, bet pazūd ēnojums: 5,6% mazāk CPU ciklu izmērītā Gran Turismo ainā.
+[hint.blend] Puscaurspīdīgums (stikls, mirdzums, ēnas). Izslēgts ir ātrāk, bet šādi objekti izskatās nepareizi.
+[hint.dirty] Nepārzīmē attēlu, ko spēle nav mainījusi. Izmērīts: 6,7 ms ietaupījums kadrā, kvalitāte nezūd.
+[hint.dsa] Raksta kadru tieši ekrāna buferī. Izmērīts: 0,93 ms ietaupījums kadrā. Nepieciešama spēles restartēšana.
+[hint.gl] Rāda attēlu ar tālruņa OpenGL ES. Vienā izmērītā 320x240 ainā bija lēnāk nekā bez tā. Nepieciešama restartēšana.
+[hint.swdraw] Tikai ar GL izvadi. Ieslēgts: zīmē programmatūras rasterizētājs, un GL tikai parāda kadru. Izslēgts: zīmē grafikas mikroshēma.
+[hint.ilace] Zīmē tikai katru otro rindu. Ātrāk, bet uz pusi mazāk vertikālo detaļu.
+[hint.pixskip] Izlaiž pikseļus, kas nav redzami augstas horizontālās izšķirtspējas režīmos. Nedaudz ātrāk.
+
+[hint.sec.speed] OK atver vai aizver sadaļu: kadru izlaišana un procesora iestatījumi. Lielākajai daļai nepieciešama restartēšana.
+[hint.gpuskip] Nezīmē dažus kadrus. Auto ļauj kodolam izlemt. Sacīkšu ierakstā 1 deva +27% emulācijas ātruma, bet 37% mazāk parādīto kadru.
+[hint.cpu] Dynarec pārkompilē PS1 kodu uz ARM un ir ātrais režīms. Interpretators ir lēnais režīms. Nepieciešama restartēšana.
+[hint.gtenf] Izlaiž daļu ģeometrijas kopprocesora karogu aprēķina. Gran Turismo tas bija 6% lēnāk, jo mainās ģeometrija. Nepieciešama restartēšana.
+[hint.cycle] Emulētā PS1 procesora ātrums procentos. Zemāks mazāk noslogo tālruni, bet var izjaukt spēles laiku. Stājas spēkā uzreiz.
+
+[hint.sec.sound] OK atver vai aizver sadaļu: skaņas izvade un tonis.
+[hint.sound] Skaņas izvade. Izslēgta noņem skaņu un ietaupa audio ceļa procesora laiku. Nepieciešama spēles restartēšana.
+[hint.wsola] Kad spēle darbojas lēnāk par pilnu ātrumu, izstiepj skaņu, nemainot tās toni. Izmērīts: maksā aptuveni 6% kadra laika uz N95. Nepieciešama restartēšana.
+
+[hint.sec.input] OK atver vai aizver sadaļu: taustiņu izkārtojumi, taustiņu piešķiršana un sasvēršanas vadība.
+[hint.preset] Aizstāj visus taustiņu piešķīrumus ar gatavu izkārtojumu. Pa kreisi/Pa labi izvēlas, OK pielieto. Jūsu piešķīrumi tiks zaudēti.
+[hint.keybase] Pamata izkārtojums: N95 ir noklusējuma; C5 virzieniem kā otru taustiņu pieņem arī 2, 4, 6, 8. OK to pielieto un aizstāj piešķīrumus.
+[hint.keys] Atver taustiņu piešķiršanas lapu: OK, tad nospiediet taustiņu. Pa kreisi/Pa labi ieslēdz vai izslēdz pogas turēšanu.
+[hint.tilt] Vada ar tālruņa sasvēršanu (akselerometrs). Tālruņa turēšanas veids, atgriežoties spēlē, ir neitrālā pozīcija.
+[hint.tiltside] Sviras ass, kas seko sasvēršanai uz sāniem (LX, LY, RX, RY; mīnuss apgriež virzienu). Noklusējums LX.
+[hint.tiltpitch] Sviras ass, kas seko sasvēršanai uz priekšu un atpakaļ (LX, LY, RX, RY; mīnuss apgriež virzienu). Noklusējums LY.
+[hint.tiltdead] Mazāka sasvēršana tiek ignorēta. No 0 līdz 40, noklusējums 10.
+[hint.tiltsens] Cik stipri svira seko sasvēršanai: no 40% līdz 300%, noklusējums 100%.
+
+[hint.sec.system] OK atver vai aizver sadaļu: valoda, BIOS, profili katrai spēlei un atiestatīšana.
+[hint.lang] Izvēlnes valoda. Mainās uzreiz. Palīdzības teksti tai seko; ja teksta trūkst, tiek izmantota angļu valoda.
+[hint.bios] BIOS damps no E:\PS1\bios. Bez tā darbojas iebūvētais aizstājējs (HLE) un saderība ir sliktāka. Nepieciešama restartēšana.
+[hint.profile] Ieslēgts: katra spēle glabā savus iestatījumus mapē E:\PS1\cfg, piemēram, taustiņus un ātruma slēdžus. Izslēgts: viens komplekts visām spēlēm.
+[hint.reset] Atiestata visus iestatījumus uz noklusējumu, ieskaitot taustiņus un valodu. Nospiediet OK divreiz. Saglabātais netiek skarts.
+
+[hint.help] Atver palīdzību: pirmā iestatīšana, vadība, saglabāšana, problēmu novēršana un katras izvēlnes rindas apraksts.
+
+[topic.setup] Pirmā iestatīšana
+Šī tēma atver pirmās iestatīšanas lapu, to pašu, ko emulators parāda pirmajā palaišanas reizē.
+
+[topic.play] Vadība spēlē
+Izvēlnes taustiņi: Augšup un Lejup pārvieto, Pa kreisi un Pa labi maina vērtību, OK atver rindu vai pārslēdz to, C un labais programmtaustiņš atgriež atpakaļ.
+
+Navigācija galvenajā izvēlnē: Augšup un Lejup no pēdējās rindas pāriet uz pirmo. Pa labi uz sadaļas virsraksta to atver, un Pa kreisi aizver; atverot vienu sadaļu, otra aizveras. C sadaļā to aizver un atstāj kursoru uz tās virsraksta. OK uz vērtības rindas maina to tieši tāpat kā Pa labi.
+
+Spēlē labais programmtaustiņš atver izvēlni un aptur spēli. Kreisais programmtaustiņš uzņem ekrānuzņēmumu. Kad ienāk zvans vai pārslēdzaties uz citu lietojumprogrammu, spēle tiek apturēta un izvēlne atveras pati.
+
+Noklusējuma taustiņi: virziena taustiņš kustina; OK vai 5 ir Krusts; 0 ir Aplis; 7 ir Kvadrāts; 9 ir Trijstūris; 1 ir L1; 3 ir R1; 4 ir L2; 6 ir R2; 2 ir Select; 8 ir Start.
+
+Abi pamata izkārtojumi vada ar virziena taustiņu. Rinda Tastatūra sadaļā Vadība izvēlas pamata izkārtojumu: N95 ir noklusējuma; C5 virzieniem kā otru taustiņu pieņem arī 2, 4, 6 un 8 uz ciparu tastatūras, tiem, kam tie ērtāki.
+
+Skaļumu maina ar sānu skaļuma taustiņiem vai ar # (skaļāk) un * (klusāk), ja vien šie taustiņi nav piešķirti pogai.
+
+Katru pogu var piešķirt sadaļā Vadība... : OK uz pogas, tad nospiediet taustiņu. Pa kreisi un Pa labi ieslēdz turēšanu: turētā poga paliek nospiesta, līdz to nospiežat vēlreiz, kas der gāzes pedālim sacīkstēs.
+
+Sasvēršanas vadība (sadaļā Vadība) vada ar tālruņa sasvēršanu. Tai vajadzīgs tālrunis ar akselerometru, piemēram, N95; E90 un C5-00.2 tāda nav.
+
+Neitrālā pozīcija tiek noteikta katru reizi, kad atgriežaties spēlē no izvēlnes. Lai pārkalibrētu, atveriet izvēlni ar labo programmtaustiņu, turiet tālruni tā, kā vēlaties spēlēt, un izvēlieties Turpināt.
+
+[topic.saves] Saglabāšana
+Saglabātais stāvoklis glabā visu spēli vienā brīdī. Atveriet SPĒLE, izvēlieties Saglabāt stāvokli, ar Pa kreisi un Pa labi izvēlieties vietu (no 1 līdz 5) un nospiediet OK. [*] aiz vietas numura nozīmē, ka vietā jau ir stāvoklis, [ ] nozīmē, ka tā ir tukša. Ielādēt stāvokli to atjauno.
+
+Saglabāt stāvokli un Ielādēt stāvokli parādās tikai tad, kad spēle darbojas un ir izvēlētā.
+
+Stāvokļu faili atrodas E:\PS1\saves, nosaukti pēc spēles un vietas. Spēles atmiņas kartes card1.mcd un card2.mcd ir tajā pašā mapē: tajās glabājas saglabājumi, ko raksta pati spēle. Stāvoklis un atmiņas karte ir neatkarīgi viens no otra.
+
+Rindām ar * nepieciešama spēles restartēšana. Nesaglabātais progress tiek zaudēts, tāpēc pirms to maiņas saglabājiet stāvokli.
+
+[topic.slow] Ja spēle ir lēna
+Mainiet vienu lietu reizē un vērojiet FPS skaitītāju (VIDEO).
+
+Vispirms lētie. Tiešā zīmēšana un Izlaist vienādos jāatstāj ieslēgti: tie nemaksā kvalitāti. Gluda mērogošana izslēgta ietaupīja 4,6% darbības laika izmērītā ierakstā un tikai nedaudz mīkstina smalkas līnijas.
+
+Tad Kadru izlaišana. Auto ir saudzīgākais. Fiksēta vērtība 1 deva par 27% lielāku emulācijas ātrumu izmērītās sacīkstēs, bet tika parādīti par 37% mazāk kadru.
+
+Tad tie, kas maksā attēla kvalitāti: Malu izlīdzināšana izslēgta, 3D apgaismojums izslēgts (5,6% mazāk CPU ciklu izmērītā ainā), Caurspīdīgums izslēgts, Rindpārlēces triks, Pikseļu izlaišana. Zemāks PS1 CPU ātrums atvieglo slodzi, bet var izjaukt spēles laiku.
+
+No šiem palīdzību negaidiet: GTE ātrais režīms bija 6% lēnāks Gran Turismo; GL izvade bija lēnāka par programmatūras ceļu izmērītā 320x240 ainā. Atstājiet CPU uz dynarec: interpretators ir lēnais režīms.
+
+[topic.nosound] Nav skaņas vai attēla
+Nav skaņas: pārbaudiet, vai Skaņa (sadaļā SKAŅA) ir ieslēgta un vai spēle pēc tās maiņas ir restartēta. Palieliniet skaļumu ar sānu taustiņiem, # vai *. Ja Saglabāt toni ir ieslēgts, mēģiniet to izslēgt.
+
+Nav attēla vai melns ekrāns: nospiediet labo programmtaustiņu un pārbaudiet kļūdas lapu. Ziņojums, ka diska attēls vai BIOS nav atrasts, nozīmē, ka faili trūkst: skatiet Faili kartē. Ja attēls pēc izmaiņas ir nepareizs, izslēdziet Tiešā zīmēšana vai GL izvade un restartējiet spēli.
+
+Nav BIOS: tad spēle darbojas ar iebūvēto aizstājēju (HLE). Daudzas spēles startē, bet saderība ir sliktāka. Ievietojiet BIOS dampu mapē E:\PS1\bios vai izvēlieties to sadaļā SISTĒMA, BIOS.
+
+Diska attēli tiek uzskaitīti formātos bin, img, iso, pbp, cbn un cbin. Cue fails spēļu pārlūkā netiek uzskaitīts: kodols to atvasina no bin pēc nosaukuma, tāpēc turiet abus kopā. Importēšana cue failus uzskaita.
+
+[topic.files] Faili kartē
+E:\PS1\games satur diska attēlus. Pievienot spēles ļauj tos importēt no jebkuras vietas kartē.
+
+E:\PS1\bios satur BIOS dampu. Noklusējuma nosaukums ir scph7502.bin. Dampu vai zip, rar vai 7z arhīvu ar to var izvēlēties sadaļā SISTĒMA, BIOS.
+
+E:\PS1\saves satur saglabātos stāvokļus un atmiņas kartes.
+
+E:\PS1\cfg satur ps1_settings.txt, globālos iestatījumus, un vienu nelielu failu katrai spēlei ar tās iestatījumiem.
+
+E:\PS1\help satur šos tekstus: vienu failu katrai valodai, nosauktu ar valodas kodu (en.txt, uk.txt), UTF-8. Ja fails vai atslēga trūkst, tiek izmantota angļu valoda.
+
+E:\PS1\logs satur darbības žurnālus.
+
+[topic.game] Spēle
+Spēle: spēlējamais diska attēls. OK atver failu pārlūku pašreizējās spēles mapē. Citu disku izvēloties, kamēr spēle darbojas, nepieciešama restartēšana.
+
+Saglabāt stāvokli un Ielādēt stāvokli: skatiet tēmu Saglabāšana.
+
+Pievienot spēles...: importē spēles no kartes. Atzīmējiet failus vai arhīvus ar OK, sāciet ar kreiso programmtaustiņu. Tos var saspiest uz PBP, kas ietaupa aptuveni 40%, bet noņem kļūdu labošanas datus un to nevar atsaukt, un var izdzēst oriģinālus. Darbojošās spēles diska importēšana to aizver.
+
+[topic.video] Video
+Gluda mērogošana: vidēšo pikseļus, kad 640 pikseļu platu attēlu samazina.
+
+Malu izlīdzināšana: izlīdzina 3D formu robainās malas, līmenis no 1 līdz 5.
+
+FPS skaitītājs: rāda kadru ātrumu virs attēla.
+
+Pārējā sadaļa: 3D apgaismojums (tekstūru ēnojums), Caurspīdīgums (puscaurspīdīgi objekti), Izlaist vienādos (nepārzīmē nemainītu attēlu), Tiešā zīmēšana (raksta tieši ekrāna buferī, nepieciešama restartēšana), GL izvade (rāda attēlu ar OpenGL ES, nepieciešama restartēšana), Programm. zīmēšana (tikai ar GL: kurš rasterizētājs zīmē), Rindpārlēces triks (tikai katra otrā rinda) un Pikseļu izlaišana (izlaiž pikseļus, kas nav redzami augstas horizontālās izšķirtspējas režīmos).
+
+[topic.speed] Ātrums
+Kadru izlaišana: nezīmē dažus kadrus. Auto ļauj kodolam izlemt katram kadram; 1 līdz 3 izlaiž tik daudz kadru starp zīmētajiem.
+
+Pārējā sadaļa: CPU (dynarec vai interpretators, nepieciešama restartēšana), GTE ātrais režīms (nepieciešama restartēšana) un PS1 CPU ātrums.
+
+PS1 CPU ātrums tiek rādīts procentos no normālā ātruma. Zemākas vērtības dod spēlei mazāk darba kadrā un var izjaukt tās laiku. Stājas spēkā uzreiz.
+
+[topic.sound] Skaņa
+Skaņa: skaņas izvade ieslēgta vai izslēgta, nepieciešama restartēšana.
+
+Saglabāt toni: kad spēle darbojas lēnāk par pilnu ātrumu, skaņa tiek izstiepta, nemainot toni. Tas maksā procesora laiku un prasa restartēšanu.
+
+[topic.input] Vadība
+Vadības sagatave: Noklusējums, Sacīkstes, Cīņas vai RPG. OK aizstāj visus taustiņu piešķīrumus.
+
+Tastatūra: N95 (noklusējuma izkārtojums) vai C5 (tas pats, plus 2, 4, 6, 8 kā otrs taustiņš virzieniem). OK aizstāj visus taustiņu piešķīrumus.
+
+Vadība...: piešķiriet katru PS1 pogu taustiņam; Pa kreisi un Pa labi ieslēdz vai izslēdz turēšanu.
+
+Sasvēršanas vadība un tās četri iestatījumi: ass sasvēršanai uz sāniem, ass sasvēršanai uz priekšu un atpakaļ, nejutības zona (0 līdz 40) un jutība (40% līdz 300%).
+
+[topic.system] Sistēma
+Valoda: izvēlnes un šo tekstu valoda, mainās uzreiz.
+
+BIOS: izmantojamais BIOS damps, nepieciešama restartēšana. Noklusējums ir scph7502.bin.
+
+Spēles profils: ieslēgts glabā atsevišķu iestatījumu failu katrai spēlei.
+
+Atiestatīt iestatījumus: atgriež visu uz noklusējumu; nospiediet OK divreiz.

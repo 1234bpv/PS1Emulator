@@ -1,0 +1,167 @@
+# PS1Emulator yardım metinleri, Türkçe. UTF-8.
+# Bölümler satır başında [anahtar] ile başlar.
+#   [hint.<id>] seçilen menü satırı için durum çubuğunda gösterilen tek bir cümle.
+#   [topic.<id>] Başlık, ardından metin: satır başına bir paragraf, boş satır bir aralıktır.
+# Sayılar Nokia N95 8GB üzerindeki ölçümlerdir, kesin vaatler değildir: oyuna göre değişir.
+
+[hint.start] Seçilen oyunu aşağıdaki ayarlarla başlatır. Önce disk kalıbı ve BIOS kontrol edilir.
+[hint.resume] Oyuna tam olarak kaldığınız yerden geri döner.
+[hint.restart] * işaretli satırlar değişti: oyun baştan başlar ve kaydedilmemiş ilerleme kaybolur. Önce durumu kaydedin.
+[hint.exit] Ayarları kaydeder ve emülatörü kapatır. Durumu kaydetmediyseniz çalışan oyun kaybolur.
+
+[hint.sec.game] OK bölümü açar veya kapatır: oyun, durum kayıtları ve oyunları içe aktarma.
+[hint.game] Oynanacak disk kalıbı. OK dosya tarayıcısını açar. Değiştirmek oyunun yeniden başlatılmasını gerektirir.
+[hint.savestate] Çalışan oyunu gösterilen yuvaya kaydeder (Sol/Sağ: 1-5). Yuvanın arkasındaki [*] dolu olduğunu ve üzerine yazılacağını, [ ] boş olduğunu belirtir.
+[hint.loadstate] Gösterilen yuvayı yükler. Bu kayıttan sonra yapılan ilerleme kaybolur.
+[hint.add] Karttan oyunları içe aktarır: kalıplar ve zip, rar veya 7z arşivleri, isteğe bağlı olarak PBP şeklinde paketlenir.
+
+[hint.sec.video] OK bölümü açar veya kapatır: ölçekleme, kenar yumuşatma, kare sayacı ve görüntü anahtarları.
+[hint.smooth] 640 genişliğindeki görüntü küçültüldüğünde piksellerin ortalamasını alır. kapalı, ölçülen bir izlemede çalışma süresinden 4.6% tasarruf sağladı.
+[hint.fxaa] 3D şekillerin pürüzlü kenarlarını yumuşatır; daha yüksek değer daha güçlüdür. Hıza mal olur: test izlemesinde yaklaşık 17% daha az kare.
+[hint.fps] Görüntünün üzerinde kare hızını gösterir. Diğer anahtarların ne yaptığını anlamak için kullanışlıdır.
+[hint.light] 3D aydınlatma. kapalı daha hızlıdır ancak gölgelendirme kaybolur: ölçülen bir Gran Turismo sahnesinde 5.6% daha az CPU döngüsü.
+[hint.blend] Yarı saydamlık (cam, parıltı, gölgeler). kapalı daha hızlıdır, ancak bu tür nesneler hatalı görünür.
+[hint.dirty] Oyunun değiştirmediği bir görüntüyü yeniden çizmez. Ölçülen: kare başına 6.7 ms tasarruf, kalite kaybı yok.
+[hint.dsa] Kareyi doğrudan ekran arabelleğine yazar. Ölçülen: kare başına 0.93 ms tasarruf. Oyunun yeniden başlatılmasını gerektirir.
+[hint.gl] Görüntüyü telefonun OpenGL ES'i üzerinden gösterir. Ölçülen bir 320x240 sahnesinde onsuz halinden daha yavaştı. Yeniden başlatma gerektirir.
+[hint.swdraw] Yalnızca GL çıkışı ile. açık: yazılımsal rasterleştirici çizer ve GL yalnızca kareyi gösterir. kapalı: grafik çipi çizer.
+[hint.ilace] Yalnızca iki satırdan birini çizer. Daha hızlıdır, ancak dikey ayrıntıyı yarıya indirir.
+[hint.pixskip] Yüksek yatay çözünürlük modlarında görünmeyen pikselleri atlar. Biraz daha hızlıdır.
+
+[hint.sec.speed] OK bölümü açar veya kapatır: kare atlama ve işlemci ayarları. Bunların çoğu yeniden başlatma gerektirir.
+[hint.gpuskip] Bazı kareleri çizmez. otomatik kararı çekirdeğe bırakır. Bir yarış izlemesinde 1 değeri +27% emülasyon hızı verdi ancak 37% daha az kare gösterildi.
+[hint.cpu] Dynarec PS1 kodunu ARM'ye yeniden derler ve hızlı moddur. yorumlayıcı yavaş moddur. Yeniden başlatma gerektirir.
+[hint.gtenf] Geometri yardımcı işlemcisinin bazı bayrak hesaplamalarını atlar. Geometri değiştiği için Gran Turismo'da 6% daha yavaştı. Yeniden başlatma gerektirir.
+[hint.cycle] Emüle edilen PS1 işlemcisinin yüzde cinsinden hızı. Daha düşük değer telefona daha az yük bindirir ancak oyun zamanlamasını bozabilir. Anında uygulanır.
+
+[hint.sec.sound] OK bölümü açar veya kapatır: ses çıkışı ve ses tonu.
+[hint.sound] Ses çıkışı. kapalı sesi keser ve ses yolunun işlemci süresinden tasarruf sağlar. Oyunun yeniden başlatılmasını gerektirir.
+[hint.wsola] Oyun tam hızın altında çalıştığında, ses tonunu değiştirmeden sesi esnetir. N95 üzerinde yapılan bir ölçümde kare süresinin yaklaşık 6%'sına mal olur. Yeniden başlatma gerektirir.
+
+[hint.sec.input] OK bölümü açar veya kapatır: tuş düzenleri, tuş atama ve Eğerek kontrol.
+[hint.preset] Tüm tuş atamalarını hazır bir düzenle değiştirir. Sol/Sağ seçer, OK uygular. Kendi atamalarınız kaybolur.
+[hint.keybase] Temel düzen: N95 varsayılandır; C5 ayrıca yönler için ikinci bir tuş olarak 2, 4, 6, 8'i kabul eder. OK uygular ve atamaları değiştirir.
+[hint.keys] Tuş atama sayfasını açar: OK, ardından tuşa basın. Sol/Sağ bir buton için basılı durumunu açar veya kapatır.
+[hint.tilt] Telefonun eğimiyle (ivmeölçer) yönlendirir. Oyuna geri döndüğünüzde telefonu tutuş şekliniz nötr konumdur.
+[hint.tiltside] Yanlara eğimi izleyen analog kol ekseni (LX, LY, RX, RY; eksi işareti tersine çevirir). Varsayılan LX.
+[hint.tiltpitch] İleri ve geri eğimi izleyen analog kol ekseni (LX, LY, RX, RY; eksi işareti tersine çevirir). Varsayılan LY.
+[hint.tiltdead] Bundan daha küçük eğimler yok sayılır. 0 ile 40 arası, varsayılan 10.
+[hint.tiltsens] Analog kolun eğimi ne kadar güçlü izleyeceği: 40% ile 300% arası, varsayılan 100%.
+
+[hint.sec.system] OK bölümü açar veya kapatır: dil, BIOS, oyuna ozel profiller ve sıfırlama.
+[hint.lang] Menünün dili. Anında değişir. Yardım metinleri onu takip eder; metnin eksik olduğu yerlerde İngilizce kullanılır.
+[hint.bios] E:\PS1\bios konumundaki BIOS dökümü. O olmadan yerleşik alternatif (HLE) çalışır ve uyumluluk daha düşüktür. Yeniden başlatma gerektirir.
+[hint.profile] açık: her oyun tuşlar ve hız anahtarları gibi kendi ayarlarını E:\PS1\cfg içinde tutar. kapalı: tüm oyunlar için tek ayar kümesi.
+[hint.reset] Tuşlar ve dil dahil her ayarı varsayılana döndürür. İki kez OK basın. Kayıt dosyalarına dokunulmaz.
+
+[hint.help] Yardımı açar: ilk kurulum, kontroller, kaydetme, sorun giderme ve her menü satırının açıklaması.
+
+[topic.setup] İlk kurulum
+Bu konu, emülatörün ilk başlatmada gösterdiği ilk kurulum sayfasını açar.
+
+[topic.play] Oyundaki kontroller
+Menü tuşları: Yukarı ve Aşağı taşır, Sol ve Sağ değeri değiştirir, OK satırı açar veya değiştirir, C ve sağ seçim tuşu geri döner.
+
+Ana menüde gezinme: Yukarı ve Aşağı son satırdan ilk satıra döngü yapar. Bir bölüm başlığında Sağ tuşu onu açar ve Sol kapatır; bir bölümü açmak diğerini kapatır. Bir bölüm içinde C onu kapatır ve imleci başlığında bırakır. Değer satırında OK, tıpkı Sağ gibi değeri değiştirir.
+
+Oyunda sağ seçim tuşu menüyü açar ve oyunu duraklatır. Sol seçim tuşu ekran görüntüsü alır. Bir arama geldiğinde veya başka bir uygulamaya geçtiğinizde oyun duraklatılır ve menü kendiliğinden açılır.
+
+Varsayılan tuşlar: yön tuşları hareket ettirir; OK veya 5 Çarpı; 0 Daire; 7 Kare; 9 Üçgen; 1 L1; 3 R1; 4 L2; 6 R2; 2 Select; 8 Start.
+
+Her iki taban da yön tuşlarıyla yönlendirir. KONTROLLER bölümündeki Klavye satırı temel düzeni seçer: N95 varsayılandır; C5 daha kullanışlı bulanlar için dört yönün ikinci tuşu olarak sayısal tuş takımındaki 2, 4, 6 ve 8'i de kabul eder.
+
+Ses düzeyi, bu tuşlar bir butona atanmadığı sürece yan ses tuşlarıyla veya # (daha yüksek) ve * (daha sessiz) ile değiştirilir.
+
+Her buton Kontroller... içinde atanabilir: bir buton üzerindeyken OK, ardından tuşa basın. Sol ve Sağ basılı özelliğini açar: basılı tutulan buton siz tekrar basana kadar basılı kalır; bu da bir yarışta gaz pedalı için uygundur.
+
+Eğerek kontrol (KONTROLLER) telefonun eğimiyle yönlendirir. N95 gibi ivmeölçeri olan bir telefon gerektirir; E90 ve C5-00.2 modellerinde ivmeölçer yoktur.
+
+Nötr konum, menüden oyuna her döndüğünüzde alınır. Yeniden kalibre etmek için sağ seçim tuşu ile menüyü açın, telefonu oynamak istediğiniz şekilde tutun ve Devam et seçeneğini belirleyin.
+
+[topic.saves] Kaydetme
+Durum kaydı tüm oyunu o anki haliyle saklar. Oyun bölümünü açın, Durumu kaydet seçin, Sol ve Sağ ile bir yuva seçin (1 ile 5 arası) ve OK basın. Yuva numarasından sonraki [*] yuvanın zaten bir kayıt tuttuğunu, [ ] boş olduğunu gösterir. Durumu yükle onu geri yükler.
+
+Durumu kaydet ve Durumu yükle yalnızca bir oyun çalışırken ve seçili durumdayken görünür.
+
+Durum dosyaları E:\PS1\saves içindedir, oyunun ve yuvanın adını alır. Oyunun hafıza kartları card1.mcd ve card2.mcd aynı klasördedir: oyunun kendisinin yazdığı kayıtları tutarlar. Bir durum kaydı ile hafıza kartı birbirinden bağımsızdır.
+
+* işaretli satırlar oyunun yeniden başlatılmasını gerektirir. Kaydedilmemiş ilerleme kaybolur, bu yüzden onları değiştirmeden önce bir durum kaydedin.
+
+[topic.slow] Oyun yavaşsa
+Her defasında tek bir şeyi değiştirin ve FPS sayacı (VİDEO) değerini izleyin.
+
+Önce masrafsız olanlar. Doğrudan çizim ve Aynı kareleri atla açık kalmalıdır: kaliteden ödün vermezler. Yumuşak ölçek kapalıyken ölçülen bir izlemede çalışma süresinden 4.6% tasarruf sağladı ve yalnızca ince çizgileri yumuşatır.
+
+Ardından Kare atlama. otomatik en hafifidir. Ölçülen bir yarışta sabit 1 değeri 27% daha fazla emülasyon hızı verdi ancak 37% daha az kare gösterildi.
+
+Sonra görüntüye mal olanlar: Kenar yumuşatma kapalı, 3D aydınlatma kapalı (ölçülen bir sahnede 5.6% daha az CPU döngüsü), Şeffaflık kapalı, Interlace hilesi, Piksel atlama. Daha düşük PS1 CPU hızı yükü hafifletir ancak oyunun zamanlamasını bozabilir.
+
+Bunlardan fayda beklemeyin: GTE hızlı mod Gran Turismo'da 6% daha yavaştı; GL çıkışı ölçülen bir 320x240 sahnesinde yazılımsal yoldan daha yavaştı. CPU ayarını dynarec üzerinde tutun: yorumlayıcı yavaş moddur.
+
+[topic.nosound] Ses veya görüntü yok
+Ses yok: Ses ayarının (SES bölümünde) açık olduğunu ve değiştirdikten sonra oyunun yeniden başlatıldığını kontrol edin. Sesi yan tuşlar, # veya * ile yükseltin. Ses tonunu koru açıksa kapatmayı deneyin.
+
+Görüntü yok veya siyah ekran: sağ seçim tuşuna basın ve hata sayfasını kontrol edin. Disk kalıbı veya BIOS bulunamadı ifadesi dosyaların eksik olduğu anlamına gelir: bkz. Karttaki dosyalar. Bir değişiklikten sonra görüntü bozulursa Doğrudan çizim veya GL çıkışı ayarını kapatın ve oyunu yeniden başlatın.
+
+BIOS yok: oyun bu durumda yerleşik alternatif (HLE) üzerinde çalışır. Birçok oyun başlar ancak uyumluluk daha düşüktür. E:\PS1\bios içine bir BIOS dökümü koyun veya SİSTEM, BIOS içinden birini seçin.
+
+Disk kalıpları bin, img, iso, pbp, cbn ve cbin biçimlerinde listelenir. cue dosyası oyun tarayıcısında listelenmez: çekirdek onu ada göre bin dosyasından türetir, bu yüzden ikisini bir arada tutun. İçe aktarma cue dosyalarını listeler.
+
+[topic.files] Karttaki dosyalar
+E:\PS1\games disk kalıplarını tutar. Oyun ekle... kartın herhangi bir yerinden onları içe aktarmanızı sağlar.
+
+E:\PS1\bios BIOS dökümünü tutar. Varsayılan ad scph7502.bin'dir. Bir döküm veya bunu içeren bir zip, rar ya da 7z arşivi SİSTEM, BIOS içinden seçilebilir.
+
+E:\PS1\saves durum kayıtlarını ve hafıza kartlarını tutar.
+
+E:\PS1\cfg genel ayarlar olan ps1_settings.txt dosyasını ve kendi ayarlarına sahip her oyun için küçük bir dosyayı tutar.
+
+E:\PS1\help bu metinleri tutar: dil koduna göre adlandırılmış (en.txt, uk.txt), UTF-8 biçiminde her dil için bir dosya. Eksik bir dosya veya eksik bir anahtar İngilizceye geri döner.
+
+E:\PS1\logs çalışma günlüklerini tutar.
+
+[topic.game] Oyun
+Oyun: oynanacak disk kalıbı. OK geçerli oyunun klasöründe dosya tarayıcısını açar. Bir oyun çalışırken başka bir disk seçmek yeniden başlatma gerektirir.
+
+Durumu kaydet ve Durumu yükle: bkz. Kaydetme konusu.
+
+Oyun ekle...: oyunları karttan içe aktarır. Dosyaları veya arşivleri OK ile işaretleyin, sol seçim tuşu ile başlatın. Bunları yaklaşık 40% tasarruf sağlayan ancak hata düzeltme verilerini kaldıran ve geri alınamayan PBP olarak paketleyebilirsiniz; ayrıca orijinalleri silebilirsiniz. Çalışan oyunun diskini içe aktarmak oyunu kapatır.
+
+[topic.video] Video
+Yumuşak ölçek: 640 genişliğindeki bir görüntü küçültüldüğünde piksellerin ortalamasını alır.
+
+Kenar yumuşatma: 3D şekillerin pürüzlü kenarlarını yumuşatır, seviye 1 ile 5 arası.
+
+FPS sayacı: görüntünün üzerinde kare hızını gösterir.
+
+Bölümün geri kalanı: 3D aydınlatma (dokuların gölgelendirilmesi), Şeffaflık (yarı saydam nesneler), Aynı kareleri atla (değişmeyen görüntünün yeniden çizilmemesi), Doğrudan çizim (doğrudan ekran arabelleğine yazar, yeniden başlatma gerektirir), GL çıkışı (görüntüyü OpenGL ES üzerinden gösterir, yeniden başlatma gerektirir), Yazılımsal çizim (yalnızca GL ile: hangi rasterleştiricinin çizdiği), Interlace hilesi (yalnızca iki satırdan biri) ve Piksel atlama (yüksek yatay çözünürlük modlarında görünmeyen pikselleri atlar).
+
+[topic.speed] Hız
+Kare atlama: bazı kareleri çizmez. otomatik her karede kararı çekirdeğe bırakır; 1 ile 3 çizilen kareler arasında o kadar kare atlar.
+
+Bölümün geri kalanı: CPU (dynarec veya yorumlayıcı, yeniden başlatma gerektirir), GTE hızlı mod (yeniden başlatma gerektirir) ve PS1 CPU hızı.
+
+PS1 CPU hızı normal hızın yüzdesi olarak gösterilir. Daha düşük değerler oyuna kare başına daha az iş verir ve zamanlamasını bozabilir. Anında uygulanır.
+
+[topic.sound] Ses
+Ses: ses çıkışı açık veya kapalı, yeniden başlatma gerektirir.
+
+Ses tonunu koru: oyun tam hızın altında çalıştığında, ses tonu değişmeden ses esnetilir. İşlemci süresine mal olur ve yeniden başlatma gerektirir.
+
+[topic.input] Kontroller
+Kontrol önayarı: Varsayılan, Yarış, Dövüş veya RPG. OK tüm tuş atamalarını değiştirir.
+
+Klavye: N95 (varsayılan düzen) veya C5 (aynısı, artı yönler için ikinci tuş olarak 2, 4, 6, 8). OK tüm tuş atamalarını değiştirir.
+
+Kontroller...: her PS1 butonunu bir tuşa atayın; Sol ve Sağ basılı durumunu açar veya kapatır.
+
+Eğerek kontrol ve dört ayarı: yanlara eğim ekseni, ileri ve geri eğim ekseni, ölü bölge (0 ile 40) ve hassasiyet (40% ile 300%).
+
+[topic.system] Sistem
+Dil: menünün ve bu metinlerin dili, anında değişir.
+
+BIOS: kullanılacak BIOS dökümü, yeniden başlatma gerektirir. Varsayılan scph7502.bin'dir.
+
+Oyuna özel profil: açık ayarı her oyun için ayrı bir ayar dosyası tutar.
+
+Ayarları sıfırla: her şeyi varsayılana döndürür; iki kez OK basın.

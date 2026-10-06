@@ -1,0 +1,167 @@
+# Textos d'ajuda del PS1Emulator, català. UTF-8.
+# Les seccions comencen amb [clau] a l'inici d'una línia.
+#   [hint.<id>] una frase mostrada a la línia d'estat per a la fila de menú seleccionada.
+#   [topic.<id>] Títol, després el text: un paràgraf per línia, una línia buida és un espai.
+# Els números són mesures en un Nokia N95 8GB, no promeses: depenen del joc.
+
+[hint.start] Inicia el joc seleccionat amb la configuració de sota. La imatge de disc i el BIOS es comproven primer.
+[hint.resume] Torna al joc exactament on l'heu deixat.
+[hint.restart] Les files marcades amb * han canviat: el joc recomença i el progrés no desat es perd. Deseu un estat primer.
+[hint.exit] Desa la configuració i tanca l'emulador. Un joc en curs es perd si no heu desat un estat.
+
+[hint.sec.game] OK obre o tanca la secció: el joc, els estats desats i la importació de jocs.
+[hint.game] La imatge de disc a jugar. OK obre el navegador de fitxers. Canviar-la requereix reiniciar el joc.
+[hint.savestate] Desa el joc en curs a la ranura mostrada (Esquerra/Dreta: 1-5). [*] després de la ranura vol dir que està ocupada i es sobreescriurà, [ ] vol dir que és buida.
+[hint.loadstate] Carrega la ranura mostrada. El progrés fet després d'aquella desada es perd.
+[hint.add] Importa jocs de la targeta: imatges i arxius zip, rar o 7z, opcionalment empaquetats a PBP.
+
+[hint.sec.video] OK obre o tanca la secció: escala, suavitzat de vores, el comptador de fotogrames i els interruptors d'imatge.
+[hint.smooth] Calcula la mitjana dels píxels quan una imatge de 640 d'ample es redueix. Desactivat va estalviar un 4.6% del temps d'execució en un rastre mesurat.
+[hint.fxaa] Suavitza les vores dentades de les formes 3D; més alt és més fort. Costa velocitat: uns 17% menys de fotogrames en un rastre de prova.
+[hint.fps] Mostra la taxa de fotogrames sobre la imatge. Útil per jutjar què fan els altres interruptors.
+[hint.light] Il·luminació 3D. Desactivat és més ràpid però es perd l'ombrejat: un 5.6% menys de cicles CPU en una escena mesurada de Gran Turismo.
+[hint.blend] Semitransparència (vidre, brillantors, ombres). Desactivat és més ràpid, però aquests objectes es veuen malament.
+[hint.dirty] No redibuixa una imatge que el joc no ha canviat. Mesurat: 6.7 ms estalviats per fotograma, sense pèrdua de qualitat.
+[hint.dsa] Escriu el fotograma directament al buffer de pantalla. Mesurat: 0.93 ms estalviats per fotograma. Cal reiniciar el joc.
+[hint.gl] Mostra la imatge a través de l'OpenGL ES del telèfon. En una escena mesurada de 320x240 va ser més lent que sense. Cal reiniciar.
+[hint.swdraw] Només amb sortida GL. Activat: el rasteritzador per programari dibuixa i GL només mostra el fotograma. Desactivat: el xip gràfic dibuixa.
+[hint.ilace] Dibuixa només una línia de cada dues. Més ràpid, però redueix a la meitat el detall vertical.
+[hint.pixskip] Omet píxels que no són visibles en modes d'alta resolució horitzontal. Una mica més ràpid.
+
+[hint.sec.speed] OK obre o tanca la secció: omissió de fotogrames i la configuració del processador. La majoria requereixen reinici.
+[hint.gpuskip] No dibuixa alguns fotogrames. Automàtic deixa que el nucli decideixi. En un rastre de curses, 1 va donar +27% de taxa d'emulació però un 37% menys de fotogrames mostrats.
+[hint.cpu] Dynarec recompila codi PS1 a ARM i és el mode ràpid. L'intèrpret és el mode lent. Cal reiniciar.
+[hint.gtenf] Omet algun càlcul de flags del coprocessador de geometria. A Gran Turismo va ser un 6% més lent, perquè la geometria canvia. Cal reiniciar.
+[hint.cycle] Velocitat del processador PS1 emulat en percentatge. Més baixa alleugereix el telèfon però pot alterar la temporització del joc. S'aplica immediatament.
+
+[hint.sec.sound] OK obre o tanca la secció: sortida de so i to.
+[hint.sound] Sortida de so. Desactivat elimina el so i estalvia el temps de processador del camí d'àudio. Cal reiniciar el joc.
+[hint.wsola] Quan el joc va per sota de la velocitat normal, estira el so sense canviar-ne el to. Costa aproximadament un 6% del temps d'un fotograma al N95 en una mesura. Cal reiniciar.
+
+[hint.sec.input] OK obre o tanca la secció: disposicions de tecles, assignació de tecles i control per inclinació.
+[hint.preset] Substitueix totes les assignacions de tecles per una disposició predefinida. Esquerra/Dreta trien, OK aplica. Les vostres assignacions es perden.
+[hint.keybase] La disposició base: N95 és la per defecte; C5 també accepta 2, 4, 6, 8 com a segona tecla per a les direccions. OK l'aplica i substitueix les assignacions.
+[hint.keys] Obre la pàgina d'assignació de tecles: OK, després premeu la tecla. Esquerra/Dreta activen o desactiven Mantenir per a un botó.
+[hint.tilt] Controla amb la inclinació del telèfon (acceleròmetre). La posició en què teniu el telèfon quan torneu al joc és la posició neutra.
+[hint.tiltside] L'eix del stick que segueix la inclinació lateral (LX, LY, RX, RY; un menys l'inverteix). Per defecte LX.
+[hint.tiltpitch] L'eix del stick que segueix la inclinació endavant i enrere (LX, LY, RX, RY; un menys l'inverteix). Per defecte LY.
+[hint.tiltdead] Les inclinacions més petites que això s'ignoren. De 0 a 40, per defecte 10.
+[hint.tiltsens] Com de fort el stick segueix la inclinació: 40% a 300%, per defecte 100%.
+
+[hint.sec.system] OK obre o tanca la secció: idioma, BIOS, perfils per joc i reinici.
+[hint.lang] L'idioma del menú. Canvia immediatament. Els textos d'ajuda el segueixen; l'anglès s'usa quan falta un text.
+[hint.bios] El volcat BIOS de E:\PS1\bios. Sense ell el substitut integrat (HLE) s'executa i la compatibilitat és pitjor. Cal reiniciar.
+[hint.profile] Activat: cada joc conserva la seva configuració a E:\PS1\cfg, com les tecles i els interruptors de velocitat. Desactivat: una configuració per a tots els jocs.
+[hint.reset] Restaura cada paràmetre al seu valor per defecte, tecles i idioma inclosos. Premeu OK dues vegades. Les desades no es toquen.
+
+[hint.help] Obre l'ajuda: configuració inicial, controls, desades, resolució de problemes i una descripció de cada fila del menú.
+
+[topic.setup] Configuració inicial
+Aquest tema obre la pàgina de configuració inicial, la mateixa que l'emulador mostra al primer inici.
+
+[topic.play] Controls al joc
+Les tecles del menú: Amunt i Avall mouen, Esquerra i Dreta canvien un valor, OK obre una fila o la commuta, C i la tecla suau dreta tornen enrere.
+
+Navegació al menú principal: Amunt i Avall van de l'última fila a la primera. Dreta sobre una capçalera de secció l'obre i Esquerra la tanca; obrir una secció tanca l'altra. C dins d'una secció la tanca i deixa el cursor a la seva capçalera. OK sobre una fila de valor la canvia igual que Dreta.
+
+Al joc, la tecla suau dreta obre el menú i pausa el joc. La tecla suau esquerra fa una captura de pantalla. Quan arriba una trucada o canvieu a una altra aplicació, el joc es pausa i el menú s'obre sol.
+
+Tecles per defecte: el D-pad mou; OK o 5 és Creu; 0 és Cercle; 7 és Quadrat; 9 és Triangle; 1 és L1; 3 és R1; 4 és L2; 6 és R2; 2 és Select; 8 és Start.
+
+Les dues bases controlen amb el D-pad. La fila Teclat a Controls tria la disposició base: N95 és la per defecte; C5 també accepta 2, 4, 6 i 8 al teclat numèric com a segona tecla per a les quatre direccions, per als qui les troben més còmodes.
+
+El volum es canvia amb les tecles de volum laterals, o amb # (més fort) i * (més fluix), llevat que aquestes tecles estiguin assignades a un botó.
+
+Cada botó es pot assignar a Controls... : OK sobre un botó, després premeu la tecla. Esquerra i Dreta activen Mantenir: un botó mantingut resta premut fins que el torneu a premer, cosa útil per a l'accelerador en una cursa.
+
+Control d'inclinació (Controls) controla amb la inclinació del telèfon. Cal un telèfon amb acceleròmetre, com el N95; l'E90 i el C5-00.2 no en tenen.
+
+La posició neutra es pren cada cop que torneu al joc des del menú. Per recalibrar, obriu el menú amb la tecla suau dreta, mantingueu el telèfon com voleu jugar i trieu Reprendre.
+
+[topic.saves] Desades
+Un estat desat emmagatzema tot el joc en un moment. Obriu Joc, trieu Desar estat, trieu una ranura amb Esquerra i Dreta (1 a 5) i premeu OK. [*] després del número de ranura vol dir que la ranura ja té un estat, [ ] vol dir que és buida. Carregar estat el restaura.
+
+Desar estat i Carregar estat només apareixen mentre un joc s'està executant i és el seleccionat.
+
+Els fitxers d'estat són a E:\PS1\saves, amb el nom del joc i la ranura. Les targetes de memòria del joc, card1.mcd i card2.mcd, són a la mateixa carpeta: contenen les desades que el propi joc escriu. Un estat i una targeta de memòria són independents entre si.
+
+Les files marcades amb * requereixen reiniciar el joc. El progrés no desat es perd, així que deseu un estat abans de canviar-les.
+
+[topic.slow] Si el joc va lent
+Canvieu una cosa a la vegada i observeu el Comptador FPS (Vídeo).
+
+Primer les barates. Dibuix directe i Ometre fotogrames iguals han d'estar activats: no costen qualitat. Escalat suau desactivat va estalviar un 4.6% del temps d'execució en un rastre mesurat i només suavitza línies fines.
+
+Després Ometre fotogrames. Automàtic és el més suau. Un valor fix de 1 va donar un 27% més de velocitat d'emulació en una cursa mesurada, però es van mostrar un 37% menys de fotogrames.
+
+Després els que costen imatge: Suavitzar vores desactivat, Il·luminació 3D desactivada (5.6% menys de cicles CPU en una escena mesurada), Transparència desactivada, Truc entrellaçat, Ometre píxels. Una Velocitat CPU PS1 menor alleugereix la càrrega però pot alterar la temporització del joc.
+
+No espereu ajuda d'aquests: GTE mode ràpid va ser un 6% més lent a Gran Turismo; Sortida GL va ser més lenta que el camí per programari en una escena mesurada de 320x240. Mantingueu CPU en dynarec: l'intèrpret és el mode lent.
+
+[topic.nosound] Sense so o sense imatge
+Sense so: comproveu que So (a la secció So) està activat i que el joc s'ha reiniciat després de canviar-lo. Pugeu el volum amb les tecles laterals, # o *. Si Conservar to està activat, proveu de desactivar-lo.
+
+Sense imatge o pantalla negra: premeu la tecla suau dreta i comproveu la pàgina d'error. Imatge de disc o BIOS no trobat vol dir que els fitxers no hi són: consulteu Fitxers a la targeta. Si la imatge és incorrecta després d'un canvi, desactiveu Dibuix directe o Sortida GL i reinicieu el joc.
+
+Sense BIOS: el joc s'executa amb el substitut integrat (HLE). Molts jocs s'inicien, però la compatibilitat és pitjor. Poseu un volcat BIOS a E:\PS1\bios o trieu-ne un a Sistema, BIOS.
+
+Les imatges de disc es llisten en els formats bin, img, iso, pbp, cbn i cbin. Un fitxer cue no es llista al navegador de jocs: el nucli el deriva del bin pel nom, així que mantingueu-los junts. La importació sí llista els fitxers cue.
+
+[topic.files] Fitxers a la targeta
+E:\PS1\games conté les imatges de disc. Afegir jocs us permet importar-les des de qualsevol lloc de la targeta.
+
+E:\PS1\bios conté el volcat BIOS. El nom per defecte és scph7502.bin. Un volcat o un arxiu zip, rar o 7z amb un es pot triar a Sistema, BIOS.
+
+E:\PS1\saves conté els estats desats i les targetes de memòria.
+
+E:\PS1\cfg conté ps1_settings.txt, la configuració global, i un petit fitxer per a cada joc amb la seva configuració.
+
+E:\PS1\help conté aquests textos: un fitxer per idioma, amb el nom del codi d'idioma (en.txt, uk.txt), en UTF-8. Un fitxer o una clau que falta recorre a l'anglès.
+
+E:\PS1\logs conté els registres d'execució.
+
+[topic.game] Joc
+Joc: la imatge de disc a jugar. OK obre el navegador de fitxers a la carpeta del joc actual. Triar un altre disc amb un joc en curs requereix reinici.
+
+Desar estat i Carregar estat: consulteu el tema Desades.
+
+Afegir jocs...: importa jocs de la targeta. Marqueu fitxers o arxius amb OK, inicieu amb la tecla suau esquerra. Podeu empaquetar-los a PBP, que estalvia aproximadament un 40% però descarta les dades de correcció d'errors i no es pot desfer, i podeu eliminar els originals. Importar el disc del joc en curs el tanca.
+
+[topic.video] Vídeo
+Escalat suau: calcula la mitjana dels píxels quan una imatge de 640 d'ample es redueix.
+
+Suavitzar vores: suavitza les vores dentades de les formes 3D, nivell 1 a 5.
+
+Comptador FPS: mostra la taxa de fotogrames sobre la imatge.
+
+La resta de la secció: Il·luminació 3D (ombrejat de textures), Transparència (objectes semitransparents), Ometre fotogrames iguals (no redibuixa una imatge sense canvis), Dibuix directe (escriu directament al buffer de pantalla, cal reiniciar), Sortida GL (mostra la imatge a través d'OpenGL ES, cal reiniciar), Dibuix per programari (només amb GL: quin rasteritzador dibuixa), Truc entrellaçat (només una línia de cada dues) i Ometre píxels (omet píxels no visibles en modes d'alta resolució horitzontal).
+
+[topic.speed] Velocitat
+Ometre fotogrames: no dibuixa alguns fotogrames. Automàtic deixa que el nucli decideixi cada fotograma; 1 a 3 ometen tants fotogrames entre els dibuixats.
+
+La resta de la secció: CPU (dynarec o intèrpret, cal reiniciar), GTE mode ràpid (cal reiniciar) i Velocitat CPU PS1.
+
+La Velocitat CPU PS1 es mostra en percentatge de la velocitat normal. Valors més baixos donen al joc menys feina per fotograma i poden trencar-ne la temporització. S'aplica immediatament.
+
+[topic.sound] So
+So: sortida de so activada o desactivada, cal reiniciar.
+
+Conservar to: quan el joc va per sota de la velocitat normal, el so s'estira sense canvi de to. Costa temps de processador i cal reiniciar.
+
+[topic.input] Controls
+Preset de controls: Per defecte, Curses, Lluita o RPG. OK substitueix totes les assignacions de tecles.
+
+Teclat: N95 (la disposició per defecte) o C5 (la mateixa, més 2, 4, 6, 8 com a segona tecla per a les direccions). OK substitueix totes les assignacions de tecles.
+
+Controls...: assigneu cada botó de PS1 a una tecla; Esquerra i Dreta activen o desactiven Mantenir.
+
+Control d'inclinació i els seus quatre paràmetres: l'eix per a la inclinació lateral, l'eix per a la inclinació endavant i enrere, la zona morta (0 a 40) i la sensibilitat (40% a 300%).
+
+[topic.system] Sistema
+Idioma: l'idioma del menú i d'aquests textos, canvia immediatament.
+
+BIOS: el volcat BIOS a utilitzar, cal reiniciar. Per defecte és scph7502.bin.
+
+Perfil per joc: activat conserva un fitxer de configuració separat per a cada joc.
+
+Reiniciar configuració: restaura tot als valors per defecte; premeu OK dues vegades.

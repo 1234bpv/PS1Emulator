@@ -1,0 +1,167 @@
+# Texty nápovedy PS1Emulator, slovenčina. UTF-8.
+# Sekcie začínajú s [kľúč] na začiatku riadka.
+#   [hint.<id>] jedna veta zobrazená v stavovom riadku pre vybraný riadok menu.
+#   [topic.<id>] Názov, potom text: jeden odsek na riadok, prázdny riadok je medzera.
+# Čísla sú namerané hodnoty na Nokii N95 8GB, nie záruka: závisia od konkrétnej hry.
+
+[hint.start] Spustí vybranú hru s nižšie uvedeným nastavením. Najprv sa skontroluje obraz disku a BIOS.
+[hint.resume] Vráti sa do hry presne tam, kde ste skončili.
+[hint.restart] Riadky označené * sa zmenili: hra sa spustí znova a neuložený postup sa stratí. Najprv uložte stav.
+[hint.exit] Uloží nastavenia a ukončí emulátor. Bežiaca hra sa stratí, ak ste neuložili stav.
+
+[hint.sec.game] OK otvorí alebo zatvorí sekciu: hra, uložené stavy a import hier.
+[hint.game] Obraz disku na hranie. OK otvorí správcu súborov. Zmena vyžaduje reštart hry.
+[hint.savestate] Uloží bežiacu hru do zobrazeného slotu (Vľavo/Vpravo: 1-5). [*] za slotom znamená, že je obsadený a prepíše sa, [ ] znamená, že je prázdny.
+[hint.loadstate] Načíta zobrazený slot. Postup dosiahnutý po tomto uložení sa stratí.
+[hint.add] Importuje hry z karty: obrazy a archívy zip, rar alebo 7z, voliteľne zabalené do PBP.
+
+[hint.sec.video] OK otvorí alebo zatvorí sekciu: škálovanie, vyhladenie hrán, ukazovateľ FPS a prepínače obrazu.
+[hint.smooth] Priemeruje pixely pri zmenšení obrazu so šírkou 640. Vypnuté ušetrilo 4.6% času behu v nameranom teste.
+[hint.fxaa] Vyhladzuje zubaté hrany 3D tvarov; vyššia hodnota znamená silnejšie vyhladenie. Znižuje rýchlosť: asi o 17% menej snímok v teste.
+[hint.fps] Zobrazuje snímkovú frekvenciu cez obraz. Užitočné na posúdenie vplyvu ostatných prepínačov.
+[hint.light] 3D osvetlenie. Vypnuté je rýchlejšie, ale tieňovanie sa stratí: o 5.6% menej cyklov CPU v nameranej scéne Gran Turismo.
+[hint.blend] Polopriehľadnosť (sklo, žiara, tiene). Vypnuté je rýchlejšie, ale takéto objekty vyzerajú chybne.
+[hint.dirty] Neprekresľuje obraz, ktorý hra nechala bez zmeny. Namerané: úspora 6.7 ms na snímku bez straty kvality.
+[hint.dsa] Zapisuje snímku priamo do vyrovnávacej pamäte obrazovky. Namerané: úspora 0.93 ms na snímku. Vyžaduje reštart hry.
+[hint.gl] Zobrazuje obraz cez OpenGL ES v telefóne. V jednej nameranej scéne 320x240 bol pomalší ako bez neho. Vyžaduje reštart.
+[hint.swdraw] Iba pri Výstup GL. Zapnuté: softvérový rastrovací engine kreslí a GL iba zobrazuje snímku. Vypnuté: kreslí grafický čip.
+[hint.ilace] Kreslí iba každý druhý riadok. Rýchlejšie, ale znižuje zvislé detaily na polovicu.
+[hint.pixskip] Preskakuje pixely, ktoré nie sú viditeľné v režimoch s vysokým vodorovným rozlíšením. O niečo rýchlejšie.
+
+[hint.sec.speed] OK otvorí alebo zatvorí sekciu: preskok snímok a nastavenia procesora. Väčšina z nich vyžaduje reštart.
+[hint.gpuskip] Nevykresľuje niektoré snímky. Auto nechá jadro rozhodnúť. V pretekárskom teste hodnota 1 priniesla +27% k rýchlosti emulácie, ale o 37% menej zobrazených snímok.
+[hint.cpu] Dynarec rekompiluje kód PS1 pre ARM a je rýchlym režimom. Interpret je pomalý režim. Vyžaduje reštart.
+[hint.gtenf] Preskakuje niektoré výpočty príznakov geometrického koprocesora. V Gran Turismo bol o 6% pomalší kvôli zmenám geometrie. Vyžaduje reštart.
+[hint.cycle] Rýchlosť emulovaného procesora PS1 v percentách. Nižšia hodnota menej zaťažuje telefón, ale môže narušiť časovanie hry. Prejaví sa ihneď.
+
+[hint.sec.sound] OK otvorí alebo zatvorí sekciu: zvukový výstup a výška tónu.
+[hint.sound] Zvukový výstup. Vypnuté vypne zvuk a ušetrí procesorový čas audio cesty. Vyžaduje reštart hry.
+[hint.wsola] Ak hra beží pod plnou rýchlosťou, roztiahne zvuk bez zmeny výšky tónu. Na N95 stojí meraním asi 6% času snímky. Vyžaduje reštart.
+
+[hint.sec.input] OK otvorí alebo zatvorí sekciu: rozloženia klávesov, priradenie klávesov a ovládanie náklonom.
+[hint.preset] Nahradí všetky priradenia klávesov hotovým rozložením. Vľavo/Vpravo výber, OK použije. Vlastné priradenia sa stratia.
+[hint.keybase] Základné rozloženie: N95 je predvolené; C5 navyše prijíma 2, 4, 6, 8 ako druhý kláves pre smery. OK ho použije a nahradí priradenia.
+[hint.keys] Otvorí stránku priradenia klávesov: OK, potom stlačte kláves. Vľavo/Vpravo zapne alebo vypne Držať pre tlačidlo.
+[hint.tilt] Riadi náklonom telefónu (akcelerometer). Spôsob, akým držíte telefón pri návrate do hry, je neutrálna poloha.
+[hint.tiltside] Os páčky, ktorá sleduje náklon do strán (LX, LY, RX, RY; mínus ju obráti). Predvolená LX.
+[hint.tiltpitch] Os páčky, ktorá sleduje náklon vpred a vzad (LX, LY, RX, RY; mínus ju obráti). Predvolená LY.
+[hint.tiltdead] Náklon menší ako táto hodnota sa ignoruje. Od 0 do 40, predvolená 10.
+[hint.tiltsens] Ako silno páčka sleduje náklon: 40% až 300%, predvolené 100%.
+
+[hint.sec.system] OK otvorí alebo zatvorí sekciu: jazyk, BIOS, profily pre hru a reset.
+[hint.lang] Jazyk menu. Zmení sa ihneď. Texty nápovedy sa mu prispôsobia; kde text chýba, použije sa angličtina.
+[hint.bios] Výpis BIOS z E:\PS1\bios. Bez neho beží vstavaná náhrada (HLE) a kompatibilita je horšia. Vyžaduje reštart.
+[hint.profile] Zapnuté: každá hra si ukladá vlastné nastavenia v E:\PS1\cfg, napríklad klávesy a prepínače rýchlosti. Vypnuté: jedno nastavenie pre všetky hry.
+[hint.reset] Vráti všetky nastavenia na predvolené hodnoty vrátane klávesov a jazyka. Stlačte OK dvakrát. Uložené pozície zostanú nedotknuté.
+
+[hint.help] Otvorí nápovedu: úvodné nastavenie, ovládanie, ukladanie, riešenie problémov a popis každého riadka menu.
+
+[topic.setup] Úvodné nastavenie
+Táto téma otvorí stránku úvodného nastavenia, rovnakú, akú emulátor zobrazuje pri prvom spustení.
+
+[topic.play] Ovládanie v hre
+Klávesy menu: Hore a Dole pohybujú, Vľavo a Vpravo menia hodnotu, OK otvorí riadok alebo ho prepne, C a pravé výberové tlačidlo slúžia na návrat.
+
+Navigácia v hlavnom menu: Hore a Dole prechádzajú medzi posledným a prvým riadkom dookola. Vpravo na záhlaví sekcie ju otvorí a Vľavo ju zatvorí; otvorenie jednej sekcie zatvorí ostatné. C vnútri sekcie ju zatvorí a ponechá kurzor na jej záhlaví. OK na riadku hodnoty ju zmení presne tak ako Vpravo.
+
+V hre pravé výberové tlačidlo otvorí menu a pozastaví hru. Ľavé výberové tlačidlo vytvorí snímku obrazovky. Pri prichádzajúcom hovore alebo prepnutí do inej aplikácie sa hra pozastaví a menu sa otvorí samo.
+
+Predvolené klávesy: smerový ovládač pohybuje; OK alebo 5 je Krížik; 0 je Koliesko; 7 je Štvorec; 9 je Trojuholník; 1 je L1; 3 je R1; 4 je L2; 6 je R2; 2 je Select; 8 je Start.
+
+Obe základné rozloženia ovládajú smerovým ovládačom. Riadok Klávesnica v sekcii Ovládanie vyberá základné rozloženie: N95 je predvolené; C5 navyše prijíma 2, 4, 6 a 8 na numerickej klávesnici ako druhý kláves pre štyri smery pre tých, ktorým to viac vyhovuje.
+
+Hlasitosť sa mení bočnými tlačidlami hlasitosti alebo pomocou # (hlasnejšie) a * (tichšie), pokiaľ tieto klávesy nie sú priradené k tlačidlu.
+
+Každé tlačidlo je možné priradiť v Ovládanie... : OK na tlačidle, potom stlačte kláves. Vľavo a Vpravo zapne Držať: držané tlačidlo zostane stlačené, kým ho nestlačíte znova, čo sa hodí na plyn v pretekoch.
+
+Ovládanie náklonom (Ovládanie) riadi náklonom telefónu. Vyžaduje telefón s akcelerometrom, napríklad N95; modely E90 a C5-00.2 ho nemajú.
+
+Neutrálna poloha sa nastaví pri každom návrate do hry z menu. Na novú kalibráciu otvorte menu pravým výberovým tlačidlom, držte telefón tak, ako chcete hrať, a zvoľte Pokračovať.
+
+[topic.saves] Ukladanie
+Uložený stav zachytí celú hru v danom okamihu. Otvorte Hra, zvoľte Uložiť stav, vyberte slot pomocou Vľavo a Vpravo (1 až 5) a stlačte OK. [*] za číslom slotu znamená, že slot už stav obsahuje, [ ] znamená, že je prázdny. Načítať stav ho obnoví.
+
+Uložiť stav a Načítať stav sa zobrazujú iba vtedy, keď hra beží a je práve vybratá.
+
+Súbory stavov sú v E:\PS1\saves, pomenované podľa hry a slotu. Pamäťové karty hry, card1.mcd a card2.mcd, sú v rovnakom priečinku: obsahujú uloženia, ktoré zapisuje samotná hra. Uložený stav a pamäťová karta sú od seba nezávislé.
+
+Riadky označené * vyžadujú reštart hry. Neuložený postup sa stratí, preto pred ich zmenou uložte stav.
+
+[topic.slow] Ak je hra pomalá
+Meňte vždy iba jednu vec a sledujte Ukazovateľ FPS (Video).
+
+Najprv tie nenáročné. Priame kreslenie a Preskočiť rovnaké snímky by mali zostať zapnuté: neznižujú kvalitu. Vypnuté Hladké škálovanie ušetrilo 4.6% času behu v nameranom teste a iba zjemňuje tenké línie.
+
+Potom Preskok snímok. Auto je najšetrnejšie. Pevná hodnota 1 priniesla v nameraných pretekoch o 27% vyššiu rýchlosť emulácie, ale zobrazilo sa o 37% menej snímok.
+
+Potom tie, ktoré ovplyvňujú obraz: vypnúť Vyhladenie hrán, vypnúť 3D osvetlenie (o 5.6% menej cyklov CPU v nameranej scéne), vypnúť Priehľadnosť, Hack prekladania, Preskok pixelov. Nižšia Rýchlosť CPU PS1 zníži záťaž, ale môže narušiť časovanie hry.
+
+Od týchto nečakajte pomoc: Rýchly režim GTE bol v Gran Turismo o 6% pomalší; Výstup GL bol v nameranej scéne 320x240 pomalší ako softvérová cesta. Ponechajte CPU na dynarec: interpret je pomalý režim.
+
+[topic.nosound] Žiadny zvuk alebo žiadny obraz
+Žiadny zvuk: skontrolujte, či je Zvuk (v sekcii Zvuk) zapnutý a či bola po jeho zmene hra reštartovaná. Zvýšte hlasitosť bočnými klávesmi, # alebo *. Ak je zapnuté Zachovať výšku tónu, skúste ho vypnúť.
+
+Žiadny obraz alebo čierna obrazovka: stlačte pravé výberové tlačidlo a skontrolujte chybovú stránku. Obraz disku ani BIOS sa nenašiel znamená, že súbory chýbajú: pozri Súbory na karte. Ak je obraz po zmene chybný, vypnite Priame kreslenie alebo Výstup GL a reštartujte hru.
+
+Bez BIOS: hra potom beží na vstavanej náhrade (HLE). Mnohé hry sa spustia, ale kompatibilita je horšia. Vložte výpis BIOS do E:\PS1\bios alebo ho vyberte v položke Systém, BIOS.
+
+Obrazy diskov sú uvedené vo formátoch bin, img, iso, pbp, cbn a cbin. Súbor cue nie je v prehliadači hier uvedený: jadro ho odvodzuje z bin podľa názvu, preto ponechajte oba spolu. Import súbory cue uvádza.
+
+[topic.files] Súbory na karte
+E:\PS1\games obsahuje obrazy diskov. Pridať hry vám umožní importovať ich odkiaľkoľvek z karty.
+
+E:\PS1\bios obsahuje výpis BIOS. Predvolený názov je scph7502.bin. Výpis alebo archív zip, rar či 7z s ním je možné vybrať v Systém, BIOS.
+
+E:\PS1\saves obsahuje uložené stavy a pamäťové karty.
+
+E:\PS1\cfg obsahuje ps1_settings.txt, globálne nastavenia, a jeden malý súbor pre každú hru s vlastnými nastaveniami.
+
+E:\PS1\help obsahuje tieto texty: jeden súbor pre každý jazyk, pomenovaný kódom jazyka (en.txt, sk.txt), v kódovaní UTF-8. Chýbajúci súbor alebo kľúč sa nahradí angličtinou.
+
+E:\PS1\logs obsahuje protokoly behu.
+
+[topic.game] Hra
+Hra: obraz disku na hranie. OK otvorí správcu súborov v priečinku aktuálnej hry. Výber iného disku počas behu hry vyžaduje reštart.
+
+Uložiť stav a Načítať stav: pozri tému Ukladanie.
+
+Pridať hry...: importuje hry z karty. Označte súbory alebo archívy pomocou OK, spustite ľavým výberovým tlačidlom. Môžete ich zabaliť do PBP, čo ušetrí asi 40%, ale odstráni dáta na opravu chýb a nemožno to vrátiť späť, a môžete zmazať originály. Import disku práve bežiacej hry ju zatvorí.
+
+[topic.video] Video
+Hladké škálovanie: priemeruje pixely pri zmenšení obrazu so šírkou 640.
+
+Vyhladenie hrán: vyhladzuje zubaté hrany 3D tvarov, úroveň 1 až 5.
+
+Ukazovateľ FPS: zobrazuje snímkovú frekvenciu cez obraz.
+
+Zvyšok sekcie: 3D osvetlenie (tieňovanie textúr), Priehľadnosť (polopriehľadné objekty), Preskočiť rovnaké snímky (bez prekresľovania nezmeneného obrazu), Priame kreslenie (zapisuje priamo do vyrovnávacej pamäte obrazovky, vyžaduje reštart), Výstup GL (zobrazuje obraz cez OpenGL ES, vyžaduje reštart), Softvérové kreslenie (iba s GL: ktorý rastrovací engine kreslí), Hack prekladania (iba každý druhý riadok) a Preskok pixelov (preskakuje pixely, ktoré nie sú viditeľné v režimoch s vysokým vodorovným rozlíšením).
+
+[topic.speed] Rýchlosť
+Preskok snímok: nevykresľuje niektoré snímky. Auto nechá jadro rozhodnúť pre každú snímku; 1 až 3 vynechá toľko snímok medzi vykreslenými.
+
+Zvyšok sekcie: CPU (dynarec alebo interpret, vyžaduje reštart), Rýchly režim GTE (vyžaduje reštart) a Rýchlosť CPU PS1.
+
+Rýchlosť CPU PS1 sa zobrazuje v percentách normálnej rýchlosti. Nižšie hodnoty dávajú hre menej práce na snímku a môžu narušiť jej časovanie. Prejaví sa ihneď.
+
+[topic.sound] Zvuk
+Zvuk: zvukový výstup zapnutý alebo vypnutý, vyžaduje reštart.
+
+Zachovať výšku tónu: ak hra beží pod plnou rýchlosťou, zvuk sa roztiahne bez zmeny výšky tónu. Spotrebováva procesorový čas a vyžaduje reštart.
+
+[topic.input] Ovládanie
+Predvoľba ovládania: Predvolené, Pretekárske, Bojové alebo RPG. OK nahradí všetky priradenia klávesov.
+
+Klávesnica: N95 (predvolené rozloženie) alebo C5 (to isté plus 2, 4, 6, 8 ako druhý kláves pre smery). OK nahradí všetky priradenia klávesov.
+
+Ovládanie...: priradí každé tlačidlo PS1 ku klávesu; Vľavo a Vpravo zapne alebo vypne Držať.
+
+Ovládanie náklonom a jeho štyri nastavenia: os pre náklon do strán, os pre náklon vpred a vzad, mŕtva zóna náklonu (0 až 40) a citlivosť náklonu (40% až 300%).
+
+[topic.system] Systém
+Jazyk: jazyk menu a týchto textov, zmení sa ihneď.
+
+BIOS: výpis BIOS na použitie, vyžaduje reštart. Predvolený je scph7502.bin.
+
+Profil pre hru: zapnuté uchováva samostatný súbor nastavení pre každú hru.
+
+Obnoviť nastavenia: vráti všetko na predvolené hodnoty; stlačte OK dvakrát.

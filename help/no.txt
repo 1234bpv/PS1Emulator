@@ -1,0 +1,167 @@
+# PS1Emulator-hjelpetekster, norsk (også reserve for alle andre språk). UTF-8.
+# Seksjoner starter med [nøkkel] på starten av en linje.
+#   [hint.<id>] én setning vist på statuslinjen for valgt menyelement.
+#   [topic.<id>] Tittel, deretter teksten: ett avsnitt per linje, en tom linje er et opphold.
+# Tall er målinger på en Nokia N95 8GB, ikke garantier: de avhenger av spillet.
+
+[hint.start] Starter det valgte spillet med innstillingene nedenfor. Platebildet og BIOS sjekkes først.
+[hint.resume] Vender tilbake til spillet nøyaktig der du slapp.
+[hint.restart] Rader merket med * ble endret: spillet starter på nytt og ulagret fremgang tapes. Lagre en tilstand først.
+[hint.exit] Lagrer innstillingene og lukker emulatoren. Et spill som kjører tapes med mindre du har lagret en tilstand.
+
+[hint.sec.game] OK åpner eller lukker seksjonen: spill, lagrede tilstander og import av spill.
+[hint.game] Platebildet som skal spilles. OK åpner fillisten. Endring krever omstart av spillet.
+[hint.savestate] Lagrer spillet som kjører til plassen som vises (Venstre/Høyre: 1-5). [*] etter plassen betyr at den er i bruk og vil overskrives, [ ] betyr at den er tom.
+[hint.loadstate] Laster inn plassen som vises. Fremgang oppnådd etter denne lagringen tapes.
+[hint.add] Importerer spill fra minnekortet: platebilder og zip-, rar- eller 7z-arkiver, valgfritt pakket til PBP.
+
+[hint.sec.video] OK åpner eller lukker seksjonen: skalering, kantutjevning, bildetelleren og bildebryterne.
+[hint.smooth] Gjennomsnittsberegner piksler når et 640-bredt bilde skaleres ned. Av sparte 4.6% kjøretid i en målt test.
+[hint.fxaa] Utjevner taggete kanter på 3D-former; høyere gir sterkere effekt. Koster hastighet: omtrent 17% færre bilder i en test.
+[hint.fps] Viser bildehastigheten over bildet. Nyttig for å vurdere hva de andre bryterne gjør.
+[hint.light] 3D-belysning. Av er raskere, men skyggeleggingen går tapt: 5.6% færre CPU-sykluser i en målt scene fra Gran Turismo.
+[hint.blend] Halvgjennomsiktighet (glass, lysskjær, skygger). Av er raskere, men slike objekter ser feil ut.
+[hint.dirty] Tegner ikke et bilde som spillet etterlot uendret. Målt: 6.7 ms spart per bilde, uten tap av kvalitet.
+[hint.dsa] Skriver bildet rett inn i skjermbufferen. Målt: 0.93 ms spart per bilde. Krever omstart av spillet.
+[hint.gl] Viser bildet via telefonens OpenGL ES. I en målt 320x240-scene var det tregere enn uten. Krever omstart.
+[hint.swdraw] Kun med GL-utdata. På: programvarerasteriseringen tegner og GL bare viser bildet. Av: grafikkbrikken tegner.
+[hint.ilace] Tegner bare annenhver linje. Raskere, men halverer den vertikale detaljgraden.
+[hint.pixskip] Hopper over piksler som ikke er synlige i moduser med høy horisontal oppløsning. Litt raskere.
+
+[hint.sec.speed] OK åpner eller lukker seksjonen: frameskip og prosessorinnstillinger. De fleste av disse krever omstart.
+[hint.gpuskip] Hopper over tegning av noen bilder. Auto lar kjernen bestemme. I en racingtest ga 1 +27% emuleringshastighet, men 37% færre viste bilder.
+[hint.cpu] Dynarec rekompilerer PS1-kode til ARM og er den raske modusen. Tolkeren er den trege modusen. Krever omstart.
+[hint.gtenf] Hopper over enkelte flaggberegninger i geometri-koprosessoren. I Gran Turismo var det 6% tregere fordi geometrien endres. Krever omstart.
+[hint.cycle] Hastigheten til den emulerte PS1-prosessoren i prosent. Lavere er lettere for telefonen, men kan forstyrre spillets timing. Trer i kraft straks.
+
+[hint.sec.sound] OK åpner eller lukker seksjonen: lydutdata og tonehøyde.
+[hint.sound] Lydutdata. Av slår av lyden og sparer prosessortid for lydbehandlingen. Krever omstart av spillet.
+[hint.wsola] Når spillet kjører under full hastighet, strekkes lyden uten å endre tonehøyden. Koster omtrent 6% av en bildetid på N95 i en måling. Krever omstart.
+
+[hint.sec.input] OK åpner eller lukker seksjonen: tasteoppsett, tastetilordning og vippestyring.
+[hint.preset] Erstatter alle tastetilordninger med et ferdig oppsett. Venstre/Høyre velger, OK tar i bruk. Egne tilordninger går tapt.
+[hint.keybase] Grunnoppsettet: N95 er standardoppsettet; C5 godtar også 2, 4, 6, 8 som en ekstra tast for retningene. OK tar det i bruk og erstatter tilordningene.
+[hint.keys] Åpner siden for tastetilordning: OK, trykk deretter på tasten. Venstre/Høyre slår Hold på eller av for en knapp.
+[hint.tilt] Styrer med telefonens helling (akselerometer). Måten du holder telefonen på når du vender tilbake til spillet er nøytralposisjonen.
+[hint.tiltside] Stikkeaksen som følger sidelengs helling (LX, LY, RX, RY; en minus inverterer). Standard LX.
+[hint.tiltpitch] Stikkeaksen som følger helling frem og tilbake (LX, LY, RX, RY; en minus inverterer). Standard LY.
+[hint.tiltdead] Helling mindre enn dette ignoreres. Fra 0 til 40, standard 10.
+[hint.tiltsens] Hvor sterkt stikken følger hellingen: 40% til 300%, standard 100%.
+
+[hint.sec.system] OK åpner eller lukker seksjonen: språk, BIOS, spillprofiler og tilbakestilling.
+[hint.lang] Språket i menyen. Endres umiddelbart. Hjelpetekstene følger det; engelsk brukes der en tekst mangler.
+[hint.bios] BIOS-dumpen fra E:\PS1\bios. Uten den kjøres den innebygde erstatningen (HLE), og kompatibiliteten er dårligere. Krever omstart.
+[hint.profile] På: hvert spill beholder sine egne innstillinger i E:\PS1\cfg, som taster og hastighetsbrytere. Av: ett felles oppsett for alle spill.
+[hint.reset] Setter alle innstillinger tilbake til standard, inkludert taster og språk. Trykk OK to ganger. Lagrede spill røres ikke.
+
+[hint.help] Åpner hjelpen: første oppsett, styring, lagring, feilsøking og en beskrivelse av hvert menyelement.
+
+[topic.setup] Første oppsett
+Dette emnet åpner siden for første oppsett, den samme som emulatoren viser ved første oppstart.
+
+[topic.play] Styring i spillet
+Menytastene: Opp og Ned flytter, Venstre og Høyre endrer en verdi, OK åpner en rad eller veksler den, C og høyre valgtast går tilbake.
+
+Navigering i hovedmenyen: Opp og Ned ruller rundt fra siste rad til første. Høyre på en seksjonsoverskrift åpner den og Venstre lukker den; åpning av én seksjon lukker de andre. C inne i en seksjon lukker den og lar markøren stå på overskriften. OK på en verdirad endrer den på samme måte som Høyre.
+
+I spillet åpner høyre valgtast menyen og setter spillet på pause. Venstre valgtast tar et skjermbilde. Når en samtale ankommer eller du bytter til et annet program, settes spillet på pause og menyen åpnes automatisk.
+
+Standardtaster: navigeringstasten beveger; OK eller 5 er Kryss; 0 er Sirkel; 7 er Firkant; 9 er Trekant; 1 er L1; 3 er R1; 4 er L2; 6 er R2; 2 er Select; 8 er Start.
+
+Begge grunnoppsett styrer med navigeringstasten. Raden Tastatur i Styring velger grunnoppsettet: N95 er standardoppsettet; C5 godtar også 2, 4, 6 og 8 på talltastaturet som en ekstra tast for de fire retningene, for de som synes det er mer praktisk.
+
+Lydstyrken endres med volumtastene på siden, eller med # (høyere) og * (lavere), med mindre disse tastene er tilordnet en knapp.
+
+Hver knapp kan tilordnes i Styring... : OK på en knapp, trykk deretter på tasten. Venstre og Høyre slår på Hold: en holdt knapp forblir inntrykket til du trykker på den igjen, noe som passer til gasspedalen i racingspill.
+
+Vippestyring (Styring) styrer med hellingen til telefonen. Det krever en telefon med akselerometer, slik som N95; E90 og C5-00.2 har ikke dette.
+
+Nøytralposisjonen registreres hver gang du vender tilbake til spillet fra menyen. For å kalibrere på nytt åpner du menyen med høyre valgtast, holder telefonen slik du ønsker å spille og velger Gjenoppta.
+
+[topic.saves] Lagring
+En lagret tilstand lagrer hele spillet i et gitt øyeblikk. Åpne Spill, velg Lagre tilstand, velg en plass med Venstre og Høyre (1 til 5) og trykk OK. [*] etter plassnummeret betyr at plassen allerede inneholder en tilstand, [ ] betyr at den er tom. Last inn tilstand gjenoppretter den.
+
+Lagre tilstand og Last inn tilstand vises bare når et spill kjører og er det valgte spillet.
+
+Tilstandsfilene ligger i E:\PS1\saves, oppkalt etter spillet og plassen. Spillets minnekort, card1.mcd og card2.mcd, ligger i samme mappe: de inneholder lagringene som spillet selv skriver. En tilstand og et minnekort er uavhengige av hverandre.
+
+Rader merket med * krever omstart av spillet. Ulagret fremgang går tapt, så lagre en tilstand før du endrer dem.
+
+[topic.slow] Hvis spillet går tregt
+Endre én ting om gangen og følg med på FPS-måler (Video).
+
+Først de rimelige. Direktetegning og Hopp over like bilder bør forbli på: de koster ingen kvalitet. Jevn skalering av sparte 4.6% kjøretid i en målt test og gjør bare fine linjer mykere.
+
+Deretter Frameskip. Auto er mest skånsom. En fast verdi på 1 ga 27% høyere emuleringshastighet i et målt løp, men 37% færre bilder ble vist.
+
+Deretter de som koster på bildekvaliteten: Kantutjevning av, 3D-belysning av (5.6% færre CPU-sykluser i en målt scene), Transparens av, Interlace-hack, Pikselhopp. Lavere PS1 CPU-hastighet letter belastningen, men kan forstyrre spillets timing.
+
+Ikke forvent hjelp fra disse: GTE-hurtigmodus var 6% tregere i Gran Turismo; GL-utdata var tregere enn programvaretegning i en målt 320x240-scene. Behold CPU på dynarec: tolkeren er den trege modusen.
+
+[topic.nosound] Ingen lyd eller intet bilde
+Ingen lyd: sjekk at Lyd (i Lyd-seksjonen) er på og at spillet ble startet på nytt etter endringen. Øk volumet med sidetastene, # eller *. Hvis Bevar tonehøyde er på, prøv å slå den av.
+
+Intet bilde eller svart skjerm: trykk på høyre valgtast og sjekk feilsiden. Platebilde eller BIOS ikke funnet betyr at filene mangler: se Filer på minnekortet. Hvis bildet er feil etter en endring, slå av Direktetegning eller GL-utdata og start spillet på nytt.
+
+Ingen BIOS: spillet kjører da på den innebygde erstatningen (HLE). Mange spill starter, men kompatibiliteten er dårligere. Legg en BIOS-dump i E:\PS1\bios eller velg en i System, BIOS.
+
+Platebilder er oppført i formatene bin, img, iso, pbp, cbn og cbin. En cue-fil vises ikke i spillisten: kjernen henter den fra bin-filen etter navn, så behold begge sammen. Import viser cue-filer.
+
+[topic.files] Filer på minnekortet
+E:\PS1\games inneholder platebildene. Legg til spill... lar deg importere dem fra hvor som helst på minnekortet.
+
+E:\PS1\bios inneholder BIOS-dumpen. Standardnavnet er scph7502.bin. En dump eller et zip-, rar- eller 7z-arkiv med en kan velges i System, BIOS.
+
+E:\PS1\saves inneholder lagrede tilstander og minnekortene.
+
+E:\PS1\cfg inneholder ps1_settings.txt, de globale innstillingene, og én liten fil for hvert spill med egne innstillinger.
+
+E:\PS1\help inneholder disse tekstene: én fil per språk, navngitt etter språkkoden (en.txt, uk.txt), i UTF-8. En manglende fil eller manglende nøkkel faller tilbake til engelsk.
+
+E:\PS1\logs inneholder kjøreloggene.
+
+[topic.game] Spill
+Spill: platebildet som skal spilles. OK åpner fillisten i mappen til det gjeldende spillet. Å velge en annen plate mens et spill kjører krever omstart.
+
+Lagre tilstand og Last inn tilstand: se emnet Lagring.
+
+Legg til spill...: importerer spill fra minnekortet. Merk filer eller arkiver med OK, start med venstre valgtast. Du kan pakke dem til PBP, noe som sparer omtrent 40%, men fjerner feilkorrigeringsdata og kan ikke angres, og du kan slette originalene. Importering av platen til spillet som kjører lukker det.
+
+[topic.video] Video
+Jevn skalering: gjennomsnittsberegner piksler når et 640-bredt bilde skaleres ned.
+
+Kantutjevning: jevner ut taggete kanter på 3D-former, nivå 1 til 5.
+
+FPS-måler: viser bildehastigheten over bildet.
+
+Resten av seksjonen: 3D-belysning (skyggelegging av teksturer), Transparens (halvgjennomsiktige objekter), Hopp over like bilder (ingen nyopptegning av et uendret bilde), Direktetegning (skriver rett inn i skjermbufferen, krever omstart), GL-utdata (viser bildet via OpenGL ES, krever omstart), Programvaretegning (kun med GL: hvilken rasterisering som tegner), Interlace-hack (bare annenhver linje) og Pikselhopp (hopper over piksler som ikke er synlige i moduser med høy horisontal oppløsning).
+
+[topic.speed] Hastighet
+Frameskip: hopper over tegning av enkelte bilder. Auto lar kjernen bestemme for hvert bilde; 1 til 3 hopper over så mange bilder mellom de som tegnes.
+
+Resten av seksjonen: CPU (dynarec eller tolker, krever omstart), GTE-hurtigmodus (krever omstart) og PS1 CPU-hastighet.
+
+PS1 CPU-hastighet vises i prosent av normal hastighet. Lavere verdier gir spillet mindre arbeid per bilde og kan forstyrre timingen. Trer i kraft straks.
+
+[topic.sound] Lyd
+Lyd: lydutdata på eller av, krever omstart.
+
+Bevar tonehøyde: når spillet kjører under full hastighet, strekkes lyden uten endring i tonehøyde. Det koster prosessortid og krever omstart.
+
+[topic.input] Styring
+Styringsprofil: Standard, Racing, Fighting eller RPG. OK erstatter alle tastetilordninger.
+
+Tastatur: N95 (standardoppsettet) eller C5 (det samme, pluss 2, 4, 6, 8 som en ekstra tast for retningene). OK erstatter alle tastetilordninger.
+
+Styring...: tilordne hver PS1-knapp til en tast; Venstre og Høyre slår Hold på eller av.
+
+Vippestyring og dens fire innstillinger: aksen for helling sidelengs, aksen for helling frem og tilbake, dødsonen (0 til 40) og følsomheten (40% til 300%).
+
+[topic.system] System
+Språk: språket i menyen og i disse tekstene, endres umiddelbart.
+
+BIOS: BIOS-dumpen som skal brukes, krever omstart. Standard er scph7502.bin.
+
+Spillprofil: på beholder en egen innstillingsfil for hvert spill.
+
+Tilbakestill alt: setter alt tilbake til standard; trykk OK to ganger.

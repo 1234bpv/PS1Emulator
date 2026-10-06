@@ -1,0 +1,167 @@
+# Texte de ajutor PS1Emulator, română (şi rezervă pentru orice altă limbă). UTF-8.
+# Secţiunile încep cu [cheie] la începutul unui rând.
+#   [hint.<id>] o propoziţie afişată pe bara de stare pentru rândul de meniu selectat.
+#   [topic.<id>] Titlu, apoi textul: un paragraf per rând, un rând gol este o pauză.
+# Numerele sunt măsurători pe un Nokia N95 8GB, nu promisiuni: depind de joc.
+
+[hint.start] Porneşte jocul selectat cu setările de mai jos. Imaginea de disc şi BIOS-ul sunt verificate mai întâi.
+[hint.resume] Revine în joc exact de unde l-ai lăsat.
+[hint.restart] Rândurile marcate cu * s-au schimbat: jocul reîncepe şi progresul nesalvat se pierde. Salvează o stare mai întâi.
+[hint.exit] Salvează setările şi închide emulatorul. Jocul în derulare se pierde dacă nu ai salvat o stare.
+
+[hint.sec.game] OK deschide sau închide secţiunea: jocul, salvările de stare şi importarea jocurilor.
+[hint.game] Imaginea de disc de rulat. OK deschide exploratorul de fişiere. Schimbarea necesită repornirea jocului.
+[hint.savestate] Salvează jocul curent în slotul afişat (Stânga/Dreapta: 1-5). [*] după slot indică faptul că este folosit şi va fi suprascris, [ ] că este gol.
+[hint.loadstate] Încarcă slotul afişat. Progresul realizat după acea salvare se pierde.
+[hint.add] Importă jocuri de pe card: imagini şi arhive zip, rar sau 7z, opţional împachetate în PBP.
+
+[hint.sec.video] OK deschide sau închide secţiunea: scalarea, netezirea muchiilor, contorul de cadre şi opţiunile de imagine.
+[hint.smooth] Calculează media pixelilor când o imagine lată de 640 este redusă. Oprit a economisit 4.6% din timpul de rulare într-o măsurătoare.
+[hint.fxaa] Netezeşte marginile zimţate ale formelor 3D; mai mare înseamnă mai intens. Scade viteza: cu circa 17% mai puţine cadre într-o măsurătoare de test.
+[hint.fps] Afişează frecvenţa cadrelor peste imagine. Util pentru a evalua efectul celorlalte opţiuni.
+[hint.light] Iluminare 3D. Oprit este mai rapid, dar umbrirea se pierde: cu 5.6% mai puţine cicluri CPU într-o scenă măsurată din Gran Turismo.
+[hint.blend] Semitransparenţă (sticlă, străluciri, umbre). Oprit este mai rapid, dar astfel de obiecte arată incorect.
+[hint.dirty] Nu redesenează o imagine pe care jocul a lăsat-o neschimbată. Măsurat: 6.7 ms economisite per cadru, fără pierderi de calitate.
+[hint.dsa] Scrie cadrul direct în memoria tampon a ecranului. Măsurat: 0.93 ms economisite per cadru. Necesită repornirea jocului.
+[hint.gl] Afişează imaginea prin OpenGL ES al telefonului. Într-o scenă măsurată de 320x240 a fost mai lent decât fără el. Necesită repornire.
+[hint.swdraw] Doar cu Ieşire GL. Pornit: rasterizatorul software desenează, iar GL doar afişează cadrul. Oprit: cipul grafic desenează.
+[hint.ilace] Desenează doar o linie din două. Mai rapid, dar înjumătăţeşte detaliul vertical.
+[hint.pixskip] Sare peste pixelii care nu sunt vizibili în modurile cu rezoluţie orizontală mare. Puţin mai rapid.
+
+[hint.sec.speed] OK deschide sau închide secţiunea: sărirea cadrelor şi setările procesorului. Cele mai multe necesită repornire.
+[hint.gpuskip] Nu desenează unele cadre. Auto lasă nucleul să decidă. Într-o cursă măsurată, 1 a oferit +27% viteză de emulare, dar cu 37% mai puţine cadre afişate.
+[hint.cpu] Dynarec recompilează codul PS1 în ARM şi este modul rapid. Interpretul este modul lent. Necesită repornire.
+[hint.gtenf] Omite calculul unor indicatori ai coprocesorului geometric. În Gran Turismo a fost cu 6% mai lent, deoarece geometria se schimbă. Necesită repornire.
+[hint.cycle] Viteza procesorului PS1 emulat în procente. O valoare mai mică solicită mai puţin telefonul, dar poate afecta sincronizarea jocului. Se aplică imediat.
+
+[hint.sec.sound] OK deschide sau închide secţiunea: ieşirea de sunet şi tonalitatea.
+[hint.sound] Ieşire sunet. Oprit elimină sunetul şi economiseşte timpul de procesor al căii audio. Necesită repornirea jocului.
+[hint.wsola] Când jocul rulează sub viteza maximă, extinde sunetul fără a-i schimba tonul. Consumă circa 6% din timpul unui cadru pe N95 într-o măsurătoare. Necesită repornire.
+
+[hint.sec.input] OK deschide sau închide secţiunea: configuraţiile de taste, atribuirea tastelor şi controlul prin înclinare.
+[hint.preset] Înlocuieşte toate atribuirile de taste cu o configuraţie gata pregătită. Stânga/Dreapta alege, OK aplică. Atribuirile proprii se pierd.
+[hint.keybase] Configuraţia de bază: N95 este cea implicită; C5 acceptă şi 2, 4, 6, 8 ca a doua tastă pentru direcţii. OK o aplică şi înlocuieşte atribuirile.
+[hint.keys] Deschide pagina de atribuire a tastelor: OK, apoi apasă tasta. Stânga/Dreapta activează sau dezactivează opţiunea Ţine pentru un buton.
+[hint.tilt] Virează prin înclinarea telefonului (accelerometru). Modul în care ţii telefonul când revii în joc reprezintă poziţia neutră.
+[hint.tiltside] Axa manetei care urmăreşte înclinarea laterală (LX, LY, RX, RY; minus o inversează). Implicit LX.
+[hint.tiltpitch] Axa manetei care urmăreşte înclinarea faţă-spate (LX, LY, RX, RY; minus o inversează). Implicit LY.
+[hint.tiltdead] Înclinarea mai mică de atât este ignorată. De la 0 la 40, implicit 10.
+[hint.tiltsens] Cât de puternic urmăreşte maneta înclinarea: de la 40% la 300%, implicit 100%.
+
+[hint.sec.system] OK deschide sau închide secţiunea: limba, BIOS-ul, profilurile per joc şi resetarea.
+[hint.lang] Limba meniului. Se schimbă imediat. Textele de ajutor o urmează; engleza este folosită unde lipseşte un text.
+[hint.bios] Dump-ul BIOS din E:\PS1\bios. Fără el rulează înlocuitorul integrat (HLE), iar compatibilitatea este mai scăzută. Necesită repornire.
+[hint.profile] Pornit: fiecare joc îşi păstrează propriile setări în E:\PS1\cfg, cum ar fi tastele şi opţiunile de viteză. Oprit: un singur set pentru toate jocurile.
+[hint.reset] Readuce fiecare setare la valoarea implicită, inclusiv tastele şi limba. Apasă OK de două ori. Salvările nu sunt afectate.
+
+[hint.help] Deschide ajutorul: prima configurare, comenzi, salvare, depanare şi o descriere a fiecărui rând de meniu.
+
+[topic.setup] Prima configurare
+Acest subiect deschide pagina primei configurări, aceeaşi pe care emulatorul o afişează la prima lansare.
+
+[topic.play] Comenzi în joc
+Tastele de meniu: Sus şi Jos deplasează, Stânga şi Dreapta schimbă o valoare, OK deschide un rând sau îl comută, C şi tasta de selecţie dreapta merg înapoi.
+
+Navigarea în meniul principal: Sus şi Jos trec circular de la ultimul rând la primul. Dreapta pe antetul unei secţiuni o deschide, iar Stânga o închide; deschiderea unei secţiuni o închide pe cealaltă. C în interiorul unei secţiuni o închide şi lasă cursorul pe antetul ei. OK pe un rând de valoare o modifică exact aşa cum face Dreapta.
+
+În joc, tasta de selecţie dreapta deschide meniul şi pune jocul pe pauză. Tasta de selecţie stânga face o captură de ecran. Când soseşte un apel sau comuţi la altă aplicaţie, jocul se întrerupe şi meniul se deschide automat.
+
+Taste implicite: D-pad-ul deplasează; OK sau 5 este Cruce; 0 este Cerc; 7 este Pătrat; 9 este Triunghi; 1 este L1; 3 este R1; 4 este L2; 6 este R2; 2 este Select; 8 este Start.
+
+Ambele baze virează cu D-pad-ul. Rândul Tastatură din Comenzi alege configuraţia de bază: N95 este cea implicită; C5 acceptă de asemenea 2, 4, 6 şi 8 de pe tastatura numerică ca o a doua tastă pentru cele patru direcţii, pentru cei care le consideră mai comode.
+
+Volumul se modifică cu tastele laterale de volum sau cu # (mai tare) şi * (mai încet), cu excepţia cazului în care acele taste sunt atribuite unui buton.
+
+Fiecare buton poate fi atribuit în Comenzi... : OK pe un buton, apoi apasă tasta. Stânga şi Dreapta activează Ţine: un buton menţinut rămâne apăsat până îl apeşi din nou, ceea ce este util pentru acceleraţie într-o cursă.
+
+Control înclinare (Comenzi) virează prin înclinarea telefonului. Necesită un telefon cu accelerometru, cum ar fi N95; modelele E90 şi C5-00.2 nu au.
+
+Poziţia neutră este preluată de fiecare dată când revii în joc din meniu. Pentru a recalibra, deschide meniul cu tasta de selecţie dreapta, ţine telefonul în poziţia în care doreşti să joci şi alege Reluare.
+
+[topic.saves] Salvare
+O salvare de stare stochează întregul joc într-un anumit moment. Deschide Joc, alege Salvare stare, alege un slot cu Stânga şi Dreapta (1 la 5) şi apasă OK. [*] după numărul slotului înseamnă că slotul conţine deja o stare, [ ] înseamnă că este gol. Încărcare stare o restabileşte.
+
+Salvare stare şi Încărcare stare apar doar atunci când un joc rulează şi este cel selectat.
+
+Fişierele de stare se află în E:\PS1\saves, denumite după joc şi slot. Cardurile de memorie ale jocului, card1.mcd şi card2.mcd, se află în acelaşi dosar: ele păstrează salvările pe care le scrie jocul însuşi. O stare şi un card de memorie sunt independente una de cealaltă.
+
+Rândurile marcate cu * necesită repornirea jocului. Progresul nesalvat se pierde, aşa că salvează o stare înainte de a le modifica.
+
+[topic.slow] Dacă jocul merge lent
+Schimbă câte un lucru pe rând şi urmăreşte Contor FPS (Video).
+
+Mai întâi cele economice. Desen direct şi Omite cadre identice ar trebui să rămână pe pornit: nu afectează calitatea. Scalare netedă pe oprit a economisit 4.6% din timpul de rulare într-o măsurătoare şi doar atenuează liniile fine.
+
+Apoi Sărire cadre. Auto este cea mai lină opţiune. O valoare fixă de 1 a oferit cu 27% mai multă viteză de emulare într-o cursă măsurată, dar s-au afişat cu 37% mai puţine cadre.
+
+Apoi cele care afectează imaginea: Netezire muchii pe oprit, Iluminare 3D pe oprit (cu 5.6% mai puţine cicluri CPU într-o scenă măsurată), Transparenţă pe oprit, Hack întreţesere, Sărire pixeli. O valoare mai mică pentru Viteză CPU PS1 reduce solicitarea, dar poate deregla sincronizarea jocului.
+
+Nu te aştepta la îmbunătăţiri de la acestea: Mod rapid GTE a fost cu 6% mai lent în Gran Turismo; Ieşire GL a fost mai lentă decât calea software într-o scenă măsurată de 320x240. Păstrează CPU pe dynarec: modul interpret este cel lent.
+
+[topic.nosound] Fără sunet sau fără imagine
+Fără sunet: verifică dacă Sunet (în secţiunea Sunet) este pornit şi dacă jocul a fost repornit după modificare. Creşte volumul cu tastele laterale, # sau *. Dacă Păstrează tonul este pornit, încearcă să-l opreşti.
+
+Fără imagine sau ecran negru: apasă tasta de selecţie dreapta şi verifică pagina de eroare. Imagine disc sau BIOS negăsit înseamnă că fişierele lipsesc: vezi Fişiere de pe card. Dacă imaginea este incorectă după o modificare, dezactivează Desen direct sau Ieşire GL şi reporneşte jocul.
+
+Fără BIOS: jocul rulează atunci cu înlocuitorul integrat (HLE). Multe jocuri pornesc, dar compatibilitatea este mai scăzută. Pune un fişier BIOS în E:\PS1\bios sau alege unul în Sistem, BIOS.
+
+Imaginile de disc sunt listate în formatele bin, img, iso, pbp, cbn şi cbin. Un fişier cue nu este listat în browserul de jocuri: nucleul îl deduce din bin după nume, aşa că păstrează-le pe ambele împreună. Importul listează fişierele cue.
+
+[topic.files] Fişiere de pe card
+E:\PS1\games păstrează imaginile de disc. Adăugare jocuri îţi permite să le imporţi de oriunde de pe card.
+
+E:\PS1\bios păstrează dump-ul BIOS. Numele implicit este scph7502.bin. Un dump sau o arhivă zip, rar sau 7z care conţine unul poate fi aleasă în Sistem, BIOS.
+
+E:\PS1\saves păstrează salvările de stare şi cardurile de memorie.
+
+E:\PS1\cfg conţine ps1_settings.txt, setările globale, şi câte un mic fişier pentru fiecare joc cu propriile sale setări.
+
+E:\PS1\help conţine aceste texte: câte un fişier per limbă, denumit după codul de limbă (en.txt, uk.txt), în UTF-8. Un fişier lipsă sau o cheie lipsă revine la engleză.
+
+E:\PS1\logs păstrează jurnalele de rulare.
+
+[topic.game] Joc
+Joc: imaginea de disc de rulat. OK deschide exploratorul de fişiere în dosarul jocului curent. Alegerea unui alt disc în timp ce un joc rulează necesită repornire.
+
+Salvare stare şi Încărcare stare: vezi subiectul Salvare.
+
+Adăugare jocuri...: importă jocuri de pe card. Marchează fişierele sau arhivele cu OK, porneşte cu tasta de selecţie stânga. Le poţi împacheta în PBP, ceea ce economiseşte circa 40%, dar elimină datele de corectare a erorilor şi nu poate fi anulat, şi poţi şterge originalele. Importarea discului jocului care rulează îl închide pe acesta.
+
+[topic.video] Video
+Scalare netedă: calculează media pixelilor când o imagine lată de 640 este redusă.
+
+Netezire muchii: netezeşte marginile zimţate ale formelor 3D, nivelul 1 la 5.
+
+Contor FPS: afişează frecvenţa cadrelor peste imagine.
+
+Restul secţiunii: Iluminare 3D (umbrirea texturilor), Transparenţă (obiecte semitransparente), Omite cadre identice (fără redesenarea unei imagini neschimbate), Desen direct (scrie direct în memoria tampon a ecranului, necesită repornire), Ieşire GL (arată imaginea prin OpenGL ES, necesită repornire), Desen software (doar cu GL: ce rasterizator desenează), Hack întreţesere (doar o linie din două) şi Sărire pixeli (sare peste pixelii care nu sunt vizibili în modurile cu rezoluţie orizontală mare).
+
+[topic.speed] Viteză
+Sărire cadre: nu desenează unele cadre. Auto lasă nucleul să decidă fiecare cadru; 1 la 3 sar atâtea cadre între cele desenate.
+
+Restul secţiunii: CPU (dynarec sau interpret, necesită repornire), Mod rapid GTE (necesită repornire) şi Viteză CPU PS1.
+
+Viteză CPU PS1 este afişată în procente din viteza normală. Valorile mai mici dau jocului mai puţin de lucru per cadru şi îi pot afecta sincronizarea. Se aplică imediat.
+
+[topic.sound] Sunet
+Sunet: ieşire sunet pe pornit sau oprit, necesită repornire.
+
+Păstrează tonul: când jocul rulează sub viteza maximă, sunetul este extins fără modificarea tonului. Consumă timp de procesor şi necesită repornire.
+
+[topic.input] Comenzi
+Preset comenzi: Implicit, Curse, Lupte sau RPG. OK înlocuieşte toate atribuirile de taste.
+
+Tastatură: N95 (configuraţia implicită) sau C5 (aceeaşi, plus 2, 4, 6, 8 ca a doua tastă pentru direcţii). OK înlocuieşte toate atribuirile de taste.
+
+Comenzi...: atribuie fiecare buton PS1 unei taste; Stânga şi Dreapta activează sau dezactivează Ţine.
+
+Control înclinare şi cele patru setări ale sale: axa pentru înclinarea laterală, axa pentru înclinarea faţă-spate, zona moartă (0 la 40) şi sensibilitatea (40% la 300%).
+
+[topic.system] Sistem
+Limbă: limba meniului şi a acestor texte, se schimbă imediat.
+
+BIOS: dump-ul BIOS de utilizat, necesită repornire. Valoarea implicită este scph7502.bin.
+
+Profil per joc: pornit păstrează un fişier separat de setări pentru fiecare joc.
+
+Resetare setări: readuce totul la valorile implicite; apasă OK de două ori.

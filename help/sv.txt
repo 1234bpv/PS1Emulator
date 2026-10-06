@@ -1,0 +1,167 @@
+# PS1Emulator hjälptexter, svenska (även reservtext för alla andra språk). UTF-8.
+# Avsnitt börjar med [nyckel] i början av en rad.
+#   [hint.<id>] en mening som visas på statusraden för den markerade menyraden.
+#   [topic.<id>] Rubrik, sedan texten: ett stycke per rad, en tom rad ger ett mellanrum.
+# Siffrorna är mätningar på en Nokia N95 8GB, inga löften: de beror på spelet.
+
+[hint.start] Startar det valda spelet med inställningarna nedan. Skivavbilden och BIOS kontrolleras först.
+[hint.resume] Återgår till spelet precis där du lämnade det.
+[hint.restart] Rader märkta med * har ändrats: spelet startar om och osparade framsteg förloras. Spara tillstånd först.
+[hint.exit] Sparar inställningarna och stänger emulatorn. Ett pågående spel förloras om du inte sparade ett tillstånd.
+
+[hint.sec.game] OK öppnar eller stänger avsnittet: spelet, sparade tillstånd och import av spel.
+[hint.game] Skivavbilden som ska spelas. OK öppnar filbläddraren. Att ändra den kräver en omstart av spelet.
+[hint.savestate] Sparar det pågående spelet på platsen som visas (Vänster/Höger: 1-5). [*] efter platsen betyder att den används och skrivs över, [ ] betyder att den är tom.
+[hint.loadstate] Läser in den plats som visas. Framsteg som gjorts efter den sparningen förloras.
+[hint.add] Importerar spel från kortet: avbilder och zip-, rar- eller 7z-arkiv, valfritt packade till PBP.
+
+[hint.sec.video] OK öppnar eller stänger avsnittet: skalning, kantutjämning, bildräknaren och bildväxlarna.
+[hint.smooth] Beräknar pixelmedelvärde när en bild med 640 i bredd skalas ned. Av sparade 4.6% körtid i en uppmätt körning.
+[hint.fxaa] Jämnar ut taggiga kanter på 3D-former; högre ger mer effekt. Kostar hastighet: cirka 17% färre bildrutor i ett test.
+[hint.fps] Visar bildfrekvensen över bilden. Användbart för att bedöma vad de andra inställningarna gör.
+[hint.light] 3D-belysning. Av är snabbare men skuggningen försvinner: 5.6% färre CPU-cykler i en uppmätt scen i Gran Turismo.
+[hint.blend] Halvtransparens (glas, sken, skuggor). Av är snabbare, men sådana objekt ser felaktiga ut.
+[hint.dirty] Ritar inte om en bild som spelet lämnat oförändrad. Uppmätt: 6.7 ms sparades per bildruta utan kvalitetsförlust.
+[hint.dsa] Skriver bildrutan direkt till skärmbufferten. Uppmätt: 0.93 ms sparades per bildruta. Kräver omstart av spelet.
+[hint.gl] Visar bilden via telefonens OpenGL ES. I en uppmätt 320x240-scen var det långsammare än utan. Kräver omstart.
+[hint.swdraw] Endast med GL-utmatning. På: mjukvarurastereraren ritar och GL visar bara bildrutan. Av: grafikchippet ritar.
+[hint.ilace] Ritar endast varannan rad. Snabbare, men halverar den vertikala detaljrikedomen.
+[hint.pixskip] Hoppar över pixlar som inte syns i lägen med hög horisontell upplösning. Lite snabbare.
+
+[hint.sec.speed] OK öppnar eller stänger avsnittet: bildrutehopp och processorinställningar. De flesta kräver en omstart.
+[hint.gpuskip] Ritar inte vissa bildrutor. Auto låter kärnan bestämma. I ett racingspår gav 1 +27% emuleringshastighet men 37% färre visade bildrutor.
+[hint.cpu] Dynarec omkompilerar PS1-kod till ARM och är det snabba läget. Tolken är det långsamma läget. Kräver omstart.
+[hint.gtenf] Hoppar över viss flaggberäkning för geometricoprocessorn. I Gran Turismo var det 6% långsammare eftersom geometrin ändras. Kräver omstart.
+[hint.cycle] Den emulerade PS1-processorns hastighet i procent. Lägre värde belastar telefonen mindre men kan störa spelets timing. Gäller direkt.
+
+[hint.sec.sound] OK öppnar eller stänger avsnittet: ljudutmatning och tonhöjd.
+[hint.sound] Ljudutmatning. Av stänger av ljudet och sparar processortid för ljudvägen. Kräver omstart av spelet.
+[hint.wsola] När spelet körs under full hastighet sträcks ljudet ut utan att tonhöjden ändras. Kostar cirka 6% av en bildrutas tid på N95 i en mätning. Kräver omstart.
+
+[hint.sec.input] OK öppnar eller stänger avsnittet: tangentlayouter, tangenttilldelning och lutningsstyrning.
+[hint.preset] Ersätter alla tangenttilldelningar med en färdig layout. Vänster/Höger väljer, OK tillämpar. Dina egna tilldelningar förloras.
+[hint.keybase] Baslayouten: N95 är standardlayouten; C5 accepterar även 2, 4, 6, 8 som en andra tangent för riktningarna. OK tillämpar den och ersätter tilldelningarna.
+[hint.keys] Öppnar sidan för tangenttilldelning: OK, tryck sedan på tangenten. Vänster/Höger slår på eller av Håll för en knapp.
+[hint.tilt] Styr med telefonens lutning (accelerometer). Det läge du håller telefonen i när du återgår till spelet är neutralläget.
+[hint.tiltside] Spakaxeln som följer sidolutning (LX, LY, RX, RY; ett minus inverterar). Standard LX.
+[hint.tiltpitch] Spakaxeln som följer lutning framåt och bakåt (LX, LY, RX, RY; ett minus inverterar). Standard LY.
+[hint.tiltdead] Lutning som är mindre än detta ignoreras. Från 0 till 40, standard 10.
+[hint.tiltsens] Hur kraftigt spaken följer lutningen: 40% till 300%, standard 100%.
+
+[hint.sec.system] OK öppnar eller stänger avsnittet: språk, BIOS, spelprofiler och återställning.
+[hint.lang] Menyns språk. Ändras direkt. Hjälptexterna följer det; engelska används där text saknas.
+[hint.bios] BIOS-dumpen från E:\PS1\bios. Utan den körs den inbyggda ersättningen (HLE) och kompatibiliteten är sämre. Kräver omstart.
+[hint.profile] På: varje spel behåller sina egna inställningar i E:\PS1\cfg, till exempel tangenter och hastighetsväxlar. Av: samma inställningar för alla spel.
+[hint.reset] Återställer alla inställningar till standard, inklusive tangenter och språk. Tryck OK två gånger. Sparade filer påverkas inte.
+
+[hint.help] Öppnar hjälpen: första konfigurering, styrning, sparning, felsökning och en beskrivning av varje menyrad.
+
+[topic.setup] Första konfigurering
+Detta ämne öppnar sidan för första konfigurering, samma sida som emulatorn visar vid första starten.
+
+[topic.play] Styrning i spelet
+Menytangenterna: Upp och Ned flyttar, Vänster och Höger ändrar ett värde, OK öppnar en rad eller växlar den, C och höger urvalsknapp går tillbaka.
+
+Navigering i huvudmenyn: Upp och Ned slår runt från sista raden till den första. Höger på en avsnittsrubrik öppnar den och Vänster stänger den; att öppna ett avsnitt stänger det andra. C inuti ett avsnitt stänger det och lämnar markören på dess rubrik. OK på en värderad ändrar den på precis samma sätt som Höger.
+
+I spelet öppnar höger urvalsknapp menyn och pausar spelet. Vänster urvalsknapp tar en skärmdump. När ett samtal kommer eller om du växlar till ett annat program pausas spelet och menyn öppnas automatiskt.
+
+Standardtangenter: styrknappen flyttar; OK eller 5 är Kryss; 0 är Cirkel; 7 är Fyrkant; 9 är Triangel; 1 är L1; 3 är R1; 4 är L2; 6 är R2; 2 är Select; 8 är Start.
+
+Båda baserna styr med styrknappen. Raden Tangentbord i Styrning väljer baslayout: N95 är standardlayouten; C5 accepterar även 2, 4, 6 och 8 på sifferknappsatsen som en andra tangent för de fyra riktningarna, för dem som finner det smidigare.
+
+Volymen ändras med volymknapparna på sidan, eller med # (högre) och * (lägre), såvida inte dessa tangenter har tilldelats en knapp.
+
+Varje knapp kan tilldelas i Styrning... : OK på en knapp, tryck sedan på tangenten. Vänster och Höger slår på Håll: en hållen knapp förblir nedtryckt tills du trycker på den igen, vilket passar bra för gaspedalen i ett racingspel.
+
+Lutningsstyrning (Styrning) styr med telefonens lutning. Den kräver en telefon med accelerometer, såsom N95; E90 och C5-00.2 saknar detta.
+
+Neutralläget registreras varje gång du återgår till spelet från menyn. För att kalibrera om, öppna menyn med höger urvalsknapp, håll telefonen så som du vill spela och välj Återuppta.
+
+[topic.saves] Spara
+Ett sparat tillstånd lagrar hela spelet vid ett ögonblick. Öppna Spel, välj Spara tillstånd, välj en plats med Vänster och Höger (1 till 5) och tryck OK. [*] efter platsnumret betyder att platsen redan innehåller ett tillstånd, [ ] betyder att den är tom. Läs in tillstånd återställer det.
+
+Spara tillstånd och Läs in tillstånd visas endast medan ett spel körs och är det som är valt.
+
+Tillståndsfilerna finns i E:\PS1\saves och har namn efter spelet och platsen. Spelets minneskort, card1.mcd och card2.mcd, finns i samma mapp: de innehåller de sparningar som spelet självt skriver. Ett tillstånd och ett minneskort är oberoende av varandra.
+
+Rader märkta med * kräver en omstart av spelet. Osparade framsteg förloras, så spara ett tillstånd innan du ändrar dem.
+
+[topic.slow] Om spelet går långsamt
+Ändra en sak i taget och observera FPS-mätare (Video).
+
+Först de billiga. Direktritning och Hoppa över samma bild bör förbli på: de kostar ingen kvalitet. Mjuk skalning av sparade 4.6% körtid i en uppmätt körning och gör bara tunna linjer mjukare.
+
+Sedan Frameskip. Auto är skonsammast. Ett fast värde på 1 gav 27% mer emuleringshastighet i ett uppmätt lopp, men 37% färre bildrutor visades.
+
+Därefter de som påverkar bilden: Kantutjämning av, 3D-belysning av (5.6% färre CPU-cykler i en uppmätt scen), Transparens av, Interlace-hack, Pixelhopp. Lägre PS1 CPU-hastighet minskar belastningen men kan störa spelets timing.
+
+Förvänta dig ingen hjälp från dessa: GTE-snabbläge var 6% långsammare i Gran Turismo; GL-utmatning var långsammare än mjukvaruvägen i en uppmätt 320x240-scen. Behåll CPU på dynarec: tolken är det långsamma läget.
+
+[topic.nosound] Inget ljud eller ingen bild
+Inget ljud: kontrollera att Ljud (i avsnittet Ljud) är på och att spelet startades om efter att det ändrats. Höj volymen med sidoknapparna, # eller *. Om Bevara tonhöjd är på, prova att stänga av det.
+
+Ingen bild eller svart skärm: tryck på höger urvalsknapp och kontrollera felsidan. Skivavbild eller BIOS saknas betyder att filerna saknas: se Filer på kortet. Om bilden är felaktig efter en ändring, stäng av Direktritning eller GL-utmatning och starta om spelet.
+
+Inget BIOS: spelet körs då med den inbyggda ersättningen (HLE). Många spel startar, men kompatibiliteten är sämre. Placera en BIOS-dump i E:\PS1\bios eller välj en i System, BIOS.
+
+Skivavbilder listas i formaten bin, img, iso, pbp, cbn och cbin. En cue-fil listas inte i spelbläddraren: kärnan härleder den från bin-filen via namn, så håll båda tillsammans. Import listar cue-filer.
+
+[topic.files] Filer på kortet
+E:\PS1\games innehåller skivavbilderna. Lägg till spel... låter dig importera dem från valfri plats på kortet.
+
+E:\PS1\bios innehåller BIOS-dumpen. Standardnamnet är scph7502.bin. En dump eller ett zip-, rar- eller 7z-arkiv med en sådan kan väljas i System, BIOS.
+
+E:\PS1\saves innehåller sparade tillstånd och minneskorten.
+
+E:\PS1\cfg innehåller ps1_settings.txt, de globala inställningarna, och en liten fil för varje spel med egna inställningar.
+
+E:\PS1\help innehåller dessa texter: en fil per språk, namngiven med språkkoden (en.txt, uk.txt), i UTF-8. En saknad fil eller saknad nyckel faller tillbaka på engelska.
+
+E:\PS1\logs innehåller körloggarna.
+
+[topic.game] Spel
+Spel: skivavbilden som ska spelas. OK öppnar filbläddraren i mappen för det aktuella spelet. Att välja en annan skiva medan ett spel körs kräver en omstart.
+
+Spara tillstånd och Läs in tillstånd: se ämnet Spara.
+
+Lägg till spel...: importerar spel från kortet. Markera filer eller arkiv med OK, starta med vänster urvalsknapp. Du kan packa dem till PBP, vilket sparar cirka 40% men tar bort felkorrigeringsdata och inte kan ångras, och du kan ta bort originalen. Import av skivan för det pågående spelet stänger det.
+
+[topic.video] Video
+Mjuk skalning: beräknar pixelmedelvärde när en bild med 640 i bredd skalas ned.
+
+Kantutjämning: jämnar ut taggiga kanter på 3D-former, nivå 1 till 5.
+
+FPS-mätare: visar bildfrekvensen över bilden.
+
+Resten av avsnittet: 3D-belysning (skuggning av texturer), Transparens (halvtransparenta objekt), Hoppa över samma bild (ingen omritning av en oförändrad bild), Direktritning (skriver direkt till skärmbufferten, kräver omstart), GL-utmatning (visar bilden via OpenGL ES, kräver omstart), Mjukvaruritning (endast med GL: vilken rastererare som ritar), Interlace-hack (endast varannan rad) och Pixelhopp (hoppar över pixlar som inte syns i lägen med hög horisontell upplösning).
+
+[topic.speed] Hastighet
+Frameskip: ritar inte vissa bildrutor. Auto låter kärnan bestämma för varje bildruta; 1 till 3 hoppar över så många bildrutor mellan de som ritas.
+
+Resten av avsnittet: CPU (dynarec eller tolk, kräver omstart), GTE-snabbläge (kräver omstart) och PS1 CPU-hastighet.
+
+PS1 CPU-hastighet visas i procent av normal hastighet. Lägre värden ger spelet mindre arbete per bildruta och kan störa dess timing. Den tillämpas direkt.
+
+[topic.sound] Ljud
+Ljud: ljudutmatning på eller av, kräver omstart.
+
+Bevara tonhöjd: när spelet körs under full hastighet sträcks ljudet ut utan ändring av tonhöjd. Det kostar processortid och kräver omstart.
+
+[topic.input] Styrning
+Styrprofil: Standard, Racing, Fighting eller RPG. OK ersätter alla tangenttilldelningar.
+
+Tangentbord: N95 (standardlayouten) eller C5 (samma, plus 2, 4, 6, 8 som en andra tangent för riktningarna). OK ersätter alla tangenttilldelningar.
+
+Styrning...: tilldela varje PS1-knapp en tangent; Vänster och Höger slår på eller av Håll.
+
+Lutningsstyrning och dess fyra inställningar: axeln för lutning i sidled, axeln för lutning framåt och bakåt, dödzon (0 till 40) och känslighet (40% till 300%).
+
+[topic.system] System
+Språk: språket i menyn och i dessa texter, ändras direkt.
+
+BIOS: BIOS-dumpen som ska användas, kräver omstart. Standard är scph7502.bin.
+
+Spelprofil: på behåller en separat inställningsfil för varje spel.
+
+Återställ allt: återställer allt till standardvärden; tryck OK två gånger.

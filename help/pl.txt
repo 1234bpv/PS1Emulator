@@ -1,0 +1,167 @@
+# Teksty pomocy PS1Emulator, polski. UTF-8.
+# Sekcje zaczynają się od [klucz] na początku wiersza.
+#   [hint.<id>] jedno zdanie wyświetlane na pasku stanu dla wybranego wiersza menu.
+#   [topic.<id>] Tytuł, a potem tekst: jeden akapit na wiersz, pusty wiersz to odstęp.
+# Liczby to pomiary z telefonu Nokia N95 8GB, a nie gwarancje: zależą od gry.
+
+[hint.start] Uruchamia wybraną grę z poniższymi ustawieniami. Najpierw sprawdzany jest obraz płyty oraz BIOS.
+[hint.resume] Wraca do gry dokładnie tam, gdzie została przerwana.
+[hint.restart] Zmieniono wiersze oznaczone *: gra uruchomi się od nowa, a niezapisany postęp przepadnie. Najpierw zapisz stan.
+[hint.exit] Zapisuje ustawienia i zamyka emulator. Uruchomiona gra zostanie utracona, chyba że zapisano stan.
+
+[hint.sec.game] OK otwiera lub zamyka sekcję: gra, zapisane stany i importowanie gier.
+[hint.game] Obraz płyty do uruchomienia. OK otwiera przeglądarkę plików. Zmiana wymaga restartu gry.
+[hint.savestate] Zapisuje uruchomioną grę w wybranym slocie (Lewo/Prawo: 1-5). [*] za slotem oznacza, że jest zajęty i zostanie nadpisany, [ ] oznacza pusty.
+[hint.loadstate] Wczytuje wybrany slot. Postęp dokonany po tym zapisie zostanie utracony.
+[hint.add] Importuje gry z karty: obrazy oraz archiwa zip, rar lub 7z, opcjonalnie spakowane do PBP.
+
+[hint.sec.video] OK otwiera lub zamyka sekcję: skalowanie, wygładzanie krawędzi, licznik klatek i opcje obrazu.
+[hint.smooth] Uśrednia piksele przy pomniejszaniu obrazu o szerokości 640. Opcja wył zaoszczędziła 4.6% czasu pracy w teście pomiarowym.
+[hint.fxaa] Wygładza postrzępione krawędzie obiektów 3D; wyższa wartość oznacza mocniejsze działanie. Kosztuje wydajność: około 17% mniej klatek w teście.
+[hint.fps] Wyświetla liczbę klatek na sekundę na obrazie. Przydatne do oceny wpływu pozostałych opcji.
+[hint.light] Oświetlenie 3D. Opcja wył jest szybsza, lecz traci się cieniowanie: 5.6% mniej cykli CPU w zmierzonej scenie Gran Turismo.
+[hint.blend] Półprzezroczystość (szkło, poświaty, cienie). Opcja wył jest szybsza, lecz takie obiekty wyglądają niepoprawnie.
+[hint.dirty] Nie przerysowuje klatki, jeśli gra nie zmieniła obrazu. Pomiar: 6.7 ms zaoszczędzone na klatkę, bez utraty jakości.
+[hint.dsa] Zapisuje klatkę bezpośrednio w buforze ekranu. Pomiar: 0.93 ms zaoszczędzone na klatkę. Wymaga restartu gry.
+[hint.gl] Wyświetla obraz przez OpenGL ES telefonu. W jednej zmierzonej scenie 320x240 było to wolniejsze niż bez tego. Wymaga restartu.
+[hint.swdraw] Tylko przy Wyjście GL. Opcja wł: rasteryzator programowy rysuje, a GL tylko wyświetla klatkę. Opcja wył: rysuje układ graficzny.
+[hint.ilace] Rysuje tylko co drugą linię. Szybsze, lecz zmniejsza o połowę szczegółowość w pionie.
+[hint.pixskip] Pomija piksele niewidoczne w trybach wysokiej rozdzielczości poziomej. Nieco szybsze.
+
+[hint.sec.speed] OK otwiera lub zamyka sekcję: pomijanie klatek i ustawienia procesora. Większość z nich wymaga restartu.
+[hint.gpuskip] Nie rysuje niektórych klatek. Opcja auto pozwala rdzeniowi decydować. W teście wyścigowym 1 dało +27% prędkości emulacji, lecz o 37% mniej wyświetlanych klatek.
+[hint.cpu] Dynarec rekompiluje kod PS1 do ARM i jest trybem szybkim. Interpreter to tryb wolny. Wymaga restartu.
+[hint.gtenf] Pomija część obliczeń flag koprocesora geometrii. W Gran Turismo było to o 6% wolniejsze z powodu zmian geometrii. Wymaga restartu.
+[hint.cycle] Taktowanie emulowanego procesora PS1 w procentach. Niższe mniej obciąża telefon, lecz może zakłócić synchronizację gry. Działa natychmiast.
+
+[hint.sec.sound] OK otwiera lub zamyka sekcję: wyjście dźwięku i tonacja.
+[hint.sound] Wyjście dźwięku. Opcja wył wyłącza dźwięk i oszczędza czas procesora na torze audio. Wymaga restartu gry.
+[hint.wsola] Gdy gra działa poniżej pełnej prędkości, rozciąga dźwięk bez zmiany tonacji. Na N95 kosztuje to w pomiarach około 6% czasu klatki. Wymaga restartu.
+
+[hint.sec.input] OK otwiera lub zamyka sekcję: układy klawiszy, przypisanie klawiszy i sterowanie przechyłem.
+[hint.preset] Zastępuje wszystkie przypisania klawiszy gotowym układem. Lewo/Prawo wybiera, OK stosuje. Własne przypisania zostaną utracone.
+[hint.keybase] Układ bazowy: N95 jest domyślny; C5 akceptuje również 2, 4, 6, 8 jako drugi klawisz dla kierunków. OK stosuje go i zastępuje przypisania.
+[hint.keys] Otwiera stronę przypisania klawiszy: OK, a potem naciśnij klawisz. Lewo/Prawo włącza lub wyłącza przytrzym dla przycisku.
+[hint.tilt] Steruje przechyłem telefonu (akcelerometr). Sposób trzymania telefonu w chwili powrotu do gry wyznacza pozycję neutralną.
+[hint.tiltside] Oś drążka podążająca za przechyłem na boki (LX, LY, RX, RY; minus odwraca). Domyślnie LX.
+[hint.tiltpitch] Oś drążka podążająca za przechyłem w przód i w tył (LX, LY, RX, RY; minus odwraca). Domyślnie LY.
+[hint.tiltdead] Przechył mniejszy niż ta wartość jest ignorowany. Od 0 do 40, domyślnie 10.
+[hint.tiltsens] Jak mocno drążek reaguje na przechył: od 40% do 300%, domyślnie 100%.
+
+[hint.sec.system] OK otwiera lub zamyka sekcję: język, BIOS, profile dla gier i resetowanie.
+[hint.lang] Język menu. Zmienia się natychmiast. Teksty pomocy podążają za nim; język angielski jest używany tam, gdzie brak tekstu.
+[hint.bios] Zrzut BIOS-u z E:\PS1\bios. Bez niego działa wbudowany zamiennik (HLE), a kompatybilność jest gorsza. Wymaga restartu.
+[hint.profile] Opcja wł: każda gra zachowuje własne ustawienia w E:\PS1\cfg, np. klawisze i opcje prędkości. Opcja wył: jeden zestaw dla wszystkich gier.
+[hint.reset] Przywraca wszystkie ustawienia do wartości domyślnych, w tym klawisze i język. Naciśnij OK dwa razy. Zapisy pozostają nienaruszone.
+
+[hint.help] Otwiera pomoc: pierwsza konfiguracja, sterowanie, zapisywanie, rozwiązywanie problemów i opis każdego wiersza menu.
+
+[topic.setup] Pierwsza konfiguracja
+Ten temat otwiera stronę pierwszej konfiguracji, tę samą, którą emulator wyświetla przy pierwszym uruchomieniu.
+
+[topic.play] Sterowanie w grze
+Klawisze menu: Góra i Dół przesuwają kursor, Lewo i Prawo zmieniają wartość, OK otwiera wiersz lub go przełącza, C i prawy klawisz wyboru cofają.
+
+Nawigacja w menu głównym: Góra i Dół przechodzą w pętli od ostatniego wiersza do pierwszego. Prawo na nagłówku sekcji otwiera ją, a Lewo zamyka; otwarcie jednej sekcji zamyka drugą. C wewnątrz sekcji zamyka ją i pozostawia kursor na jej nagłówku. OK na wierszu wartości zmienia ją dokładnie tak jak Prawo.
+
+W grze prawy klawisz wyboru otwiera menu i wstrzymuje grę. Lewy klawisz wyboru robi zrzut ekranu. Gdy nadejdzie połączenie lub przełączysz się do innej aplikacji, gra zatrzymuje się, a menu otwiera się automatycznie.
+
+Domyślne klawisze: manipulator porusza; OK lub 5 to Krzyżyk; 0 to Kółko; 7 to Kwadrat; 9 to Trójkąt; 1 to L1; 3 to R1; 4 to L2; 6 to R2; 2 to Select; 8 to Start.
+
+Obie bazy sterują manipulatorem. Wiersz Klawiatura w sekcji Sterowanie wybiera układ bazowy: N95 jest domyślny; C5 akceptuje także 2, 4, 6 i 8 na klawiaturze numerycznej jako drugi klawisz dla czterech kierunków, dla osób uznających je za wygodniejsze.
+
+Głośność zmienia się bocznymi klawiszami głośności lub za pomocą # (głośniej) i * (ciszej), chyba że klawisze te są przypisane do przycisku.
+
+Każdy przycisk można przypisać w Sterowanie... : OK na przycisku, a potem naciśnij klawisz. Lewo i Prawo włączają przytrzym: przytrzymany przycisk pozostaje wciśnięty, dopóki nie naciśniesz go ponownie, co sprawdza się przy gazie w wyścigach.
+
+Sterowanie przechyłem (Sterowanie) steruje przechyłem telefonu. Wymaga telefonu z akcelerometrem, takiego jak N95; E90 oraz C5-00.2 go nie mają.
+
+Pozycja neutralna jest ustalana za każdym razem, gdy wracasz do gry z menu. Aby skalibrować ponownie, otwórz menu prawym klawiszem wyboru, chwyć telefon tak, jak chcesz grać, i wybierz Wznów.
+
+[topic.saves] Zapisywanie
+Zapisany stan zachowuje całą grę w danym momencie. Otwórz Gra, wybierz Zapisz stan, wybierz slot za pomocą Lewo i Prawo (od 1 do 5) i naciśnij OK. [*] po numerze slotu oznacza, że slot zawiera już stan, [ ] oznacza pusty. Wczytaj stan przywraca go.
+
+Zapisz stan i Wczytaj stan pojawiają się tylko wtedy, gdy gra jest uruchomiona i aktualnie wybrana.
+
+Pliki stanu znajdują się w E:\PS1\saves, nazwane według gry i slotu. Karty pamięci gry, card1.mcd i card2.mcd, znajdują się w tym samym folderze: przechowują one zapisy, które tworzy sama gra. Stan i karta pamięci są od siebie niezależne.
+
+Wiersze oznaczone * wymagają restartu gry. Niezapisany postęp zostanie utracony, więc przed ich zmianą zapisz stan.
+
+[topic.slow] Jeśli gra działa wolno
+Zmieniaj jedną rzecz na raz i obserwuj Licznik FPS (WIDEO).
+
+Najpierw te o niskim koszcie. Bezpośredni rysunek i Pomijaj takie same klatki powinny pozostać włączone: nie pogarszają jakości. Gładkie skalowanie wyłączone (wył) zaoszczędziło 4.6% czasu pracy w teście i jedynie zmiękcza drobne linie.
+
+Następnie Pomijanie klatek. Opcja auto jest najłagodniejsza. Stała wartość 1 dała o 27% wyższą prędkość emulacji w testowym wyścigu, lecz wyświetlono o 37% mniej klatek.
+
+Następnie opcje wpływające na obraz: Wygładzanie krawędzi wyłączone (wył), Oświetlenie 3D wyłączone (wył) (5.6% mniej cykli CPU w zmierzonej scenie), Przezroczystość wyłączona (wył), Hak przeplotu, Pomijanie pikseli. Niższe Taktowanie PS1 CPU zmniejsza obciążenie, lecz może zakłócić synchronizację gry.
+
+Nie oczekuj pomocy od tych opcji: Szybki tryb GTE był o 6% wolniejszy w Gran Turismo; Wyjście GL było wolniejsze niż ścieżka programowa w zmierzonej scenie 320x240. Utrzymuj CPU na dynarec: interpreter to tryb wolny.
+
+[topic.nosound] Brak dźwięku lub obrazu
+Brak dźwięku: upewnij się, że Dźwięk (w sekcji DŹWIĘK) jest włączony (wł) i że po zmianie zrestartowano grę. Zwiększ głośność klawiszami bocznymi, # lub *. Jeśli opcja Zachowaj tonację jest włączona (wł), spróbuj ją wyłączyć (wył).
+
+Brak obrazu lub czarny ekran: naciśnij prawy klawisz wyboru i sprawdź ekran błędu. Nie znaleziono obrazu płyty ani BIOS-u oznacza, że brakuje plików: zobacz Pliki na karcie. Jeśli obraz jest nieprawidłowy po zmianie, wyłącz Bezpośredni rysunek lub Wyjście GL i zrestartuj grę.
+
+Brak BIOS-u: gra uruchamia się wtedy na wbudowanym zamienniku (HLE). Wiele gier się uruchamia, lecz kompatybilność jest gorsza. Umieść zrzut BIOS-u w E:\PS1\bios lub wybierz go w SYSTEM, BIOS.
+
+Obrazy płyt są wyświetlane w formatach bin, img, iso, pbp, cbn oraz cbin. Plik cue nie jest widoczny w przeglądarce gier: rdzeń dobiera go na podstawie nazwy pliku bin, dlatego trzymaj oba razem. Importowanie wyświetla pliki cue.
+
+[topic.files] Pliki na karcie
+E:\PS1\games zawiera obrazy płyt. Dodaj gry pozwala zaimportować je z dowolnego miejsca na karcie.
+
+E:\PS1\bios zawiera zrzut BIOS-u. Domyślna nazwa to scph7502.bin. Zrzut lub archiwum zip, rar albo 7z z nim można wybrać w SYSTEM, BIOS.
+
+E:\PS1\saves zawiera zapisane stany i karty pamięci.
+
+E:\PS1\cfg zawiera ps1_settings.txt z ustawieniami ogólnymi oraz po jednym małym pliku dla każdej gry z własnymi ustawieniami.
+
+E:\PS1\help zawiera te teksty: jeden plik na język, nazwany kodem języka (en.txt, uk.txt), w formacie UTF-8. Brakujący plik lub brakujący klucz powoduje powrót do języka angielskiego.
+
+E:\PS1\logs zawiera dzienniki uruchomień.
+
+[topic.game] Gra
+Gra: obraz płyty do uruchomienia. OK otwiera przeglądarkę plików w folderze bieżącej gry. Wybór innej płyty podczas działania gry wymaga restartu.
+
+Zapisz stan i Wczytaj stan: zobacz temat Zapisywanie.
+
+Dodaj gry...: importuje gry z karty. Oznacz pliki lub archiwa za pomocą OK, rozpocznij lewym klawiszem wyboru. Możesz spakować je do PBP, co oszczędza około 40%, lecz usuwa dane korekcji błędów i jest nieodwracalne, oraz usunąć oryginały. Importowanie płyty aktualnie uruchomionej gry zamyka ją.
+
+[topic.video] Wideo
+Gładkie skalowanie: uśrednia piksele przy pomniejszaniu obrazu o szerokości 640.
+
+Wygładzanie krawędzi: wygładza postrzępione krawędzie obiektów 3D, poziom od 1 do 5.
+
+Licznik FPS: wyświetla liczbę klatek na sekundę na obrazie.
+
+Reszta sekcji: Oświetlenie 3D (cieniowanie tekstur), Przezroczystość (obiekty półprzezroczyste), Pomijaj takie same klatki (brak przerysowywania niezmienionego obrazu), Bezpośredni rysunek (zapisuje bezpośrednio do bufora ekranu, wymaga restartu), Wyjście GL (wyświetla obraz przez OpenGL ES, wymaga restartu), Rysowanie programowe (tylko z GL: który rasteryzator rysuje), Hak przeplotu (tylko co druga linia) i Pomijanie pikseli (pomija piksele niewidoczne w trybach wysokiej rozdzielczości poziomej).
+
+[topic.speed] Prędkość
+Pomijanie klatek: nie rysuje niektórych klatek. Opcja auto pozwala rdzeniowi decydować o każdej klatce; 1 do 3 pomija tyle klatek pomiędzy narysowanymi.
+
+Reszta sekcji: CPU (dynarec lub interpreter, wymaga restartu), Szybki tryb GTE (wymaga restartu) i Taktowanie PS1 CPU.
+
+Taktowanie PS1 CPU jest wyświetlane w procentach normalnej prędkości. Niższe wartości dają grze mniej pracy na klatkę i mogą zaburzyć synchronizację. Działa natychmiast.
+
+[topic.sound] Dźwięk
+Dźwięk: wyjście dźwięku włączone (wł) lub wyłączone (wył), wymaga restartu.
+
+Zachowaj tonację: gdy gra działa poniżej pełnej prędkości, dźwięk jest rozciągany bez zmiany tonacji. Kosztuje to czas procesora i wymaga restartu.
+
+[topic.input] Sterowanie
+Profil sterowania: Domyślny, Wyścigi, Bijatyki lub RPG. OK zastępuje wszystkie przypisania klawiszy.
+
+Klawiatura: N95 (układ domyślny) lub C5 (to samo, plus 2, 4, 6, 8 jako drugi klawisz dla kierunków). OK zastępuje wszystkie przypisania klawiszy.
+
+Sterowanie...: przypisz każdy przycisk PS1 do klawisza; Lewo i Prawo włączają lub wyłączają przytrzym.
+
+Sterowanie przechyłem i jego cztery ustawienia: oś przechyłu na boki, oś przechyłu w przód i w tył, strefa martwa (od 0 do 40) i czułość (od 40% do 300%).
+
+[topic.system] System
+Język: język menu oraz tych tekstów, zmienia się natychmiast.
+
+BIOS: zrzut BIOS-u do użycia, wymaga restartu. Domyślnie scph7502.bin.
+
+Profil dla gry: opcja wł zachowuje osobny plik ustawień dla każdej gry.
+
+Resetuj ustawienia: przywraca wszystkie wartości domyślne; naciśnij OK dwukrotnie.

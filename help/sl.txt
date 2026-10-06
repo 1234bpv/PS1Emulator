@@ -1,0 +1,167 @@
+# Pomoč za PS1Emulator, slovenščina (angleščina je nadomestna za vse druge jezike). UTF-8.
+# Razdelki se začnejo z [ključ] na začetku vrstice.
+#   [hint.<id>] en stavek, prikazan v vrstici stanja za izbrano vrstico menija.
+#   [topic.<id>] Naslov, nato besedilo: en odstavek na vrstico, prazna vrstica je razmik.
+# Številke so meritve na Nokii N95 8GB, ne obljube: odvisne so od igre.
+
+[hint.start] Zažene izbrano igro z spodnjimi nastavitvami. Najprej se preverita slika diska in BIOS.
+[hint.resume] Vrne v igro točno tja, kjer ste jo pustili.
+[hint.restart] Vrstice z * so se spremenile: igra se začne znova, neshranjen napredek je izgubljen. Prej shranite stanje.
+[hint.exit] Shrani nastavitve in zapre emulator. Igra, ki teče, je izgubljena, če niste shranili stanja.
+
+[hint.sec.game] OK odpre ali zapre razdelek: igra, shranjena stanja in uvoz iger.
+[hint.game] Slika diska za igranje. OK odpre brskalnik datotek. Sprememba zahteva ponovni zagon igre.
+[hint.savestate] Shrani igro, ki teče, v prikazano mesto (Levo/Desno: 1-5). [*] za mestom pomeni, da je zasedeno in bo prepisano, [ ] pomeni, da je prazno.
+[hint.loadstate] Naloži prikazano mesto. Napredek po tistem shranjevanju je izgubljen.
+[hint.add] Uvozi igre s kartice: slike in arhive zip, rar ali 7z, po želji stisnjene v PBP.
+
+[hint.sec.video] OK odpre ali zapre razdelek: skaliranje, glajenje robov, števec sličic in stikala slike.
+[hint.smooth] Povpreči piksle, ko se slika širine 640 pomanjša. Izklop je v izmerjenem posnetku prihranil 4,6% časa delovanja.
+[hint.fxaa] Zgladi nazobčane robove 3D oblik; višja vrednost je močnejša. Stane hitrost: približno 17% manj sličic na preizkusnem posnetku.
+[hint.fps] Prikaže hitrost sličic čez sliko. Uporabno za presojo, kaj počnejo druga stikala.
+[hint.light] 3D osvetlitev. Izklop je hitrejši, a senčenje se izgubi: 5,6% manj ciklov CPU v izmerjenem prizoru Gran Turismo.
+[hint.blend] Polprosojnost (steklo, sij, sence). Izklop je hitrejši, a taki predmeti izgledajo napačno.
+[hint.dirty] Ne nariše znova slike, ki je igra ni spremenila. Izmerjeno: 6,7 ms prihranka na sličico, brez izgube kakovosti.
+[hint.dsa] Zapiše sličico neposredno v medpomnilnik zaslona. Izmerjeno: 0,93 ms prihranka na sličico. Zahteva ponovni zagon igre.
+[hint.gl] Prikaže sliko prek OpenGL ES telefona. V enem izmerjenem prizoru 320x240 je bilo počasneje kot brez njega. Zahteva ponovni zagon.
+[hint.swdraw] Samo z izhodom GL. Vklj.: riše programski rasterizator, GL le prikaže sličico. Izklj.: riše grafični čip.
+[hint.ilace] Nariše samo vsako drugo vrstico. Hitreje, a razpolovi navpično podrobnost.
+[hint.pixskip] Preskoči piksle, ki niso vidni v načinih z visoko vodoravno ločljivostjo. Malo hitreje.
+
+[hint.sec.speed] OK odpre ali zapre razdelek: preskok sličic in nastavitve procesorja. Večina zahteva ponovni zagon.
+[hint.gpuskip] Ne nariše nekaterih sličic. Samodejno pusti odločitev jedru. Na dirkalnem posnetku je 1 dal +27% hitrosti emulacije, a 37% manj prikazanih sličic.
+[hint.cpu] Dynarec prevede kodo PS1 v ARM in je hitri način. Interpreter je počasni način. Zahteva ponovni zagon.
+[hint.gtenf] Preskoči del izračuna zastavic geometrijskega koprocesorja. V Gran Turismo je bilo 6% počasneje, ker se geometrija spreminja. Zahteva ponovni zagon.
+[hint.cycle] Hitrost emuliranega procesorja PS1 v odstotkih. Nižja je lažja za telefon, a lahko poruši časovno usklajenost igre. Velja takoj.
+
+[hint.sec.sound] OK odpre ali zapre razdelek: izhod zvoka in višina tona.
+[hint.sound] Izhod zvoka. Izklop odstrani zvok in prihrani procesorski čas zvočne poti. Zahteva ponovni zagon igre.
+[hint.wsola] Ko igra teče pod polno hitrostjo, razteguje zvok brez spremembe višine tona. Na N95 stane po meritvi približno 6% časa sličice. Zahteva ponovni zagon.
+
+[hint.sec.input] OK odpre ali zapre razdelek: nabori tipk, dodelitev tipk in krmiljenje z nagibom.
+[hint.preset] Zamenja vse dodelitve tipk z že pripravljeno razporeditvijo. Levo/Desno izbira, OK uporabi. Vaše dodelitve so izgubljene.
+[hint.keybase] Osnovna razporeditev: N95 je privzeta; C5 sprejme tudi 2, 4, 6, 8 kot drugo tipko za smeri. OK jo uporabi in zamenja dodelitve.
+[hint.keys] Odpre stran z dodelitvijo tipk: OK, nato pritisnite tipko. Levo/Desno vklopi ali izklopi Drži za gumb.
+[hint.tilt] Krmili z nagibom telefona (pospeškomer). Način, kako držite telefon ob vrnitvi v igro, je nevtralni položaj.
+[hint.tiltside] Os krmilke, ki sledi nagibu vstran (LX, LY, RX, RY; minus jo obrne). Privzeto LX.
+[hint.tiltpitch] Os krmilke, ki sledi nagibu naprej in nazaj (LX, LY, RX, RY; minus jo obrne). Privzeto LY.
+[hint.tiltdead] Nagib, manjši od te vrednosti, se prezre. Od 0 do 40, privzeto 10.
+[hint.tiltsens] Kako močno krmilka sledi nagibu: od 40% do 300%, privzeto 100%.
+
+[hint.sec.system] OK odpre ali zapre razdelek: jezik, BIOS, profili iger in ponastavitev.
+[hint.lang] Jezik menija. Spremeni se takoj. Besedila pomoči mu sledijo; kjer besedila ni, se uporabi angleščina.
+[hint.bios] Izpis BIOS-a iz E:\PS1\bios. Brez njega teče vgrajena zamenjava (HLE) in združljivost je slabša. Zahteva ponovni zagon.
+[hint.profile] Vklj.: vsaka igra obdrži svoje nastavitve v E:\PS1\cfg, na primer tipke in stikala hitrosti. Izklj.: en nabor za vse igre.
+[hint.reset] Vrne vse nastavitve na privzete, tudi tipke in jezik. Dvakrat pritisnite OK. Shranjenih stanj ne spremeni.
+
+[hint.help] Odpre pomoč: prva nastavitev, tipke, shranjevanje, odpravljanje težav in opis vsake vrstice menija.
+
+[topic.setup] Prva nastavitev
+Ta tema odpre stran prve nastavitve, isto, ki jo emulator pokaže ob prvem zagonu.
+
+[topic.play] Tipke v igri
+Tipke menija: Gor in Dol premikata, Levo in Desno spreminjata vrednost, OK odpre vrstico ali jo preklopi, C in desna funkcijska tipka vrneta nazaj.
+
+Pomikanje po glavnem meniju: Gor in Dol se z zadnje vrstice zavrtita na prvo. Desno na glavi razdelka ga odpre, Levo ga zapre; odprtje enega razdelka zapre drugega. C znotraj razdelka ga zapre in pusti kazalec na njegovi glavi. OK na vrstici z vrednostjo jo spremeni povsem enako kot Desno.
+
+V igri desna funkcijska tipka odpre meni in zaustavi igro. Leva funkcijska tipka naredi posnetek zaslona. Ko pride klic ali preklopite v drug program, se igra zaustavi in meni se odpre sam.
+
+Privzete tipke: smerna tipka premika; OK ali 5 je Križec; 0 je Krog; 7 je Kvadrat; 9 je Trikotnik; 1 je L1; 3 je R1; 4 je L2; 6 je R2; 2 je Select; 8 je Start.
+
+Obe osnovi krmilita s smerno tipko. Vrstica Tipkovnica v razdelku Tipke izbere osnovno razporeditev: N95 je privzeta; C5 sprejme tudi 2, 4, 6 in 8 na številčnici kot drugo tipko za štiri smeri, za tiste, ki jim je to bolj priročno.
+
+Glasnost spreminjate s stranskima tipkama za glasnost ali s # (glasneje) in * (tišje), razen če sta ti tipki dodeljeni gumbu.
+
+Vsak gumb lahko dodelite v Tipke...: OK na gumbu, nato pritisnite tipko. Levo in Desno vklopita Drži: držani gumb ostane pritisnjen, dokler ga ne pritisnete znova, kar ustreza plinu v dirki.
+
+Krmiljenje z nagibom (Tipke) krmili z nagibom telefona. Potrebuje telefon s pospeškomerom, kot je N95; E90 in C5-00.2 ga nimata.
+
+Nevtralni položaj se vzame vsakič, ko se iz menija vrnete v igro. Za ponovno umerjanje odprite meni z desno funkcijsko tipko, držite telefon tako, kot želite igrati, in izberite Nadaljuj.
+
+[topic.saves] Shranjevanje
+Shranjeno stanje shrani celotno igro v enem trenutku. Odprite Igra, izberite Shrani stanje, z Levo in Desno izberite mesto (1 do 5) in pritisnite OK. [*] za številko mesta pomeni, da mesto že vsebuje stanje, [ ] pomeni, da je prazno. Naloži stanje ga obnovi.
+
+Shrani stanje in Naloži stanje se prikažeta le, ko igra teče in je izbrana.
+
+Datoteke stanj so v E:\PS1\saves, poimenovane po igri in mestu. Pomnilniški kartici igre, card1.mcd in card2.mcd, sta v isti mapi: vsebujeta shranjene igre, ki jih piše sama igra. Stanje in pomnilniška kartica sta med seboj neodvisna.
+
+Vrstice z * zahtevajo ponovni zagon igre. Neshranjen napredek je izgubljen, zato pred spremembo shranite stanje.
+
+[topic.slow] Če je igra počasna
+Spreminjajte eno stvar naenkrat in opazujte števec FPS (Video).
+
+Najprej poceni: Neposredno risanje in Preskoči enake sličice naj ostaneta vklopljena: ne stanejo kakovosti. Glajenje slike izklopljeno je v izmerjenem posnetku prihranilo 4,6% časa delovanja in le omehča tanke črte.
+
+Nato Preskok sličic. Samodejno je najnežnejše. Fiksna vrednost 1 je v izmerjeni dirki dala 27% višjo hitrost emulacije, a prikazanih je bilo 37% manj sličic.
+
+Nato tisto, kar stane sliko: Glajenje robov izklopljeno, 3D osvetlitev izklopljena (5,6% manj ciklov CPU v izmerjenem prizoru), Prosojnost izklopljena, Trik s prepletanjem, Preskok pikslov. Nižja Hitrost PS1 CPU olajša obremenitev, a lahko poruši časovno usklajenost igre.
+
+Od teh ne pričakujte pomoči: Hitri način GTE je bil v Gran Turismo 6% počasnejši; Izhod GL je bil počasnejši od programske poti v izmerjenem prizoru 320x240. CPU naj ostane na dynarec: interpreter je počasni način.
+
+[topic.nosound] Brez zvoka ali brez slike
+Brez zvoka: preverite, da je Zvok (v razdelku Zvok) vklopljen in da je bila igra po spremembi znova zagnana. Povečajte glasnost s stranskima tipkama, # ali *. Če je Ohrani višino tona vklopljeno, ga poskusite izklopiti.
+
+Brez slike ali črn zaslon: pritisnite desno funkcijsko tipko in preverite stran z napako. Slike diska ali BIOS-a ni pomeni, da datotek ni: glejte Datoteke na kartici. Če je slika po spremembi napačna, izklopite Neposredno risanje ali Izhod GL in znova zaženite igro.
+
+Brez BIOS-a: igra nato teče na vgrajeni zamenjavi (HLE). Mnoge igre se zaženejo, a združljivost je slabša. Dajte izpis BIOS-a v E:\PS1\bios ali izberite enega v Sistem, BIOS.
+
+Slike diskov so navedene v formatih bin, img, iso, pbp, cbn in cbin. Datoteka cue v brskalniku iger ni navedena: jedro jo izpelje iz bin po imenu, zato ju hranite skupaj. Uvoz datoteke cue navede.
+
+[topic.files] Datoteke na kartici
+E:\PS1\games hrani slike diskov. Dodaj igre omogoča uvoz od koderkoli na kartici.
+
+E:\PS1\bios hrani izpis BIOS-a. Privzeto ime je scph7502.bin. Izpis ali arhiv zip, rar ali 7z z njim lahko izberete v Sistem, BIOS.
+
+E:\PS1\saves hrani shranjena stanja in pomnilniški kartici.
+
+E:\PS1\cfg hrani ps1_settings.txt, splošne nastavitve, in po eno majhno datoteko za vsako igro z njenimi nastavitvami.
+
+E:\PS1\help hrani ta besedila: ena datoteka na jezik, poimenovana po kodi jezika (en.txt, uk.txt), v UTF-8. Manjkajoča datoteka ali ključ se nadomesti z angleščino.
+
+E:\PS1\logs hrani dnevnike delovanja.
+
+[topic.game] Igra
+Igra: slika diska za igranje. OK odpre brskalnik datotek v mapi trenutne igre. Izbira drugega diska med tekočo igro zahteva ponovni zagon.
+
+Shrani stanje in Naloži stanje: glejte temo Shranjevanje.
+
+Dodaj igre...: uvozi igre s kartice. Datoteke ali arhive označite z OK, začnite z levo funkcijsko tipko. Lahko jih stisnete v PBP, kar prihrani približno 40%, a odstrani podatke za popravljanje napak in se ne da razveljaviti, ter izbrišete izvirnike. Uvoz diska igre, ki teče, jo zapre.
+
+[topic.video] Video
+Glajenje slike: povpreči piksle, ko se slika širine 640 pomanjša.
+
+Glajenje robov: zgladi nazobčane robove 3D oblik, stopnja 1 do 5.
+
+Števec FPS: prikaže hitrost sličic čez sliko.
+
+Preostanek razdelka: 3D osvetlitev (senčenje tekstur), Prosojnost (polprosojni predmeti), Preskoči enake sličice (brez ponovnega risanja nespremenjene slike), Neposredno risanje (piše neposredno v medpomnilnik zaslona, zahteva ponovni zagon), Izhod GL (prikaže sliko prek OpenGL ES, zahteva ponovni zagon), Programsko risanje (samo z GL: kateri rasterizator riše), Trik s prepletanjem (samo vsaka druga vrstica) in Preskok pikslov (preskoči piksle, ki niso vidni v načinih z visoko vodoravno ločljivostjo).
+
+[topic.speed] Hitrost
+Preskok sličic: ne nariše nekaterih sličic. Samodejno pusti jedru odločitev za vsako sličico; 1 do 3 preskoči toliko sličic med narisanimi.
+
+Preostanek razdelka: CPU (dynarec ali interpreter, zahteva ponovni zagon), Hitri način GTE (zahteva ponovni zagon) in Hitrost PS1 CPU.
+
+Hitrost PS1 CPU je prikazana v odstotkih običajne hitrosti. Nižje vrednosti dajo igri manj dela na sličico in lahko porušijo njeno časovno usklajenost. Velja takoj.
+
+[topic.sound] Zvok
+Zvok: izhod zvoka vklopljen ali izklopljen, zahteva ponovni zagon.
+
+Ohrani višino tona: ko igra teče pod polno hitrostjo, se zvok razteguje brez spremembe višine tona. Stane procesorski čas in zahteva ponovni zagon.
+
+[topic.input] Tipke
+Nabor tipk: Privzeto, Dirke, Borbe ali RPG. OK zamenja vse dodelitve tipk.
+
+Tipkovnica: N95 (privzeta razporeditev) ali C5 (enako, plus 2, 4, 6, 8 kot druga tipka za smeri). OK zamenja vse dodelitve tipk.
+
+Tipke...: dodelite vsak gumb PS1 tipki; Levo in Desno vklopita ali izklopita Drži.
+
+Krmiljenje z nagibom in njegove štiri nastavitve: os za nagib vstran, os za nagib naprej in nazaj, mrtvo območje (0 do 40) in občutljivost (40% do 300%).
+
+[topic.system] Sistem
+Jezik: jezik menija in teh besedil, spremeni se takoj.
+
+BIOS: izpis BIOS-a, ki naj se uporabi, zahteva ponovni zagon. Privzeto je scph7502.bin.
+
+Profil igre: vklj. hrani ločeno datoteko nastavitev za vsako igro.
+
+Ponastavi nastavitve: vrne vse na privzeto; dvakrat pritisnite OK.

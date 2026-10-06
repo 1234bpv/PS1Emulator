@@ -1,0 +1,167 @@
+# Hilfetexte für PS1Emulator, Deutsch (auch Ausweichtext für alle anderen Sprachen). UTF-8.
+# Abschnitte beginnen mit [schlüssel] am Zeilenanfang.
+#   [hint.<id>] ein Satz in der Statuszeile für die ausgewählte Menüzeile.
+#   [topic.<id>] Titel, dann der Text: ein Absatz pro Zeile, Leerzeilen trennen.
+# Zahlen sind Messwerte auf einem Nokia N95 8GB, keine Garantien: sie hängen vom Spiel ab.
+
+[hint.start] Startet das ausgewählte Spiel mit den unten stehenden Einstellungen. CD-Abbild und BIOS werden zuerst geprüft.
+[hint.resume] Kehrt genau an die Stelle im Spiel zurück, an der Sie es verlassen haben.
+[hint.restart] Mit * markierte Zeilen geändert: Spiel startet neu und ungespeicherter Fortschritt geht verloren. Zuerst Spielstand speichern.
+[hint.exit] Speichert die Einstellungen und schließt den Emulator. Ein laufendes Spiel geht verloren, sofern kein Spielstand gespeichert wurde.
+
+[hint.sec.game] OK öffnet oder schließt den Abschnitt: Spiel, Spielstände und Importieren von Spielen.
+[hint.game] Das CD-Abbild zum Spielen. OK öffnet den Dateibrowser. Eine Änderung erfordert einen Neustart des Spiels.
+[hint.savestate] Speichert das laufende Spiel auf dem angezeigten Platz (Links/Rechts: 1-5). [*] hinter dem Platz bedeutet belegt und wird überschrieben, [ ] bedeutet leer.
+[hint.loadstate] Lädt den angezeigten Platz. Nach dieser Speicherung erzielter Fortschritt geht verloren.
+[hint.add] Importiert Spiele von der Speicherkarte: Abbilder sowie zip-, rar- oder 7z-Archive, optional als PBP gepackt.
+
+[hint.sec.video] OK öffnet oder schließt den Abschnitt: Skalierung, Kantenglättung, FPS-Anzeige und Bildschalter.
+[hint.smooth] Bildet Pixelmittelwerte beim Herunterskalieren eines 640 breiten Bildes. Aus sparte in einer Messung 4.6% Laufzeit.
+[hint.fxaa] Glättet gezackte Kanten von 3D-Formen; höher ist stärker. Kostet Tempo: ca. 17% weniger Frames in einer Testmessung.
+[hint.fps] Zeigt die Bildrate über dem Bild an. Nützlich zur Beurteilung der anderen Einstellungen.
+[hint.light] 3D-Beleuchtung. Aus ist schneller, aber die Schattierung geht verloren: 5.6% weniger CPU-Zyklen in einer gemessenen Gran Turismo-Szene.
+[hint.blend] Halbtransparenz (Glas, Leuchten, Schatten). Aus ist schneller, aber solche Objekte sehen fehlerhaft aus.
+[hint.dirty] Zeichnet ein Bild nicht neu, wenn das Spiel es nicht verändert hat. Gemessen: 6.7 ms Ersparnis pro Frame ohne Qualitätsverlust.
+[hint.dsa] Schreibt den Frame direkt in den Bildschirmpuffer. Gemessen: 0.93 ms Ersparnis pro Frame. Erfordert Neustart des Spiels.
+[hint.gl] Zeigt das Bild über das OpenGL ES des Telefons an. In einer gemessenen 320x240-Szene war es langsamer als ohne. Erfordert Neustart.
+[hint.swdraw] Nur bei GL-Ausgabe. Ein: Der Software-Rasterisierer zeichnet und GL zeigt nur den Frame an. Aus: Der Grafikchip zeichnet.
+[hint.ilace] Zeichnet nur jede zweite Zeile. Schneller, halbiert aber die vertikalen Details.
+[hint.pixskip] Überspringt Pixel, die bei hoher horizontaler Auflösung nicht sichtbar sind. Etwas schneller.
+
+[hint.sec.speed] OK öffnet oder schließt den Abschnitt: Frame-Skip und Prozessoreinstellungen. Die meisten erfordern einen Neustart.
+[hint.gpuskip] Zeichnet manche Frames nicht. Auto lässt den Kern entscheiden. Bei einem Rennspiel-Test ergab 1 +27% Emulationsrate, aber 37% weniger angezeigte Frames.
+[hint.cpu] Dynarec rekompiliert PS1-Code zu ARM und ist der schnelle Modus. Der Interpreter ist der langsame Modus. Erfordert Neustart.
+[hint.gtenf] Überspringt Teile der Flag-Berechnung des Geometrie-Coprozessors. In Gran Turismo war es 6% langsamer, da sich die Geometrie ändert. Erfordert Neustart.
+[hint.cycle] Takt des emulierten PS1-Prozessors in Prozent. Niedriger entlastet das Telefon, kann aber das Timing des Spiels stören. Gilt sofort.
+
+[hint.sec.sound] OK öffnet oder schließt den Abschnitt: Tonausgabe und Tonhöhe.
+[hint.sound] Tonausgabe. Aus schaltet den Ton ab und spart Rechenzeit des Audiopfads. Erfordert Neustart des Spiels.
+[hint.wsola] Dehnt den Ton ohne Änderung der Tonhöhe, wenn das Spiel unter voller Geschwindigkeit läuft. Kostet auf dem N95 gemessen ca. 6% einer Frame-Zeit. Erfordert Neustart.
+
+[hint.sec.input] OK öffnet oder schließt den Abschnitt: Tastenbelegungen, Tastenkonfiguration und Neigungssteuerung.
+[hint.preset] Ersetzt alle Tastenbelegungen durch ein fertiges Layout. Links/Rechts wählt aus, OK übernimmt. Eigene Belegungen gehen verloren.
+[hint.keybase] Das Basisschema: N95 ist Standard; C5 akzeptiert auch 2, 4, 6, 8 als Zweittaste für die Richtungen. OK übernimmt es und ersetzt die Belegungen.
+[hint.keys] Öffnet die Tastenbelegung: OK, dann Taste drücken. Links/Rechts schaltet Halten für eine Taste ein oder aus.
+[hint.tilt] Steuert über das Neigen des Telefons (Beschleunigungssensor). Die Haltung des Telefons bei der Rückkehr ins Spiel ist die Neutralstellung.
+[hint.tiltside] Die Stick-Achse für seitliche Neigung (LX, LY, RX, RY; ein Minus kehrt sie um). Standard LX.
+[hint.tiltpitch] Die Stick-Achse für Vor- und Zurückneigung (LX, LY, RX, RY; ein Minus kehrt sie um). Standard LY.
+[hint.tiltdead] Eine geringere Neigung wird ignoriert. Von 0 bis 40, Standard 10.
+[hint.tiltsens] Wie stark der Stick der Neigung folgt: 40% bis 300%, Standard 100%.
+
+[hint.sec.system] OK öffnet oder schließt den Abschnitt: Sprache, BIOS, Spielprofile und Standardwerte.
+[hint.lang] Die Menüsprache. Ändert sich sofort. Die Hilfetexte folgen ihr; fehlt ein Text, wird Englisch verwendet.
+[hint.bios] Das BIOS-Abbild aus E:\PS1\bios. Ohne dieses läuft der integrierte Ersatz (HLE) und die Kompatibilität ist schlechter. Erfordert Neustart.
+[hint.profile] Ein: Jedes Spiel behält eigene Einstellungen in E:\PS1\cfg, wie Tasten und Tempo-Schalter. Aus: einheitlich für alle Spiele.
+[hint.reset] Setzt alle Einstellungen auf Standard zurück, einschließlich Tasten und Sprache. OK zweimal drücken. Spielstände bleiben unberührt.
+
+[hint.help] Öffnet die Hilfe: Ersteinrichtung, Steuerung, Speichern, Problembehebung und Beschreibung jeder Menüzeile.
+
+[topic.setup] Ersteinrichtung
+Dieser Hilfepunkt öffnet die Seite der Ersteinrichtung, dieselbe, die der Emulator beim ersten Start anzeigt.
+
+[topic.play] Steuerung im Spiel
+Die Menütasten: Hoch und Runter bewegen, Links und Rechts ändern einen Wert, OK öffnet eine Zeile oder schaltet um, C und die rechte Auswahltaste führen zurück.
+
+Navigation im Hauptmenü: Hoch und Runter springen von der letzten Zeile zur ersten über. Rechts auf einem Abschnittstitel öffnet ihn und Links schließt ihn; das Öffnen eines Abschnitts schließt die anderen. C innerhalb eines Abschnitts schließt ihn und lässt den Cursor auf dem Titel stehen. OK auf einer Wertezeile ändert sie genau wie Rechts.
+
+Im Spiel öffnet die rechte Auswahltaste das Menü und pausiert das Spiel. Die linke Auswahltaste erstellt einen Screenshot. Wenn ein Anruf eingeht oder Sie zu einer anderen Anwendung wechseln, pausiert das Spiel und das Menü öffnet sich von selbst.
+
+Standardtasten: Das Steuerkreuz bewegt; OK oder 5 ist Kreuz; 0 ist Kreis; 7 ist Quadrat; 9 ist Dreieck; 1 ist L1; 3 ist R1; 4 ist L2; 6 ist R2; 2 ist Select; 8 ist Start.
+
+Beide Schemas steuern mit dem Steuerkreuz. Die Zeile Tastatur in Steuerung wählt das Basisschema: N95 ist das Standardlayout; C5 akzeptiert auch 2, 4, 6 und 8 auf der Zifferntastatur als Zweittaste für die vier Richtungen für jene, die dies handlicher finden.
+
+Die Lautstärke wird über die seitlichen Lautstärketasten geändert oder mit # (lauter) und * (leiser), sofern diese Tasten keiner Spielfunktion zugewiesen sind.
+
+Jede Taste kann in Steuerung... zugewiesen werden: OK auf einer Taste, dann die gewünschte Taste drücken. Links und Rechts schalten Halten ein: Eine gehaltene Taste bleibt gedrückt, bis sie erneut gedrückt wird, was sich für das Gaspedal in Rennen eignet.
+
+Neigungssteuerung (Steuerung) steuert über das Neigen des Telefons. Sie erfordert ein Telefon mit Beschleunigungssensor wie das N95; das E90 und das C5-00.2 besitzen keinen.
+
+Die Neutralstellung wird jedes Mal übernommen, wenn Sie aus dem Menü ins Spiel zurückkehren. Um neu zu kalibrieren, öffnen Sie das Menü mit der rechten Auswahltaste, halten das Telefon so, wie Sie spielen möchten, und wählen Fortsetzen.
+
+[topic.saves] Speichern
+Ein Spielstand speichert das gesamte Spiel in einem Augenblick. Öffnen Sie Spiel, wählen Sie Spielstand speichern, wählen Sie mit Links und Rechts einen Platz (1 bis 5) und drücken Sie OK. [*] nach der Platznummer bedeutet, dass der Platz bereits einen Spielstand enthält, [ ] bedeutet, dass er leer ist. Spielstand laden stellt ihn wieder her.
+
+Spielstand speichern und Spielstand laden erscheinen nur, wenn ein Spiel läuft und aktuell ausgewählt ist.
+
+Die Spielstand-Dateien liegen in E:\PS1\saves, benannt nach Spiel und Platz. Die Speicherkarten des Spiels, card1.mcd und card2.mcd, befinden sich im selben Ordner: Sie enthalten die Spielstände, die das Spiel selbst schreibt. Ein Spielstand und eine Speicherkarte sind unabhängig voneinander.
+
+Mit * markierte Zeilen erfordern einen Neustart des Spiels. Ungespeicherter Fortschritt geht verloren; speichern Sie daher einen Spielstand vor deren Änderung.
+
+[topic.slow] Wenn das Spiel langsam läuft
+Ändern Sie nur eine Einstellung nach der anderen und beobachten Sie die FPS-Anzeige (Video).
+
+Zuerst die ressourcensparenden Optionen. Direct Draw und Gleiche Frames überspringen sollten eingeschaltet bleiben: Sie kosten keine Qualität. Weiche Skalierung aus sparte in einer gemessenen Testszene 4.6% Laufzeit und schwächt lediglich feine Linien ab.
+
+Danach Frame-Skip. Auto ist am schonendsten. Ein fester Wert von 1 ergab in einer gemessenen Rennszene 27% mehr Emulationsgeschwindigkeit, jedoch wurden 37% weniger Frames angezeigt.
+
+Dann die Optionen, die Bildqualität kosten: Kantenglättung aus, 3D-Beleuchtung aus (5.6% weniger CPU-Zyklen in einer gemessenen Szene), Transparenz aus, Interlace-Hack, Pixelsprung. Ein niedrigerer PS1-CPU-Takt verringert die Last, kann aber das Timing des Spiels beeinträchtigen.
+
+Hiervon ist keine Hilfe zu erwarten: GTE-Schnellmodus war in Gran Turismo 6% langsamer; GL-Ausgabe war in einer gemessenen 320x240-Szene langsamer als der Software-Pfad. Belassen Sie CPU auf Dynarec: Der Interpreter ist der langsame Modus.
+
+[topic.nosound] Kein Ton oder kein Bild
+Kein Ton: Prüfen Sie, ob Ton (im Abschnitt Ton) ein ist und das Spiel nach der Änderung neu gestartet wurde. Erhöhen Sie die Lautstärke mit den Seitentasten, # oder *. Falls Tonhöhe halten ein ist, versuchen Sie, es auf aus zu stellen.
+
+Kein Bild oder ein schwarzer Bildschirm: Drücken Sie die rechte Auswahltaste und prüfen Sie die Fehlerseite. CD-Abbild oder BIOS nicht gefunden bedeutet, dass die Dateien fehlen: siehe Dateien auf der Karte. Falls das Bild nach einer Änderung fehlerhaft ist, schalten Sie Direct Draw oder GL-Ausgabe aus und starten Sie das Spiel neu.
+
+Kein BIOS: Das Spiel läuft dann mit dem integrierten Ersatz (HLE). Viele Spiele starten, die Kompatibilität ist jedoch schlechter. Legen Sie ein BIOS-Abbild nach E:\PS1\bios oder wählen Sie eines unter System, BIOS.
+
+CD-Abbilder werden in den Formaten bin, img, iso, pbp, cbn und cbin aufgelistet. Eine cue-Datei wird im Spielbrowser nicht aufgeführt: Der Kern leitet sie namensgleich aus der bin-Datei ab; belassen Sie daher beide zusammen. Der Import listet cue-Dateien auf.
+
+[topic.files] Dateien auf der Karte
+E:\PS1\games enthält die CD-Abbilder. Spiele hinzufügen ermöglicht ihren Import von jedem Ort der Speicherkarte.
+
+E:\PS1\bios enthält das BIOS-Abbild. Der Standardname lautet scph7502.bin. Ein Abbild oder ein zip-, rar- oder 7z-Archiv damit kann unter System, BIOS gewählt werden.
+
+E:\PS1\saves enthält die Spielstände und Speicherkarten.
+
+E:\PS1\cfg enthält ps1_settings.txt, die globalen Einstellungen, sowie je eine kleine Datei für jedes Spiel mit eigenen Einstellungen.
+
+E:\PS1\help enthält diese Texte: eine Datei pro Sprache, benannt nach dem Sprachcode (en.txt, de.txt), in UTF-8. Bei einer fehlenden Datei oder einem fehlenden Schlüssel wird auf Englisch zurückgegriffen.
+
+E:\PS1\logs enthält die Ausführungsprotokolle.
+
+[topic.game] Spiel
+Spiel: Das CD-Abbild zum Spielen. OK öffnet den Dateibrowser im Ordner des aktuellen Spiels. Die Auswahl einer anderen CD bei laufendem Spiel erfordert einen Neustart.
+
+Spielstand speichern und Spielstand laden: siehe das Thema Speichern.
+
+Spiele hinzufügen...: Importiert Spiele von der Speicherkarte. Dateien oder Archive mit OK markieren, mit der linken Auswahltaste starten. Sie können zu PBP komprimiert werden, was ca. 40% spart, jedoch Fehlerkorrekturdaten verwirft und nicht umkehrbar ist; Originale können gelöscht werden. Das Importieren der CD des laufenden Spiels beendet dieses.
+
+[topic.video] Video
+Weiche Skalierung: Bildet Pixelmittelwerte beim Herunterskalieren eines 640 breiten Bildes.
+
+Kantenglättung: Glättet gezackte Kanten von 3D-Formen, Stufe 1 bis 5.
+
+FPS-Anzeige: Zeigt die Bildrate über dem Bild an.
+
+Der Rest des Abschnitts: 3D-Beleuchtung (Schattierung von Texturen), Transparenz (halbtransparente Objekte), Gleiche Frames überspringen (kein Neuzeichnen bei unverändertem Bild), Direct Draw (schreibt direkt in den Bildschirmpuffer, erfordert Neustart), GL-Ausgabe (zeigt das Bild über OpenGL ES, erfordert Neustart), Software-Rendern (nur bei GL: welcher Rasterisierer zeichnet), Interlace-Hack (nur jede zweite Zeile) und Pixelsprung (überspringt Pixel, die bei hoher horizontaler Auflösung nicht sichtbar sind).
+
+[topic.speed] Tempo
+Frame-Skip: Zeichnet manche Frames nicht. Auto lässt den Kern für jeden Frame entscheiden; 1 bis 3 überspringen so viele Frames zwischen gezeichneten.
+
+Der Rest des Abschnitts: CPU (Dynarec oder Interpreter, erfordert Neustart), GTE-Schnellmodus (erfordert Neustart) und PS1-CPU-Takt.
+
+PS1-CPU-Takt wird in Prozent der Normalgeschwindigkeit angezeigt. Niedrigere Werte verringern den Rechenaufwand des Spiels pro Frame, können aber das Timing stören. Gilt sofort.
+
+[topic.sound] Ton
+Ton: Tonausgabe ein oder aus, erfordert Neustart.
+
+Tonhöhe halten: Läuft das Spiel unter voller Geschwindigkeit, wird der Ton ohne Änderung der Tonhöhe gedehnt. Das kostet Prozessorzeit und erfordert einen Neustart.
+
+[topic.input] Steuerung
+Steuerungsprofil: Standard, Rennen, Kampf oder RPG. OK ersetzt alle Tastenbelegungen.
+
+Tastatur: N95 (das Standardlayout) oder C5 (dasselbe plus 2, 4, 6, 8 als Zweittaste für die Richtungen). OK ersetzt alle Tastenbelegungen.
+
+Steuerung...: Jeder PS1-Taste eine Telefontaste zuweisen; Links und Rechts schalten Halten ein oder aus.
+
+Neigungssteuerung und ihre vier Einstellungen: Die Achse für seitliche Neigung, die Achse für Vor- und Zurückneigung, die Totzone (0 bis 40) und die Empfindlichkeit (40% bis 300%).
+
+[topic.system] System
+Sprache: Die Sprache des Menüs und dieser Hilfetexte, ändert sich sofort.
+
+BIOS: Das zu verwendende BIOS-Abbild, erfordert Neustart. Standard ist scph7502.bin.
+
+Spielprofil: Ein behält für jedes Spiel eine separate Einstellungsdatei bei.
+
+Standardwerte: Setzt alles auf die Standardwerte zurück; OK zweimal drücken.

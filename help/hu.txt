@@ -1,0 +1,167 @@
+# PS1Emulator súgószövegek, magyar (egyben tartalék minden más nyelvhez). UTF-8.
+# A szakaszok sora a sor elején található [kulcs] elemmel kezdődik.
+#   [hint.<id>] egy mondat az állapotsoron a kiválasztott menüsorhoz.
+#   [topic.<id>] Cím, majd a szöveg: soronként egy bekezdés, az üres sor térköz.
+# A számok mérések egy Nokia N95 8GB készüléken, nem ígéretek: a játéktól függenek.
+
+[hint.start] Elindítja a kiválasztott játékot az alábbi beállításokkal. Előbb ellenőrzi a lemezképet és a BIOS-t.
+[hint.resume] Visszatér a játékba pontosan oda, ahol abbahagyta.
+[hint.restart] A *-gal jelölt sorok módosultak: a játék újraindul, a mentetlen haladás elvész. Előbb mentsen állást.
+[hint.exit] Menti a beállításokat és bezárja az emulátort. A futó játék elvész, hacsak nem mentett állást.
+
+[hint.sec.game] Az OK megnyitja vagy bezárja a szakaszt: a játék, mentett állások és játékok importálása.
+[hint.game] A játszani kívánt lemezkép. Az OK megnyitja a fájlkezelőt. Módosítása játék-újraindítást igényel.
+[hint.savestate] Menti a futó játékot a jelzett helyre (Balra/Jobbra: 1-5). A [*] a hely után azt jelzi, hogy foglalt és felülíródik, a [ ] azt, hogy üres.
+[hint.loadstate] Betölti a jelzett mentést. Az azóta elért haladás elvész.
+[hint.add] Játékokat importál a kártyáról: lemezképeket és zip, rar vagy 7z archívumokat, opcionálisan PBP-be csomagolva.
+
+[hint.sec.video] Az OK megnyitja vagy bezárja a szakaszt: méretezés, élsimítás, a képkocka-számláló és a képi kapcsolók.
+[hint.smooth] Átlagolja a képpontokat a 640 széles kép lekicsinyítésekor. A Ki állás 4.6% futásidőt spórolt egy mért jelenetben.
+[hint.fxaa] Simítja a 3D alakzatok recés éleit; a magasabb erősebb. Sebességbe kerül: kb. 17%-kal kevesebb képkocka egy tesztben.
+[hint.fps] Megjeleníti a képkockasebességet a kép felett. Hasznos a többi kapcsoló hatásának megítéléséhez.
+[hint.light] 3D világítás. A Ki gyorsabb, de az árnyalás elvész: 5.6%-kal kevesebb CPU-ciklus egy mért Gran Turismo jelenetben.
+[hint.blend] Félig átlátszóság (üveg, ragyogás, árnyékok). A Ki gyorsabb, de az ilyen objektumok hibásan jelennek meg.
+[hint.dirty] Nem rajzolja újra a játék által változatlanul hagyott képet. Mérés alapján: 6.7 ms nyereség képkockánként, minőségromlás nélkül.
+[hint.dsa] A képkockát közvetlenül a képernyőpufferbe írja. Mérés alapján: 0.93 ms nyereség képkockánként. Játék-újraindítást igényel.
+[hint.gl] A képet a telefon OpenGL ES felületén keresztül jeleníti meg. Egy mért 320x240-es jelenetben lassabb volt, mint nélküle. Újraindítást igényel.
+[hint.swdraw] Csak GL kimenet mellett. Be: a szoftveres raszterező rajzol, és a GL csak megjeleníti a képkockát. Ki: a grafikus chip rajzol.
+[hint.ilace] Csak minden második sort rajzolja meg. Gyorsabb, de felezi a függőleges részletességet.
+[hint.pixskip] Kihagyja azokat a képpontokat, amelyek a nagy vízszintes felbontású módokban nem láthatók. Kicsit gyorsabb.
+
+[hint.sec.speed] Az OK megnyitja vagy bezárja a szakaszt: képkocka-kihagyás és a processzorbeállítások. A legtöbb újraindítást igényel.
+[hint.gpuskip] Egyes képkockákat nem rajzol ki. Az auto módban a mag dönt. Egy versenyjelenetben az 1-es érték +27% emulációs sebességet adott, de 37%-kal kevesebb megjelenített képkockát.
+[hint.cpu] A dynarec a PS1 kódját ARM-re fordítja, ez a gyors mód. Az értelmező a lassú mód. Újraindítást igényel.
+[hint.gtenf] Kihagyja a geometriai társprocesszor néhány jelzőszámítását. Gran Turismo alatt 6%-kal lassabb volt, mert a geometria változik. Újraindítást igényel.
+[hint.cycle] Az emulált PS1 processzor sebessége százalékban. Az alacsonyabb érték kevésbé terheli a telefont, de felboríthatja a játék időzítését. Azonnal érvényesül.
+
+[hint.sec.sound] Az OK megnyitja vagy bezárja a szakaszt: hangkimenet és hangmagasság.
+[hint.sound] Hangkimenet. A Ki kikapcsolja a hangot és megspórolja az audió ág processzoridejét. Játék-újraindítást igényel.
+[hint.wsola] Ha a játék teljes sebesség alatt fut, megnyújtja a hangot a hangmagasság megváltoztatása nélkül. N95-ön mérés alapján a képkockaidő kb. 6%-ába kerül. Újraindítást igényel.
+
+[hint.sec.input] Az OK megnyitja vagy bezárja a szakaszt: billentyűkiosztások, gombtársítás és döntéses irányítás.
+[hint.preset] Az összes gombtársítást felülírja egy kész elrendezéssel. Balra/Jobbra választ, OK érvényesít. A saját társítások elvesznek.
+[hint.keybase] Az alapelrendezés: az N95 az alapértelmezett; a C5 a 2, 4, 6, 8 gombokat is elfogadja második billentyűként az irányokhoz. Az OK érvényesíti és felülírja a társításokat.
+[hint.keys] Megnyitja a billentyűtársítási oldalt: OK, majd nyomja meg a gombot. A Balra/Jobbra be- vagy kikapcsolja a Tartás módot egy gombon.
+[hint.tilt] A telefon döntésével irányít (gyorsulásmérő). Ahogyan a telefont tartja a játékba való visszatéréskor, az lesz a semleges helyzet.
+[hint.tiltside] Az analóg kar tengelye, amely az oldalra döntést követi (LX, LY, RX, RY; a mínuszjel megfordítja). Alapértelmezett: LX.
+[hint.tiltpitch] Az analóg kar tengelye, amely az előre és hátra döntést követi (LX, LY, RX, RY; a mínuszjel megfordítja). Alapértelmezett: LY.
+[hint.tiltdead] Az ennél kisebb döntést figyelmen kívül hagyja. 0-tól 40-ig, alapértelmezett: 10.
+[hint.tiltsens] Milyen erősen kövesse a kar a döntést: 40%-tól 300%-ig, alapértelmezett: 100%.
+
+[hint.sec.system] Az OK megnyitja vagy bezárja a szakaszt: nyelv, BIOS, játékonkénti profilok és alapbeállítások.
+[hint.lang] A menü nyelve. Azonnal megváltozik. A súgószövegek követik; ahol hiányzik a szöveg, ott az angol jelenik meg.
+[hint.bios] A BIOS-másolat a(z) E:\PS1\bios mappából. Nélküle a beépített helyettesítő (HLE) fut, és a kompatibilitás gyengébb. Újraindítást igényel.
+[hint.profile] Be: minden játék saját beállításokat tart a(z) E:\PS1\cfg mappában, mint a gombok és sebességkapcsolók. Ki: egy közös beállítás minden játéknak.
+[hint.reset] Minden beállítást visszaállít az alapértelmezettre, a gombokat és a nyelvet is beleértve. Nyomja meg kétszer az OK gombot. A mentéseket nem érinti.
+
+[hint.help] Megnyitja a súgót: első beállítás, irányítás, mentés, hibaelhárítás és az összes menüsor leírása.
+
+[topic.setup] Első beállítás
+Ez a téma megnyitja az első beállítás oldalát, ugyanazt, amelyet az emulátor az első indításkor mutat.
+
+[topic.play] Irányítás a játékban
+A menübillentyűk: a Fel és Le mozgat, a Balra és Jobbra értéket módosít, az OK megnyitja a sort vagy átváltja, a C és a jobb választógomb visszalép.
+
+Navigáció a főmenüben: a Fel és Le körbefordul az utolsó sorról az elsőre. A Jobbra egy szakaszfejlécen megnyitja azt, a Balra pedig bezárja; az egyik szakasz megnyitása bezárja a másikat. A C a szakaszon belül bezárja azt, és a kurzort a fejlécén hagyja. Az OK egy értéksoron pontosan úgy módosítja azt, mint a Jobbra.
+
+Játék közben a jobb választógomb megnyitja a menüt és szünetelteti a játékot. A bal választógomb képernyőképet készít. Ha hívás érkezik, vagy átvált egy másik alkalmazásra, a játék szünetel és a menü magától megnyílik.
+
+Alapértelmezett gombok: az iránygombok mozgatnak; az OK vagy 5 a Kereszt; 0 a Kör; 7 a Négyzet; 9 a Háromszög; 1 az L1; 3 az R1; 4 az L2; 6 az R2; 2 a Select; 8 a Start.
+
+Mindkét alap az iránygombokkal vezérel. A Billentyűzet sor az Irányítás alatt kiválasztja az alapelrendezést: az N95 az alapértelmezett; a C5 a számbillentyűzet 2, 4, 6 és 8 gombját is elfogadja a négy irány második billentyűjeként azok számára, akiknek ez kényelmesebb.
+
+A hangerő az oldalsó hangerőgombokkal módosítható, vagy a # (hangosabb) és * (halkabb) gombokkal, kivéve, ha ezek a gombok funkcióhoz vannak rendelve.
+
+Minden gomb hozzárendelhető az Irányítás... menüpontban: OK a gombon, majd nyomja meg a kívánt billentyűt. A Balra és Jobbra bekapcsolja a Tartás módot: a nyomva tartott gomb lenyomva marad, amíg újra meg nem nyomja, ami jól használható gázadásra versenyben.
+
+A Döntéses irányítás (Irányítás) a telefon döntésével vezérel. Gyorsulásmérővel rendelkező telefont igényel, mint amilyen az N95; az E90 és a C5-00.2 nem rendelkezik ilyennel.
+
+A semleges helyzet minden alkalommal rögzítésre kerül, amikor a menüből visszatér a játékba. Az újrakalibráláshoz nyissa meg a menüt a jobb választógombbal, tartsa a telefont úgy, ahogyan játszani szeretne, és válassza a Folytatás lehetőséget.
+
+[topic.saves] Mentés
+Az állásmentés az egész játékot elmenti egy adott pillanatban. Nyissa meg a Játék menüt, válassza az Állás mentése pontot, válasszon egy helyet a Balra és Jobbra gombokkal (1-től 5-ig), majd nyomja meg az OK gombot. A [*] a hely száma után azt jelenti, hogy a hely már tartalmaz mentést, a [ ] azt, hogy üres. Az Állás betöltése visszaállítja azt.
+
+Az Állás mentése és Állás betöltése csak akkor jelenik meg, ha a játék fut és az van kiválasztva.
+
+A mentésfájlok a(z) E:\PS1\saves mappában találhatók, a játék és a hely száma alapján elnevezve. A játék memóriakártyái, a card1.mcd és a card2.mcd, ugyanebben a mappában vannak: ezek tartalmazzák azokat a mentéseket, amelyeket maga a játék ír. Az elmentett állás és a memóriakártya független egymástól.
+
+A *-gal jelölt sorokhoz játék-újraindítás szükséges. A mentetlen haladás elvész, ezért mentse el az állást a módosításuk előtt.
+
+[topic.slow] Ha a játék lassú
+Egyszerre csak egy dolgot változtasson, és figyelje az FPS-számlálót (Videó).
+
+Először az egyszerűbbeket. A Közvetlen rajzolás és az Azonos képkockák kihagyása maradjon bekapcsolva: nem rontják a minőséget. A Sima méretezés kikapcsolása 4.6% futásidőt takarított meg egy mért jelenetben, és csak a finom vonalakat lágyítja.
+
+Ezután a Képkocka-kihagyás. Az auto a legkíméletesebb. Egy mért versenyen az 1-es rögzített érték 27%-kal nagyobb emulációs sebességet adott, de 37%-kal kevesebb képkocka jelent meg.
+
+Ezután a képminőséget érintők: Élsimítás ki, 3D világítás ki (5.6%-kal kevesebb CPU-ciklus egy mért jelenetben), Átlátszóság ki, Váltottsoros trükk, Pixelkihagyás. Az alacsonyabb PS1 CPU-sebesség csökkenti a terhelést, de felboríthatja a játék időzítését.
+
+Ezekről ne várjon segítséget: a GTE gyorsmód 6%-kal lassabb volt Gran Turismo alatt; a GL kimenet lassabb volt a szoftveres útnál egy mért 320x240-es jelenetben. A CPU maradjon dynarec beállításon: az értelmező a lassú mód.
+
+[topic.nosound] Nincs hang vagy nincs kép
+Nincs hang: ellenőrizze, hogy a Hang (a Hang szakaszban) be van-e kapcsolva, és hogy a játék újra lett-e indítva a módosítás után. Növelje a hangerőt az oldalsó gombokkal, a #-tel vagy *-gal. Ha a Hangmagasság-tartás be van kapcsolva, próbálja meg kikapcsolni.
+
+Nincs kép vagy fekete a képernyő: nyomja meg a jobb választógombot, és ellenőrizze a hibaoldalt. A Lemezkép vagy BIOS nem található azt jelenti, hogy a fájlok hiányoznak: lásd a Fájlok a kártyán részt. Ha a kép rossz egy módosítás után, kapcsolja ki a Közvetlen rajzolás vagy GL kimenet opciót, és indítsa újra a játékot.
+
+Nincs BIOS: a játék ekkor a beépített helyettesítővel (HLE) fut. Sok játék elindul, de a kompatibilitás gyengébb. Helyezzen egy BIOS-fájlt a(z) E:\PS1\bios mappába, vagy válasszon egyet a Rendszer, BIOS menüpontban.
+
+A lemezképek bin, img, iso, pbp, cbn és cbin formátumokban jelennek meg. A cue fájl nem szerepel a játékböngészőben: a mag név alapján származtatja a bin fájlból, ezért tartsa őket együtt. Az importálás listázza a cue fájlokat.
+
+[topic.files] Fájlok a kártyán
+A(z) E:\PS1\games tartalmazza a lemezképeket. A Játék hozzáadása lehetővé teszi az importálásukat a kártya bármely pontjáról.
+
+A(z) E:\PS1\bios tartalmazza a BIOS-fájlt. Az alapértelmezett név scph7502.bin. Egy másolat vagy egy azt tartalmazó zip, rar vagy 7z archívum kiválasztható a Rendszer, BIOS menüpontban.
+
+A(z) E:\PS1\saves tartalmazza a mentett állásokat és a memóriakártyákat.
+
+A(z) E:\PS1\cfg tartalmazza a ps1_settings.txt fájlt, a globális beállításokat, és egy kis fájlt minden saját beállításokkal rendelkező játékhoz.
+
+A(z) E:\PS1\help tartalmazza ezeket a szövegeket: nyelvenként egy fájl a nyelvkóddal elnevezve (en.txt, uk.txt), UTF-8 kódolással. Hiányzó fájl vagy kulcs esetén az angolra vált vissza.
+
+A(z) E:\PS1\logs tartalmazza a futási naplókat.
+
+[topic.game] Játék
+Játék: a játszani kívánt lemezkép. Az OK megnyitja a fájlböngészőt az aktuális játék mappájában. Másik lemez kiválasztása futó játék közben újraindítást igényel.
+
+Állás mentése és Állás betöltése: lásd a Mentés témakört.
+
+Játék hozzáadása...: játékokat importál a kártyáról. Jelölje ki a fájlokat vagy archívumokat az OK gombbal, indítsa el a bal választógombbal. Becsomagolhatja őket PBP formátumba, ami kb. 40%-ot takarít meg, de eldobja a hibajavítási adatokat és nem vonható vissza, valamint törölheti az eredetiket. A futó játék lemezének importálása bezárja a játékot.
+
+[topic.video] Videó
+Sima méretezés: átlagolja a képpontokat a 640 széles kép lekicsinyítésekor.
+
+Élsimítás: simítja a 3D alakzatok recés éleit, 1-től 5-ös szintig.
+
+FPS-számláló: megjeleníti a képkockasebességet a kép felett.
+
+A szakasz többi része: 3D világítás (textúrák árnyalása), Átlátszóság (félig átlátszó objektumok), Azonos képkockák kihagyása (változatlan kép esetén nincs újrarajzolás), Közvetlen rajzolás (közvetlenül a képernyőpufferbe ír, újraindítást igényel), GL kimenet (a képet az OpenGL ES-en keresztül mutatja, újraindítást igényel), Szoftveres rajzolás (csak GL mellett: melyik raszterező rajzol), Váltottsoros trükk (csak minden második sor) és Pixelkihagyás (kihagyja a nagy vízszintes felbontású módokban nem látható képpontokat).
+
+[topic.speed] Sebesség
+Képkocka-kihagyás: egyes képkockákat nem rajzol ki. Az auto módban a mag dönt minden képkockánál; az 1-től 3-ig terjedő értékek annyi képkockát hagynak ki a kirajzoltak között.
+
+A szakasz többi része: CPU (dynarec vagy értelmező, újraindítást igényel), GTE gyorsmód (újraindítást igényel) és PS1 CPU-sebesség.
+
+A PS1 CPU-sebesség a normál sebesség százalékában jelenik meg. Az alacsonyabb értékek kevesebb munkát adnak a játéknak képkockánként, és felboríthatják az időzítését. Azonnal érvényesül.
+
+[topic.sound] Hang
+Hang: hangkimenet be vagy ki, újraindítást igényel.
+
+Hangmagasság-tartás: ha a játék teljes sebesség alatt fut, a hang megnyúlik a hangmagasság megváltoztatása nélkül. Processzoridőbe kerül és újraindítást igényel.
+
+[topic.input] Irányítás
+Irányítási séma: Alapértelmezett, Verseny, Verekedős vagy RPG. Az OK felülír minden gombtársítást.
+
+Billentyűzet: N95 (az alapértelmezett elrendezés) vagy C5 (ugyanez, plusz a 2, 4, 6, 8 második billentyűként az irányokhoz). Az OK felülír minden gombtársítást.
+
+Irányítás...: rendeljen minden PS1 gombot egy billentyűhöz; a Balra és Jobbra be- vagy kikapcsolja a Tartás módot.
+
+Döntéses irányítás és annak négy beállítása: az oldalirányú döntés tengelye, az előre és hátra döntés tengelye, a holttér (0-tól 40-ig) és az érzékenység (40%-tól 300%-ig).
+
+[topic.system] Rendszer
+Nyelv: a menü és ezen szövegek nyelve, azonnal megváltozik.
+
+BIOS: a használandó BIOS-fájl, újraindítást igényel. Alapértelmezett: scph7502.bin.
+
+Játékonkénti profil: be esetén külön beállításfájlt tart fenn minden játékhoz.
+
+Alapbeállítások: mindent visszaállít az alapértékekre; nyomja meg kétszer az OK gombot.
