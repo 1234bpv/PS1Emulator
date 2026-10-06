@@ -25,8 +25,8 @@ memory card, with sound, save states and the full PlayStation controller
 mapped to the phone keys. How fast a game runs depends on the game and on the
 phone. On the Nokia C5-00.2 and on an overclocked Nokia N95 8GB the twelve
 games measured so far run at between 28% and about 100% of the speed of a real
-PlayStation; on an N95 8GB at its factory clock they run at between 18% and
-44%. The full table is in [Game speed](#game-speed).
+PlayStation; on an N95 8GB at its factory clock they run at between 22% and
+79%. The full table is in [Game speed](#game-speed).
 
 The emulator offers the following:
 
@@ -78,23 +78,24 @@ The first number is the speed of the emulated PlayStation as a share of the
 real console, where 100% is full speed. The second is the number of pictures
 per second that reached the screen. All games are NTSC versions and the
 emulator ran with its default settings and sound on. Each figure is the median
-of three runs. The measurements were made on 2026-10-05 with release alpha
-1.3.
+of three runs. The measurements were made with release alpha 1.3, on
+2026-10-05 for the C5-00.2 and the overclocked N95 and on 2026-10-06 for the
+N95 at its factory clock.
 
 | Game | C5-00.2 | N95 8GB, 330 MHz | N95 8GB, 426 MHz |
 |---|---|---|---|
-| Castlevania: Symphony of the Night | 56.8% / 34.1 fps | 31.2% / 18.7 fps | 57.9% / 34.7 fps |
-| Colin McRae Rally 2.0 | 32.0% / 9.5 fps | 18.4% / 5.5 fps | 28.5% / 8.5 fps |
-| Colony Wars | 65.0% / 19.5 fps | 34.5% / 10.4 fps | 68.0% / 20.4 fps |
-| Crash Bandicoot | 52.8% / 15.9 fps | 26.3% / 7.9 fps | 45.0% / 13.5 fps |
-| Gran Turismo | 58.3% / 17.5 fps | 30.7% / 9.2 fps | 57.1% / 17.1 fps |
-| Need for Speed: Porsche Unleashed | 46.7% / 13.8 fps | 26.1% / 7.7 fps | 44.9% / 13.3 fps |
-| Rayman | 66.0% / 39.6 fps | 39.5% / 23.7 fps | 84.6% / 50.8 fps |
-| RC Helicopter | 53.1% / 31.9 fps | 29.3% / 17.6 fps | 52.1% / 31.3 fps |
-| Star Trek: Invasion | 84.7% / 25.4 fps | 41.9% / 12.6 fps | 93.0% / 27.9 fps |
-| Warzone 2100 | 82.3% / 16.5 fps | 37.1% / 7.4 fps | 74.3% / 14.9 fps |
-| Wing Commander III | 100.1% / 24.0 fps | 44.1% / 10.6 fps | 104.3% / 25.0 fps |
-| WipEout | 68.5% / 20.6 fps | 35.2% / 10.5 fps | 67.9% / 20.4 fps |
+| Castlevania: Symphony of the Night | 56.8% / 34.1 fps | 44.8% / 26.9 fps | 57.9% / 34.7 fps |
+| Colin McRae Rally 2.0 | 32.0% / 9.5 fps | 22.3% / 6.6 fps | 28.5% / 8.5 fps |
+| Colony Wars | 65.0% / 19.5 fps | 51.7% / 15.5 fps | 68.0% / 20.4 fps |
+| Crash Bandicoot | 52.8% / 15.9 fps | 35.1% / 10.5 fps | 45.0% / 13.5 fps |
+| Gran Turismo | 58.3% / 17.5 fps | 43.8% / 13.2 fps | 57.1% / 17.1 fps |
+| Need for Speed: Porsche Unleashed | 46.7% / 13.8 fps | 34.8% / 10.3 fps | 44.9% / 13.3 fps |
+| Rayman | 66.0% / 39.6 fps | 65.2% / 39.1 fps | 84.6% / 50.8 fps |
+| RC Helicopter | 53.1% / 31.9 fps | 40.4% / 24.2 fps | 52.1% / 31.3 fps |
+| Star Trek: Invasion | 84.7% / 25.4 fps | 71.1% / 21.3 fps | 93.0% / 27.9 fps |
+| Warzone 2100 | 82.3% / 16.5 fps | 57.7% / 11.5 fps | 74.3% / 14.9 fps |
+| Wing Commander III | 100.1% / 24.0 fps | 79.4% / 19.1 fps | 104.3% / 25.0 fps |
+| WipEout | 68.5% / 20.6 fps | 52.6% / 15.8 fps | 67.9% / 20.4 fps |
 
 The third column is the N95 8GB overclocked with
 [SymbianOverclock](https://github.com/1234bpv/SymbianOverclock): multiplier
@@ -112,15 +113,16 @@ differences smaller than that between the columns mean nothing. Wing
 Commander III reaches full speed on the C5-00.2 and on the overclocked N95;
 a figure slightly above 100% is full speed within that spread.
 
-The overclocked column needs one warning. Raising the processor and the bus by
-29% made the games between 55% and 136% faster in these series, and that is
-more than the clock change can explain: in a controlled experiment a 51% faster
-processor made Gran Turismo only 16% faster. The factory-clock series were run
-before several manual restarts of the phone and the overclocked series after
-them, so the state of the phone is not separated from the clock in these data.
-The factory column is also slower relative to the C5-00.2 than in an earlier
-comparison. Until a repeat separates the two effects, the overclocked column
-shows what was measured, not what the clock alone gives. The details are in
+Raising the N95's processor and bus by 29% makes every one of the twelve games
+between 28% and 32% faster, so the gain follows the clock almost exactly. The
+C5-00.2, with its 600 MHz processor but no 3D chip, is between as fast as and
+1.5 times as fast as the N95 at its factory clock, and within about 20% of the
+overclocked N95 in either direction, depending on the game.
+
+The factory column was measured twice. The first series, on 2026-10-05, took
+21% to 80% longer than the repeat on 2026-10-06, on the same clock, the
+same saved states and the same emulator file, and it is not used here. The
+details are in
 [How the game speed is measured](#how-the-game-speed-is-measured).
 
 ## Before you install
@@ -379,8 +381,7 @@ NTSC). The shown frame rate counts the frames copied to the screen by direct
 output, so it is the rate of screen updates; it does not prove that every
 update showed a different picture.
 
-Every game ran three times on each configuration, 108 accepted runs in total.
-The emulator file was the alpha 1.3 release, identical on both phones and
+Every game ran three times on each configuration. The emulator file was the alpha 1.3 release, identical on both phones and
 checked by its SHA-256 hash. The N95's clock registers were read before and
 after every series of three runs; only read-only probes were used during the
 series. Runs spoiled by a Bluetooth dialog over the picture, by a game image
@@ -396,16 +397,23 @@ and its `evidence` folder.
 
 ### What these numbers do not show
 
-The overclocked N95 series ran after several manual restarts of the phone and
-the factory-clock series before them. Its gain of 55% to 136% from a 29% clock
-increase contradicts the controlled clock experiment described above, so a
-part of the difference must come from something other than the clock. The
-factory column also looks slow against the C5-00.2: here the C5-00.2 is 1.7
-to 2.3 times faster, while an earlier comparison on Gran Turismo, without sound
-and without direct output, gave 1.39. What changed the N95's speed between the
-series has not been established. Until a repeat on one boot of the phone
-separates the clock from the state of the phone, the gain from overclocking in
-the table must not be read as the gain from the clock alone.
+The first factory-clock series on the N95, on 2026-10-05, made the overclock
+look worth 55% to 136%, far more than a 29% clock change can give. A repeat on
+2026-10-06, on the same clock read back from the registers and with the same
+states, settings, script and emulator file, ran every game faster: the first
+series had taken 21% to 80% longer, depending on the game. The emulated work was identical: in Gran Turismo both series
+executed exactly 733 371 181 PlayStation cycles and showed 601 frames, and only
+the time differed. The table uses the repeat, and against it the overclock is
+worth 28% to 32%.
+
+The slow state is not a one-off. In the repeat, the first of three Wing
+Commander III runs took 53.2 seconds against 25.4 and 25.1 for the other two,
+and it was slow evenly from its first second, emulating about 44 million
+PlayStation cycles per second instead of 94 million. That run was discarded
+and the game repeated: 25.2, 25.5 and 25.1 seconds. What puts the phone into
+this state, about twice as slow on the same clock, has not been established.
+A single run on the N95 therefore proves little, and a series whose three runs
+disagree by more than a few percent has to be repeated.
 
 The E90 was not part of this series, and no game has been measured on the
 Nokia 701.
