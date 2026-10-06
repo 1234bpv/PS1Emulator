@@ -111,6 +111,8 @@ function Build-Step {
   $out = @($out | Select-Object -SkipLast 1)
   $bad = $out | Select-String -Pattern 'rror|undefined reference|No such file'
   if ($rc -ne 0 -or $bad) {
+    # The failing line is usually far above the tail make prints last.
+    $bad | Select-Object -First 15 | ForEach-Object { Write-Host $_ }
     $out | Select-Object -Last 10 | ForEach-Object { Write-Host $_ }
     throw "$What failed with exit code $rc"
   }
