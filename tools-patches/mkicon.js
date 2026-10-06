@@ -3,6 +3,7 @@
 //   node tools-patches/mkicon.js           variant A, the one in use, into src/symbian/gfx
 //   node tools-patches/mkicon.js B         variant B (A..F) into plans/reports/icon-variants/B
 //   node tools-patches/mkicon.js all       every variant plus the summary preview.png
+//   node tools-patches/mkicon.js readme    variant A at 256 px with alpha, src/symbian/gfx/icon.png
 //
 // The icon is an original drawing: a dark rounded plate, a compact disc with a
 // rainbow sheen, and in front of it a light grey game pad with a cross on the
@@ -483,8 +484,26 @@ function writeSet(dir, icons) {
 
 // No argument: variant A into src/symbian/gfx, as before. A letter: that variant
 // into plans/reports/icon-variants/<letter>. "all": every variant plus the summary.
+// RGBA PNG of one rendered size, for the README.
+function writeRgbaPng(file, icon) {
+    const n = icon.size, raw = Buffer.alloc((n * 4 + 1) * n);
+    for (let y = 0; y < n; ++y)
+        for (let x = 0; x < n; ++x) {
+            const s = y * n + x, o = y * (n * 4 + 1) + 1 + x * 4;
+            raw[o] = icon.rgb[s * 3]; raw[o + 1] = icon.rgb[s * 3 + 1]; raw[o + 2] = icon.rgb[s * 3 + 2];
+            raw[o + 3] = icon.mask[s];
+        }
+    const ihdr = Buffer.alloc(13);
+    ihdr.writeUInt32BE(n, 0); ihdr.writeUInt32BE(n, 4); ihdr[8] = 8; ihdr[9] = 6;
+    fs.writeFileSync(file, Buffer.concat([Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]),
+        chunk('IHDR', ihdr), chunk('IDAT', zlib.deflateSync(raw)), chunk('IEND', Buffer.alloc(0))]));
+    console.log(file);
+}
+
 const arg = (process.argv[2] || '').toUpperCase();
-if (!arg) {
+if (arg === 'README') {
+    writeRgbaPng(path.join(root, 'src', 'symbian', 'gfx', 'icon.png'), { size: 256, ...render(256, 2, MAKERS.A) });
+} else if (!arg) {
     const icons = renderAll('A');
     writeSet(path.join(root, 'src', 'symbian', 'gfx'), icons);
     writePreview(path.join(root, 'plans', 'reports', 'icon-preview.png'), icons);

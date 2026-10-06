@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="src/symbian/gfx/icon.png" width="128" height="128" alt="PS1Emulator icon">
+</p>
+
 # PS1Emulator
 
 <!-- Video demonstration: to be added here. -->
@@ -28,6 +32,13 @@ games measured so far run at between 28% and about 100% of the speed of a real
 PlayStation; on an N95 8GB at its factory clock they run at between 22% and
 79%. The full table is in [Game speed](#game-speed).
 
+A lot of the work on this port went into speed. The code is heavily optimised
+for these phones, and every optimisation was kept or rejected by measuring it
+on the phone itself, not by reasoning about it: hot rasteriser loops are
+written in ARM assembly, video decoding, sound decoding and colour conversion
+were rewritten for the ARM11, the polygons can be drawn by the 3D chip, and
+the compiler and its options were chosen by measured frame time.
+
 The emulator offers the following:
 
 - **Dynamic recompiler.** PlayStation code is translated into ARM code by the
@@ -48,21 +59,22 @@ The emulator offers the following:
   importer on the phone itself that unpacks `.zip`, `.7z` and uncompressed
   `.rar` archives and compresses the images.
 - **Configurable controls** with presets for racing, fighting and role-playing
-  games, a hold mode that keeps a button pressed without holding the key, and
-  tilt steering on the N95's accelerometer.
+  games, and a hold mode that keeps a button pressed without holding the key.
+- **Tilt steering** on phones with an accelerometer: the tilt of the phone
+  drives the analogue stick.
 - **Per-game settings**, so that a speed setting needed by one game does not
   affect the others.
-- **Fifteen interface languages**, chosen automatically from the phone's
-  language setting or by hand, with a built-in help text and a hint for every
-  menu row.
+- **33 interface languages**, chosen automatically from the phone's language
+  setting or by hand, each with the full built-in help text and a hint for
+  every menu row.
 
 ## Supported phones
 
 | Phone | Platform | Processor | Graphics | Status |
 |---|---|---|---|---|
-| Nokia N95 8GB (RM-320) | S60 3rd FP1, Symbian 9.2 | OMAP 2420, ARM1136, 330 MHz | PowerVR MBX | reference phone, all twelve games measured |
-| Nokia E90 (RA-6) | S60 3rd FP1, Symbian 9.2 | OMAP 2420, ARM1136, 330 MHz | PowerVR MBX | installed and tested, not part of the game speed series |
-| Nokia C5-00.2 | S60 3rd FP2 | ARM11, about 600 MHz | none | all twelve games measured |
+| Nokia N95 8GB (RM-320) | S60 3rd FP1, Symbian 9.2 | OMAP 2420, ARM1136, 330 MHz | PowerVR MBX | reference phone, tested |
+| Nokia E90 (RA-6) | S60 3rd FP1, Symbian 9.2 | OMAP 2420, ARM1136, 330 MHz | PowerVR MBX | tested |
+| Nokia C5-00.2 | S60 3rd FP2 | ARM11, about 600 MHz | none | tested |
 | Nokia 701 | Symbian Belle FP2 | BCM2763, 1 GHz | VideoCore IV | a target, the emulator has not been run on it yet |
 
 Adaptation to more phones is planned: the touch-screen Nokia phones with the
@@ -79,15 +91,10 @@ screen output exist so that phones like it are fully supported.
 
 ## Game speed
 
-Every game below was measured from the same saved moment of actual gameplay,
-not from a menu or an intro, three times for exactly 1200 PlayStation frames.
-The first number is the speed of the emulated PlayStation as a share of the
-real console, where 100% is full speed. The second is the number of pictures
-per second that reached the screen. All games are NTSC versions and the
-emulator ran with its default settings and sound on. Each figure is the median
-of three runs. The measurements were made with release alpha 1.3, on
-2026-10-05 for the C5-00.2 and the overclocked N95 and on 2026-10-06 for the
-N95 at its factory clock.
+Every game was measured during actual gameplay, with the default settings and
+sound on. The first number is the speed of the emulated PlayStation, where
+100% is the speed of the real console. The second is the number of pictures
+per second that reach the screen.
 
 | Game | C5-00.2 | N95 8GB, 330 MHz | N95 8GB, 426 MHz |
 |---|---|---|---|
@@ -104,33 +111,17 @@ N95 at its factory clock.
 | Wing Commander III | 100.1% / 24.0 fps | 79.4% / 19.1 fps | 104.3% / 25.0 fps |
 | WipEout | 68.5% / 20.6 fps | 52.6% / 15.8 fps | 67.9% / 20.4 fps |
 
-The third column is the N95 8GB overclocked with
-[SymbianOverclock](https://github.com/1234bpv/SymbianOverclock): multiplier
-111, processor 426.24 MHz, memory bus 213.12 MHz, both 29% above factory. The
-clock was read back from the processor registers before and after every series
-of three runs, not taken from the setting.
+The third column is the N95 8GB overclocked to 426 MHz with
+[SymbianOverclock](https://github.com/1234bpv/SymbianOverclock), which raises
+the processor and the memory bus by 29% and makes every game about 30% faster.
+The C5-00.2 is between as fast as and 1.5 times as fast as the N95 at its
+factory clock.
 
 Many games do not draw a new picture on every frame of the television signal.
-Gran Turismo, Crash Bandicoot and WipEout, for example, run at 30 pictures per
-second on a real PlayStation, so at 100% speed they would show 30 fps, not 60.
+Gran Turismo, Crash Bandicoot and WipEout, for example, show 30 pictures per
+second on a real PlayStation, so at full speed they would show 30 fps, not 60.
 This is why the two numbers in a cell are not proportional across games.
-
-Repeated runs of the same game on the same phone differed by up to 4%, so
-differences smaller than that between the columns mean nothing. Wing
-Commander III reaches full speed on the C5-00.2 and on the overclocked N95;
-a figure slightly above 100% is full speed within that spread.
-
-Raising the N95's processor and bus by 29% makes every one of the twelve games
-between 28% and 32% faster, so the gain follows the clock almost exactly. The
-C5-00.2, with its 600 MHz processor but no 3D chip, is between as fast as and
-1.5 times as fast as the N95 at its factory clock, and within about 20% of the
-overclocked N95 in either direction, depending on the game.
-
-The factory column was measured twice. The first series, on 2026-10-05, took
-21% to 80% longer than the repeat on 2026-10-06, on the same clock, the
-same saved states and the same emulator file, and it is not used here. The
-details are in
-[How the game speed is measured](#how-the-game-speed-is-measured).
+Differences of a few percent are within the spread of repeated runs.
 
 ## Before you install
 
@@ -150,19 +141,13 @@ details are in
 
 ## Installation
 
-1. Download a package from the [Releases](../../releases) page. Two are
-   offered:
-   - `ps1emu_full.sis` for a phone that has never had this emulator. It also
-     installs the application resource; without that resource the launch
-     fails with the panic `USER 23`.
-   - `ps1emu_min.sis` for a phone that already has the emulator installed. It
-     replaces the program, the icon, the registration resource and the help
-     texts.
-2. Copy the package to the phone by USB cable, Bluetooth or memory card, open
-   it and confirm the installation.
+1. Download `ps1emu_full.sis` from the [Releases](../../releases) page.
+2. Copy it to the phone by USB cable, Bluetooth or memory card, open it and
+   confirm the installation. The same package is used for a first install and
+   for an update.
 3. The emulator appears in the phone menu with its own icon.
 
-Both packages install the English and Ukrainian help texts into
+The package also installs the help texts for every interface language into
 `E:\PS1\help\`. To remove the emulator, use the phone's application manager.
 Save states, memory cards and settings in `E:\PS1\` stay on the card.
 
@@ -220,17 +205,22 @@ C5-00.2's keypad.
 On phones with an accelerometer the game can be steered by tilting the phone.
 `Tilt control` in the `Controls` section turns the accelerometer into the
 analogue stick of a DualShock controller, which suits racing and flying games
-best. The way the phone is held at the moment tilt control is switched on
-becomes the neutral position, so it can be played lying on a table or held at
-an angle. Four settings appear while it is on: which stick axis follows
-sideways tilt, which follows forward-and-back tilt (either can be inverted or
-switched off), the dead zone around the neutral position, and the sensitivity.
-The buttons stay on their keys while tilt is on.
+best. Four settings appear while it is on: which stick axis follows sideways
+tilt, which follows forward-and-back tilt (either can be inverted or switched
+off), the dead zone around the neutral position, and the sensitivity. The
+buttons stay on their keys while tilt is on.
+
+There is no separate calibration step: the neutral position is the way the
+phone is held at the moment you return to the game. To calibrate, or to change
+how you hold the phone, do this:
+
+1. Press the right soft key to open the menu.
+2. Hold the phone the way you want to play, lying on a table or at an angle.
+3. Select `Resume`. From now on this position means "stick in the centre".
 
 Tilt control works on the Nokia N95 8GB, where it has been tested. The E90 and
-the C5-00.2 have no accelerometer the emulator can find; there the setting
-switches itself back to `off`. Other phones with an accelerometer have not been
-tried yet.
+the C5-00.2 have no accelerometer, so on them the setting switches itself back
+to `off`.
 
 ## Settings
 
@@ -290,7 +280,7 @@ adjustments, as described in [Controls](#controls).
 
 ### System
 
-- **`Language`**: one of fifteen interface languages; by default the phone's
+- **`Language`**: one of 33 interface languages; by default the phone's
   own.
 - **`BIOS` \***: choose a BIOS dump from `E:\PS1\bios\` or extract one from an
   archive.
@@ -321,9 +311,6 @@ image (Gran Turismo: 454 MB instead of 694 MB) and costs only about 1.4% of
 speed to read during play, as measured on the N95.
 
 ## Questions and problems
-
-**The emulator closes at once with `USER 23`.** The application resource is
-missing. Install `ps1emu_full.sis` instead of `ps1emu_min.sis`.
 
 **The emulator warns about a missing BIOS.** No dump was found in
 `E:\PS1\bios\`. The game can still be started on the built-in replacement, but
@@ -407,42 +394,20 @@ NTSC). The shown frame rate counts the frames copied to the screen by direct
 output, so it is the rate of screen updates; it does not prove that every
 update showed a different picture.
 
-Every game ran three times on each configuration. The emulator file was the alpha 1.3 release, identical on both phones and
-checked by its SHA-256 hash. The N95's clock registers were read before and
-after every series of three runs; only read-only probes were used during the
-series. Runs spoiled by a Bluetooth dialog over the picture, by a game image
-with a wrong name, or by sound that was not yet muted were excluded and their
-logs kept. An earlier attempt to measure a third N95 configuration, 495 MHz
-with the factory bus, lost the connection to the phone every time and has no
-accepted results.
+Every game ran three times on each configuration and the table gives the
+median. The emulator file was the same release on both phones, checked by its
+hash, and the N95's clock was read back from the processor registers before
+and after every series rather than taken from the setting. Repeated runs of
+the same game differed by up to 4%.
+
+Sometimes the N95 runs about twice as slow on the same verified clock, and
+what puts it into that state is not known. A series whose runs disagree by
+more than a few percent is therefore repeated, and such runs are not used.
 
 The full record, with every run, the raw logs, the register readings and the
 gameplay screenshots, is in
 [`docs/measurements/f11-game-speed-2026-10-05.md`](docs/measurements/f11-game-speed-2026-10-05.md)
 and its `evidence` folder.
-
-### What these numbers do not show
-
-The first factory-clock series on the N95, on 2026-10-05, made the overclock
-look worth 55% to 136%, far more than a 29% clock change can give. A repeat on
-2026-10-06, on the same clock read back from the registers and with the same
-states, settings, script and emulator file, ran every game faster: the first
-series had taken 21% to 80% longer, depending on the game. The emulated work was identical: in Gran Turismo both series
-executed exactly 733 371 181 PlayStation cycles and showed 601 frames, and only
-the time differed. The table uses the repeat, and against it the overclock is
-worth 28% to 32%.
-
-The slow state is not a one-off. In the repeat, the first of three Wing
-Commander III runs took 53.2 seconds against 25.4 and 25.1 for the other two,
-and it was slow evenly from its first second, emulating about 44 million
-PlayStation cycles per second instead of 94 million. That run was discarded
-and the game repeated: 25.2, 25.5 and 25.1 seconds. What puts the phone into
-this state, about twice as slow on the same clock, has not been established.
-A single run on the N95 therefore proves little, and a series whose three runs
-disagree by more than a few percent has to be repeated.
-
-The E90 was not part of this series, and no game has been measured on the
-Nokia 701.
 
 ## Known limitations
 
@@ -452,19 +417,22 @@ Nokia 701.
   processor together with its geometry and sound chips is heavy work for a
   330 MHz phone. Of the twelve games measured, only Wing Commander III reaches
   full speed, and only on the C5-00.2 and an overclocked N95.
-- **Help texts in two languages.** The interface has fifteen languages, but the
-  long help text exists in English and Ukrainian only; other languages fall
-  back to English for it.
 - **The Nokia 701 is untested.**
 
 ## Translations
 
-The interface is available in fifteen languages: English, Ukrainian, Chinese,
-German, French, Spanish, Russian, Portuguese, Italian, Polish, Turkish,
-Japanese, Hindi, Arabic and Korean. The menu texts live in
-`src/symbian/i18n.cpp`; the help texts and menu hints are UTF-8 files in
-`help/<lang>.txt`, installed to `E:\PS1\help\`. A missing text falls back to
-English.
+The interface and the help are available in 33 languages, the same set as
+[SymbianOverclock](https://github.com/1234bpv/SymbianOverclock): English,
+Ukrainian, Chinese, German, French, Spanish, Russian, Portuguese, Italian,
+Polish, Turkish, Japanese, Hindi, Arabic, Korean, Czech, Dutch, Swedish,
+Romanian, Hungarian, Greek, Finnish, Danish, Norwegian, Slovak, Bulgarian,
+Croatian, Slovenian, Serbian, Estonian, Latvian, Lithuanian and Catalan.
+The menu texts live in `src/symbian/strings.json`, from which
+`node tools-patches/gen_strings.js` generates `src/symbian/i18n.cpp`; the help
+texts and menu hints are UTF-8 files in `help/<lang>.txt`, installed to
+`E:\PS1\help\`. A missing text falls back to English. The phone's fonts have
+no Chinese, Japanese or Korean characters on the tested phones, so those three
+languages need a phone whose firmware includes them.
 
 ## Building from source
 
