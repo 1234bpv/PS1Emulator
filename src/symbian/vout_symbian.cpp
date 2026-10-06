@@ -2553,9 +2553,12 @@ extern "C" int voutSymbianTiltStats(int *aX, int *aY, int *aZeroX, int *aZeroY, 
 
 extern "C" void voutSymbianSetTilt(int aOn)
 	{
-	if (aOn && !g_tilt)
+	// Called on every return from the menu: the way the phone is held then becomes
+	// the neutral position, which is how the player recalibrates.
+	if (aOn)
 		{
-		g_tilt = (accelStart() == KErrNone);
+		if (!g_tilt)
+			g_tilt = (accelStart() == KErrNone);
 		g_tiltZeroed = EFalse;
 		g_tiltPad = 0;
 		}
