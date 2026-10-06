@@ -1,235 +1,498 @@
-# PS1Emulator (PCSX-ReARMed for Symbian)
+# PS1Emulator
 
-A PlayStation 1 (PS1) emulator port for Nokia smartphones running Symbian S60v3 and Symbian Belle. Based on the [PCSX-ReARMed](https://github.com/notaz/pcsx_rearmed) core by notaz, adapted for ARMv6 (ARM11) hardware and Symbian OS platform security requirements.
+<!-- Video demonstration: to be added here. -->
 
-## 1. Overview
+PS1Emulator is a PlayStation emulator for Nokia smartphones running Symbian
+S60 3rd Edition and Symbian Belle. It is a port of
+[PCSX-ReARMed](https://github.com/notaz/pcsx_rearmed) by notaz, adapted to the
+ARM11 processors of these phones and to the platform security of Symbian 9.
+Games run on a dynamic recompiler that translates PlayStation machine code
+into ARM code while the game is running, which is what makes them playable on
+a 330 MHz phone.
 
-This project ports PCSX-ReARMed to Symbian OS devices powered by ARM11 processors. The primary goal is achieving playable emulation performance on resource-constrained mobile hardware through dynamic binary translation (MIPS R3000A to ARM) and optimized rendering pipelines.
+The first part of this document is written for people who want to install the
+emulator and play. The second part, starting at
+[How it works](#part-2-how-it-works), is written for people who want to know
+what happens inside, check the measurements, or build the emulator
+themselves.
 
-To comply with Symbian platform security (Symbian OS 9.1 and newer), standard Linux memory management mechanisms have been replaced with platform-native equivalents:
-- **Executable Translation Cache**: `RChunk` allocation with executable permissions replaces `mmap(PROT_EXEC|PROT_WRITE)`.
-- **Instruction Cache Synchronization**: `User::IMB_Range()` replaces `__clear_cache` / `cacheflush` after code generation.
+# Part 1. Using the emulator
 
-## 2. Supported Devices
+## What it gives you
 
-| Device | Platform | SoC / CPU Core | Clock Speed | Graphics Hardware |
+The emulator runs real PlayStation games from disc images on the phone's
+memory card, with sound, save states and the full PlayStation controller
+mapped to the phone keys. How fast a game runs depends on the game and on the
+phone. On the Nokia C5-00.2 and on an overclocked Nokia N95 8GB the twelve
+games measured so far run at between 28% and about 100% of the speed of a real
+PlayStation; on an N95 8GB at its factory clock they run at between 18% and
+44%. The full table is in [Game speed](#game-speed).
+
+The emulator offers the following:
+
+- **Dynamic recompiler.** PlayStation code is translated into ARM code by the
+  Ari64 recompiler of PCSX-ReARMed. An interpreter is included as a fallback
+  for games the recompiler gets wrong.
+- **Two ways to draw the picture.** The software rasteriser `gpu_unai` works on
+  every phone, including those without a 3D chip. On phones with the PowerVR
+  MBX chip (N95 8GB, E90) the polygons can be drawn by the graphics chip
+  through OpenGL ES 1.1 instead.
+- **Direct screen output.** The finished frame is written straight into the
+  screen memory, bypassing the window server, and a frame the game did not
+  change is not drawn again.
+- **Sound** from the PlayStation sound chip emulation at 44.1 kHz stereo, with
+  an optional mode that keeps the pitch when the game runs slower than real
+  time.
+- **Save states**, five slots per game, and PlayStation memory cards.
+- **Disc images in several formats**, including compressed `.pbp`, and an
+  importer on the phone itself that unpacks `.zip`, `.7z` and uncompressed
+  `.rar` archives and compresses the images.
+- **Configurable controls** with presets for racing, fighting and role-playing
+  games, a hold mode that keeps a button pressed without holding the key, and
+  tilt steering on the N95's accelerometer.
+- **Per-game settings**, so that a speed setting needed by one game does not
+  affect the others.
+- **Fifteen interface languages**, chosen automatically from the phone's
+  language setting or by hand, with a built-in help text and a hint for every
+  menu row.
+
+## Supported phones
+
+| Phone | Platform | Processor | Graphics | Status |
 |---|---|---|---|---|
-| **Nokia N95 8GB** *(Reference)* | S60v3 FP1, Symbian 9.2 | OMAP 2420, ARM1136 | 332 MHz | PowerVR MBX |
-| Nokia E90 | S60v3 FP1, Symbian 9.2 | OMAP 2420, ARM1136 | 330 MHz | PowerVR MBX |
-| Nokia C5-00.2 | S60v3 FP2 | ARMv6 | ~600 MHz | None (No 3D accelerator) |
-| Nokia 701 | Symbian Belle | BCM2763, VideoCore IV | 1000 MHz | VideoCore IV (OpenGL ES 2.0) |
+| Nokia N95 8GB (RM-320) | S60 3rd FP1, Symbian 9.2 | OMAP 2420, ARM1136, 330 MHz | PowerVR MBX | reference phone, all twelve games measured |
+| Nokia E90 (RA-6) | S60 3rd FP1, Symbian 9.2 | OMAP 2420, ARM1136, 330 MHz | PowerVR MBX | installed and tested, not part of the game speed series |
+| Nokia C5-00.2 | S60 3rd FP2 | ARM11, about 600 MHz | none | all twelve games measured |
+| Nokia 701 | Symbian Belle FP2 | BCM2763, 1 GHz | VideoCore IV | a target, the emulator has not been run on it yet |
 
-- **Nokia N95 8GB** is the primary reference and baseline test device. Hardware performance measurements directly translate to its architectural twin, the Nokia E90.
-- **Nokia C5-00.2** lacks a dedicated 3D graphics accelerator. Software rasterization with direct screen writing (Direct Screen Access / CFbsBitmap) is fully supported for devices without GPU hardware.
+The N95 8GB and the E90 are built on the same chip, so what is measured on one
+of them applies to the other, except where the E90's slower factory memory bus
+matters. The C5-00.2 has no 3D chip at all; the software rasteriser and direct
+screen output exist so that phones like it are fully supported.
 
-## 3. Features
+## Game speed
 
-All listed features are implemented and verified in the codebase:
+Every game below was measured from the same saved moment of actual gameplay,
+not from a menu or an intro, three times for exactly 1200 PlayStation frames.
+The first number is the speed of the emulated PlayStation as a share of the
+real console, where 100% is full speed. The second is the number of pictures
+per second that reached the screen. All games are NTSC versions and the
+emulator ran with its default settings and sound on. Each figure is the median
+of three runs. The measurements were made on 2026-10-05 with release alpha
+1.3.
 
-- **Dynamic Recompiler (Dynarec)**: Ari64 MIPS R3000A to ARM dynarec adapted for Symbian memory protection (`RChunk` and `User::IMB_Range()`). An interpreter fallback is also included.
-- **Software GPU Rendering (`gpu_unai`)**: ARM-optimized C++ software rasterizer with custom assembly routines (excluding NEON).
-- **Hardware GPU Rasterizer (`glrender`)**: OpenGL ES 1.1 hardware rasterizer designed for PowerVR MBX hardware, featuring primitive batching, VRAM page texture caching, and partial state cache invalidation.
-- **Display Output Subsystem**:
-  - Direct Screen Access (DSA) for direct framebuffer writes, bypassing Window Server blitting overhead.
-  - Latch-based dirty frame filtering (`Skip same frames`) to avoid redundant presentation passes.
-  - Hardware-accelerated OpenGL ES scaling and presentation.
-- **Visual Enhancement Filters**:
-  - `Smooth scale`: Bilinear downsampling filter for high horizontal resolution modes (such as 640x480 text menus).
-  - `Edge smooth`: Fast FXAA-style edge smoothing post-processor for 3D geometry.
-  - Performance hacks: `Interlace hack` (alternate scanline skipping), `Pixel skip` (skipping off-screen pixels in high-res modes), texture lighting modulation, and semi-transparency blending toggles.
-- **Audio Subsystem**:
-  - `dfsound` SPU emulation core outputting 16-bit stereo 44.1 kHz PCM.
-  - Asynchronous audio playback via Symbian `CMdaAudioOutputStream` with dynamic rate pacing.
-  - Pitch-preserving time-scale stretching via WSOLA (`Preserve pitch`) when emulation drops below real-time speed.
-  - Hardware-level 10-step master volume control.
-- **Timing and Frameskip**:
-  - Adaptive frameskip advice mechanism synchronized with guest framebuffer swapping.
-  - Configurable fixed frameskip levels.
-  - Adjustable guest CPU cycle multiplier.
-- **State Management**: Five save-state slots per game, written to and read from `E:\PS1\saves\`.
-- **Localised Interface**: Fifteen interface languages, chosen in the menu or taken from the phone's own language setting.
-- **Input & Controls**:
-  - Complete 14-button digital PlayStation controller mapping with ready-made presets (Default, Racing, Fighting, RPG).
-  - In-app key remapping interface with secondary key assignment and C5 directional keypad options.
-  - Key toggle/hold mode for sustaining button states (e.g., vehicle acceleration).
-  - Optional tilt control on phones with an accelerometer (Nokia N95): the tilt drives an analogue stick, with an adjustable dead zone, sensitivity, axis assignment and inversion. The position the phone is held in when it is switched on becomes the neutral one.
-- **Native User Interface**:
-  - Dedicated application icon in the phone menu (multi-resolution 88x88, 44x44, and 22x22).
-  - Full-screen AVKON interface with custom rendering.
-  - Two-level accordion menu in a single list with contextual status line hints for each item (localized, English fallback).
-  - Built-in help reader with word wrapping and scrolling (`E:\PS1\help\<lang>.txt`).
-  - First-time setup wizard on initial launch when configuration is uninitialized (`intro=1`).
-  - Pre-start verification with warnings if no game is selected or when running on the built-in HLE BIOS replacement.
-  - Built-in file browser with game auto-detection.
-  - Per-game configuration profiles (`E:\PS1\cfg\<game>.txt`).
-  - Real-time on-screen FPS and frame time performance overlay.
-  - In-game screenshot capture.
-- **On-Device Disc Import & Compression**:
-  - Built-in conversion utility to extract and compress disc images into `.pbp` format directly on the device.
+| Game | C5-00.2 | N95 8GB, 330 MHz | N95 8GB, 426 MHz |
+|---|---|---|---|
+| Castlevania: Symphony of the Night | 56.8% / 34.1 fps | 31.2% / 18.7 fps | 57.9% / 34.7 fps |
+| Colin McRae Rally 2.0 | 32.0% / 9.5 fps | 18.4% / 5.5 fps | 28.5% / 8.5 fps |
+| Colony Wars | 65.0% / 19.5 fps | 34.5% / 10.4 fps | 68.0% / 20.4 fps |
+| Crash Bandicoot | 52.8% / 15.9 fps | 26.3% / 7.9 fps | 45.0% / 13.5 fps |
+| Gran Turismo | 58.3% / 17.5 fps | 30.7% / 9.2 fps | 57.1% / 17.1 fps |
+| Need for Speed: Porsche Unleashed | 46.7% / 13.8 fps | 26.1% / 7.7 fps | 44.9% / 13.3 fps |
+| Rayman | 66.0% / 39.6 fps | 39.5% / 23.7 fps | 84.6% / 50.8 fps |
+| RC Helicopter | 53.1% / 31.9 fps | 29.3% / 17.6 fps | 52.1% / 31.3 fps |
+| Star Trek: Invasion | 84.7% / 25.4 fps | 41.9% / 12.6 fps | 93.0% / 27.9 fps |
+| Warzone 2100 | 82.3% / 16.5 fps | 37.1% / 7.4 fps | 74.3% / 14.9 fps |
+| Wing Commander III | 100.1% / 24.0 fps | 44.1% / 10.6 fps | 104.3% / 25.0 fps |
+| WipEout | 68.5% / 20.6 fps | 35.2% / 10.5 fps | 67.9% / 20.4 fps |
 
-## 4. Supported Image Formats
+The third column is the N95 8GB overclocked with
+[SymbianOverclock](https://github.com/1234bpv/SymbianOverclock): multiplier
+111, processor 426.24 MHz, memory bus 213.12 MHz, both 29% above factory. The
+clock was read back from the processor registers before and after every series
+of three runs, not taken from the setting.
 
-### Disc Images and Metadata
-- **Uncompressed Disc Images**: `.bin`, `.img`, `.iso`
-- **Compressed Disc Images**:
-  - `.pbp` (PlayStation Portable EBOOT format with 16-sector DEFLATE block compression)
-  - `.cbn` / `.cbin` (Compressed ISO format)
-- **Track Sheets and Metadata**: `.cue`, `.toc`, `.ccd`, `.mds`
-- **Subchannel and Protection Data**: `.sub` (subchannel data), `.sbi` (LibCrypt copy protection data)
+Many games do not draw a new picture on every frame of the television signal.
+Gran Turismo, Crash Bandicoot and WipEout, for example, run at 30 pictures per
+second on a real PlayStation, so at 100% speed they would show 30 fps, not 60.
+This is why the two numbers in a cell are not proportional across games.
 
-*Note: CHD format is not supported.*
+Repeated runs of the same game on the same phone differed by up to 4%, so
+differences smaller than that between the columns mean nothing. Wing
+Commander III reaches full speed on the C5-00.2 and on the overclocked N95;
+a figure slightly above 100% is full speed within that spread.
 
-### Archive Formats (On-Device Batch Import & Decompression)
-- **`.zip`**: Store and DEFLATE compression via zlib.
-- **`.7z`**: LZMA, LZMA2, and uncompressed streams via the LZMA SDK.
-- **`.rar`**: Stored (uncompressed) streams in RAR4 and RAR5 formats. Compressed RAR archives are not supported due to licensing restrictions in the unRAR library that conflict with GPL-2.0.
+The overclocked column needs one warning. Raising the processor and the bus by
+29% made the games between 55% and 136% faster in these series, and that is
+more than the clock change can explain: in a controlled experiment a 51% faster
+processor made Gran Turismo only 16% faster. The factory-clock series were run
+before several manual restarts of the phone and the overclocked series after
+them, so the state of the phone is not separated from the clock in these data.
+The factory column is also slower relative to the C5-00.2 than in an earlier
+comparison. Until a repeat separates the two effects, the overclocked column
+shows what was measured, not what the clock alone gives. The details are in
+[How the game speed is measured](#how-the-game-speed-is-measured).
 
-## 5. Controls
+## Before you install
 
-### Default Key Mapping (Nokia N95 8GB Layout)
+1. **The phone must accept self-signed packages.** It has to be prepared for
+   homebrew software ("hacked") in the way usual for Symbian 9. On S60 3rd
+   Edition up to FP1 this is done with `Dr Web RomPatcher plus light` and its
+   `Open4all`, `universal` and `Install server` patches. On Symbian Belle FP2
+   the antivirus route no longer works; there `SafeManager` is used first and
+   `RomPatcher+` after it.
+2. **A PlayStation BIOS is strongly recommended.** Put a dump of your own
+   console's BIOS (for example `scph7502.bin`, `scph1001.bin` or
+   `scph5500.bin`) into `E:\PS1\bios\`. Without one the emulator warns before
+   starting and falls back to a built-in replacement, which is less compatible
+   and less accurate in timing.
+3. **Games** are disc images made from your own discs, placed anywhere on the
+   memory card; the folder `E:\PS1\games\` is the usual one.
 
-| PlayStation Button | Primary Key | Secondary Key |
+## Installation
+
+1. Download a package from the [Releases](../../releases) page. Two are
+   offered:
+   - `ps1emu_full.sis` for a phone that has never had this emulator. It also
+     installs the application resource; without that resource the launch
+     fails with the panic `USER 23`.
+   - `ps1emu_min.sis` for a phone that already has the emulator installed. It
+     replaces the program, the icon, the registration resource and the help
+     texts.
+2. Copy the package to the phone by USB cable, Bluetooth or memory card, open
+   it and confirm the installation.
+3. The emulator appears in the phone menu with its own icon.
+
+Both packages install the English and Ukrainian help texts into
+`E:\PS1\help\`. To remove the emulator, use the phone's application manager.
+Save states, memory cards and settings in `E:\PS1\` stay on the card.
+
+## Your first game
+
+On the first launch the emulator opens a short setup page. After that it shows
+its main menu: a single list with six sections, `Game`, `Video`, `Speed`,
+`Sound`, `Controls` and `System`, and the rows `Help` and `Exit`. Only one
+section is open at a time, and the line at the bottom of the screen explains
+the highlighted row.
+
+1. Open the `Game` section and select `Game`. A file browser opens; choose a
+   disc image. If the game is still inside an archive, use `Add games...`
+   instead, which finds archives and images on the card and converts them.
+2. Select `Start` at the top of the list.
+3. The right soft key opens the pause menu during the game. The top row then
+   reads `Resume`, or `Restart game` if a setting marked with `*` was changed,
+   because such settings take effect only after a restart.
+
+Before starting, the emulator checks that a game is chosen and a BIOS is
+present, and warns if either is missing.
+
+### Menu keys
+
+- **Up and down** move between rows and wrap around at the ends.
+- **Right or OK** opens a section, or changes the value of a setting.
+- **Left** closes the open section; opening another section closes it too.
+- **Clear (C)** closes the section and puts the cursor on its header.
+
+## Controls
+
+The default mapping, laid out for the N95 8GB:
+
+| PlayStation | Phone key | | PlayStation | Phone key |
+|---|---|---|---|---|
+| D-pad | arrow keys | | L1 / R1 | `1` / `3` |
+| Cross | OK, or `5` | | L2 / R2 | `4` / `6` |
+| Circle | `0` | | Select | `2` |
+| Square | `7` | | Start | `8` |
+| Triangle | `9` | | | |
+
+During a game the right soft key opens the pause menu, the left soft key saves
+a screenshot, and the side volume keys or `#` and `*` change the volume.
+
+Every button can be reassigned in `Controls...`. Select a button and press OK
+to bind a key, or press left or right to switch the button into hold mode,
+marked `hold`: one press latches the button down and the next releases it,
+which is what keeps the accelerator pressed through a race. `Control preset`
+offers ready layouts (`Default`, `Racing`, `Fighting`, `RPG`), and
+`Keyboard: C5` additionally maps `2`, `4`, `6` and `8` to the D-pad for the
+C5-00.2's keypad.
+
+On the N95, `Tilt control` turns the accelerometer into an analogue stick. The
+way the phone is held when tilt control is switched on becomes the neutral
+position; dead zone, sensitivity, axis assignment and inversion are
+adjustable.
+
+## Settings
+
+Settings marked with `*` take effect after a game restart.
+
+### Game
+
+- **`Game` \***: choose a disc image.
+- **`Save state`** and **`Load state`**, slots 1 to 5, shown while a game is
+  running. Left and right choose the slot; `[*]` marks a used slot and `[ ]`
+  an empty one. States are stored in `E:\PS1\saves\`.
+- **`Add games...`**: find disc images and archives on the card and convert
+  them to compressed `.pbp`.
+
+### Video
+
+- **`Smooth scale`** (default `on`): filters the picture when the game uses a
+  640-pixel-wide mode, so that thin letters do not drop out.
+- **`Edge smooth`** (`off`, `1` to `5`, default `off`): smooths the edges of 3D
+  geometry.
+- **`FPS meter`**: shows the frame rate and frame time on screen.
+- **`3D lighting`** and **`Transparency`**: switch off lighting and
+  semi-transparent effects to save time where a game allows it.
+- **`Skip same frames`**: does not redraw a frame the game left unchanged.
+- **`Direct draw` \***: writes the picture straight into the screen memory.
+- **`GL output` \***: shows the picture through OpenGL ES on phones with a 3D
+  chip. With it on, **`Software draw`** chooses whether the software
+  rasteriser draws the polygons and the 3D chip only shows the result, or the
+  3D chip draws them itself.
+- **`Interlace hack`** and **`Pixel skip`**: draw only every other line, or skip
+  pixels that cannot be seen in wide modes, trading picture quality for speed.
+
+### Speed
+
+- **`Frameskip`** (`off`, `auto`, `1` to `3`): in `auto` the emulator skips
+  drawing a frame when it falls behind.
+- **`CPU` \***: `dynarec` (the recompiler) or `interpreter`.
+- **`GTE fast mode` \***: skips part of the geometry calculation. It changes
+  the geometry, and therefore the picture, and is not always faster: in Gran
+  Turismo it costs about 6%, because the rasteriser then gets more work.
+- **`PS1 CPU speed`** (58% to 175%, default 100%): the speed of the emulated
+  PlayStation processor. Raising it helps only games that wait for the
+  processor; in Gran Turismo 25% more costs 2.5% of time and draws under 1%
+  more geometry.
+
+### Sound
+
+- **`Sound` \***: switches sound emulation and output on or off.
+- **`Preserve pitch` \*** (default `off`): when the game runs slower than real
+  time, stretches the sound without lowering its pitch. It costs about 6% of
+  speed on the N95.
+
+### Controls
+
+`Control preset`, `Keyboard`, `Controls...` and `Tilt control` with its four
+adjustments, as described in [Controls](#controls).
+
+### System
+
+- **`Language`**: one of fifteen interface languages; by default the phone's
+  own.
+- **`BIOS` \***: choose a BIOS dump from `E:\PS1\bios\` or extract one from an
+  archive.
+- **`Per-game profile`**: keep separate settings and key bindings for every
+  game in `E:\PS1\cfg\<game>.txt`.
+- **`Reset settings`**: return all settings, keys and the language to their
+  defaults after a second press of OK. Saves and memory cards are not touched.
+
+## Disc image formats
+
+- **Disc images**: `.bin`, `.img`, `.iso`, with track sheets `.cue`, `.toc`,
+  `.ccd` or `.mds`.
+- **Compressed images**: `.pbp` (the PSP EBOOT format) and `.cbn` / `.cbin`
+  (compressed ISO). `.pbp` is the recommended one: it is smaller and cheaper to
+  read on the phone.
+- **Copy protection data**: `.sub` and `.sbi` (LibCrypt).
+- **Archives for import**: `.zip`, `.7z`, and `.rar` with uncompressed content.
+  Compressed RAR archives are not supported, because the unRAR licence
+  conflicts with GPL-2.0.
+
+CHD images are not supported.
+
+## Questions and problems
+
+**The emulator closes at once with `USER 23`.** The application resource is
+missing. Install `ps1emu_full.sis` instead of `ps1emu_min.sis`.
+
+**The emulator warns about a missing BIOS.** No dump was found in
+`E:\PS1\bios\`. The game can still be started on the built-in replacement, but
+some games behave differently or do not start.
+
+**A game is too slow.** Try `Frameskip: auto` first. Switching off
+`3D lighting` or `Transparency` helps where the game still looks acceptable
+without them. On the N95 8GB and E90 an overclock gives the largest gain; see
+[Game speed](#game-speed).
+
+**A game shows wrong graphics or freezes.** Try `CPU: interpreter` for that
+game together with `Per-game profile`, so that the slower setting stays with
+that one game.
+
+# Part 2. How it works
+
+## Running generated code under Symbian platform security
+
+A dynamic recompiler writes machine code into memory and then executes it.
+Since Symbian 9.1, platform security forbids this for ordinary memory. Two
+platform-dependent parts of PCSX-ReARMed are therefore replaced:
+
+| Purpose | Linux, as in upstream | Symbian |
 |---|---|---|
-| D-Pad Up | Up Arrow | - |
-| D-Pad Down | Down Arrow | - |
-| D-Pad Left | Left Arrow | - |
-| D-Pad Right | Right Arrow | - |
-| Cross | D-Pad Center / OK (Enter) | Key `5` |
-| Circle | Key `0` | - |
-| Square | Key `7` | - |
-| Triangle | Key `9` | - |
-| L1 | Key `1` | - |
-| R1 | Key `3` | - |
-| L2 | Key `4` | - |
-| R2 | Key `6` | - |
-| Select | Key `2` | - |
-| Start | Key `8` | - |
+| memory for translated code, writable and executable | `mmap(PROT_EXEC\|PROT_WRITE)` | `RChunk` with execute permission |
+| making the processor see freshly written code | `__clear_cache` / `cacheflush` | `User::IMB_Range()` |
 
-### In-Game Shortcuts
+Everything else in the core is upstream code, compiled for ARMv6. NEON code
+paths are excluded throughout, because none of the target processors has
+NEON. The user interface, file browser, sound output and screen output are a
+Symbian shell written for this port; the upstream `frontend/` and `libpicofe`
+are not used.
 
-- **Right Softkey (RSK)**: Open in-game pause and settings menu.
-- **Left Softkey (LSK)**: Capture on-demand screenshot.
-- **Side Volume Keys** or **Key `#` (Volume Up)** / **Key `*` (Volume Down)**: Adjust audio output volume.
+## Drawing and showing a frame
 
-### Menu Navigation
+The PlayStation GPU is emulated by `gpu_unai`, a C++ software rasteriser with
+ARM-specific routines. On phones with the PowerVR MBX chip a second
+rasteriser, `glrender`, can draw the polygons through OpenGL ES 1.1 instead; it
+batches primitives, caches PlayStation video memory pages as textures and
+invalidates only what the game overwrote.
 
-- **Up / Down**: Navigate through items with wrap-around between first and last rows.
-- **Right / OK**: Expand accordion section header, or cycle/toggle a setting value.
-- **Left**: Collapse the open accordion section (opening another section closes the active one).
-- **Clear (C)**: Collapse active section and return cursor to its header.
-- **Status Line**: Displays a contextual explanatory hint for the highlighted item in the active interface language (English fallback).
+The finished frame reaches the screen in one of two ways. Direct Screen Access
+writes it straight into the screen memory, bypassing the window server; this
+is the default and the only path on phones without a 3D chip. On phones with
+the MBX chip the frame can instead be scaled and shown through OpenGL ES. In
+both cases a frame the game did not change is not presented again.
 
-### Controls Configuration
-The `Controls...` menu allows assigning custom scan codes to each button and toggling the hold/toggle mode per button. Select a button and press OK to bind a key, or Left/Right to switch that button into hold mode, marked `hold` in the row. In hold mode one press latches the button down and the next press releases it, which is what keeps Cross held through a race without holding the key.
+## Where the time goes
 
-### Starting a Game
-The top-level execution item launches the game: it displays `Start` before emulation has begun, `Resume` once a game is running, or `Restart game` if restart-only settings marked with `*` were modified. OK on any other row opens or alters that row, preventing accidental session restarts. Before starting, the emulator checks for a valid game disc image and BIOS dump; if no game is selected or if no BIOS file is found in `E:\PS1\bios\`, a warning prompt is displayed (falling back to the built-in HLE BIOS replacement if accepted). On initial launch when configuration is uninitialized (missing `intro=1`), the first-time setup page opens instead.
+The measurements behind the following were made on the phones themselves,
+with the clock read from the processor registers.
 
-## 6. Settings
+On the N95 8GB at factory clock, about 62% of the frame time follows the
+processor clock, 19% follows the memory bus clock and 19% follows neither. A
+51% faster processor with the bus unchanged made Gran Turismo 16% faster in
+wall time. In a real race, the software rasteriser takes about half of the
+run; semi-transparent blending costs almost nothing.
 
-The settings menu uses a two-level accordion structure in a single list. The top level contains the execution command (`Start` / `Resume` / `Restart game`), six expandable sections (`Game`, `Video`, `Speed`, `Sound`, `Controls`, `System`), followed by `Help` and `Exit`. Only one section is open at a time. The status line at the bottom displays a localized hint for the highlighted row (`help/<lang>.txt`, with English fallback). Items marked with `*` require an emulation restart to take effect when modified from the in-game pause menu.
+The C5-00.2 is about 1.8 times faster than the N95 at emulation and
+rasterisation, which matches the ratio of the processor clocks, but its screen
+output costs 3.6 times as much as on the N95 and takes 18% of the run instead
+of 3%. On that phone the output path is therefore where further work pays off.
 
-### Top-Level Items
-- **`Start` / `Resume` / `Restart game`**: Begins emulation, resumes the active game, or restarts the session when restart-only settings (`*`) have been changed. Displays warnings if no game is selected or if no BIOS file is present.
-- **`Help`**: Opens the built-in help viewer with word wrapping and smooth scrolling, loading topic texts from `E:\PS1\help\<lang>.txt`.
-- **`Exit`**: Saves settings and terminates the emulator.
+Many games show far fewer pictures than the emulator produces frames, because
+the game itself decides when to flip its picture, and it counts emulated time
+to do so. In the Gran Turismo race replay the game shows a new picture on only
+41% of the emulated frames, independently of the phone's speed. Frameskip with
+a fixed pattern makes this worse, not better: drawing every second frame cut
+the pictures actually seen from 14.4 to 9.0 per second. Only the adaptive
+`auto` mode, which decides frame by frame, is worth using.
 
-### GAME Section
-- **`Game` \***: Opens the file browser to select a disc image (`.bin`, `.img`, `.iso`, `.pbp`, `.cbn`, `.cbin`). Changing it requires a game restart.
-- **`Save state`** (slots `1`–`5`): Saves the running machine state to `E:\PS1\saves\`, using a file name derived from the disc image and slot. Visible only while a game is running. Left/Right selects the slot; `[*]` marks an occupied slot and `[ ]` marks an empty slot.
-- **`Load state`** (slots `1`–`5`): Restores machine state from the selected slot. Visible only while a game is running.
-- **`Add games...`**: Launches the batch import and extraction utility to scan storage drives for disc images and archives (`.zip`, `.7z`, `.rar`, `.cue`) and convert them to compressed `.pbp` format.
+## How the game speed is measured
 
-### VIDEO Section
-- **`Smooth scale`** (`on` / `off`, default `on`): Bilinear downsampling filter for high horizontal resolution modes (such as 640-wide text) to prevent thin character strokes from dropping out.
-- **`Edge smooth`** (`off`, `1`–`5`, default `off`): Fast FXAA-style edge smoothing post-processor for 3D geometry. Higher levels increase smoothing strength.
-- **`FPS meter`** (`on` / `off`): Displays real-time frames per second and frame calculation time overlaid on screen.
-- **`3D lighting`** (`on` / `off`): Controls texture lighting and Gouraud shading modulation in `gpu_unai`.
-- **`Transparency`** (`on` / `off`): Enables or disables semi-transparency blending (glass, glows, shadows).
-- **`Skip same frames`** (`on` / `off`): Dirty-only display presentation based on GPU updates. Skips redrawing unchanged frames to save blitting time (~6.7 ms per frame).
-- **`Direct draw` \*** (`on` / `off`): Direct Screen Access (DSA / direct framebuffer writes), bypassing Window Server composite operations (~0.93 ms saved per frame).
-- **`GL output` \*** (`on` / `off`): Hardware-accelerated OpenGL ES scaling and presentation via PowerVR MBX.
-- **`Software draw`** (`on` / `off`): Available when `GL output` is active. When `on`, the software rasterizer renders the frame and GL presents it; when `off`, the graphics chip rasterizes primitives.
-- **`Interlace hack`** (`on` / `off`): Skips rendering alternate scanlines to boost software rasterization frame rates.
-- **`Pixel skip`** (`on` / `off`): Skips rasterizing invisible pixels in high horizontal resolution modes.
+Each game has one saved state, taken during actual gameplay and checked by a
+screenshot, and the same state was used on every phone and every clock. A run
+loads the state, waits until the emulator is in the foreground, sets the
+volume to zero and lets the game run for exactly 1200 PlayStation frames, with
+no screenshots, dumps or saves during that time. The PlayStation speed is
+1200 divided by the run time and by the frame rate of the region (60 for
+NTSC). The shown frame rate counts the frames copied to the screen by direct
+output, so it is the rate of screen updates; it does not prove that every
+update showed a different picture.
 
-### SPEED Section
-- **`Frameskip`** (`off`, `auto`, `1`–`3`): GPU rendering frameskip. In `auto` mode, the emulator dynamically drops frames based on timing advice. Fixed levels (1–3) skip that many frames between drawn ones.
-- **`CPU` \*** (`dynarec` / `interpreter`): Selects the CPU execution engine (Ari64 dynamic recompiler or interpreter fallback).
-- **`GTE fast mode` \*** (`on` / `off`): Skips GTE flag calculation in the dynamic recompiler. It changes the geometry the GTE produces, so it alters the picture and is not always faster: measured on Gran Turismo it costs about 6 percent, because the rasteriser then receives more work.
-- **`PS1 CPU speed`** (`58%` to `175%`, default `100%`): Speed of the emulated PlayStation processor, shown as a percentage where a larger number is faster. Internally it is the cycle multiplier - how many cycles one guest instruction is charged - which is why the steps are uneven. Measured on Gran Turismo, a 25 percent overclock costs 2.5 percent of wall time and buys under 1 percent more drawn geometry, so treat it as a per-game remedy rather than a general speed-up.
+Every game ran three times on each configuration, 108 accepted runs in total.
+The emulator file was the alpha 1.3 release, identical on both phones and
+checked by its SHA-256 hash. The N95's clock registers were read before and
+after every series of three runs; only read-only probes were used during the
+series. Runs spoiled by a Bluetooth dialog over the picture, by a game image
+with a wrong name, or by sound that was not yet muted were excluded and their
+logs kept. An earlier attempt to measure a third N95 configuration, 495 MHz
+with the factory bus, lost the connection to the phone every time and has no
+accepted results.
 
-### SOUND Section
-- **`Sound` \*** (`on` / `off`): Enables or disables SPU sound emulation and audio output.
-- **`Preserve pitch` \*** (`on` / `off`, default `off`): When emulation drops below full speed, stretches sound without changing pitch using WSOLA (Waveform Similarity Overlap-Add). Costs ~6% emulation performance on Nokia N95.
+The full record, with every run, the raw logs, the register readings and the
+gameplay screenshots, is in
+[`docs/measurements/f11-game-speed-2026-10-05.md`](docs/measurements/f11-game-speed-2026-10-05.md)
+and its `evidence` folder.
 
-### CONTROLS Section
-- **`Control preset`**: Ready-made key layout presets (`Default`, `Racing`, `Fighting`, `RPG`). Selecting a preset replaces current key assignments.
-- **`Keyboard`**: Base keypad layout selection (`N95` or `C5`). `N95` is default; `C5` additionally maps numeric keys `2`, `4`, `6`, `8` as secondary D-pad direction controls.
-- **`Controls...`**: Opens the button mapping menu to configure primary/secondary scan codes and hold/toggle flags for all 14 controller buttons.
-- **`Tilt control`** (`on` / `off`): Steers from the accelerometer on supported devices (Nokia N95). Reports as a DualShock controller and moves an analog stick. Reverts to `off` on devices without an accelerometer. The following four settings appear only while tilt control is enabled:
-  - **`Tilt: sideways`** (`LX`, `LY`, `RX`, `RY`, inverted, `off`, default `LX`): Stick axis mapped to sideways phone tilt.
-  - **`Tilt: forward-back`** (`LX`, `LY`, `RX`, `RY`, inverted, `off`, default `LY`): Stick axis mapped to forward/backward phone tilt.
-  - **`Tilt dead zone`** (`0` to `40`, default `10`): Neutral dead zone threshold before stick displacement begins.
-  - **`Tilt sensitivity`** (`40%` to `300%`, default `100%`): Analog stick deflection sensitivity.
+### What these numbers do not show
 
-### SYSTEM Section
-- **`Language`**: Interface language selection (15 languages available; initial value follows the phone's language setting). Menu labels and help texts switch immediately.
-- **`BIOS` \***: Selects a PlayStation BIOS ROM dump from `E:\PS1\bios\` or extracts one from an archive (default: `scph7502.bin`). When no dump is present, emulation falls back to the built-in HLE BIOS replacement.
-- **`Per-game profile`** (`on` / `off`): Enables storing and loading independent configuration settings and keymaps for each game under `E:\PS1\cfg\<game>.txt`.
-- **`Reset settings`**: Restores all configuration settings, keys, and language to default values (requires confirmation, press OK twice). Existing saves and memory cards are not touched.
+The overclocked N95 series ran after several manual restarts of the phone and
+the factory-clock series before them. Its gain of 55% to 136% from a 29% clock
+increase contradicts the controlled clock experiment described above, so a
+part of the difference must come from something other than the clock. The
+factory column also looks slow against the C5-00.2: here the C5-00.2 is 1.7
+to 2.3 times faster, while an earlier comparison on Gran Turismo, without sound
+and without direct output, gave 1.39. What changed the N95's speed between the
+series has not been established. Until a repeat on one boot of the phone
+separates the clock from the state of the phone, the gain from overclocking in
+the table must not be read as the gain from the clock alone.
 
-## 7. Building
+The E90 was not part of this series, and no game has been measured on the
+Nokia 701.
 
-### Prerequisites
-- **SDK**: S60 3rd Edition FP1 SDK (`S60_3rd_FP1`).
-- **Compilers**:
-  - **GCCE 4.6.3** (`arm-2012.03` BPABI) for the core library (`libpcsxcore`) and GPU library (`gpu_unai`).
-  - **CSL Arm Toolchain** (GCC 3.4.3, SDK bundle) for the `stage1` application shell and `.mmp` components.
-- **Perl**: Strawberry Perl 5.20.x portable (Perl 5.22+ is incompatible with Symbian SDK build scripts due to `defined(%hash)` syntax).
-- **PCSX Core Fork**: `pcsx_rearmed-symbian` repository (`symbian` branch).
+## Known limitations
 
-### Build Procedure
-As of 2026-10-02, the core library (`libpcsxcore`) and the GPU library (`gpu_unai`) are built by default with GCCE 4.6.3 via `tools-patches/core463-regen.cmd` and `tools-patches/gpu463-regen.cmd` (reducing frame time by 2–4% with identical VRAM output across test devices). The `stage1` shell executable is compiled with CSL Arm Toolchain GCC 3.4.3. The parameter `-CoreCc csl343` in `run.ps1` remains available for benchmark comparisons.
+- **No NEON.** The ARM11 processors of the target phones do not have NEON, so
+  all NEON code is excluded and the emulator is built for ARMv6.
+- **Full speed is not guaranteed.** Emulating the 33.8 MHz PlayStation
+  processor together with its geometry and sound chips is heavy work for a
+  330 MHz phone. Of the twelve games measured, only Wing Commander III reaches
+  full speed, and only on the C5-00.2 and an overclocked N95.
+- **Help texts in two languages.** The interface has fifteen languages, but the
+  long help text exists in English and Ukrainian only; other languages fall
+  back to English for it.
+- **The Nokia 701 is untested.**
 
-1. Set up the build environment using `tools-patches/symbian-env.cmd`.
-2. Apply SDK patches (`tools-patches/cl_bpabi.pm.patch` and `tools-patches/makdeps.pm.patch`) to `Epoc32\tools\`.
-3. Generate the core revision header `revision.h` in the PCSX core fork.
-4. Compile the libraries and application via `tools-patches/run.ps1`:
+## Translations
+
+The interface is available in fifteen languages: English, Ukrainian, Chinese,
+German, French, Spanish, Russian, Portuguese, Italian, Polish, Turkish,
+Japanese, Hindi, Arabic and Korean. The menu texts live in
+`src/symbian/i18n.cpp`; the help texts and menu hints are UTF-8 files in
+`help/<lang>.txt`, installed to `E:\PS1\help\`. A missing text falls back to
+English.
+
+## Building from source
+
+The build requires the S60 3rd Edition FP1 SDK, two GCCE compilers and a Perl
+older than 5.22 (the SDK's scripts use `defined(%hash)`); Strawberry Perl
+5.20 portable works.
+
+- **GCCE 4.6.3** (`arm-2012.03`) builds the emulator core `libpcsxcore` and
+  the rasteriser `gpu_unai`. Since 2026-10-02 this is the default: it gave a
+  2% to 4% shorter frame with identical video memory on three phones.
+- **CSL ARM Toolchain** (GCC 3.4.3, bundled with the SDK) builds the Symbian
+  shell `stage1` and everything else described by `.mmp` files.
+- The assembly files are in GAS syntax, so RVCT and `armasm` cannot be used.
+- The core is the fork
+  [`pcsx_rearmed-symbian`](https://github.com/1234bpv/pcsx_rearmed-symbian),
+  branch `symbian`, checked out into `pcsx_rearmed/`.
+
+The steps:
+
+1. Set up the environment with `tools-patches/symbian-env.cmd`.
+2. Apply `tools-patches/cl_bpabi.pm.patch` and
+   `tools-patches/makdeps.pm.patch` to the SDK's `Epoc32\tools\`.
+3. Generate `revision.h` in the core fork.
+4. Build the core, the rasteriser and the application:
    ```powershell
    pwsh -NoProfile -File tools-patches/run.ps1 -Core -Gpu -Release -NoPush
    ```
-   Alternatively, invoke individual regeneration scripts:
-   - Run `tools-patches/core463-regen.cmd` to build `pcsxcore.lib`.
-   - Run `tools-patches/gpu463-regen.cmd` to build `gpuunai.lib`.
-   - Build `stage1` via `configs\stage1\group\ABLD.BAT build gcce urel`.
-5. Package and sign the SIS installer in one step:
+5. Package and sign both installers:
    ```powershell
    pwsh -NoProfile -File tools-patches/pack.ps1
    ```
-   This produces two self-signed packages. It refuses a harness build: run
-   `run.ps1 -Release` first, or pass `-AllowBench` when testing the installer.
+   `pack.ps1` refuses a benchmark build unless `-AllowBench` is given. On a
+   clean clone there is no signing key in `configs\sign`, so it generates a
+   self-signed one; that is a different identity from earlier builds, so
+   remove an earlier installation from the phone first.
 
-Detailed build scripts, patches, and deployment instructions are documented in [tools-patches/README.md](tools-patches/README.md).
+`run.ps1 -CoreCc csl343` builds the core with the older compiler for
+comparison. The scripts, patches and the delivery of builds to a phone are
+described in [`tools-patches/README.md`](tools-patches/README.md). During
+development, builds are delivered over WiFi or Bluetooth by the neighbouring
+project `SymbianDeployDaemon`.
 
-### Installing on a Phone
+## Further documentation
 
-Both packages are self-signed, so the phone must be hacked to accept them: `Dr Web RomPatcher plus light` with the `Open4all`, `universal` and `Install server` patches on S60v3 up to FP1, and `SafeManager` followed by `RomPatcher+` on Symbian Belle FP2, where the antivirus route no longer works.
+| File | Contents |
+|---|---|
+| [`pcsx-rearmed-symbian-port-plan.md`](pcsx-rearmed-symbian-port-plan.md) | The port plan and the reasons behind its architectural decisions. |
+| [`docs/measurements/f11-game-speed-2026-10-05.md`](docs/measurements/f11-game-speed-2026-10-05.md) | The game speed series of 2026-10-05, with every run and its evidence. |
+| [`docs/measurements/f6-compat-matrix.md`](docs/measurements/f6-compat-matrix.md) | Which of the twelve test games start, reach gameplay and at what speed. |
+| [`tools-patches/README.md`](tools-patches/README.md) | Build scripts, SDK patches and delivery to the phone. |
+| [`work/state.md`](work/state.md) | Current state of the work. |
 
-- `ps1emu_min.sis` carries the executable, application icon (`ps1stage1_aif.mbm`), registration resource and the help texts. Use it on a phone that already holds `\resource\apps\ps1stage1.rsc` — every phone the deploy daemon has set up does.
-- `ps1emu_full.sis` carries the application resource as well. Use it on a phone that has never had this application: without that resource the launch panics with `USER 23`.
+## Contributing
 
-Both are built in one step by `tools-patches\pack.ps1`, which refuses a harness build unless you pass `-AllowBench`. On a clean clone there is no signing pair in `configs\sign`, so it generates a self-signed one and writes the passphrase next to it. That is a different identity from the one used before, so remove any earlier install from the phone first.
+This is a hobby project, developed in spare time on the author's own phones.
+Bug reports, fixes and reports from other Symbian phones are welcome as issues
+or pull requests. For a game that runs wrongly, the most useful report names
+the phone, the game image and the settings, and says whether
+`CPU: interpreter` changes anything.
 
-**Help texts**: both packages install `help/en.txt` and `help/uk.txt` to `E:\PS1\help\`. The help viewer and the menu hints read `E:\PS1\help\<lang>.txt` (UTF-8) and fall back to English when a language file or entry is missing. A phone set up through the deploy daemon needs these two files copied there by hand.
+## License
 
-## 8. Known Limitations
-
-- **No ARM NEON Instructions**: The target ARMv6 architecture (ARM1136, BCM2763) does not support NEON SIMD extensions. All NEON code paths are excluded from compilation.
-- **ARMv6 Instruction Set**: Compiled specifically for ARMv6 processors.
-- **PlayStation BIOS Dump**: A valid PS1 BIOS ROM image (such as `scph7502.bin`, `scph1001.bin`, or `scph5500.bin`) placed in `E:\PS1\bios\` is strongly recommended. Without a BIOS dump, the emulator issues a warning before launch and runs on its built-in HLE replacement with lower compatibility and timing fidelity.
-- **Hardware Performance**: Emulating a 33.8 MHz MIPS R3000A CPU along with GTE and SPU on ~330 MHz ARM11 hardware (OMAP 2420) is resource-demanding. While many games achieve playable frame rates using the dynamic recompiler, frameskip, and hardware rasterization, full-speed (60 FPS) execution across all games is not guaranteed.
-
-## 9. License
-
-This project is licensed under the **GNU General Public License v2.0 (GPL-2.0)**, matching the license of upstream [PCSX-ReARMed](https://github.com/notaz/pcsx_rearmed).
+GPL-2.0, the licence of upstream
+[PCSX-ReARMed](https://github.com/notaz/pcsx_rearmed). The changes to the core
+in the fork remain under the same licence.
