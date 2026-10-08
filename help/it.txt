@@ -41,8 +41,8 @@
 [hint.sec.input] OK apre o chiude la sezione: layout dei tasti, assegnazione tasti e controllo con inclinazione.
 [hint.preset] Sostituisce tutte le assegnazioni dei tasti con un layout pronto. Sinistra/Destra sceglie, OK applica. Le tue assegnazioni andranno perse.
 [hint.keybase] Il layout di base: N95 è quello predefinito; C5 accetta anche 2, 4, 6, 8 come secondi tasti per le direzioni. OK lo applica e sostituisce le assegnazioni.
-[hint.keys] Apre la pagina di assegnazione tasti: OK, poi premi il tasto. Sinistra/Destra attiva o disattiva Tieni per un pulsante.
-[hint.tilt] Sterza con l'inclinazione del telefono (accelerometro). Come tieni il telefono al ritorno al gioco determina la posizione neutra.
+[hint.keys] Apre la pagina di assegnazione tasti: OK, poi premi il tasto. Sinistra/Destra attiva o disattiva Tieni per un pulsante. L'ultima riga è il tasto di inclinazione zero.
+[hint.tilt] Sterza con l'inclinazione del telefono (accelerometro). Come tieni il telefono al ritorno al gioco determina la posizione neutra, e il tasto di inclinazione zero (C per impostazione predefinita) la reimposta in qualsiasi momento.
 [hint.tiltside] L'asse della levetta che segue l'inclinazione laterale (LX, LY, RX, RY; un meno la inverte). Predefinito LX.
 [hint.tiltpitch] L'asse della levetta che segue l'inclinazione avanti-indietro (LX, LY, RX, RY; un meno la inverte). Predefinito LY.
 [hint.tiltdead] Un'inclinazione inferiore a questo valore viene ignorata. Da 0 a 40, predefinito 10.
@@ -52,6 +52,7 @@
 [hint.lang] La lingua del menu. Cambia subito. I testi della guida la seguono; l'inglese viene usato dove manca un testo.
 [hint.bios] Il dump del BIOS da E:\\PS1\\bios. Senza di esso viene eseguito il sostituto integrato (HLE) e la compatibilità è peggiore. Richiede il riavvio.
 [hint.profile] Sì: ogni gioco mantiene le proprie impostazioni in E:\\PS1\\cfg, come tasti e opzioni di velocità. No: un unico set per tutti i giochi.
+[hint.debug] Scrive i tempi dei fotogrammi una volta al secondo, e ogni pausa dell'immagine, in E:\PS1\logs\ps1_stage1.jsonl. Per segnalare problemi; riduce leggermente la velocità.
 [hint.reset] Riporta ogni impostazione ai valori predefiniti, inclusi tasti e lingua. Premi OK due volte. I salvataggi non vengono modificati.
 
 [hint.help] Apre la guida: prima configurazione, controlli, salvataggio, risoluzione problemi e la descrizione di ogni voce del menu.
@@ -76,7 +77,7 @@ Ogni pulsante può essere assegnato in Controlli... : OK su un pulsante, poi pre
 
 Controllo con inclinazione (Controlli) sterza con l'inclinazione del telefono. Richiede un telefono con accelerometro, come l'N95; l'E90 e il C5-00.2 non ne hanno.
 
-La posizione neutra viene rilevata ogni volta che torni al gioco dal menu. Per ricalibrare, apri il menu con il tasto di selezione destro, tieni il telefono nella posizione in cui vuoi giocare e scegli Riprendi.
+La posizione neutra viene rilevata ogni volta che torni al gioco dal menu e ogni volta che premi il tasto di inclinazione zero. Quel tasto è C per impostazione predefinita e può essere riassegnato nell'ultima riga di Controlli... . Per ricalibrare, tieni il telefono nella posizione in cui vuoi giocare e premilo.
 
 [topic.saves] Salvataggio
 Uno stato di salvataggio memorizza l'intero gioco in un determinato momento. Apri Gioco, scegli Salva stato, seleziona uno slot con Sinistra e Destra (da 1 a 5) e premi OK. [*] dopo il numero dello slot indica che contiene già uno stato, [ ] indica che è vuoto. Carica stato lo ripristina.
@@ -153,7 +154,7 @@ Preset controlli: Predefinito, Corse, Picchiaduro o RPG. OK sostituisce tutte le
 
 Tastiera: N95 (il layout predefinito) o C5 (lo stesso, più 2, 4, 6, 8 come secondi tasti per le direzioni). OK sostituisce tutte le assegnazioni dei tasti.
 
-Controlli...: assegna ogni pulsante PS1 a un tasto; Sinistra e Destra attivano o disattivano Tieni.
+Controlli...: assegna ogni pulsante PS1 a un tasto; Sinistra e Destra attivano o disattivano Tieni. L'ultima riga, Inclinazione zero, è il tasto che rende neutra la posizione corrente del telefono.
 
 Controllo con inclinazione e le sue quattro impostazioni: l'asse per l'inclinazione laterale, l'asse per l'inclinazione avanti-indietro, la zona morta (da 0 a 40) e la sensibilità (da 40% a 300%).
 
@@ -163,5 +164,7 @@ Lingua: la lingua del menu e di questi testi, cambia subito.
 BIOS: il dump del BIOS da usare, richiede il riavvio. Il valore predefinito è scph7502.bin.
 
 Profilo per gioco: attivo mantiene un file di impostazioni separato per ciascun gioco.
+
+Registro di debug: attivo scrive i tempi dei fotogrammi una volta al secondo, e ogni pausa dell'immagine, in E:\PS1\logs\ps1_stage1.jsonl. Per segnalare un problema, attivalo, gioca fino a quando non si presenta il problema, esci dall'emulatore tramite Esci e invia quel file. La sessione precedente viene conservata come ps1_stage1_prev.jsonl.
 
 Ripristina: ripristina tutti i valori predefiniti; premi OK due volte.

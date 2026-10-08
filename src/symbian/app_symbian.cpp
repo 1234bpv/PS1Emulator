@@ -61,6 +61,8 @@ void ps1CfgApplyLive(int aIlace, int aLight, int aBlend, int aPixSkip,
 	int aFps, int aGpuSkip, int aCycle, int aSmooth, int aFxaa, int aDirty,
 	int aSwDraw);
 extern "C" void voutSymbianSetTilt(int aOn);
+extern "C" void voutSymbianTiltRezero(void);
+extern "C" void ps1SetDebugLog(int aOn);
 extern "C" void voutSymbianSetTiltMap(int aSide, int aPitch, int aDead, int aSensPct);
 extern "C" int voutSymbianTiltActive(void);
 extern "C" int ps1TiltCli(void);
@@ -104,7 +106,7 @@ enum TCfgItem
 	ECfgHdrSound, ECfgSound, ECfgWsola,
 	ECfgHdrInput, ECfgPreset, ECfgKeyBase, ECfgKeys,
 	ECfgTilt, ECfgTiltSide, ECfgTiltPitch, ECfgTiltDead, ECfgTiltSens,
-	ECfgHdrSystem, ECfgLang, ECfgBios, ECfgProfile, ECfgReset,
+	ECfgHdrSystem, ECfgLang, ECfgBios, ECfgProfile, ECfgDebug, ECfgReset,
 	ECfgHelp, ECfgExit,
 	ECfgCount
 	};
@@ -132,7 +134,7 @@ static const unsigned char KItemSection[ECfgCount] =
 	ESecSound, ESecSound, ESecSound,
 	ESecInput, ESecInput, ESecInput, ESecInput, ESecInput, ESecInput, ESecInput,
 	ESecInput, ESecInput,
-	ESecSystem, ESecSystem, ESecSystem, ESecSystem, ESecSystem,
+	ESecSystem, ESecSystem, ESecSystem, ESecSystem, ESecSystem, ESecSystem,
 	ESecCount, ESecCount
 	};
 
@@ -148,7 +150,8 @@ static const TStrId KItemLabelStrId[ECfgCount] =
 	EStrSecControls, EStrItemPreset, EStrItemKeyBase, EStrItemKeys,
 	EStrItemTilt, EStrItemTiltSide, EStrItemTiltPitch, EStrItemTiltDead,
 	EStrItemTiltSens,
-	EStrSecSystem, EStrItemLang, EStrItemBios, EStrItemProfile, EStrItemReset,
+	EStrSecSystem, EStrItemLang, EStrItemBios, EStrItemProfile, EStrItemDebug,
+	EStrItemReset,
 	EStrItemHelp, EStrItemExit
 	};
 
@@ -165,7 +168,7 @@ static const char *const KCfgKey[ECfgCount] =
 	NULL, "sound", "wsola",
 	NULL, NULL, NULL, NULL, "tilt", "tiltside", "tiltpitch", "tiltdead",
 	"tiltsens",
-	NULL, "lang", NULL, "profile", NULL,
+	NULL, "lang", NULL, "profile", "debug", NULL,
 	NULL, NULL
 	};
 
@@ -181,7 +184,7 @@ static const char *const KItemHelpId[ECfgCount] =
 	"sec.sound", "sound", "wsola",
 	"sec.input", "preset", "keybase", "keys", "tilt", "tiltside",
 	"tiltpitch", "tiltdead", "tiltsens",
-	"sec.system", "lang", "bios", "profile", "reset",
+	"sec.system", "lang", "bios", "profile", "debug", "reset",
 	"help", "exit"
 	};
 
@@ -316,6 +319,8 @@ public:
 	TInt iInterp, iIlace, iLight, iBlend, iPixSkip, iGteNf, iSound, iGl, iWsola;
 	TInt iDirty, iDsa, iFps, iGpuSkip, iCycle, iSmooth, iFxaa, iProfile, iSwDraw;
 	TInt iLang;
+	// Debug log: global only, like the language, so one switch covers every game.
+	TInt iDebug;
 	// First-run marker, kept in the global file only (intro=1): the setup page opens
 	// at start until it is set. Not part of SetDefaults, so a reset does not clear it.
 	TInt iIntro;
@@ -362,6 +367,7 @@ void TPs1Cfg::SetDefaults()
 	// Per-game settings: key bindings and speed hacks needed in a racing game vs an
 	// RPG are different, and flipping through them manually each time is the same menu twice.
 	iProfile = 1;
+	iDebug = 0;
 	// Display by gpulib latch: measured -6.7 ms per frame with no image quality loss.
 	iDirty = 1;
 	// Direct screen buffer write: measured -0.93 ms per frame. It was broken because of
@@ -374,6 +380,11 @@ void TPs1Cfg::SetDefaults()
 		iKeyAlt[i]  = voutSymbianDefaultKey(i, 1);
 		iKeyHold[i] = 0;
 		}
+	// The row after the PS1 buttons is the tilt zero key. C is free in the default
+	// layout and in Racing and Fighting.
+	const TInt tiltRow = voutSymbianPadButtons();
+	if (tiltRow >= 0 && tiltRow < KPadMax)
+		iKeyScan[tiltRow] = EStdKeyBackspace;
 	}
 
 // A hand-edited or truncated settings file must not reach the core or the menu
@@ -387,6 +398,7 @@ void TPs1Cfg::Clamp()
 	if (iTiltPitch < 0 || iTiltPitch > 8) iTiltPitch = 3;
 	if (iTiltDead < 0 || iTiltDead > 40) iTiltDead = 10;
 	if (iTiltSens < 40 || iTiltSens > 300) iTiltSens = 100;
+	iDebug = iDebug ? 1 : 0;
 	}
 
 TInt &TPs1Cfg::Value(TInt aItem)
@@ -411,6 +423,7 @@ TInt &TPs1Cfg::Value(TInt aItem)
 		case ECfgSmooth:  return iSmooth;
 		case ECfgFxaa:    return iFxaa;
 		case ECfgProfile: return iProfile;
+		case ECfgDebug:   return iDebug;
 		case ECfgLang:    return iLang;
 		case ECfgTilt:      return iTilt;
 		case ECfgTiltSide:  return iTiltSide;
@@ -756,6 +769,7 @@ private:
 	void SyncSideKeyCaptures(TBool aAll = EFalse);
 	void ApplyPreset(TInt aPreset);
 	void ApplyBase(TInt aBase);
+	void FreeTiltKey();
 	void SnapRestart();
 	TBool RestartNeeded() const;
 
@@ -791,6 +805,8 @@ private:
 	TInt iStateSlot;          // state slot (1..5)
 	TBuf<80> iStatusMsg;      // message shown in hint bar (e.g. state save/load result)
 	TInt iPadCount;
+	// Rows of the key page: the PS1 buttons, then the tilt zero key.
+	TInt iKeyRows;
 	TBool iStartedOnce;       // config already sent to the core; only live changes from now on
 	TBool iGameClosed;        // game was shut down for importing its own disc image
 	TBool iRestartReq;        // exited menu with a change that requires a new pass
@@ -830,7 +846,8 @@ void CPs1Container::ConstructL(const TRect &aRect)
 	iBrowse = new (ELeave) CDesCArrayFlat(16);
 	iPicked = new (ELeave) CDesCArrayFlat(8);
 	iPadCount = voutSymbianPadButtons();
-	if (iPadCount > KPadMax) iPadCount = KPadMax;
+	if (iPadCount > KPadMax - 1) iPadCount = KPadMax - 1;
+	iKeyRows = iPadCount + 1;
 	iCapture = -1;
 	iConfirm = -1;
 	iPresetSel = EPresetDefault;
@@ -1402,6 +1419,8 @@ void CPs1Container::ParseCfg(const TDesC8 &aTxt, TBool aWithGame)
 					// must not switch it back.
 					if (i == ECfgLang && (!aWithGame || v < 0 || v >= I18nLanguageCount()))
 						break;
+					if (i == ECfgDebug && !aWithGame)
+						break;
 					iCfg.Value(i) = v;
 					if (i == ECfgLang)
 						I18nSetLanguage(v);
@@ -1456,12 +1475,12 @@ void CPs1Container::SaveCfg(const TDesC &aPath, TBool aWithGame) const
 		if (werr == KErrNone) werr = f.Write(line);
 		}
 		for (TInt i = 0; i < ECfgCount; i++)
-			if (KCfgKey[i] && (aWithGame || i != ECfgLang))
+			if (KCfgKey[i] && (aWithGame || (i != ECfgLang && i != ECfgDebug)))
 				{
 				line.Format(_L8("%s=%d\n"), KCfgKey[i], c.Value(i));
 				if (werr == KErrNone) werr = f.Write(line);
 				}
-		for (TInt b = 0; b < iPadCount; b++)
+		for (TInt b = 0; b < iKeyRows; b++)
 			{
 			line.Format(_L8("btn%d=%d %d %d\n"), b, iCfg.iKeyScan[b],
 				iCfg.iKeyAlt[b], iCfg.iKeyHold[b]);
@@ -1513,7 +1532,7 @@ void CPs1Container::SyncSideKeyCaptures(TBool aAll)
 	TBool inUse[8];
 	for (TInt k = 0; k < 8; k++)
 		inUse[k] = aAll;
-	for (TInt i = 0; i < iPadCount; i++)
+	for (TInt i = 0; i < iKeyRows; i++)
 		{
 		const TInt sc = iCfg.iKeyScan[i];
 		const TInt alt = iCfg.iKeyAlt[i];
@@ -1573,8 +1592,35 @@ void CPs1Container::ApplyPreset(TInt aPreset)
 			iCfg.iKeyHold[i] = 0;
 			}
 		}
+	FreeTiltKey();
 	ApplyKeyMap();
 	SaveAll();
+	}
+
+// A preset or a base can take the tilt zero key for a PS1 button (RPG and C5 both use
+// C): move it to the first key the new layout leaves free, so one press does not do two
+// things the player did not ask for together.
+void CPs1Container::FreeTiltKey()
+	{
+	static const TInt KTiltCandidates[5] = { EStdKeyBackspace, '0', '5', '*', '#' };
+	const TInt row = iPadCount;
+	for (TInt c = -1; c < 5; c++)
+		{
+		const TInt k = (c < 0) ? iCfg.iKeyScan[row] : KTiltCandidates[c];
+		if (k < 0)
+			continue;
+		TBool used = EFalse;
+		for (TInt i = 0; i < iPadCount && !used; i++)
+			used = (iCfg.iKeyScan[i] == k || iCfg.iKeyAlt[i] == k);
+		if (!used)
+			{
+			iCfg.iKeyScan[row] = k;
+			iCfg.iKeyAlt[row] = -1;
+			return;
+			}
+		}
+	iCfg.iKeyScan[row] = -1;
+	iCfg.iKeyAlt[row] = -1;
 	}
 
 // A base picks the handset's keyboard, not the game type: same one-shot overwrite
@@ -1595,6 +1641,7 @@ void CPs1Container::ApplyBase(TInt aBase)
 			}
 		iCfg.iKeyHold[i] = 0;
 		}
+	FreeTiltKey();
 	ApplyKeyMap();
 	SaveAll();
 	}
@@ -1933,14 +1980,14 @@ void CPs1Container::DrawKeys(CWindowGc &gc, const TRect &aBody) const
 	TInt rows = aBody.Height() / lh;
 	if (rows < 1) rows = 1;
 	TInt first = iKeySel - rows / 2;
-	if (first > iPadCount - rows) first = iPadCount - rows;
+	if (first > iKeyRows - rows) first = iKeyRows - rows;
 	if (first < 0) first = 0;
 
 	TInt y = aBody.iTl.iY + font->AscentInPixels();
-	for (TInt i = first; i < first + rows && i < iPadCount; i++)
+	for (TInt i = first; i < first + rows && i < iKeyRows; i++)
 		{
 		TBuf<40> name;
-		name.Copy(Tr(KBtnStrId[i]));
+		name.Copy(Tr(i < iPadCount ? KBtnStrId[i] : EStrBtnTiltZero));
 		TBuf<64> value;
 		if (iCapture == i)
 			value.Copy(Tr(EStrPressKey));
@@ -2686,6 +2733,7 @@ void CPs1Container::DoCloseMenu(TBool aWithRestart)
 		iCfg.iFps, iCfg.iGpuSkip, iCfg.iCycle, iCfg.iSmooth, iCfg.iFxaa, iCfg.iDirty,
 		iCfg.iSwDraw);
 	ps1SndResetRate();
+	ps1SetDebugLog(iCfg.iDebug);
 	iPage = EPageNone;
 	voutSymbianSuspend(0);
 	ps1Log("menu", "close");
@@ -2707,8 +2755,10 @@ void CPs1Container::RevertRestartSettings()
 	if (iCfgPrevValid)
 		{
 		const TInt lang = iCfg.iLang;
+		const TInt debug = iCfg.iDebug;
 		iCfg = iCfgPrev;
 		iCfg.iLang = lang;
+		iCfg.iDebug = debug;
 		iCfgPrevValid = EFalse;
 		}
 	iGamePath = iGameAtStart;
@@ -2766,6 +2816,7 @@ void CPs1Container::ApplyAndStart()
 		iCfg.iLight, iCfg.iBlend, iCfg.iPixSkip, iCfg.iGteNf, iCfg.iSound, iCfg.iGl,
 		iCfg.iDirty, iCfg.iDsa, iCfg.iFps, iCfg.iGpuSkip, iCfg.iCycle, iCfg.iSmooth,
 		iCfg.iFxaa, iCfg.iSwDraw, iCfg.iWsola);
+	ps1SetDebugLog(iCfg.iDebug);
 	iStartedOnce = ETrue;
 	iRestartReq = EFalse;
 	SnapRestart();
@@ -3373,10 +3424,11 @@ TKeyResponse CPs1Container::KeysKeyL(TInt aScan)
 		return EKeyWasConsumed;
 		}
 	if (aScan == EStdKeyUpArrow)
-		iKeySel = (iKeySel + iPadCount - 1) % iPadCount;
+		iKeySel = (iKeySel + iKeyRows - 1) % iKeyRows;
 	else if (aScan == EStdKeyDownArrow)
-		iKeySel = (iKeySel + 1) % iPadCount;
-	else if (aScan == EStdKeyLeftArrow || aScan == EStdKeyRightArrow)
+		iKeySel = (iKeySel + 1) % iKeyRows;
+	// Hold means nothing for the tilt zero key: it acts once per press.
+	else if ((aScan == EStdKeyLeftArrow || aScan == EStdKeyRightArrow) && iKeySel < iPadCount)
 		iCfg.iKeyHold[iKeySel] = iCfg.iKeyHold[iKeySel] ? 0 : 1;
 	else if (aScan == EStdKeyDevice3 || aScan == EStdKeyEnter || aScan == EStdKeyNkpEnter)
 		iCapture = iKeySel;
@@ -3562,7 +3614,19 @@ TKeyResponse CPs1Container::DispatchKeyL(const TKeyEvent &aKeyEvent, TEventCode 
 	// the asterisk or the left soft key would silently not work - screenshot and volume
 	// would consume them earlier. The default layout does not use them, so for an
 	// unmodified config the order changes nothing.
+	// Tilt zero key: the way the phone is held at this moment becomes the neutral
+	// position. A key that is also bound to a PS1 button goes on pressing it below.
+	const TInt sc0 = aKeyEvent.iScanCode;
+	const TBool tiltKey = iCfg.iTilt && sc0 >= 0 &&
+		(sc0 == iCfg.iKeyScan[iPadCount] || sc0 == iCfg.iKeyAlt[iPadCount]);
+	if (tiltKey && aType == EEventKeyDown)
+		{
+		voutSymbianTiltRezero();
+		ps1Log("tilt", "rezero by key");
+		}
 	if (voutSymbianKeyEvent(aKeyEvent.iScanCode, aType == EEventKeyDown))
+		return EKeyWasConsumed;
+	if (tiltKey)
 		return EKeyWasConsumed;
 
 	// Left soft key = on-demand screenshot.

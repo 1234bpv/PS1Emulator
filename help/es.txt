@@ -41,8 +41,8 @@
 [hint.sec.input] OK abre o cierra la sección: distribuciones de teclas, asignación de controles y control por inclinación.
 [hint.preset] Sustituye todas las asignaciones de teclas por una distribución lista. Izq/Der elige, OK aplica. Tus asignaciones se perderán.
 [hint.keybase] Distribución base: N95 es la predeterminada; C5 también acepta 2, 4, 6, 8 como segunda tecla para las direcciones. OK la aplica y sustituye las asignaciones.
-[hint.keys] Abre la asignación de teclas: OK, luego pulsa la tecla. Izq/Der activa o desactiva Mantener para un botón.
-[hint.tilt] Conduce con la inclinación del teléfono (acelerómetro). La posición al volver al juego se toma como punto neutro.
+[hint.keys] Abre la asignación de teclas: OK, luego pulsa la tecla. Izq/Der activa o desactiva Mantener para un botón. La última fila es la tecla de inclinación cero.
+[hint.tilt] Conduce con la inclinación del teléfono (acelerómetro). La posición al volver al juego se toma como punto neutro, y la tecla de inclinación cero (C por defecto) lo restablece en cualquier momento.
 [hint.tiltside] Eje de palanca que sigue la inclinación lateral (LX, LY, RX, RY; un signo menos lo invierte). Por defecto LX.
 [hint.tiltpitch] Eje de palanca que sigue la inclinación adelante-atrás (LX, LY, RX, RY; un signo menos lo invierte). Por defecto LY.
 [hint.tiltdead] Una inclinación menor a esto se ignora. De 0 a 40, por defecto 10.
@@ -52,6 +52,7 @@
 [hint.lang] El idioma del menú. Cambia al instante. Los textos de ayuda lo siguen; se usa inglés donde falte un texto.
 [hint.bios] Volcado de BIOS de E:\PS1\bios. Sin él se ejecuta el sustituto integrado (HLE) y la compatibilidad es menor. Requiere reiniciar.
 [hint.profile] Sí: cada juego conserva sus propios ajustes en E:\PS1\cfg, como teclas y velocidad. No: una sola configuración para todos.
+[hint.debug] Escribe los tiempos de fotograma una vez por segundo y cada pausa de la imagen en E:\PS1\logs\ps1_stage1.jsonl. Para informar de problemas; reduce un poco la velocidad.
 [hint.reset] Restablece todos los ajustes a sus valores por defecto, incluidas teclas e idioma. Pulsa OK dos veces. No afecta a las partidas guardadas.
 
 [hint.help] Abre la ayuda: configuración inicial, controles, guardado, solución de problemas y descripción de cada opción del menú.
@@ -76,7 +77,7 @@ Cada botón se puede asignar en Controles... : OK en un botón, luego pulsa la t
 
 Control por inclinación (CONTROLES) dirige con la inclinación del teléfono. Requiere un teléfono con acelerómetro, como el N95; el E90 y el C5-00.2 no lo tienen.
 
-La posición neutra se toma cada vez que vuelves al juego desde el menú. Para recalibrar, abre el menú con la tecla de selección derecha, sujeta el teléfono como desees jugar y elige Reanudar.
+La posición neutra se toma cada vez que vuelves al juego desde el menú y cada vez que pulsas la tecla de inclinación cero. Esa tecla es C por defecto y puede reasignarse en la última fila de Controles... . Para recalibrar, sujeta el teléfono como desees jugar y púlsala.
 
 [topic.saves] Guardado
 Un estado guardado almacena toda la partida en un instante. Abre JUEGO, elige Guardar estado, selecciona una ranura con Izquierda y Derecha (1 a 5) y pulsa OK. [*] tras el número de ranura indica que ya contiene un estado, [ ] indica que está vacía. Cargar estado lo restaura.
@@ -153,7 +154,7 @@ Preajuste control: Defecto, Carreras, Lucha o RPG. OK sustituye todas las asigna
 
 Teclado: N95 (la distribución por defecto) o C5 (la misma, más 2, 4, 6, 8 como segunda tecla para las direcciones). OK sustituye todas las asignaciones de teclas.
 
-Controles...: asigna cada botón de PS1 a una tecla; Izquierda y Derecha activan o desactivan Mantener.
+Controles...: asigna cada botón de PS1 a una tecla; Izquierda y Derecha activan o desactivan Mantener. La última fila, Inclinación cero, es la tecla que hace que la posición actual del teléfono sea la neutra.
 
 Control por inclinación y sus cuatro ajustes: el eje para inclinación lateral, el eje para inclinación adelante-atrás, la zona muerta (0 a 40) y la sensibilidad (40% a 300%).
 
@@ -163,5 +164,7 @@ Idioma: el idioma del menú y de estos textos, cambia al instante.
 BIOS: el volcado de BIOS a utilizar, requiere reiniciar. El valor por defecto es scph7502.bin.
 
 Perfil por juego: activado mantiene un archivo de ajustes independiente para cada juego.
+
+Registro de depuración: activado escribe los tiempos de fotograma una vez por segundo y cada pausa de la imagen en E:\PS1\logs\ps1_stage1.jsonl. Para informar de un problema, actívalo, juega hasta que aparezca el problema, sal del emulador mediante Salir y envía ese archivo. La ejecución anterior se guarda como ps1_stage1_prev.jsonl.
 
 Restaurar ajustes: restablece todo a los valores por defecto; pulsa OK dos veces.

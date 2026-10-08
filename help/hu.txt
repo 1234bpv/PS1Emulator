@@ -41,8 +41,8 @@
 [hint.sec.input] Az OK megnyitja vagy bezárja a szakaszt: billentyűkiosztások, gombtársítás és döntéses irányítás.
 [hint.preset] Az összes gombtársítást felülírja egy kész elrendezéssel. Balra/Jobbra választ, OK érvényesít. A saját társítások elvesznek.
 [hint.keybase] Az alapelrendezés: az N95 az alapértelmezett; a C5 a 2, 4, 6, 8 gombokat is elfogadja második billentyűként az irányokhoz. Az OK érvényesíti és felülírja a társításokat.
-[hint.keys] Megnyitja a billentyűtársítási oldalt: OK, majd nyomja meg a gombot. A Balra/Jobbra be- vagy kikapcsolja a Tartás módot egy gombon.
-[hint.tilt] A telefon döntésével irányít (gyorsulásmérő). Ahogyan a telefont tartja a játékba való visszatéréskor, az lesz a semleges helyzet.
+[hint.keys] Megnyitja a billentyűtársítási oldalt: OK, majd nyomja meg a gombot. A Balra/Jobbra be- vagy kikapcsolja a Tartás módot egy gombon. Az utolsó sor a döntés nullázása billentyű.
+[hint.tilt] A telefon döntésével irányít (gyorsulásmérő). Ahogyan a telefont tartja a játékba való visszatéréskor, az lesz a semleges helyzet, a döntés nullázása billentyű (alapértelmezés szerint C) pedig bármikor újra beállítja azt.
 [hint.tiltside] Az analóg kar tengelye, amely az oldalra döntést követi (LX, LY, RX, RY; a mínuszjel megfordítja). Alapértelmezett: LX.
 [hint.tiltpitch] Az analóg kar tengelye, amely az előre és hátra döntést követi (LX, LY, RX, RY; a mínuszjel megfordítja). Alapértelmezett: LY.
 [hint.tiltdead] Az ennél kisebb döntést figyelmen kívül hagyja. 0-tól 40-ig, alapértelmezett: 10.
@@ -52,6 +52,7 @@
 [hint.lang] A menü nyelve. Azonnal megváltozik. A súgószövegek követik; ahol hiányzik a szöveg, ott az angol jelenik meg.
 [hint.bios] A BIOS-másolat a(z) E:\PS1\bios mappából. Nélküle a beépített helyettesítő (HLE) fut, és a kompatibilitás gyengébb. Újraindítást igényel.
 [hint.profile] Be: minden játék saját beállításokat tart a(z) E:\PS1\cfg mappában, mint a gombok és sebességkapcsolók. Ki: egy közös beállítás minden játéknak.
+[hint.debug] Másodpercenként egyszer, valamint a kép minden megállásakor felírja a képkockák idejét a(z) E:\PS1\logs\ps1_stage1.jsonl fájlba. Hibajelentéshez; egy kevés sebességbe kerül.
 [hint.reset] Minden beállítást visszaállít az alapértelmezettre, a gombokat és a nyelvet is beleértve. Nyomja meg kétszer az OK gombot. A mentéseket nem érinti.
 
 [hint.help] Megnyitja a súgót: első beállítás, irányítás, mentés, hibaelhárítás és az összes menüsor leírása.
@@ -76,7 +77,7 @@ Minden gomb hozzárendelhető az Irányítás... menüpontban: OK a gombon, majd
 
 A Döntéses irányítás (Irányítás) a telefon döntésével vezérel. Gyorsulásmérővel rendelkező telefont igényel, mint amilyen az N95; az E90 és a C5-00.2 nem rendelkezik ilyennel.
 
-A semleges helyzet minden alkalommal rögzítésre kerül, amikor a menüből visszatér a játékba. Az újrakalibráláshoz nyissa meg a menüt a jobb választógombbal, tartsa a telefont úgy, ahogyan játszani szeretne, és válassza a Folytatás lehetőséget.
+A semleges helyzet minden alkalommal rögzítésre kerül, amikor a menüből visszatér a játékba, valamint minden alkalommal, amikor megnyomja a döntés nullázása billentyűt. Ez a billentyű alapértelmezés szerint a C, és az Irányítás... utolsó sorában újra hozzárendelhető. Az újrakalibráláshoz tartsa a telefont úgy, ahogyan játszani szeretne, és nyomja meg.
 
 [topic.saves] Mentés
 Az állásmentés az egész játékot elmenti egy adott pillanatban. Nyissa meg a Játék menüt, válassza az Állás mentése pontot, válasszon egy helyet a Balra és Jobbra gombokkal (1-től 5-ig), majd nyomja meg az OK gombot. A [*] a hely száma után azt jelenti, hogy a hely már tartalmaz mentést, a [ ] azt, hogy üres. Az Állás betöltése visszaállítja azt.
@@ -153,7 +154,7 @@ Irányítási séma: Alapértelmezett, Verseny, Verekedős vagy RPG. Az OK felü
 
 Billentyűzet: N95 (az alapértelmezett elrendezés) vagy C5 (ugyanez, plusz a 2, 4, 6, 8 második billentyűként az irányokhoz). Az OK felülír minden gombtársítást.
 
-Irányítás...: rendeljen minden PS1 gombot egy billentyűhöz; a Balra és Jobbra be- vagy kikapcsolja a Tartás módot.
+Irányítás...: rendeljen minden PS1 gombot egy billentyűhöz; a Balra és Jobbra be- vagy kikapcsolja a Tartás módot. Az utolsó sor, a Döntés nullázása az a billentyű, amely a telefon aktuális helyzetét semlegessé teszi.
 
 Döntéses irányítás és annak négy beállítása: az oldalirányú döntés tengelye, az előre és hátra döntés tengelye, a holttér (0-tól 40-ig) és az érzékenység (40%-tól 300%-ig).
 
@@ -163,5 +164,7 @@ Nyelv: a menü és ezen szövegek nyelve, azonnal megváltozik.
 BIOS: a használandó BIOS-fájl, újraindítást igényel. Alapértelmezett: scph7502.bin.
 
 Játékonkénti profil: be esetén külön beállításfájlt tart fenn minden játékhoz.
+
+Hibakeresési napló: be esetén másodpercenként egyszer, valamint a kép minden megállásakor felírja a képkockák idejét a(z) E:\PS1\logs\ps1_stage1.jsonl fájlba. Hiba bejelentéséhez kapcsolja be, játsszon a probléma megjelenéséig, lépjen ki az emulátorból a Kilépés menüponttal, és küldje el ezt a fájlt. Az ezt megelőző futás ps1_stage1_prev.jsonl néven marad meg.
 
 Alapbeállítások: mindent visszaállít az alapértékekre; nyomja meg kétszer az OK gombot.

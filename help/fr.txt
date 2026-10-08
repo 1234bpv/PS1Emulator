@@ -41,8 +41,8 @@
 [hint.sec.input] OK ouvre ou ferme la section : dispositions des touches, assignation des touches et contrôle par inclinaison.
 [hint.preset] Remplace toutes les assignations de touches par une disposition prête à l'emploi. Gauche/Droite choisit, OK applique. Vos propres assignations sont perdues.
 [hint.keybase] La disposition de base : N95 est celle par défaut ; C5 accepte aussi 2, 4, 6, 8 comme seconde touche pour les directions. OK l'applique et remplace les assignations.
-[hint.keys] Ouvre la page d'assignation des touches : OK, puis appuyez sur la touche. Gauche/Droite active ou désactive Maintien pour un bouton.
-[hint.tilt] Dirige avec l'inclinaison du téléphone (accéléromètre). La position dans laquelle vous tenez le téléphone en revenant au jeu est la position neutre.
+[hint.keys] Ouvre la page d'assignation des touches : OK, puis appuyez sur la touche. Gauche/Droite active ou désactive Maintien pour un bouton. La dernière ligne est la touche d'inclinaison zéro.
+[hint.tilt] Dirige avec l'inclinaison du téléphone (accéléromètre). La position dans laquelle vous tenez le téléphone en revenant au jeu est la position neutre, et la touche d'inclinaison zéro (C par défaut) la redéfinit à tout moment.
 [hint.tiltside] L'axe du stick qui suit l'inclinaison latérale (LX, LY, RX, RY ; un moins l'inverse). Défaut LX.
 [hint.tiltpitch] L'axe du stick qui suit l'inclinaison avant-arrière (LX, LY, RX, RY ; un moins l'inverse). Défaut LY.
 [hint.tiltdead] Une inclinaison inférieure à cette valeur est ignorée. De 0 à 40, défaut 10.`
@@ -52,6 +52,7 @@
 [hint.lang] La langue du menu. Change aussitôt. Les textes d'aide la suivent ; l'anglais est utilisé lorsqu'un texte manque.
 [hint.bios] Le dump de BIOS depuis E:\PS1\bios. Sans lui, le remplacement intégré (HLE) fonctionne et la compatibilité est moins bonne. Nécessite un redémarrage.
 [hint.profile] Activé : chaque jeu conserve ses propres réglages dans E:\PS1\cfg, comme les touches et les options de vitesse. Désactivé : un ensemble pour tous les jeux.
+[hint.debug] Écrit les temps de trame une fois par seconde, et chaque pause de l'image, dans E:\PS1\logs\ps1_stage1.jsonl. Pour signaler des problèmes ; réduit un peu la vitesse.
 [hint.reset] Rétablit chaque réglage à sa valeur par défaut, touches et langue incluses. Appuyez deux fois sur OK. Les sauvegardes ne sont pas touchées.
 
 [hint.help] Ouvre l'aide : première configuration, touches, sauvegarde, dépannage et une description de chaque ligne du menu.
@@ -76,7 +77,7 @@ Chaque bouton peut être assigné dans Touches... : OK sur un bouton, puis appuy
 
 Contrôle par inclinaison (Touches) dirige selon l'inclinaison du téléphone. Il nécessite un téléphone avec un accéléromètre, comme le N95 ; l'E90 et le C5-00.2 n'en ont pas.
 
-La position neutre est prise chaque fois que vous revenez au jeu depuis le menu. Pour recalibrer, ouvrez le menu avec la touche de sélection droite, tenez le téléphone comme vous souhaitez jouer et choisissez Reprendre.
+La position neutre est prise chaque fois que vous revenez au jeu depuis le menu, et chaque fois que vous appuyez sur la touche d'inclinaison zéro. Cette touche est C par défaut et peut être réassignée sur la dernière ligne de Touches... . Pour recalibrer, tenez le téléphone comme vous souhaitez jouer et appuyez dessus.
 
 [topic.saves] Sauvegarde
 Un état de sauvegarde enregistre l'ensemble du jeu à un instant précis. Ouvrez Jeu, choisissez Sauvegarder l'état, choisissez un emplacement avec Gauche et Droite (1 à 5) et appuyez sur OK. [*] après le numéro d'emplacement signifie que l'emplacement contient déjà un état, [ ] qu'il est vide. Charger l'état le restaure.
@@ -153,7 +154,7 @@ Préréglage touches : Défaut, Course, Combat ou RPG. OK remplace toutes les as
 
 Clavier : N95 (la disposition par défaut) ou C5 (la même, plus 2, 4, 6, 8 comme seconde touche pour les directions). OK remplace toutes les assignations de touches.
 
-Touches... : assigne chaque bouton PS1 à une touche ; Gauche et Droite activént ou désactivént Maintien.
+Touches... : assigne chaque bouton PS1 à une touche ; Gauche et Droite activént ou désactivént Maintien. La dernière ligne, Inclinaison zéro, est la touche qui rend neutre la position actuelle du téléphone.
 
 Contrôle par inclinaison et ses quatre réglages : l'axe pour l'inclinaison latérale, l'axe pour l'inclinaison avant-arrière, la zone morte (0 à 40) et la sensibilité (40% à 300%).
 
@@ -163,5 +164,7 @@ Langue : la langue du menu et de ces textes, change aussitôt.
 BIOS : le dump de BIOS à utiliser, nécessite un redémarrage. Le fichier par défaut est scph7502.bin.
 
 Profil par jeu : activé conserve un fichier de réglages séparé pour chaque jeu.
+
+Journal de débogage : activé écrit les temps de trame une fois par seconde, et chaque pause de l'image, dans E:\PS1\logs\ps1_stage1.jsonl. Pour signaler un problème, activez-le, jouez jusqu'à ce que le problème apparaisse, quittez l'émulateur par Quitter et envoyez ce fichier. La session précédente est conservée sous ps1_stage1_prev.jsonl.
 
 Réinitialiser : rétablit tous les réglages par défaut ; appuyez deux fois sur OK.

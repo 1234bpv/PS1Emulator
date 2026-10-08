@@ -41,8 +41,8 @@
 [hint.sec.input] OK atidaro arba uždaro skyrių: klavišų išdėstymai, klavišų priskyrimas ir valdymas pakreipimu.
 [hint.preset] Pakeičia visus klavišų priskyrimus paruoštu išdėstymu. Kairė/Dešinė renkasi, OK pritaiko. Jūsų priskyrimai prarandami.
 [hint.keybase] Pagrindinis išdėstymas: N95 yra numatytasis; C5 kryptims taip pat priima 2, 4, 6, 8 kaip antrą klavišą. OK jį pritaiko ir pakeičia priskyrimus.
-[hint.keys] Atidaro klavišų priskyrimo puslapį: OK, tada spauskite klavišą. Kairė/Dešinė įjungia arba išjungia mygtuko laikymą.
-[hint.tilt] Valdo telefono pakreipimu (akselerometras). Telefono laikymo padėtis, kai grįžtate į žaidimą, yra neutrali padėtis.
+[hint.keys] Atidaro klavišų priskyrimo puslapį: OK, tada spauskite klavišą. Kairė/Dešinė įjungia arba išjungia mygtuko laikymą. Paskutinė eilutė yra pakreipimo nulio klavišas.
+[hint.tilt] Valdo telefono pakreipimu (akselerometras). Telefono laikymo padėtis, kai grįžtate į žaidimą, yra neutrali padėtis, o pakreipimo nulio klavišas (pagal numatymą C) bet kuriuo metu ją nustato iš naujo.
 [hint.tiltside] Lazdelės ašis, sekanti pakreipimą į šoną (LX, LY, RX, RY; minusas ją apverčia). Numatyta LX.
 [hint.tiltpitch] Lazdelės ašis, sekanti pakreipimą pirmyn ir atgal (LX, LY, RX, RY; minusas ją apverčia). Numatyta LY.
 [hint.tiltdead] Už šią reikšmę mažesnis pakreipimas ignoruojamas. Nuo 0 iki 40, numatyta 10.
@@ -52,6 +52,7 @@
 [hint.lang] Meniu kalba. Pasikeičia iš karto. Pagalbos tekstai jai paklūsta; kur teksto trūksta, naudojama anglų kalba.
 [hint.bios] BIOS kopija iš E:\PS1\bios. Be jos veikia įmontuotas pakaitalas (HLE), o suderinamumas blogesnis. Reikia paleisti iš naujo.
 [hint.profile] Įjungta: kiekvienas žaidimas E:\PS1\cfg saugo savo nustatymus, pavyzdžiui, klavišus ir greičio jungiklius. Išjungta: vienas rinkinys visiems žaidimams.
+[hint.debug] Kartą per sekundę rašo kadrų laikus ir kiekvieną vaizdo sustabdymą į E:\PS1\logs\ps1_stage1.jsonl. Problemoms pranešti; šiek tiek mažina greitį.
 [hint.reset] Grąžina visus nustatymus į numatytuosius, įskaitant klavišus ir kalbą. Spauskite OK du kartus. Išsaugojimai neliečiami.
 
 [hint.help] Atidaro pagalbą: pirmasis nustatymas, valdymas, išsaugojimas, problemų sprendimas ir kiekvienos meniu eilutės aprašas.
@@ -76,7 +77,7 @@ Kiekvieną mygtuką galima priskirti per Valdymas...: OK ant mygtuko, tada spaus
 
 Pakreipimo valdymas (Valdymas) valdo telefono pakreipimu. Jam reikia telefono su akselerometru, pavyzdžiui, N95; E90 ir C5-00.2 jo neturi.
 
-Neutrali padėtis nustatoma kaskart grįžus į žaidimą iš meniu. Norėdami perkalibruoti, atidarykite meniu dešiniuoju programiniu klavišu, laikykite telefoną taip, kaip norite žaisti, ir pasirinkite Tęsti.
+Neutrali padėtis nustatoma kaskart grįžus į žaidimą iš meniu ir kaskart paspaudus pakreipimo nulio klavišą. Pagal numatymą šis klavišas yra C ir jį galima perskirti paskutinėje eilutėje Valdymas... . Norėdami perkalibruoti, laikykite telefoną taip, kaip norite žaisti, ir paspauskite jį.
 
 [topic.saves] Išsaugojimas
 Išsaugota būsena įrašo visą žaidimą vienu momentu. Atidarykite Žaidimas, pasirinkite Išsaugoti būseną, Kairė ir Dešinė parinkite vietą (nuo 1 iki 5) ir spauskite OK. [*] po vietos numerio reiškia, kad vietoje jau yra būsena, [ ] reiškia, kad ji tuščia. Įkelti būseną ją atkuria.
@@ -153,7 +154,7 @@ Valdymo šablonas: Numatytasis, Lenktynės, Kovos arba RPG. OK pakeičia visus k
 
 Klaviatūra: N95 (numatytasis išdėstymas) arba C5 (tas pats, plius 2, 4, 6, 8 kaip antras klavišas kryptims). OK pakeičia visus klavišų priskyrimus.
 
-Valdymas...: priskirkite kiekvieną PS1 mygtuką klavišui; Kairė ir Dešinė įjungia arba išjungia laikymą.
+Valdymas...: priskirkite kiekvieną PS1 mygtuką klavišui; Kairė ir Dešinė įjungia arba išjungia laikymą. Paskutinė eilutė, Pakreipimo nulis, yra klavišas, kuris padaro dabartinę telefono padėtį neutralia.
 
 Pakreipimo valdymas ir jo keturi nustatymai: ašis pakreipimui į šoną, ašis pakreipimui pirmyn ir atgal, nejautros zona (nuo 0 iki 40) ir jautrumas (nuo 40% iki 300%).
 
@@ -163,5 +164,7 @@ Kalba: meniu ir šių tekstų kalba, pasikeičia iš karto.
 BIOS: naudojama BIOS kopija, reikia paleisti iš naujo. Numatytoji yra scph7502.bin.
 
 Žaidimo profilis: įjungta išsaugo atskirą nustatymų failą kiekvienam žaidimui.
+
+Derinimo žurnalas: įjungta kartą per sekundę rašo kadrų laikus ir kiekvieną vaizdo sustabdymą į E:\PS1\logs\ps1_stage1.jsonl. Norėdami pranešti apie problemą, įjunkite jį, žaiskite, kol atsiras problema, išeikite iš emuliatoriaus per Išeiti ir atsiųskite šį failą. Prieš tai buvęs paleidimas išsaugomas kaip ps1_stage1_prev.jsonl.
 
 Atstatyti nustatymus: grąžina viską į numatytąsias reikšmes; spauskite OK du kartus.

@@ -41,8 +41,8 @@
 [hint.sec.input] OK abre ou fecha a seção: esquemas de teclas, atribuição de teclas e controle por inclinação.
 [hint.preset] Substitui todas as atribuições de teclas por um esquema pronto. Esquerda/Direita escolhe, OK aplica. Suas próprias atribuições serão perdidas.
 [hint.keybase] O esquema base: N95 é o padrão; C5 também aceita 2, 4, 6, 8 como segunda tecla para as direções. OK aplica e substitui as atribuições.
-[hint.keys] Abre a página de atribuição de teclas: OK e pressione a tecla. Esquerda/Direita ativa ou desativa segurar para o botão.
-[hint.tilt] Direciona com a inclinação do telefone (acelerômetro). A posição em que você segura o telefone ao voltar ao jogo é a posição neutra.
+[hint.keys] Abre a página de atribuição de teclas: OK e pressione a tecla. Esquerda/Direita ativa ou desativa segurar para o botão. A última linha é a tecla de inclinação zero.
+[hint.tilt] Direciona com a inclinação do telefone (acelerômetro). A posição em que você segura o telefone ao voltar ao jogo é a posição neutra, e a tecla de inclinação zero (C por padrão) define-a novamente a qualquer momento.
 [hint.tiltside] O eixo analógico que segue a inclinação lateral (LX, LY, RX, RY; o sinal de menos inverte). Padrão LX.
 [hint.tiltpitch] O eixo analógico que segue a inclinação frente-trás (LX, LY, RX, RY; o sinal de menos inverte). Padrão LY.
 [hint.tiltdead] Inclinação menor que esta é ignorada. De 0 a 40, padrão 10.
@@ -52,6 +52,7 @@
 [hint.lang] O idioma do menu. Muda imediatamente. Os textos de ajuda o acompanham; o inglês é usado onde faltar texto.
 [hint.bios] A cópia da BIOS de E:\PS1\bios. Sem ela, o substituto integrado (HLE) é executado e a compatibilidade é pior. Requer reiniciar.
 [hint.profile] Lig: cada jogo mantém seus próprios ajustes em E:\PS1\cfg, como teclas e opções de velocidade. Deslig: um conjunto para todos os jogos.
+[hint.debug] Grava os tempos de quadro uma vez por segundo, e cada pausa da imagem, em E:\PS1\logs\ps1_stage1.jsonl. Para relatar problemas; reduz um pouco a velocidade.
 [hint.reset] Restaura todos os ajustes para o padrão, incluindo teclas e idioma. Pressione OK duas vezes. Salvamentos não são afetados.
 
 [hint.help] Abre a ajuda: configuração inicial, controles, salvamento, solução de problemas e descrição de cada linha do menu.
@@ -76,7 +77,7 @@ Cada botão pode ser atribuído em Controles... : OK em um botão e pressione a 
 
 Controlo por inclinação (Controles) direciona com a inclinação do telefone. Requer um telefone com acelerômetro, como o N95; o E90 e o C5-00.2 não possuem.
 
-A posição neutra é definida cada vez que você volta ao jogo a partir do menu. Para recalibrar, abra o menu com a tecla de seleção direita, segure o telefone na posição que deseja jogar e escolha Continuar.
+A posição neutra é definida cada vez que você volta ao jogo a partir do menu, e cada vez que você pressiona a tecla de inclinação zero. Essa tecla é C por padrão e pode ser reatribuída na última linha de Controles... . Para recalibrar, segure o telefone na posição que deseja jogar e pressione-a.
 
 [topic.saves] Salvamento
 Um estado salvo armazena todo o jogo em determinado momento. Abra Jogo, escolha Salvar estado, selecione um slot com Esquerda e Direita (1 a 5) e pressione OK. [*] após o número do slot indica que o slot já contém um estado, [ ] indica que está vazio. Carregar estado restaura-o.
@@ -153,7 +154,7 @@ Predefinição: Padrão, Corrida, Luta ou RPG. OK substitui todas as atribuiçõ
 
 Teclado: N95 (o esquema padrão) ou C5 (o mesmo, mais 2, 4, 6, 8 como segunda tecla para as direções). OK substitui todas as atribuições de teclas.
 
-Controles...: atribua cada botão do PS1 a uma tecla; Esquerda e Direita ativam ou desativam segurar.
+Controles...: atribua cada botão do PS1 a uma tecla; Esquerda e Direita ativam ou desativam segurar. A última linha, Inclinação zero, é a tecla que torna a posição atual do telefone neutra.
 
 Controlo por inclinação e suas quatro opções: o eixo para inclinação lateral, o eixo para inclinação frente-trás, a zona morta (0 a 40) e a sensibilidade (40% a 300%).
 
@@ -163,5 +164,7 @@ Idioma: o idioma do menu e destes textos, muda imediatamente.
 BIOS: a cópia da BIOS a usar, requer reiniciar. O padrão é scph7502.bin.
 
 Perfil por jogo: lig mantém um arquivo de configurações separado para cada jogo.
+
+Registro de depuração: lig grava os tempos de quadro uma vez por segundo, e cada pausa da imagem, em E:\PS1\logs\ps1_stage1.jsonl. Para relatar um problema, ligue-o, jogue até o problema aparecer, saia do emulador pelo Sair e envie esse arquivo. A execução anterior é mantida como ps1_stage1_prev.jsonl.
 
 Redefinir ajustes: retorna tudo aos padrões; pressione OK duas vezes.

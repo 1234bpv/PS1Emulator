@@ -409,6 +409,7 @@ int voutSymbianDump(const char *path);
 int voutSymbianScreenDump(const char *path);
 int voutSymbianUpdates(void);
 unsigned int voutSymbianPresents(void);
+unsigned int voutSymbianPresentsHidden(void);
 int voutSymbianGpulibUpdates(void);
 int voutSymbianShow(int holdMs);
 int voutSymbianInit(void);
@@ -490,6 +491,7 @@ void glrSetEnabled(int on);
 int  glrEnabled(void);
 void glrBeginFrame(void);
 int  glrEndFrame(void);
+int  glrHoldFrames(void);
 void glrStats(int *verts, int *batches, int *over, int *hit, int *miss, int *evict);
 void glrShot(const char *path);
 void glrSetTexWhite(int on);
@@ -671,6 +673,21 @@ static TBool g_fpsOverlay;
 static TUint g_fpsWinTick;
 static TInt  g_fpsWinFrame;
 static TUint g_fpsWinShown;   // presented frames counter at start of window
+
+// Debug log (menu, System): a line a second on where the time went, and a line at
+// once for a hitch, so a tester can send the log of a game nobody here has played.
+// "out" is the time between two frames spent outside the frame loop (window server,
+// the shell, the system): a pause there looks the same on screen as a slow frame.
+const TUint KDbgWindowMs = 1000;
+const TUint KDbgHitchMs = 150;
+const TUint KDbgStallMs = 1000;
+static TBool g_dbgLog;
+static TUint g_dbgWinTick, g_dbgLastEnd, g_dbgLastShownTick;
+static TInt  g_dbgWinFrame;
+static TUint g_dbgWinShown, g_dbgLastShown, g_dbgGlShown, g_dbgWinUnder;
+static TUint g_dbgEmu, g_dbgBlit, g_dbgSnd, g_dbgOut, g_dbgMaxStep, g_dbgMaxOut;
+static TBool g_dbgStalled;
+static TInt  g_dbgStallFrame;
 
 // Disc image selected in menu. Empty - use KDiscImg.
 static char g_discPath[256];
@@ -2145,6 +2162,90 @@ static void inputTrace(TInt aFrame)
 	}
 
 // Single frame. EFalse = pass finished (frames exhausted, watchdog or exit).
+// Switched from the menu; every call starts a fresh window, so the pause the menu
+// itself made is never counted as time outside the frame loop.
+extern "C" void ps1SetDebugLog(int aOn)
+	{
+	g_dbgLog = aOn ? ETrue : EFalse;
+	g_dbgWinTick = g_dbgLastEnd = g_dbgLastShownTick = 0;
+	g_dbgStalled = EFalse;
+	logEvent("debug", NULL, "log=%d", (int)g_dbgLog);
+	}
+
+static void dbgStep(TUint aIn, TUint aEmu, TUint aBlit, TUint aSnd)
+	{
+	const TUint now = User::NTickCount();
+	const TUint step = now - aIn;
+	const TUint out = g_dbgLastEnd ? aIn - g_dbgLastEnd : 0;
+	// Shown means seen: a blit under a system dialog does not count.
+	const TUint shown = voutSymbianPresents() - voutSymbianPresentsHidden() + g_dbgGlShown;
+	unsigned under = 0;
+	ps1SndStats(NULL, NULL, NULL, &under, NULL);
+	if (!g_dbgWinTick)
+		{
+		g_dbgWinTick = g_dbgLastShownTick = now;
+		g_dbgWinFrame = g_pass.i;
+		g_dbgWinShown = g_dbgLastShown = shown;
+		g_dbgWinUnder = under;
+		g_dbgStallFrame = g_pass.i;
+		g_dbgEmu = g_dbgBlit = g_dbgSnd = g_dbgOut = g_dbgMaxStep = g_dbgMaxOut = 0;
+		g_dbgLastEnd = User::NTickCount();
+		return;
+		}
+	g_dbgEmu += aEmu;
+	g_dbgBlit += aBlit;
+	g_dbgSnd += aSnd;
+	g_dbgOut += out;
+	if (step > g_dbgMaxStep) g_dbgMaxStep = step;
+	if (out > g_dbgMaxOut) g_dbgMaxOut = out;
+	if (step >= KDbgHitchMs || out >= KDbgHitchMs)
+		logEvent("hitch", NULL, "frame=%d step=%u emu=%u blit=%u snd=%u out=%u",
+			(int)g_pass.i, (unsigned)step, (unsigned)aEmu, (unsigned)aBlit,
+			(unsigned)aSnd, (unsigned)out);
+
+	// The picture standing still while the game runs on: the frame loop has to say
+	// when it began and how long it lasted, a second-by-second count cannot.
+	if (shown != g_dbgLastShown)
+		{
+		if (g_dbgStalled)
+			logEvent("stall", NULL, "end frame=%d ms=%u frames=%d dsa=%d", (int)g_pass.i,
+				(unsigned)(now - g_dbgLastShownTick), (int)(g_pass.i - g_dbgStallFrame),
+				voutSymbianDsaActive());
+		g_dbgStalled = EFalse;
+		g_dbgLastShown = shown;
+		g_dbgLastShownTick = now;
+		g_dbgStallFrame = g_pass.i;
+		}
+	else if (!g_dbgStalled && now - g_dbgLastShownTick >= KDbgStallMs)
+		{
+		g_dbgStalled = ETrue;
+		logEvent("stall", NULL, "begin frame=%d since=%d dsa=%d pc=%08x", (int)g_pass.i,
+			(int)g_dbgStallFrame, voutSymbianDsaActive(), (unsigned)psxRegs.pc);
+		}
+
+	const TUint dt = now - g_dbgWinTick;
+	if (dt < KDbgWindowMs)
+		{
+		g_dbgLastEnd = User::NTickCount();
+		return;
+		}
+	TInt biggest = 0;
+	const TInt avail = User::Heap().Available(biggest);
+	logEvent("dbg", NULL, "frames=%d shown=%u ms=%u emu=%u blit=%u snd=%u out=%u "
+		"maxstep=%u maxout=%u under=%u heapKb=%d dsa=%d pc=%08x",
+		(int)(g_pass.i - g_dbgWinFrame), (unsigned)(shown - g_dbgWinShown), (unsigned)dt,
+		(unsigned)g_dbgEmu, (unsigned)g_dbgBlit, (unsigned)g_dbgSnd, (unsigned)g_dbgOut,
+		(unsigned)g_dbgMaxStep, (unsigned)g_dbgMaxOut, (unsigned)(under - g_dbgWinUnder),
+		(int)(avail / 1024), voutSymbianDsaActive(), (unsigned)psxRegs.pc);
+	g_dbgWinTick = now;
+	g_dbgWinFrame = g_pass.i;
+	g_dbgWinShown = shown;
+	g_dbgWinUnder = under;
+	g_dbgEmu = g_dbgBlit = g_dbgSnd = g_dbgOut = g_dbgMaxStep = g_dbgMaxOut = 0;
+	// After the writes: the log's own card time is not the game's pause.
+	g_dbgLastEnd = User::NTickCount();
+	}
+
 static TBool passStep()
 	{
 	if (g_pass.i >= g_pass.frames || g_guiExit)
@@ -2160,6 +2261,7 @@ static TBool passStep()
 		}
 
 	const char *mode = g_pass.mode;
+	const TUint dbgBlit0 = g_pass.tBlit, dbgSnd0 = g_pass.tSnd;
 
 	// Input: fresh button state before Execute, since core reads pad inside frame.
 	// Only when window is present (screen); no keys in headless benchmark.
@@ -2222,7 +2324,13 @@ static TBool passStep()
 			// When MBX rasterizer is active, it presents the frame - otherwise swap
 			// would happen twice, leaving on screen whichever came
 			// second, making path comparison impossible.
-			if (!glrEndFrame())
+			const int hold0 = glrHoldFrames();
+			if (glrEndFrame())
+				{
+				if (glrHoldFrames() == hold0)
+					g_dbgGlShown++;
+				}
+			else
 				voutSymbianPresent();
 			}
 		TUint t3 = User::NTickCount(); g_pass.tBlit += t3 - t2;
@@ -2375,6 +2483,8 @@ static TBool passStep()
 			gp0Count, dmaCount, fbd, fbda, (unsigned)st,
 			sw, sh, sx, sy, voff, stale, fbChg, fbSeen, (unsigned)fbB0, (unsigned)fbB1);
 		}
+	if (g_dbgLog && g_pass.showScreen)
+		dbgStep(t0, t2 - t1, g_pass.tBlit - dbgBlit0, g_pass.tSnd - dbgSnd0);
 	return ETrue;
 	}
 

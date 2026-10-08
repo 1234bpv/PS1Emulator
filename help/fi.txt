@@ -41,8 +41,8 @@
 [hint.sec.input] OK avaa tai sulkee osion: näppäinasettelut, näppäinmääritykset ja kallistusohjaus.
 [hint.preset] Korvaa kaikki näppäinmääritykset valmiilla asettelulla. Vasen/Oikea valitsee, OK ottaa käyttöön. Omat määritykset menetetään.
 [hint.keybase] Perusasettelu: N95 on oletus; C5 hyväksyy myös numerot 2, 4, 6, 8 toisina suuntanäppäiminä. OK ottaa sen käyttöön ja korvaa määritykset.
-[hint.keys] Avaa näppäinmäärityssivun: OK, paina sitten näppäintä. Vasen/Oikea ottaa Pidon käyttöön tai pois painikkeelta.
-[hint.tilt] Ohjaa puhelimen kallistuksella (kiihtyvyysanturi). Asento, jossa pitelet puhelinta palatessasi peliin, on neutraaliasento.
+[hint.keys] Avaa näppäinmäärityssivun: OK, paina sitten näppäintä. Vasen/Oikea ottaa Pidon käyttöön tai pois painikkeelta. Viimeinen rivi on kallistuksen nollausnäppäin.
+[hint.tilt] Ohjaa puhelimen kallistuksella (kiihtyvyysanturi). Asento, jossa pitelet puhelinta palatessasi peliin, on neutraaliasento, ja kallistuksen nollausnäppäin (oletuksena C) asettaa sen uudelleen milloin tahansa.
 [hint.tiltside] Ohjainsauvan akseli, joka seuraa sivukallistusta (LX, LY, RX, RY; miinus kääntää sen). Oletus LX.
 [hint.tiltpitch] Ohjainsauvan akseli, joka seuraa eteen- ja taaksekallistusta (LX, LY, RX, RY; miinus kääntää sen). Oletus LY.
 [hint.tiltdead] Tätä pienempi kallistus jätetään huomiotta. Väliltä 0-40, oletus 10.
@@ -52,6 +52,7 @@
 [hint.lang] Valikon kieli. Vaihtuu heti. Ohjetekstit seuraavat sitä; englantia käytetään siellä, mistä teksti puuttuu.
 [hint.bios] BIOS-vedos kansiosta E:\PS1\bios. Ilman sitä toimii sisäänrakennettu korvike (HLE) ja yhteensopivuus on heikompi. Vaatii uudelleenkäynnistyksen.
 [hint.profile] Päällä: jokainen peli säilyttää omat asetuksensa kansiossa E:\PS1\cfg, kuten näppäimet ja nopeuskytkimet. Pois: samat asetukset kaikille peleille.
+[hint.debug] Kirjoittaa kehysajat kerran sekunnissa ja kuvan jokaisen tauon tiedostoon E:\PS1\logs\ps1_stage1.jsonl. Ongelmien ilmoittamiseen; vie hieman nopeutta.
 [hint.reset] Palauttaa kaikki asetukset oletusarvoihinsa, mukaan lukien näppäimet ja kielen. Paina OK kahdesti. Tallennuksiin ei kosketa.
 
 [hint.help] Avaa ohjeen: alkuasetukset, ohjaus, tallentaminen, vianmääritys ja jokaisen valikkorivin kuvaus.
@@ -76,7 +77,7 @@ Jokainen painike voidaan määrittää kohdassa Ohjaus... : OK painikkeen kohdal
 
 Kallistusohjaus (Ohjaus) ohjaa puhelimen kallistuksella. Se vaatii puhelimen, jossa on kiihtyvyysanturi, kuten N95; mallissa E90 ja C5-00.2 sitä ei ole.
 
-Neutraaliasento luetaan joka kerta, kun palaat peliin valikosta. Kalibroi uudelleen avaamalla valikko oikealla valintanäppäimellä, pitele puhelinta haluamassasi peliasennossa ja valitse Jatka.
+Neutraaliasento luetaan joka kerta, kun palaat peliin valikosta, ja joka kerta, kun painat kallistuksen nollausnäppäintä. Tämä näppäin on oletuksena C ja se voidaan määrittää uudelleen valikon Ohjaus... viimeisellä rivillä. Kalibroi uudelleen pitelemällä puhelinta haluamassasi peliasennossa ja painamalla sitä.
 
 [topic.saves] Tallentaminen
 Tallennettu tila tallentaa koko pelin yhdellä hetkellä. Avaa Peli, valitse Tallenna tila, valitse paikka vasemmalla ja oikealla (1-5) ja paina OK. [*] paikan numeron perässä tarkoittaa paikan jo sisältävän tilan, [ ] tarkoittaa sen olevan tyhjä. Lataa tila palauttaa sen.
@@ -153,7 +154,7 @@ Ohjausprofiili: Oletus, Racing, Fighting tai RPG. OK korvaa kaikki näppäinmä�
 
 Näppäimistö: N95 (oletusasettelu) tai C5 (sama sekä 2, 4, 6, 8 toisina suuntanäppäiminä). OK korvaa kaikki näppäinmääritykset.
 
-Ohjaus...: määritä kukin PS1-painike näppäimelle; Vasen ja Oikea ottavat Pidon käyttöön tai pois.
+Ohjaus...: määritä kukin PS1-painike näppäimelle; Vasen ja Oikea ottavat Pidon käyttöön tai pois. Viimeinen rivi, Kallistuksen nollaus, on näppäin, joka tekee puhelimen nykyisestä asennosta neutraalin.
 
 Kallistusohjaus ja sen neljä asetusta: akseli sivukallistukselle, akseli eteen- ja taaksekallistukselle, kuollut alue (0-40) ja herkkyys (40%-300%).
 
@@ -163,5 +164,7 @@ Kieli: valikon ja näiden tekstien kieli, vaihtuu heti.
 BIOS: käytettävä BIOS-vedos, vaatii uudelleenkäynnistyksen. Oletus on scph7502.bin.
 
 Peliprofiili: päällä säilyttää erillisen asetustiedoston kullekin pelille.
+
+Virheenkorjausloki: päällä kirjoittaa kehysajat kerran sekunnissa ja kuvan jokaisen tauon tiedostoon E:\PS1\logs\ps1_stage1.jsonl. Jos haluat ilmoittaa ongelmasta, ota se käyttöön, pelaa kunnes ongelma ilmenee, poistu emulaattorista valitsemalla Poistu ja lähetä kyseinen tiedosto. Sitä edeltävä suoritus säilytetään nimellä ps1_stage1_prev.jsonl.
 
 Palauta asetukset: palauttaa kaiken oletusarvoihin; paina OK kahdesti.

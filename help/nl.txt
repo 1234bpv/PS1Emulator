@@ -41,8 +41,8 @@
 [hint.sec.input] OK opent of sluit de sectie: toetsindelingen, toetstoewijzing en kantelbesturing.
 [hint.preset] Vervangt alle toetstoewijzingen door een kant-en-klaar schema. Links/Rechts kiest, OK past toe. Uw eigen toewijzingen gaan verloren.
 [hint.keybase] De basisindeling: N95 is de standaard; C5 accepteert ook 2, 4, 6, 8 als tweede toets voor de richtingen. OK past dit toe en vervangt de toewijzingen.
-[hint.keys] Opent de pagina voor toetstoewijzing: OK, druk daarna op de toets. Links/Rechts schakelt Vasthouden voor een knop in of uit.
-[hint.tilt] Stuurt via het kantelen van de telefoon (versnellingsmeter). De houding van de telefoon bij terugkeer naar het spel is de neutrale stand.
+[hint.keys] Opent de pagina voor toetstoewijzing: OK, druk daarna op de toets. Links/Rechts schakelt Vasthouden voor een knop in of uit. De laatste rij is de toets voor kanteling nul.
+[hint.tilt] Stuurt via het kantelen van de telefoon (versnellingsmeter). De houding van de telefoon bij terugkeer naar het spel is de neutrale stand, en de toets voor kanteling nul (standaard C) stelt deze op elk moment opnieuw in.
 [hint.tiltside] De stick-as die zijwaartse kanteling volgt (LX, LY, RX, RY; een minteken keert dit om). Standaard LX.
 [hint.tiltpitch] De stick-as die voor- en achterwaartse kanteling volgt (LX, LY, RX, RY; een minteken keert dit om). Standaard LY.
 [hint.tiltdead] Kanteling kleiner dan dit wordt genegeerd. Van 0 tot 40, standaard 10.
@@ -52,6 +52,7 @@
 [hint.lang] De taal van het menu. Verandert direct. De helpteksten volgen dit; Engels wordt gebruikt waar een tekst ontbreekt.
 [hint.bios] De BIOS-dump uit E:\PS1\bios. Zonder deze draait de ingebouwde vervanger (HLE) en is de compatibiliteit minder. Vereist een herstart.
 [hint.profile] Aan: elk spel behoudt zijn eigen instellingen in E:\PS1\cfg, zoals toetsen en snelheidsopties. Uit: één set voor alle spellen.
+[hint.debug] Schrijft frametijden eens per seconde, en elke pauze van het beeld, naar E:\PS1\logs\ps1_stage1.jsonl. Voor het melden van problemen; kost een beetje snelheid.
 [hint.reset] Zet elke instelling terug naar de standaardwaarde, inclusief toetsen en taal. Druk tweemaal op OK. Opgeslagen statussen blijven onaangeroerd.
 
 [hint.help] Opent de help: eerste configuratie, besturing, opslaan, probleemoplossing en een beschrijving van elke menuregel.
@@ -76,7 +77,7 @@ Elke knop kan worden toegewezen in Besturing... : OK op een knop, druk daarna op
 
 Kantelbesturing (Besturing) stuurt met het kantelen van de telefoon. Dit vereist een telefoon met een versnellingsmeter, zoals de N95; de E90 en de C5-00.2 hebben er geen.
 
-De neutrale stand wordt bepaald telkens wanneer u vanuit het menu terugkeert naar het spel. Om opnieuw te kalibreren opent u het menu met de rechter selectietoets, houdt u de telefoon vast zoals u wilt spelen en kiest u Hervatten.
+De neutrale stand wordt bepaald telkens wanneer u vanuit het menu terugkeert naar het spel, en telkens wanneer u op de toets voor kanteling nul drukt. Die toets is standaard C en kan opnieuw worden toegewezen op de laatste rij van Besturing... . Om opnieuw te kalibreren, houdt u de telefoon vast zoals u wilt spelen en drukt u hierop.
 
 [topic.saves] Opslaan
 Een opgeslagen status bewaart het hele spel op één moment. Open Spel, kies Status opslaan, kies een slot met Links en Rechts (1 tot 5) en druk op OK. [*] achter het slotnummer betekent dat het slot al een status bevat, [ ] betekent dat het leeg is. Status laden herstelt deze.
@@ -153,7 +154,7 @@ Besturingsprofiel: Standaard, Racen, Vechten of RPG. OK vervangt alle toetstoewi
 
 Toetsenbord: N95 (de standaardindeling) of C5 (hetzelfde, plus 2, 4, 6, 8 als tweede toets voor de richtingen). OK vervangt alle toetstoewijzingen.
 
-Besturing...: wijs elke PS1-knop toe aan een toets; Links en Rechts schakelen Vasthouden in of uit.
+Besturing...: wijs elke PS1-knop toe aan een toets; Links en Rechts schakelen Vasthouden in of uit. De laatste rij, Kanteling nul, is de toets die de huidige stand van de telefoon neutraal maakt.
 
 Kantelbesturing en de vier instellingen ervan: de as voor zijwaartse kanteling, de as voor voor- en achterwaartse kanteling, de dode zone (0 tot 40) en de gevoeligheid (40% tot 300%).
 
@@ -163,5 +164,7 @@ Taal: de taal van het menu en van deze teksten, verandert direct.
 BIOS: de te gebruiken BIOS-dump, vereist een herstart. Standaard is scph7502.bin.
 
 Profiel per spel: aan behoudt een apart instellingenbestand voor elk spel.
+
+Debuglog: aan schrijft de frametijden eens per seconde, en elke pauze van het beeld, naar E:\PS1\logs\ps1_stage1.jsonl. Om een probleem te melden, schakelt u dit in, speelt u totdat het probleem optreedt, verlaat u de emulator via Afsluiten en stuurt u dat bestand op. De sessie ervoor wordt bewaard als ps1_stage1_prev.jsonl.
 
 Herstel instellingen: zet alles terug naar de standaardwaarden; druk tweemaal op OK.

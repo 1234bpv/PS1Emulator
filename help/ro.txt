@@ -41,8 +41,8 @@
 [hint.sec.input] OK deschide sau închide secţiunea: configuraţiile de taste, atribuirea tastelor şi controlul prin înclinare.
 [hint.preset] Înlocuieşte toate atribuirile de taste cu o configuraţie gata pregătită. Stânga/Dreapta alege, OK aplică. Atribuirile proprii se pierd.
 [hint.keybase] Configuraţia de bază: N95 este cea implicită; C5 acceptă şi 2, 4, 6, 8 ca a doua tastă pentru direcţii. OK o aplică şi înlocuieşte atribuirile.
-[hint.keys] Deschide pagina de atribuire a tastelor: OK, apoi apasă tasta. Stânga/Dreapta activează sau dezactivează opţiunea Ţine pentru un buton.
-[hint.tilt] Virează prin înclinarea telefonului (accelerometru). Modul în care ţii telefonul când revii în joc reprezintă poziţia neutră.
+[hint.keys] Deschide pagina de atribuire a tastelor: OK, apoi apasă tasta. Stânga/Dreapta activează sau dezactivează opţiunea Ţine pentru un buton. Ultimul rând este tasta de resetare a înclinării.
+[hint.tilt] Virează prin înclinarea telefonului (accelerometru). Modul în care ţii telefonul când revii în joc reprezintă poziţia neutră, iar tasta de resetare a înclinării (implicit C) o setează din nou în orice moment.
 [hint.tiltside] Axa manetei care urmăreşte înclinarea laterală (LX, LY, RX, RY; minus o inversează). Implicit LX.
 [hint.tiltpitch] Axa manetei care urmăreşte înclinarea faţă-spate (LX, LY, RX, RY; minus o inversează). Implicit LY.
 [hint.tiltdead] Înclinarea mai mică de atât este ignorată. De la 0 la 40, implicit 10.
@@ -52,6 +52,7 @@
 [hint.lang] Limba meniului. Se schimbă imediat. Textele de ajutor o urmează; engleza este folosită unde lipseşte un text.
 [hint.bios] Dump-ul BIOS din E:\PS1\bios. Fără el rulează înlocuitorul integrat (HLE), iar compatibilitatea este mai scăzută. Necesită repornire.
 [hint.profile] Pornit: fiecare joc îşi păstrează propriile setări în E:\PS1\cfg, cum ar fi tastele şi opţiunile de viteză. Oprit: un singur set pentru toate jocurile.
+[hint.debug] Scrie timpii cadrelor o dată pe secundă şi fiecare pauză a imaginii în E:\PS1\logs\ps1_stage1.jsonl. Pentru raportarea problemelor; scade puţin viteza.
 [hint.reset] Readuce fiecare setare la valoarea implicită, inclusiv tastele şi limba. Apasă OK de două ori. Salvările nu sunt afectate.
 
 [hint.help] Deschide ajutorul: prima configurare, comenzi, salvare, depanare şi o descriere a fiecărui rând de meniu.
@@ -76,7 +77,7 @@ Fiecare buton poate fi atribuit în Comenzi... : OK pe un buton, apoi apasă tas
 
 Control înclinare (Comenzi) virează prin înclinarea telefonului. Necesită un telefon cu accelerometru, cum ar fi N95; modelele E90 şi C5-00.2 nu au.
 
-Poziţia neutră este preluată de fiecare dată când revii în joc din meniu. Pentru a recalibra, deschide meniul cu tasta de selecţie dreapta, ţine telefonul în poziţia în care doreşti să joci şi alege Reluare.
+Poziţia neutră este preluată de fiecare dată când revii în joc din meniu şi de fiecare dată când apeşi tasta de resetare a înclinării. Această tastă este implicit C şi poate fi reatribuită pe ultimul rând din Comenzi... . Pentru a recalibra, ţine telefonul în poziţia în care doreşti să joci şi apas-o.
 
 [topic.saves] Salvare
 O salvare de stare stochează întregul joc într-un anumit moment. Deschide Joc, alege Salvare stare, alege un slot cu Stânga şi Dreapta (1 la 5) şi apasă OK. [*] după numărul slotului înseamnă că slotul conţine deja o stare, [ ] înseamnă că este gol. Încărcare stare o restabileşte.
@@ -153,7 +154,7 @@ Preset comenzi: Implicit, Curse, Lupte sau RPG. OK înlocuieşte toate atribuiri
 
 Tastatură: N95 (configuraţia implicită) sau C5 (aceeaşi, plus 2, 4, 6, 8 ca a doua tastă pentru direcţii). OK înlocuieşte toate atribuirile de taste.
 
-Comenzi...: atribuie fiecare buton PS1 unei taste; Stânga şi Dreapta activează sau dezactivează Ţine.
+Comenzi...: atribuie fiecare buton PS1 unei taste; Stânga şi Dreapta activează sau dezactivează Ţine. Ultimul rând, Resetare înclinare, este tasta care face neutră poziţia curentă a telefonului.
 
 Control înclinare şi cele patru setări ale sale: axa pentru înclinarea laterală, axa pentru înclinarea faţă-spate, zona moartă (0 la 40) şi sensibilitatea (40% la 300%).
 
@@ -163,5 +164,7 @@ Limbă: limba meniului şi a acestor texte, se schimbă imediat.
 BIOS: dump-ul BIOS de utilizat, necesită repornire. Valoarea implicită este scph7502.bin.
 
 Profil per joc: pornit păstrează un fişier separat de setări pentru fiecare joc.
+
+Jurnal depanare: pornit scrie timpii cadrelor o dată pe secundă şi fiecare pauză a imaginii în E:\PS1\logs\ps1_stage1.jsonl. Pentru a raporta o problemă, activează-l, joacă până apare problema, părăseşte emulatorul prin Ieşire şi trimite acel fişier. Rularea anterioară este păstrată ca ps1_stage1_prev.jsonl.
 
 Resetare setări: readuce totul la valorile implicite; apasă OK de două ori.

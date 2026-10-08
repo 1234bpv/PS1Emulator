@@ -153,6 +153,8 @@ enum TStrId
 	EStrAskNoBiosWarn,
 	EStrAskContinue,
 	EStrAskPickBios,
+	EStrItemDebug,
+	EStrBtnTiltZero,
 	EStrCount
 	};
 

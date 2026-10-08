@@ -210,13 +210,15 @@ tilt, which follows forward-and-back tilt (either can be inverted or switched
 off), the dead zone around the neutral position, and the sensitivity. The
 buttons stay on their keys while tilt is on.
 
-There is no separate calibration step: the neutral position is the way the
-phone is held at the moment you return to the game. To calibrate, or to change
-how you hold the phone, do this:
-
-1. Press the right soft key to open the menu.
-2. Hold the phone the way you want to play, lying on a table or at an angle.
-3. Select `Resume`. From now on this position means "stick in the centre".
+There is no separate calibration step. The neutral position, "stick in the
+centre", is the way the phone is held at one of two moments: when you return to
+the game from the menu, and when you press the tilt zero key during play. That
+key is `C` by default and can be reassigned like any other on the last row of
+`Controls...`, `Tilt zero`. To calibrate, or to change how you hold the phone,
+hold it the way you want to play, lying on a table or at an angle, and press
+`C`. A control preset or keyboard layout that puts `C` on a PlayStation button
+(`RPG`, `C5`) moves the tilt zero key to the first free key among `0`, `5`,
+`*` and `#`.
 
 Tilt control works on the Nokia N95 8GB, where it has been tested. The E90 and
 the C5-00.2 have no accelerometer, so on them the setting switches itself back
@@ -286,6 +288,9 @@ adjustments, as described in [Controls](#controls).
   archive.
 - **`Per-game profile`**: keep separate settings and key bindings for every
   game in `E:\PS1\cfg\<game>.txt`.
+- **`Debug log`** (default `off`): writes a diagnostic log during play, for
+  reporting problems; see [Reporting a problem](#reporting-a-problem). It is
+  switched on and off from the menu without restarting the game.
 - **`Reset settings`**: return all settings, keys and the language to their
   defaults after a second press of OK. Saves and memory cards are not touched.
 
@@ -324,6 +329,35 @@ without them. On the N95 8GB and E90 an overclock gives the largest gain; see
 **A game shows wrong graphics or freezes.** Try `CPU: interpreter` for that
 game together with `Per-game profile`, so that the slower setting stays with
 that one game.
+
+## Reporting a problem
+
+Games that nobody here has played may stutter, freeze or show wrong graphics,
+and the debug log is what makes a report about them useful. It records where
+the time of every second went, and it marks the moments when the picture
+stopped while the game ran on. To make a report:
+
+1. Open the menu with the right soft key and switch on `Debug log` in
+   `System`.
+2. Return to the game and play until the problem appears. Note roughly when it
+   happened.
+3. Leave the emulator through `Exit` in the menu, so that the log is closed
+   properly.
+4. Copy `E:\PS1\logs\ps1_stage1.jsonl` from the memory card and attach it to
+   an [issue](https://github.com/1234bpv/PS1Emulator/issues), together with the
+   phone model, the game and its region, and the settings you changed. If the
+   emulator was started again in between, the previous run is in
+   `ps1_stage1_prev.jsonl` next to it.
+
+The log is plain text with one line per event. Once a second it lists how many
+frames the game ran and how many of them reached the screen; how long the
+emulated processor, the picture output, the sound and everything outside the
+emulator took; the longest single frame; the free memory; and whether direct
+drawing to the screen is active. A frame or a pause longer than 150 ms gets a
+`hitch` line of its own, and a picture that stops changing for a second while
+the game runs on gets a `stall` line when it starts and another when it ends.
+The log is written to the memory card once a second, so it costs a little
+speed and is best left off for normal play.
 
 # Part 2. How it works
 
@@ -490,8 +524,9 @@ project `SymbianDeployDaemon`.
 This is a hobby project, developed in spare time on the author's own phones.
 Bug reports, fixes and reports from other Symbian phones are welcome as issues
 or pull requests. For a game that runs wrongly, the most useful report names
-the phone, the game image and the settings, and says whether
-`CPU: interpreter` changes anything.
+the phone, the game image and the settings, says whether
+`CPU: interpreter` changes anything, and carries the debug log described in
+[Reporting a problem](#reporting-a-problem).
 
 ## License
 

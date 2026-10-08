@@ -41,8 +41,8 @@
 [hint.sec.input] OK obre o tanca la secció: disposicions de tecles, assignació de tecles i control per inclinació.
 [hint.preset] Substitueix totes les assignacions de tecles per una disposició predefinida. Esquerra/Dreta trien, OK aplica. Les vostres assignacions es perden.
 [hint.keybase] La disposició base: N95 és la per defecte; C5 també accepta 2, 4, 6, 8 com a segona tecla per a les direccions. OK l'aplica i substitueix les assignacions.
-[hint.keys] Obre la pàgina d'assignació de tecles: OK, després premeu la tecla. Esquerra/Dreta activen o desactiven Mantenir per a un botó.
-[hint.tilt] Controla amb la inclinació del telèfon (acceleròmetre). La posició en què teniu el telèfon quan torneu al joc és la posició neutra.
+[hint.keys] Obre la pàgina d'assignació de tecles: OK, després premeu la tecla. Esquerra/Dreta activen o desactiven Mantenir per a un botó. L'última fila és la tecla de zero d'inclinació.
+[hint.tilt] Controla amb la inclinació del telèfon (acceleròmetre). La posició en què teniu el telèfon quan torneu al joc és la posició neutra, i la tecla de zero d'inclinació (C per defecte) la torna a establir en qualsevol moment.
 [hint.tiltside] L'eix del stick que segueix la inclinació lateral (LX, LY, RX, RY; un menys l'inverteix). Per defecte LX.
 [hint.tiltpitch] L'eix del stick que segueix la inclinació endavant i enrere (LX, LY, RX, RY; un menys l'inverteix). Per defecte LY.
 [hint.tiltdead] Les inclinacions més petites que això s'ignoren. De 0 a 40, per defecte 10.
@@ -52,6 +52,7 @@
 [hint.lang] L'idioma del menú. Canvia immediatament. Els textos d'ajuda el segueixen; l'anglès s'usa quan falta un text.
 [hint.bios] El volcat BIOS de E:\PS1\bios. Sense ell el substitut integrat (HLE) s'executa i la compatibilitat és pitjor. Cal reiniciar.
 [hint.profile] Activat: cada joc conserva la seva configuració a E:\PS1\cfg, com les tecles i els interruptors de velocitat. Desactivat: una configuració per a tots els jocs.
+[hint.debug] Escriu els temps de fotograma un cop per segon, i cada pausa de la imatge, a E:\PS1\logs\ps1_stage1.jsonl. Per a informar de problemes; costa una mica de velocitat.
 [hint.reset] Restaura cada paràmetre al seu valor per defecte, tecles i idioma inclosos. Premeu OK dues vegades. Les desades no es toquen.
 
 [hint.help] Obre l'ajuda: configuració inicial, controls, desades, resolució de problemes i una descripció de cada fila del menú.
@@ -76,7 +77,7 @@ Cada botó es pot assignar a Controls... : OK sobre un botó, després premeu la
 
 Control d'inclinació (Controls) controla amb la inclinació del telèfon. Cal un telèfon amb acceleròmetre, com el N95; l'E90 i el C5-00.2 no en tenen.
 
-La posició neutra es pren cada cop que torneu al joc des del menú. Per recalibrar, obriu el menú amb la tecla suau dreta, mantingueu el telèfon com voleu jugar i trieu Reprendre.
+La posició neutra es pren cada cop que torneu al joc des del menú, i cada cop que premeu la tecla de zero d'inclinació. Aquesta tecla és C per defecte i es pot reassignar a l'última fila de Controls... . Per recalibrar, mantingueu el telèfon com voleu jugar i premeu-la.
 
 [topic.saves] Desades
 Un estat desat emmagatzema tot el joc en un moment. Obriu Joc, trieu Desar estat, trieu una ranura amb Esquerra i Dreta (1 a 5) i premeu OK. [*] després del número de ranura vol dir que la ranura ja té un estat, [ ] vol dir que és buida. Carregar estat el restaura.
@@ -153,7 +154,7 @@ Preset de controls: Per defecte, Curses, Lluita o RPG. OK substitueix totes les 
 
 Teclat: N95 (la disposició per defecte) o C5 (la mateixa, més 2, 4, 6, 8 com a segona tecla per a les direccions). OK substitueix totes les assignacions de tecles.
 
-Controls...: assigneu cada botó de PS1 a una tecla; Esquerra i Dreta activen o desactiven Mantenir.
+Controls...: assigneu cada botó de PS1 a una tecla; Esquerra i Dreta activen o desactiven Mantenir. L'última fila, Zero d'inclinació, és la tecla que fa que la posició actual del telèfon sigui neutra.
 
 Control d'inclinació i els seus quatre paràmetres: l'eix per a la inclinació lateral, l'eix per a la inclinació endavant i enrere, la zona morta (0 a 40) i la sensibilitat (40% a 300%).
 
@@ -163,5 +164,7 @@ Idioma: l'idioma del menú i d'aquests textos, canvia immediatament.
 BIOS: el volcat BIOS a utilitzar, cal reiniciar. Per defecte és scph7502.bin.
 
 Perfil per joc: activat conserva un fitxer de configuració separat per a cada joc.
+
+Registre de depuració: activat escriu els temps de fotograma un cop per segon, i cada pausa de la imatge, a E:\PS1\logs\ps1_stage1.jsonl. Per a informar d'un problema, activeu-lo, jugueu fins que aparegui el problema, sortiu de l'emulador a través de Sortir i envieu aquest fitxer. L'execució anterior es conserva com a ps1_stage1_prev.jsonl.
 
 Reiniciar configuració: restaura tot als valors per defecte; premeu OK dues vegades.

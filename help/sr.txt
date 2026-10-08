@@ -41,8 +41,8 @@
 [hint.sec.input] OK otvara ili zatvara odeljak: šeme tastera, dodela tastera i upravljanje nagibom.
 [hint.preset] Zamenjuje sve dodele tastera gotovim rasporedom. Levo/Desno biraju, OK primenjuje. Vaše dodele se gube.
 [hint.keybase] Osnovni raspored: N95 je podrazumevani; C5 prihvata i 2, 4, 6, 8 kao drugi taster za pravce. OK ga primenjuje i zamenjuje dodele.
-[hint.keys] Otvara stranu za dodelu tastera: OK, pa pritisnite taster. Levo/Desno uključuju ili isključuju Drži za dugme.
-[hint.tilt] Upravlja nagibom telefona (akcelerometar). Način na koji držite telefon kada se vratite u igru je neutralni položaj.
+[hint.keys] Otvara stranu za dodelu tastera: OK, pa pritisnite taster. Levo/Desno uključuju ili isključuju Drži za dugme. Poslednji red je taster za nuliranje nagiba.
+[hint.tilt] Upravlja nagibom telefona (akcelerometar). Način na koji držite telefon kada se vratite u igru je neutralni položaj, a taster za nuliranje nagiba (podrazumevano C) ponovo ga postavlja u svakom trenutku.
 [hint.tiltside] Osa džojstika koja prati bočni nagib (LX, LY, RX, RY; minus je obrće). Podrazumevano LX.
 [hint.tiltpitch] Osa džojstika koja prati nagib napred i nazad (LX, LY, RX, RY; minus je obrće). Podrazumevano LY.
 [hint.tiltdead] Nagib manji od ove vrednosti se zanemaruje. Od 0 do 40, podrazumevano 10.
@@ -52,6 +52,7 @@
 [hint.lang] Jezik menija. Menja se odmah. Tekstovi pomoći ga prate; gde teksta nema, koristi se engleski.
 [hint.bios] BIOS damp iz E:\PS1\bios. Bez njega radi ugrađena zamena (HLE) i kompatibilnost je lošija. Traži restart.
 [hint.profile] Uklj.: svaka igra čuva svoja podešavanja u E:\PS1\cfg, na primer tastere i prekidače brzine. Isklj.: jedan skup za sve igre.
+[hint.debug] Svake sekunde zapisuje vreme kadrova i svaku pauzu slike u E:\PS1\logs\ps1_stage1.jsonl. Za prijavu problema; malo smanjuje brzinu.
 [hint.reset] Vraća svako podešavanje na podrazumevano, uključujući tastere i jezik. Dvaput pritisnite OK. Sačuvana stanja se ne diraju.
 
 [hint.help] Otvara pomoć: prvo podešavanje, tasteri, čuvanje, rešavanje problema i opis svakog reda menija.
@@ -76,7 +77,7 @@ Svako dugme može da se dodeli u Tasteri...: OK na dugmetu, pa pritisnite taster
 
 Upravljanje nagibom (Tasteri) upravlja nagibom telefona. Potreban je telefon sa akcelerometrom, kao što je N95; E90 i C5-00.2 ga nemaju.
 
-Neutralni položaj se uzima svaki put kada se iz menija vratite u igru. Za ponovno kalibrisanje otvorite meni desnim softverskim tasterom, držite telefon onako kako želite da igrate i izaberite Nastavi.
+Neutralni položaj se uzima svaki put kada se iz menija vratite u igru i svaki put kada pritisnete taster za nuliranje nagiba. Taj taster je podrazumevano C i može se ponovo dodeliti u poslednjem redu Tasteri... . Za ponovno kalibrisanje držite telefon onako kako želite da igrate i pritisnite ga.
 
 [topic.saves] Čuvanje
 Sačuvano stanje pamti celu igru u jednom trenutku. Otvorite Igra, izaberite Sačuvaj stanje, Levo i Desno izaberite slot (1 do 5) i pritisnite OK. [*] iza broja slota znači da slot već sadrži stanje, [ ] znači da je prazan. Učitaj stanje ga vraća.
@@ -153,7 +154,7 @@ Očuvaj visinu tona: kada igra radi ispod pune brzine, zvuk se razvlači bez pro
 
 Tastatura: N95 (podrazumevani raspored) ili C5 (isto, plus 2, 4, 6, 8 kao drugi taster za pravce). OK zamenjuje sve dodele tastera.
 
-Tasteri...: dodelite svako PS1 dugme nekom tasteru; Levo i Desno uključuju ili isključuju Drži.
+Tasteri...: dodelite svako PS1 dugme nekom tasteru; Levo i Desno uključuju ili isključuju Drži. Poslednji red, Nuliranje nagiba, taster je koji trenutni položaj telefona čini neutralnim.
 
 Upravljanje nagibom i njegova četiri podešavanja: osa za bočni nagib, osa za nagib napred i nazad, mrtva zona (0 do 40) i osetljivost (40% do 300%).
 
@@ -163,5 +164,7 @@ Jezik: jezik menija i ovih tekstova, menja se odmah.
 BIOS: BIOS damp koji se koristi, traži restart. Podrazumevano je scph7502.bin.
 
 Profil igre: uključeno čuva zasebnu datoteku podešavanja za svaku igru.
+
+Dnevnik otklanjanja: uključeno svake sekunde zapisuje vreme kadrova i svaku pauzu slike u E:\PS1\logs\ps1_stage1.jsonl. Da biste prijavili problem, uključite ga, igrajte dok se problem ne pojavi, izađite iz emulatora kroz Izlaz i pošaljite tu datoteku. Prethodno pokretanje se čuva kao ps1_stage1_prev.jsonl.
 
 Resetuj podešavanja: vraća sve na podrazumevano; dvaput pritisnite OK.

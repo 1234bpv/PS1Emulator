@@ -282,6 +282,13 @@ static void writeShot(void)
 		(int)g_frame, (int)g_shotDeferred);
 	}
 
+// Frames that ended with nothing new and left the screen alone: the frame loop must
+// not count them as shown.
+extern "C" int glrHoldFrames(void)
+	{
+	return g_holdFrames;
+	}
+
 extern "C" int glrEnabled(void)
 	{
 	return (g_on && g_ready) ? 1 : 0;

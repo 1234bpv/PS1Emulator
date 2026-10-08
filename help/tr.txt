@@ -41,8 +41,8 @@
 [hint.sec.input] OK bölümü açar veya kapatır: tuş düzenleri, tuş atama ve Eğerek kontrol.
 [hint.preset] Tüm tuş atamalarını hazır bir düzenle değiştirir. Sol/Sağ seçer, OK uygular. Kendi atamalarınız kaybolur.
 [hint.keybase] Temel düzen: N95 varsayılandır; C5 ayrıca yönler için ikinci bir tuş olarak 2, 4, 6, 8'i kabul eder. OK uygular ve atamaları değiştirir.
-[hint.keys] Tuş atama sayfasını açar: OK, ardından tuşa basın. Sol/Sağ bir buton için basılı durumunu açar veya kapatır.
-[hint.tilt] Telefonun eğimiyle (ivmeölçer) yönlendirir. Oyuna geri döndüğünüzde telefonu tutuş şekliniz nötr konumdur.
+[hint.keys] Tuş atama sayfasını açar: OK, ardından tuşa basın. Sol/Sağ bir buton için basılı durumunu açar veya kapatır. Son satır eğimi sıfırlama tuşudur.
+[hint.tilt] Telefonun eğimiyle (ivmeölçer) yönlendirir. Oyuna geri döndüğünüzde telefonu tutuş şekliniz nötr konumdur, ve eğimi sıfırlama tuşu (varsayılan olarak C) bunu her an yeniden belirler.
 [hint.tiltside] Yanlara eğimi izleyen analog kol ekseni (LX, LY, RX, RY; eksi işareti tersine çevirir). Varsayılan LX.
 [hint.tiltpitch] İleri ve geri eğimi izleyen analog kol ekseni (LX, LY, RX, RY; eksi işareti tersine çevirir). Varsayılan LY.
 [hint.tiltdead] Bundan daha küçük eğimler yok sayılır. 0 ile 40 arası, varsayılan 10.
@@ -52,6 +52,7 @@
 [hint.lang] Menünün dili. Anında değişir. Yardım metinleri onu takip eder; metnin eksik olduğu yerlerde İngilizce kullanılır.
 [hint.bios] E:\PS1\bios konumundaki BIOS dökümü. O olmadan yerleşik alternatif (HLE) çalışır ve uyumluluk daha düşüktür. Yeniden başlatma gerektirir.
 [hint.profile] açık: her oyun tuşlar ve hız anahtarları gibi kendi ayarlarını E:\PS1\cfg içinde tutar. kapalı: tüm oyunlar için tek ayar kümesi.
+[hint.debug] Kare sürelerini saniyede bir ve görüntüdeki her duraklamayı E:\PS1\logs\ps1_stage1.jsonl dosyasına yazar. Sorun bildirmek içindir; hızı biraz düşürür.
 [hint.reset] Tuşlar ve dil dahil her ayarı varsayılana döndürür. İki kez OK basın. Kayıt dosyalarına dokunulmaz.
 
 [hint.help] Yardımı açar: ilk kurulum, kontroller, kaydetme, sorun giderme ve her menü satırının açıklaması.
@@ -76,7 +77,7 @@ Her buton Kontroller... içinde atanabilir: bir buton üzerindeyken OK, ardında
 
 Eğerek kontrol (KONTROLLER) telefonun eğimiyle yönlendirir. N95 gibi ivmeölçeri olan bir telefon gerektirir; E90 ve C5-00.2 modellerinde ivmeölçer yoktur.
 
-Nötr konum, menüden oyuna her döndüğünüzde alınır. Yeniden kalibre etmek için sağ seçim tuşu ile menüyü açın, telefonu oynamak istediğiniz şekilde tutun ve Devam et seçeneğini belirleyin.
+Nötr konum, menüden oyuna her döndüğünüzde ve eğimi sıfırlama tuşuna her bastığınızda alınır. Bu tuş varsayılan olarak C'dir ve Kontroller... menüsünün son satırında yeniden atanabilir. Yeniden kalibre etmek için telefonu oynamak istediğiniz şekilde tutun ve bu tuşa basın.
 
 [topic.saves] Kaydetme
 Durum kaydı tüm oyunu o anki haliyle saklar. Oyun bölümünü açın, Durumu kaydet seçin, Sol ve Sağ ile bir yuva seçin (1 ile 5 arası) ve OK basın. Yuva numarasından sonraki [*] yuvanın zaten bir kayıt tuttuğunu, [ ] boş olduğunu gösterir. Durumu yükle onu geri yükler.
@@ -153,7 +154,7 @@ Kontrol önayarı: Varsayılan, Yarış, Dövüş veya RPG. OK tüm tuş atamala
 
 Klavye: N95 (varsayılan düzen) veya C5 (aynısı, artı yönler için ikinci tuş olarak 2, 4, 6, 8). OK tüm tuş atamalarını değiştirir.
 
-Kontroller...: her PS1 butonunu bir tuşa atayın; Sol ve Sağ basılı durumunu açar veya kapatır.
+Kontroller...: her PS1 butonunu bir tuşa atayın; Sol ve Sağ basılı durumunu açar veya kapatır. Son satır olan Eğimi sıfırla, telefonun geçerli konumunu nötr yapan tuştur.
 
 Eğerek kontrol ve dört ayarı: yanlara eğim ekseni, ileri ve geri eğim ekseni, ölü bölge (0 ile 40) ve hassasiyet (40% ile 300%).
 
@@ -163,5 +164,7 @@ Dil: menünün ve bu metinlerin dili, anında değişir.
 BIOS: kullanılacak BIOS dökümü, yeniden başlatma gerektirir. Varsayılan scph7502.bin'dir.
 
 Oyuna özel profil: açık ayarı her oyun için ayrı bir ayar dosyası tutar.
+
+Hata ayıklama günlüğü: açık ayarı kare sürelerini saniyede bir ve görüntüdeki her duraklamayı E:\PS1\logs\ps1_stage1.jsonl dosyasına yazar. Bir sorun bildirmek için bunu açın, sorun ortaya çıkana kadar oynayın, emülatörden Çıkış ile ayrılın ve bu dosyayı gönderin. Bundan önceki çalıştırma ps1_stage1_prev.jsonl olarak saklanır.
 
 Ayarları sıfırla: her şeyi varsayılana döndürür; iki kez OK basın.

@@ -41,8 +41,8 @@
 [hint.sec.input] OK otvorí alebo zatvorí sekciu: rozloženia klávesov, priradenie klávesov a ovládanie náklonom.
 [hint.preset] Nahradí všetky priradenia klávesov hotovým rozložením. Vľavo/Vpravo výber, OK použije. Vlastné priradenia sa stratia.
 [hint.keybase] Základné rozloženie: N95 je predvolené; C5 navyše prijíma 2, 4, 6, 8 ako druhý kláves pre smery. OK ho použije a nahradí priradenia.
-[hint.keys] Otvorí stránku priradenia klávesov: OK, potom stlačte kláves. Vľavo/Vpravo zapne alebo vypne Držať pre tlačidlo.
-[hint.tilt] Riadi náklonom telefónu (akcelerometer). Spôsob, akým držíte telefón pri návrate do hry, je neutrálna poloha.
+[hint.keys] Otvorí stránku priradenia klávesov: OK, potom stlačte kláves. Vľavo/Vpravo zapne alebo vypne Držať pre tlačidlo. Posledný riadok je kláves na vynulovanie náklonu.
+[hint.tilt] Riadi náklonom telefónu (akcelerometer). Spôsob, akým držíte telefón pri návrate do hry, je neutrálna poloha, a kláves na vynulovanie náklonu (predvolene C) ju kedykoľvek nastaví znova.
 [hint.tiltside] Os páčky, ktorá sleduje náklon do strán (LX, LY, RX, RY; mínus ju obráti). Predvolená LX.
 [hint.tiltpitch] Os páčky, ktorá sleduje náklon vpred a vzad (LX, LY, RX, RY; mínus ju obráti). Predvolená LY.
 [hint.tiltdead] Náklon menší ako táto hodnota sa ignoruje. Od 0 do 40, predvolená 10.
@@ -52,6 +52,7 @@
 [hint.lang] Jazyk menu. Zmení sa ihneď. Texty nápovedy sa mu prispôsobia; kde text chýba, použije sa angličtina.
 [hint.bios] Výpis BIOS z E:\PS1\bios. Bez neho beží vstavaná náhrada (HLE) a kompatibilita je horšia. Vyžaduje reštart.
 [hint.profile] Zapnuté: každá hra si ukladá vlastné nastavenia v E:\PS1\cfg, napríklad klávesy a prepínače rýchlosti. Vypnuté: jedno nastavenie pre všetky hry.
+[hint.debug] Zapisuje časy snímok raz za sekundu a každé pozastavenie obrazu do E:\PS1\logs\ps1_stage1.jsonl. Na hlásenie problémov; mierne znižuje rýchlosť.
 [hint.reset] Vráti všetky nastavenia na predvolené hodnoty vrátane klávesov a jazyka. Stlačte OK dvakrát. Uložené pozície zostanú nedotknuté.
 
 [hint.help] Otvorí nápovedu: úvodné nastavenie, ovládanie, ukladanie, riešenie problémov a popis každého riadka menu.
@@ -76,7 +77,7 @@ Každé tlačidlo je možné priradiť v Ovládanie... : OK na tlačidle, potom 
 
 Ovládanie náklonom (Ovládanie) riadi náklonom telefónu. Vyžaduje telefón s akcelerometrom, napríklad N95; modely E90 a C5-00.2 ho nemajú.
 
-Neutrálna poloha sa nastaví pri každom návrate do hry z menu. Na novú kalibráciu otvorte menu pravým výberovým tlačidlom, držte telefón tak, ako chcete hrať, a zvoľte Pokračovať.
+Neutrálna poloha sa nastaví pri každom návrate do hry z menu a pri každom stlačení klávesu na vynulovanie náklonu. Tento kláves je predvolene C a možno ho znova priradiť v poslednom riadku Ovládanie... . Na novú kalibráciu držte telefón tak, ako chcete hrať, a stlačte ho.
 
 [topic.saves] Ukladanie
 Uložený stav zachytí celú hru v danom okamihu. Otvorte Hra, zvoľte Uložiť stav, vyberte slot pomocou Vľavo a Vpravo (1 až 5) a stlačte OK. [*] za číslom slotu znamená, že slot už stav obsahuje, [ ] znamená, že je prázdny. Načítať stav ho obnoví.
@@ -153,7 +154,7 @@ Predvoľba ovládania: Predvolené, Pretekárske, Bojové alebo RPG. OK nahradí
 
 Klávesnica: N95 (predvolené rozloženie) alebo C5 (to isté plus 2, 4, 6, 8 ako druhý kláves pre smery). OK nahradí všetky priradenia klávesov.
 
-Ovládanie...: priradí každé tlačidlo PS1 ku klávesu; Vľavo a Vpravo zapne alebo vypne Držať.
+Ovládanie...: priradí každé tlačidlo PS1 ku klávesu; Vľavo a Vpravo zapne alebo vypne Držať. Posledný riadok, Vynulovať náklon, je kláves, ktorý nastaví aktuálnu polohu telefónu ako neutrálnu.
 
 Ovládanie náklonom a jeho štyri nastavenia: os pre náklon do strán, os pre náklon vpred a vzad, mŕtva zóna náklonu (0 až 40) a citlivosť náklonu (40% až 300%).
 
@@ -163,5 +164,7 @@ Jazyk: jazyk menu a týchto textov, zmení sa ihneď.
 BIOS: výpis BIOS na použitie, vyžaduje reštart. Predvolený je scph7502.bin.
 
 Profil pre hru: zapnuté uchováva samostatný súbor nastavení pre každú hru.
+
+Ladiaci záznam: zapnuté zapisuje časy snímok raz za sekundu a každé pozastavenie obrazu do E:\PS1\logs\ps1_stage1.jsonl. Ak chcete nahlásiť problém, zapnite ho, hrajte, kým sa problém neprejaví, ukončite emulátor cez Ukončiť a pošlite tento súbor. Predchádzajúci beh sa uchováva ako ps1_stage1_prev.jsonl.
 
 Obnoviť nastavenia: vráti všetko na predvolené hodnoty; stlačte OK dvakrát.

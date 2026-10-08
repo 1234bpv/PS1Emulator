@@ -41,8 +41,8 @@
 [hint.sec.input] OK åbner eller lukker afsnittet: tastaturlayouter, tastetildeling og vippestyring.
 [hint.preset] Erstatter alle tastetildelinger med et færdigt layout. Venstre/Højre vælger, OK anvender. Dine egne tildelinger går tabt.
 [hint.keybase] Grundlayoutet: N95 er standard; C5 accepterer også 2, 4, 6, 8 som en ekstra tast til retningerne. OK anvender det og erstatter tildelingerne.
-[hint.keys] Åbner siden til tastetildeling: OK, tryk derefter på tasten. Venstre/Højre slår Hold til eller fra for en knap.
-[hint.tilt] Styrer med telefonens vipning (accelerometer). Den position, du holder telefonen i, når du vender tilbage til spillet, er neutralpositionen.
+[hint.keys] Åbner siden til tastetildeling: OK, tryk derefter på tasten. Venstre/Højre slår Hold til eller fra for en knap. Den sidste række er tasten til nulstil vipning.
+[hint.tilt] Styrer med telefonens vipning (accelerometer). Den position, du holder telefonen i, når du vender tilbage til spillet, er neutralpositionen, og tasten til nulstil vipning (som standard C) indstiller den igen når som helst.
 [hint.tiltside] Den styrepindsakse, der følger vipning sidelæns (LX, LY, RX, RY; et minus vender den om). Standard LX.
 [hint.tiltpitch] Den styrepindsakse, der følger vipning fremad og tilbage (LX, LY, RX, RY; et minus vender den om). Standard LY.
 [hint.tiltdead] Vipning mindre end dette ignoreres. Fra 0 til 40, standard 10.
@@ -52,6 +52,7 @@
 [hint.lang] Menuens sprog. Ændres med det samme. Hjælpeteksterne følger det; engelsk bruges, hvor en tekst mangler.
 [hint.bios] BIOS-dumpet fra E:\PS1\bios. Uden dette kører den indbyggede erstatning (HLE), og kompatibiliteten er dårligere. Kræver genstart.
 [hint.profile] Til: hvert spil beholder sine egne indstillinger i E:\PS1\cfg, såsom taster og hastighedsindstillinger. Fra: ét sæt for alle spil.
+[hint.debug] Skriver billedtider en gang i sekundet og enhver pause i billedet til E:\PS1\logs\ps1_stage1.jsonl. Til rapportering af problemer; koster lidt hastighed.
 [hint.reset] Nulstiller alle indstillinger til standard, inklusive taster og sprog. Tryk OK to gange. Gemte spil berøres ikke.
 
 [hint.help] Åbner hjælpen: første opsætning, styring, gem spil, fejlfinding og en beskrivelse af hver menurække.
@@ -76,7 +77,7 @@ Hver knap kan tildeles i Styring... : OK på en knap, tryk derefter på tasten. 
 
 Vippestyring (Styring) styrer med telefonens vipning. Det kræver en telefon med et accelerometer, såsom N95; E90 og C5-00.2 har intet.
 
-Neutralpositionen registreres hver gang, du vender tilbage til spillet fra menuen. For at kalibrere igen skal du åbne menuen med højre valgtast, holde telefonen, som du ønsker at spille, og vælge Genoptag.
+Neutralpositionen registreres hver gang, du vender tilbage til spillet fra menuen, og hver gang du trykker på tasten til nulstil vipning. Den tast er som standard C og kan gentildeles på den sidste række i Styring... . For at kalibrere igen skal du holde telefonen, som du ønsker at spille, og trykke på den.
 
 [topic.saves] Gem spil
 En gemt tilstand gemmer hele spillet i et givet øjeblik. Åbn Spil, vælg Gem tilstand, vælg en plads med Venstre og Højre (1 til 5), og tryk på OK. [*] efter pladsnummeret betyder, at pladsen allerede indeholder en tilstand, [ ] betyder, at den er tom. Indlæs tilstand gendanner den.
@@ -153,7 +154,7 @@ Styringsprofil: Standard, Racing, Fighting eller RPG. OK erstatter alle tastetil
 
 Tastatur: N95 (standardlayoutet) eller C5 (det samme, plus 2, 4, 6, 8 som en ekstra tast til retningerne). OK erstatter alle tastetildelinger.
 
-Styring...: tildel hver PS1-knap til en tast; Venstre og Højre slår Hold til eller fra.
+Styring...: tildel hver PS1-knap til en tast; Venstre og Højre slår Hold til eller fra. Den sidste række, Nulstil vipning, er tasten, der gør telefonens aktuelle position neutral.
 
 Vippestyring og dens fire indstillinger: aksen til vipning sidelæns, aksen til vipning fremad og tilbage, dødzonen (0 til 40) og følsomheden (40% til 300%).
 
@@ -163,5 +164,7 @@ Sprog: sproget i menuen og i disse tekster, ændres med det samme.
 BIOS: BIOS-dumpet, der skal bruges, kræver genstart. Standard er scph7502.bin.
 
 Spilprofil: til gemmer en separat indstillingsfil for hvert spil.
+
+Fejlfindingslog: til skriver billedtider en gang i sekundet og enhver pause i billedet til E:\PS1\logs\ps1_stage1.jsonl. For at rapportere et problem slås den til; spil indtil problemet opstår, forlad emulatoren via Afslut og send filen. Kørslen før den bevares som ps1_stage1_prev.jsonl.
 
 Nulstil alt: nulstiller alt til standardværdierne; tryk på OK to gange.

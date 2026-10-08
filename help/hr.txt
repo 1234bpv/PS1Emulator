@@ -41,8 +41,8 @@
 [hint.sec.input] OK otvara ili zatvara odjeljak: rasporedi tipki, dodjela tipki i upravljanje nagibom.
 [hint.preset] Zamjenjuje sve dodjele tipki gotovim rasporedom. Lijevo/Desno biraju, OK primjenjuje. Vaše dodjele se gube.
 [hint.keybase] Osnovni raspored: N95 je zadani; C5 prihvaća i 2, 4, 6, 8 kao drugu tipku za smjerove. OK ga primjenjuje i zamjenjuje dodjele.
-[hint.keys] Otvara stranicu dodjele tipki: OK, zatim pritisnite tipku. Lijevo/Desno uključuju ili isključuju Drži za gumb.
-[hint.tilt] Upravlja nagibom telefona (akcelerometar). Način na koji držite telefon kad se vratite u igru je neutralni položaj.
+[hint.keys] Otvara stranicu dodjele tipki: OK, zatim pritisnite tipku. Lijevo/Desno uključuju ili isključuju Drži za gumb. Zadnji red je tipka za nuliranje nagiba.
+[hint.tilt] Upravlja nagibom telefona (akcelerometar). Način na koji držite telefon kad se vratite u igru je neutralni položaj, a tipka za nuliranje nagiba (zadano C) ponovno ga postavlja u bilo kojem trenutku.
 [hint.tiltside] Os palice koja prati bočni nagib (LX, LY, RX, RY; minus je obrće). Zadano LX.
 [hint.tiltpitch] Os palice koja prati nagib naprijed i natrag (LX, LY, RX, RY; minus je obrće). Zadano LY.
 [hint.tiltdead] Nagib manji od ove vrijednosti zanemaruje se. Od 0 do 40, zadano 10.
@@ -52,6 +52,7 @@
 [hint.lang] Jezik izbornika. Mijenja se odmah. Tekstovi pomoći ga slijede; gdje teksta nema, koristi se engleski.
 [hint.bios] BIOS snimka iz E:\PS1\bios. Bez nje radi ugrađena zamjena (HLE), a kompatibilnost je lošija. Zahtijeva ponovno pokretanje.
 [hint.profile] Uključeno: svaka igra čuva vlastite postavke u E:\PS1\cfg, primjerice tipke i prekidače brzine. Isključeno: jedan skup za sve igre.
+[hint.debug] Svake sekunde zapisuje vrijeme kadrova i svako zaustavljanje slike u E:\PS1\logs\ps1_stage1.jsonl. Za prijavu problema; malo smanjuje brzinu.
 [hint.reset] Vraća sve postavke na zadane, uključujući tipke i jezik. Pritisnite OK dvaput. Spremljena stanja ostaju netaknuta.
 
 [hint.help] Otvara pomoć: prvo podešavanje, upravljanje, spremanje, rješavanje problema i opis svakog retka izbornika.
@@ -76,7 +77,7 @@ Svaki gumb može se dodijeliti u Tipke...: OK na gumbu, zatim pritisnite tipku. 
 
 Nagib upravlj. (Upravljanje) upravlja nagibom telefona. Treba telefon s akcelerometrom, kao što je N95; E90 i C5-00.2 ga nemaju.
 
-Neutralni položaj uzima se svaki put kad se iz izbornika vratite u igru. Za ponovnu kalibraciju otvorite izbornik desnom funkcijskom tipkom, držite telefon onako kako želite igrati i odaberite Nastavi.
+Neutralni položaj uzima se svaki put kad se iz izbornika vratite u igru i svaki put kad pritisnete tipku za nuliranje nagiba. Ta je tipka zadano C i može se ponovno dodijeliti u zadnjem retku Tipke... . Za ponovnu kalibraciju držite telefon onako kako želite igrati i pritisnite je.
 
 [topic.saves] Spremanje
 Spremljeno stanje pohranjuje cijelu igru u jednom trenutku. Otvorite Igra, odaberite Spremi stanje, odaberite utor tipkama Lijevo i Desno (1 do 5) i pritisnite OK. [*] iza broja utora znači da utor već sadrži stanje, [ ] znači da je prazan. Učitaj stanje ga vraća.
@@ -153,7 +154,7 @@ Predložak tipki: Zadano, Utrke, Borbe ili RPG. OK zamjenjuje sve dodjele tipki.
 
 Tipkovnica: N95 (zadani raspored) ili C5 (isto, plus 2, 4, 6, 8 kao druga tipka za smjerove). OK zamjenjuje sve dodjele tipki.
 
-Tipke...: dodijelite svaki PS1 gumb tipki; Lijevo i Desno uključuju ili isključuju Drži.
+Tipke...: dodijelite svaki PS1 gumb tipki; Lijevo i Desno uključuju ili isključuju Drži. Zadnji redak, Nuliranje nagiba, tipka je koja trenutni položaj telefona čini neutralnim.
 
 Nagib upravlj. i njegove četiri postavke: os za bočni nagib, os za nagib naprijed i natrag, mrtva zona (0 do 40) i osjetljivost (40% do 300%).
 
@@ -163,5 +164,7 @@ Jezik: jezik izbornika i ovih tekstova, mijenja se odmah.
 BIOS: BIOS snimka koja se koristi, zahtijeva ponovno pokretanje. Zadano je scph7502.bin.
 
 Profil po igri: uključeno čuva zasebnu datoteku postavki za svaku igru.
+
+Dnevnik otklanjanja: uključeno svake sekunde zapisuje vrijeme kadrova i svako zaustavljanje slike u E:\PS1\logs\ps1_stage1.jsonl. Za prijavu problema uključite ga, igrajte dok se problem ne pojavi, napustite emulator kroz Izlaz i pošaljite tu datoteku. Prethodno pokretanje čuva se kao ps1_stage1_prev.jsonl.
 
 Vrati postavke: vraća sve na zadane vrijednosti; pritisnite OK dvaput.

@@ -41,8 +41,8 @@
 [hint.sec.input] OK öffnet oder schließt den Abschnitt: Tastenbelegungen, Tastenkonfiguration und Neigungssteuerung.
 [hint.preset] Ersetzt alle Tastenbelegungen durch ein fertiges Layout. Links/Rechts wählt aus, OK übernimmt. Eigene Belegungen gehen verloren.
 [hint.keybase] Das Basisschema: N95 ist Standard; C5 akzeptiert auch 2, 4, 6, 8 als Zweittaste für die Richtungen. OK übernimmt es und ersetzt die Belegungen.
-[hint.keys] Öffnet die Tastenbelegung: OK, dann Taste drücken. Links/Rechts schaltet Halten für eine Taste ein oder aus.
-[hint.tilt] Steuert über das Neigen des Telefons (Beschleunigungssensor). Die Haltung des Telefons bei der Rückkehr ins Spiel ist die Neutralstellung.
+[hint.keys] Öffnet die Tastenbelegung: OK, dann Taste drücken. Links/Rechts schaltet Halten für eine Taste ein oder aus. Die letzte Zeile ist die Taste zum Nullen der Neigung.
+[hint.tilt] Steuert über das Neigen des Telefons (Beschleunigungssensor). Die Haltung des Telefons bei der Rückkehr ins Spiel ist die Neutralstellung, und die Taste zum Nullen der Neigung (standardmäßig C) setzt sie jederzeit neu.
 [hint.tiltside] Die Stick-Achse für seitliche Neigung (LX, LY, RX, RY; ein Minus kehrt sie um). Standard LX.
 [hint.tiltpitch] Die Stick-Achse für Vor- und Zurückneigung (LX, LY, RX, RY; ein Minus kehrt sie um). Standard LY.
 [hint.tiltdead] Eine geringere Neigung wird ignoriert. Von 0 bis 40, Standard 10.
@@ -52,6 +52,7 @@
 [hint.lang] Die Menüsprache. Ändert sich sofort. Die Hilfetexte folgen ihr; fehlt ein Text, wird Englisch verwendet.
 [hint.bios] Das BIOS-Abbild aus E:\PS1\bios. Ohne dieses läuft der integrierte Ersatz (HLE) und die Kompatibilität ist schlechter. Erfordert Neustart.
 [hint.profile] Ein: Jedes Spiel behält eigene Einstellungen in E:\PS1\cfg, wie Tasten und Tempo-Schalter. Aus: einheitlich für alle Spiele.
+[hint.debug] Schreibt einmal pro Sekunde die Bildzeiten und jede Bildpause in E:\PS1\logs\ps1_stage1.jsonl. Zum Melden von Problemen; kostet etwas Geschwindigkeit.
 [hint.reset] Setzt alle Einstellungen auf Standard zurück, einschließlich Tasten und Sprache. OK zweimal drücken. Spielstände bleiben unberührt.
 
 [hint.help] Öffnet die Hilfe: Ersteinrichtung, Steuerung, Speichern, Problembehebung und Beschreibung jeder Menüzeile.
@@ -76,7 +77,7 @@ Jede Taste kann in Steuerung... zugewiesen werden: OK auf einer Taste, dann die 
 
 Neigungssteuerung (Steuerung) steuert über das Neigen des Telefons. Sie erfordert ein Telefon mit Beschleunigungssensor wie das N95; das E90 und das C5-00.2 besitzen keinen.
 
-Die Neutralstellung wird jedes Mal übernommen, wenn Sie aus dem Menü ins Spiel zurückkehren. Um neu zu kalibrieren, öffnen Sie das Menü mit der rechten Auswahltaste, halten das Telefon so, wie Sie spielen möchten, und wählen Fortsetzen.
+Die Neutralstellung wird jedes Mal übernommen, wenn Sie aus dem Menü ins Spiel zurückkehren, und jedes Mal, wenn Sie die Taste zum Nullen der Neigung drücken. Diese Taste ist standardmäßig C und kann in der letzten Zeile von Steuerung... neu zugewiesen werden. Um neu zu kalibrieren, halten Sie das Telefon so, wie Sie spielen möchten, und drücken Sie sie.
 
 [topic.saves] Speichern
 Ein Spielstand speichert das gesamte Spiel in einem Augenblick. Öffnen Sie Spiel, wählen Sie Spielstand speichern, wählen Sie mit Links und Rechts einen Platz (1 bis 5) und drücken Sie OK. [*] nach der Platznummer bedeutet, dass der Platz bereits einen Spielstand enthält, [ ] bedeutet, dass er leer ist. Spielstand laden stellt ihn wieder her.
@@ -153,7 +154,7 @@ Steuerungsprofil: Standard, Rennen, Kampf oder RPG. OK ersetzt alle Tastenbelegu
 
 Tastatur: N95 (das Standardlayout) oder C5 (dasselbe plus 2, 4, 6, 8 als Zweittaste für die Richtungen). OK ersetzt alle Tastenbelegungen.
 
-Steuerung...: Jeder PS1-Taste eine Telefontaste zuweisen; Links und Rechts schalten Halten ein oder aus.
+Steuerung...: Jeder PS1-Taste eine Telefontaste zuweisen; Links und Rechts schalten Halten ein oder aus. Die letzte Zeile, Neigung nullen, ist die Taste, die die aktuelle Haltung des Telefons zur Neutralstellung macht.
 
 Neigungssteuerung und ihre vier Einstellungen: Die Achse für seitliche Neigung, die Achse für Vor- und Zurückneigung, die Totzone (0 bis 40) und die Empfindlichkeit (40% bis 300%).
 
@@ -163,5 +164,7 @@ Sprache: Die Sprache des Menüs und dieser Hilfetexte, ändert sich sofort.
 BIOS: Das zu verwendende BIOS-Abbild, erfordert Neustart. Standard ist scph7502.bin.
 
 Spielprofil: Ein behält für jedes Spiel eine separate Einstellungsdatei bei.
+
+Debug-Protokoll: Ein schreibt einmal pro Sekunde die Bildzeiten und jede Bildpause in E:\PS1\logs\ps1_stage1.jsonl. Um ein Problem zu melden, schalten Sie es ein, spielen Sie, bis das Problem auftritt, verlassen Sie den Emulator über Beenden und senden Sie diese Datei. Der Durchlauf davor wird als ps1_stage1_prev.jsonl aufbewahrt.
 
 Standardwerte: Setzt alles auf die Standardwerte zurück; OK zweimal drücken.

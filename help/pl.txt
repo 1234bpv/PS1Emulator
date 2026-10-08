@@ -41,8 +41,8 @@
 [hint.sec.input] OK otwiera lub zamyka sekcję: układy klawiszy, przypisanie klawiszy i sterowanie przechyłem.
 [hint.preset] Zastępuje wszystkie przypisania klawiszy gotowym układem. Lewo/Prawo wybiera, OK stosuje. Własne przypisania zostaną utracone.
 [hint.keybase] Układ bazowy: N95 jest domyślny; C5 akceptuje również 2, 4, 6, 8 jako drugi klawisz dla kierunków. OK stosuje go i zastępuje przypisania.
-[hint.keys] Otwiera stronę przypisania klawiszy: OK, a potem naciśnij klawisz. Lewo/Prawo włącza lub wyłącza przytrzym dla przycisku.
-[hint.tilt] Steruje przechyłem telefonu (akcelerometr). Sposób trzymania telefonu w chwili powrotu do gry wyznacza pozycję neutralną.
+[hint.keys] Otwiera stronę przypisania klawiszy: OK, a potem naciśnij klawisz. Lewo/Prawo włącza lub wyłącza przytrzym dla przycisku. Ostatni wiersz to klawisz zerowania przechyłu.
+[hint.tilt] Steruje przechyłem telefonu (akcelerometr). Sposób trzymania telefonu w chwili powrotu do gry wyznacza pozycję neutralną, a klawisz zerowania przechyłu (domyślnie C) ustawia ją ponownie w dowolnym momencie.
 [hint.tiltside] Oś drążka podążająca za przechyłem na boki (LX, LY, RX, RY; minus odwraca). Domyślnie LX.
 [hint.tiltpitch] Oś drążka podążająca za przechyłem w przód i w tył (LX, LY, RX, RY; minus odwraca). Domyślnie LY.
 [hint.tiltdead] Przechył mniejszy niż ta wartość jest ignorowany. Od 0 do 40, domyślnie 10.
@@ -52,6 +52,7 @@
 [hint.lang] Język menu. Zmienia się natychmiast. Teksty pomocy podążają za nim; język angielski jest używany tam, gdzie brak tekstu.
 [hint.bios] Zrzut BIOS-u z E:\PS1\bios. Bez niego działa wbudowany zamiennik (HLE), a kompatybilność jest gorsza. Wymaga restartu.
 [hint.profile] Opcja wł: każda gra zachowuje własne ustawienia w E:\PS1\cfg, np. klawisze i opcje prędkości. Opcja wył: jeden zestaw dla wszystkich gier.
+[hint.debug] Zapisuje czasy klatek raz na sekundę i każdą pauzę obrazu w E:\PS1\logs\ps1_stage1.jsonl. Do zgłaszania problemów; nieco zmniejsza prędkość.
 [hint.reset] Przywraca wszystkie ustawienia do wartości domyślnych, w tym klawisze i język. Naciśnij OK dwa razy. Zapisy pozostają nienaruszone.
 
 [hint.help] Otwiera pomoc: pierwsza konfiguracja, sterowanie, zapisywanie, rozwiązywanie problemów i opis każdego wiersza menu.
@@ -76,7 +77,7 @@ Każdy przycisk można przypisać w Sterowanie... : OK na przycisku, a potem nac
 
 Sterowanie przechyłem (Sterowanie) steruje przechyłem telefonu. Wymaga telefonu z akcelerometrem, takiego jak N95; E90 oraz C5-00.2 go nie mają.
 
-Pozycja neutralna jest ustalana za każdym razem, gdy wracasz do gry z menu. Aby skalibrować ponownie, otwórz menu prawym klawiszem wyboru, chwyć telefon tak, jak chcesz grać, i wybierz Wznów.
+Pozycja neutralna jest ustalana za każdym razem, gdy wracasz do gry z menu, oraz za każdym naciśnięciem klawisza zerowania przechyłu. Klawisz ten to domyślnie C i można go zmienić w ostatnim wierszu Sterowanie... . Aby skalibrować ponownie, chwyć telefon tak, jak chcesz grać, i naciśnij go.
 
 [topic.saves] Zapisywanie
 Zapisany stan zachowuje całą grę w danym momencie. Otwórz Gra, wybierz Zapisz stan, wybierz slot za pomocą Lewo i Prawo (od 1 do 5) i naciśnij OK. [*] po numerze slotu oznacza, że slot zawiera już stan, [ ] oznacza pusty. Wczytaj stan przywraca go.
@@ -153,7 +154,7 @@ Profil sterowania: Domyślny, Wyścigi, Bijatyki lub RPG. OK zastępuje wszystki
 
 Klawiatura: N95 (układ domyślny) lub C5 (to samo, plus 2, 4, 6, 8 jako drugi klawisz dla kierunków). OK zastępuje wszystkie przypisania klawiszy.
 
-Sterowanie...: przypisz każdy przycisk PS1 do klawisza; Lewo i Prawo włączają lub wyłączają przytrzym.
+Sterowanie...: przypisz każdy przycisk PS1 do klawisza; Lewo i Prawo włączają lub wyłączają przytrzym. Ostatni wiersz, Zerowanie przechyłu, to klawisz, który przyjmuje bieżące położenie telefonu jako neutralne.
 
 Sterowanie przechyłem i jego cztery ustawienia: oś przechyłu na boki, oś przechyłu w przód i w tył, strefa martwa (od 0 do 40) i czułość (od 40% do 300%).
 
@@ -163,5 +164,7 @@ Język: język menu oraz tych tekstów, zmienia się natychmiast.
 BIOS: zrzut BIOS-u do użycia, wymaga restartu. Domyślnie scph7502.bin.
 
 Profil dla gry: opcja wł zachowuje osobny plik ustawień dla każdej gry.
+
+Dziennik debugowania: opcja wł zapisuje czasy klatek raz na sekundę i każdą pauzę obrazu w E:\PS1\logs\ps1_stage1.jsonl. Aby zgłosić problem, włącz go, graj do wystąpienia problemu, wyjdź z emulatora przez Wyjście i wyślij ten plik. Poprzednie uruchomienie jest zachowane jako ps1_stage1_prev.jsonl.
 
 Resetuj ustawienia: przywraca wszystkie wartości domyślne; naciśnij OK dwukrotnie.

@@ -41,8 +41,8 @@
 [hint.sec.input] OK opens or closes the section: key layouts, key assignment and tilt control.
 [hint.preset] Replaces all key assignments with a ready layout. Left/Right choose, OK applies. Your own assignments are lost.
 [hint.keybase] The base layout: N95 is the default one; C5 also accepts 2, 4, 6, 8 as a second key for the directions. OK applies it and replaces the assignments.
-[hint.keys] Opens the key assignment page: OK, then press the key. Left/Right turn Hold on or off for a button.
-[hint.tilt] Steers with the tilt of the phone (accelerometer). The way you hold the phone when you return to the game is the neutral position.
+[hint.keys] Opens the key assignment page: OK, then press the key. Left/Right turn Hold on or off for a button. The last row is the tilt zero key.
+[hint.tilt] Steers with the tilt of the phone (accelerometer). The way you hold the phone when you return to the game is the neutral position, and the tilt zero key (C by default) sets it again at any moment.
 [hint.tiltside] The stick axis that follows sideways tilt (LX, LY, RX, RY; a minus reverses it). Default LX.
 [hint.tiltpitch] The stick axis that follows forward and backward tilt (LX, LY, RX, RY; a minus reverses it). Default LY.
 [hint.tiltdead] Tilt smaller than this is ignored. From 0 to 40, default 10.
@@ -52,6 +52,7 @@
 [hint.lang] The language of the menu. Changes at once. The help texts follow it; English is used where a text is missing.
 [hint.bios] The BIOS dump from E:\PS1\bios. Without it the built-in replacement (HLE) runs and compatibility is worse. Needs a restart.
 [hint.profile] On: each game keeps its own settings in E:\PS1\cfg, such as keys and speed switches. Off: one set for all games.
+[hint.debug] Writes frame times once a second, and every pause of the picture, to E:\PS1\logs\ps1_stage1.jsonl. For reporting problems; costs a little speed.
 [hint.reset] Sets every setting back to its default, keys and language included. Press OK twice. Saves are not touched.
 
 [hint.help] Opens the help: first setup, controls, saving, troubleshooting and a description of every menu row.
@@ -76,7 +77,7 @@ Every button can be assigned in Controls... : OK on a button, then press the key
 
 Tilt control (Controls) steers with the tilt of the phone. It needs a phone with an accelerometer, such as the N95; the E90 and the C5-00.2 have none.
 
-The neutral position is taken each time you return to the game from the menu. To recalibrate, open the menu with the right soft key, hold the phone the way you want to play and choose Resume.
+The neutral position is taken each time you return to the game from the menu, and each time you press the tilt zero key. That key is C by default and can be reassigned on the last row of Controls... . To recalibrate, hold the phone the way you want to play and press it.
 
 [topic.saves] Saving
 A save state stores the whole game at one moment. Open Game, choose Save state, pick a slot with Left and Right (1 to 5) and press OK. [*] after the slot number means the slot already holds a state, [ ] means it is empty. Load state restores it.
@@ -153,7 +154,7 @@ Control preset: Default, Racing, Fighting or RPG. OK replaces all key assignment
 
 Keyboard: N95 (the default layout) or C5 (the same, plus 2, 4, 6, 8 as a second key for the directions). OK replaces all key assignments.
 
-Controls...: assign each PS1 button to a key; Left and Right turn Hold on or off.
+Controls...: assign each PS1 button to a key; Left and Right turn Hold on or off. The last row, Tilt zero, is the key that makes the current position of the phone neutral.
 
 Tilt control and its four settings: the axis for sideways tilt, the axis for forward and backward tilt, the dead zone (0 to 40) and the sensitivity (40% to 300%).
 
@@ -163,5 +164,7 @@ Language: the language of the menu and of these texts, changes at once.
 BIOS: the BIOS dump to use, needs a restart. Default is scph7502.bin.
 
 Per-game profile: on keeps a separate settings file for each game.
+
+Debug log: on writes the frame times once a second, and every pause of the picture, to E:\PS1\logs\ps1_stage1.jsonl. To report a problem, turn it on, play until the problem appears, leave the emulator through Exit and send that file. The run before it is kept as ps1_stage1_prev.jsonl.
 
 Reset settings: returns everything to the defaults; press OK twice.

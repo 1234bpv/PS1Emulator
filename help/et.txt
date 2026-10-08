@@ -41,8 +41,8 @@
 [hint.sec.input] OK avab või sulgeb jaotise: nupupaigutused, nuppude määramine ja kallutusjuhtimine.
 [hint.preset] Asendab kõik nupumäärangud valmis paigutusega. Left/Right valivad, OK rakendab. Sinu määrangud kaovad.
 [hint.keybase] Baaspaigutus: N95 on vaikimisi; C5 aktsepteerib ka 2, 4, 6, 8 teise nupuna suundade jaoks. OK rakendab ja asendab määrangud.
-[hint.keys] Avab nupumäärangu lehe: OK, seejärel vajuta nuppu. Left/Right lülitavad nupu jaoks Hoia sisse või välja.
-[hint.tilt] Juhib telefoni kallutamisega (kiirendusandur). Positsioon, kuidas hoiad telefoni mängu juurde naastes, on neutraalne asend.
+[hint.keys] Avab nupumäärangu lehe: OK, seejärel vajuta nuppu. Left/Right lülitavad nupu jaoks Hoia sisse või välja. Viimane rida on kallutuse nullimise nupp.
+[hint.tilt] Juhib telefoni kallutamisega (kiirendusandur). Positsioon, kuidas hoiad telefoni mängu juurde naastes, on neutraalne asend, ja kallutuse nullimise nupp (vaikimisi C) seab selle igal hetkel uuesti.
 [hint.tiltside] Juhtkangitelg, mis järgib külgsuunalist kallutust (LX, LY, RX, RY; miinus pöörab ümber). Vaikimisi LX.
 [hint.tiltpitch] Juhtkangitelg, mis järgib ette-taha kallutust (LX, LY, RX, RY; miinus pöörab ümber). Vaikimisi LY.
 [hint.tiltdead] Sellest väiksem kallutus ignoreeritakse. 0 kuni 40, vaikimisi 10.
@@ -52,6 +52,7 @@
 [hint.lang] Menüü keel. Muutub kohe. Abiteksid järgivad seda; puuduva teksti korral kasutatakse inglise keelt.
 [hint.bios] BIOS-i tõmmis kaustast E:\PS1\bios. Ilma selleta käivitub sisseehitatud asendaja (HLE) ja ühilduvus on halvem. Nõuab taaskäivitust.
 [hint.profile] Sees: iga mäng hoiab oma seadeid kaustas E:\PS1\cfg, näiteks nuppe ja kiiruslüliteid. Väljas: üks seadistus kõigile mängudele.
+[hint.debug] Kirjutab kaadriaegu kord sekundis ja iga pildi pausi faili E:\PS1\logs\ps1_stage1.jsonl. Probleemidest teatamiseks; võtab veidi kiirust.
 [hint.reset] Taastab kõik seaded vaikeväärtustele, sh nupud ja keel. Vajuta OK kaks korda. Salvestusi ei puudutata.
 
 [hint.help] Avab abi: esmaseadistus, juhtimine, salvestamine, veaotsing ja iga menüürea kirjeldus.
@@ -76,7 +77,7 @@ Iga nuppu saab määrata jaotises Nupud...: OK nupul, seejärel vajuta klahvi. L
 
 Kallutusjuhtimine (Juhtimine) juhib telefoni kallutamisega. Selleks on vaja kiirendusanduriga telefoni, nagu N95; E90-l ja C5-00.2-l seda ei ole.
 
-Neutraalne asend võetakse iga kord, kui naased menüüst mängu juurde. Uuesti kalibreerimiseks ava menüü parema tarkvaranupuga, hoia telefoni nii, nagu soovid mängida, ja vali Jätka.
+Neutraalne asend võetakse iga kord, kui naased menüüst mängu juurde, ja iga kord, kui vajutad kallutuse nullimise nuppu. See nupp on vaikimisi C ja seda saab ümber määrata jaotise Nupud... viimasel real. Uuesti kalibreerimiseks hoia telefoni nii, nagu soovid mängida, ja vajuta seda.
 
 [topic.saves] Salvestamine
 Olekusalvestus talletab kogu mängu ühel hetkel. Ava Mäng, vali Salvesta olek, vali pesaga Left ja Right (1 kuni 5) ja vajuta OK. [*] pesanumbri järel tähendab, et pesas on juba olek, [ ] tähendab, et see on tühi. Laadi olek taastab selle.
@@ -153,7 +154,7 @@ Nuppude eelseade: Vaikimisi, Võidusõit, Võitlus või RPG. OK asendab kõik nu
 
 Klaviatuur: N95 (vaikepaigutus) või C5 (sama, pluss 2, 4, 6, 8 teise nupuna suundade jaoks). OK asendab kõik nupumäärangud.
 
-Nupud...: määra iga PS1 nupp klahvile; Left ja Right lülitavad Hoia sisse või välja.
+Nupud...: määra iga PS1 nupp klahvile; Left ja Right lülitavad Hoia sisse või välja. Viimane rida, Kallutuse nullimine, on nupp, mis teeb telefoni praeguse asendi neutraalseks.
 
 Kallutusjuhtimine ja selle neli seadet: telg külgsuunalise kallutuse jaoks, telg ette-taha kallutuse jaoks, surnud ala (0 kuni 40) ja tundlikkus (40% kuni 300%).
 
@@ -163,5 +164,7 @@ Keel: menüü ja nende tekstide keel, muutub kohe.
 BIOS: kasutatav BIOS-i tõmmis, nõuab taaskäivitust. Vaikimisi scph7502.bin.
 
 Mängu profiil: sees hoiab iga mängu jaoks eraldi seadefaili.
+
+Silumislogi: sees kirjutab kaadriaegu kord sekundis ja iga pildi pausi faili E:\PS1\logs\ps1_stage1.jsonl. Probleemist teatamiseks lülita see sisse, mängi kuni probleemi ilmnemiseni, välju emulaatorist nupuga Välju ja saada see fail. Sellest varasem käivitus hoitakse failina ps1_stage1_prev.jsonl.
 
 Lähtesta seaded: taastab kõik vaikeväärtused; vajuta OK kaks korda.

@@ -1714,6 +1714,9 @@ static TInt g_ovlOn;
 static TInt g_ovlFpsX10 = -1;
 static TInt g_ovlMsX10;
 static unsigned int g_presents;   // frames actually presented to screen
+// Of those, frames blitted while something else held part of the screen (a system
+// dialog over direct screen access): counted, but the player did not see them.
+static unsigned int g_presentsHidden;
 
 #ifdef PS1_BENCH
 // See g_selfIntAt: drives the bench-only interruption from the frame path, the
@@ -1932,6 +1935,11 @@ static void blitCurrent()
 		glPresentFrame(vbytes, startByte, sw, sh, field, srcRows);
 		return;
 		}
+
+	// GL above presents through its own surface; only this path depends on DSA.
+	// A DSA that never started leaves the window path, which the player does see.
+	if (g_useDsa && g_dsa && !dsaCovered)
+		g_presentsHidden++;
 
 	// Target is largest 4:3 rectangle fitting on screen, and source
 	// is stretched into it COMPLETELY, regardless of its size. PS1 pixels are
@@ -2429,6 +2437,11 @@ extern "C" unsigned int voutSymbianPresents(void)
 	return g_presents;
 	}
 
+extern "C" unsigned int voutSymbianPresentsHidden(void)
+	{
+	return g_presentsHidden;
+	}
+
 // Pause video output while in game menu. Tear down DSA: while it holds screen, window
 // drawing would go underneath it. Re-enable on resume and immediately restore
 // frame - "dirty only" latch would otherwise keep menu on screen until game
@@ -2568,6 +2581,16 @@ extern "C" void voutSymbianSetTilt(int aOn)
 		g_tilt = EFalse;
 		g_tiltPad = 0;
 		}
+	}
+
+// The key for this, bound in Controls: the next sample becomes the neutral position,
+// without a trip through the menu.
+extern "C" void voutSymbianTiltRezero(void)
+	{
+	if (!g_tilt)
+		return;
+	g_tiltZeroed = EFalse;
+	g_tiltPad = 0;
 	}
 
 // One axis of the pad from one axis of the sensor, with hysteresis.

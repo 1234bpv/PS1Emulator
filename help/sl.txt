@@ -41,8 +41,8 @@
 [hint.sec.input] OK odpre ali zapre razdelek: nabori tipk, dodelitev tipk in krmiljenje z nagibom.
 [hint.preset] Zamenja vse dodelitve tipk z že pripravljeno razporeditvijo. Levo/Desno izbira, OK uporabi. Vaše dodelitve so izgubljene.
 [hint.keybase] Osnovna razporeditev: N95 je privzeta; C5 sprejme tudi 2, 4, 6, 8 kot drugo tipko za smeri. OK jo uporabi in zamenja dodelitve.
-[hint.keys] Odpre stran z dodelitvijo tipk: OK, nato pritisnite tipko. Levo/Desno vklopi ali izklopi Drži za gumb.
-[hint.tilt] Krmili z nagibom telefona (pospeškomer). Način, kako držite telefon ob vrnitvi v igro, je nevtralni položaj.
+[hint.keys] Odpre stran z dodelitvijo tipk: OK, nato pritisnite tipko. Levo/Desno vklopi ali izklopi Drži za gumb. Zadnja vrstica je tipka za ničlo nagiba.
+[hint.tilt] Krmili z nagibom telefona (pospeškomer). Način, kako držite telefon ob vrnitvi v igro, je nevtralni položaj, tipka za ničlo nagiba (privzeto C) pa ga znova nastavi v katerem koli trenutku.
 [hint.tiltside] Os krmilke, ki sledi nagibu vstran (LX, LY, RX, RY; minus jo obrne). Privzeto LX.
 [hint.tiltpitch] Os krmilke, ki sledi nagibu naprej in nazaj (LX, LY, RX, RY; minus jo obrne). Privzeto LY.
 [hint.tiltdead] Nagib, manjši od te vrednosti, se prezre. Od 0 do 40, privzeto 10.
@@ -52,6 +52,7 @@
 [hint.lang] Jezik menija. Spremeni se takoj. Besedila pomoči mu sledijo; kjer besedila ni, se uporabi angleščina.
 [hint.bios] Izpis BIOS-a iz E:\PS1\bios. Brez njega teče vgrajena zamenjava (HLE) in združljivost je slabša. Zahteva ponovni zagon.
 [hint.profile] Vklj.: vsaka igra obdrži svoje nastavitve v E:\PS1\cfg, na primer tipke in stikala hitrosti. Izklj.: en nabor za vse igre.
+[hint.debug] Enkrat na sekundo zapiše čase sličic in vsako zaustavitev slike v E:\PS1\logs\ps1_stage1.jsonl. Za poročanje o težavah; nekoliko zmanjša hitrost.
 [hint.reset] Vrne vse nastavitve na privzete, tudi tipke in jezik. Dvakrat pritisnite OK. Shranjenih stanj ne spremeni.
 
 [hint.help] Odpre pomoč: prva nastavitev, tipke, shranjevanje, odpravljanje težav in opis vsake vrstice menija.
@@ -76,7 +77,7 @@ Vsak gumb lahko dodelite v Tipke...: OK na gumbu, nato pritisnite tipko. Levo in
 
 Krmiljenje z nagibom (Tipke) krmili z nagibom telefona. Potrebuje telefon s pospeškomerom, kot je N95; E90 in C5-00.2 ga nimata.
 
-Nevtralni položaj se vzame vsakič, ko se iz menija vrnete v igro. Za ponovno umerjanje odprite meni z desno funkcijsko tipko, držite telefon tako, kot želite igrati, in izberite Nadaljuj.
+Nevtralni položaj se vzame vsakič, ko se iz menija vrnete v igro, in vsakič, ko pritisnete tipko za ničlo nagiba. Ta tipka je privzeto C in jo je mogoče znova dodeliti v zadnji vrstici Tipke... . Za ponovno umerjanje držite telefon tako, kot želite igrati, in jo pritisnite.
 
 [topic.saves] Shranjevanje
 Shranjeno stanje shrani celotno igro v enem trenutku. Odprite Igra, izberite Shrani stanje, z Levo in Desno izberite mesto (1 do 5) in pritisnite OK. [*] za številko mesta pomeni, da mesto že vsebuje stanje, [ ] pomeni, da je prazno. Naloži stanje ga obnovi.
@@ -153,7 +154,7 @@ Nabor tipk: Privzeto, Dirke, Borbe ali RPG. OK zamenja vse dodelitve tipk.
 
 Tipkovnica: N95 (privzeta razporeditev) ali C5 (enako, plus 2, 4, 6, 8 kot druga tipka za smeri). OK zamenja vse dodelitve tipk.
 
-Tipke...: dodelite vsak gumb PS1 tipki; Levo in Desno vklopita ali izklopita Drži.
+Tipke...: dodelite vsak gumb PS1 tipki; Levo in Desno vklopita ali izklopita Drži. Zadnja vrstica, Ničla nagiba, je tipka, ki trenutni položaj telefona naredi nevtralnega.
 
 Krmiljenje z nagibom in njegove štiri nastavitve: os za nagib vstran, os za nagib naprej in nazaj, mrtvo območje (0 do 40) in občutljivost (40% do 300%).
 
@@ -163,5 +164,7 @@ Jezik: jezik menija in teh besedil, spremeni se takoj.
 BIOS: izpis BIOS-a, ki naj se uporabi, zahteva ponovni zagon. Privzeto je scph7502.bin.
 
 Profil igre: vklj. hrani ločeno datoteko nastavitev za vsako igro.
+
+Dnevnik razhroščevanja: vklj. enkrat na sekundo zapiše čase sličic in vsako zaustavitev slike v E:\PS1\logs\ps1_stage1.jsonl. Če želite sporočiti težavo, ga vklopite, igrajte, dokler se težava ne pojavi, zapustite emulator prek Izhod in pošljite to datoteko. Prejšnji zagon se hrani kot ps1_stage1_prev.jsonl.
 
 Ponastavi nastavitve: vrne vse na privzeto; dvakrat pritisnite OK.
