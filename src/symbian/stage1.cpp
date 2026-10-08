@@ -688,6 +688,41 @@ static TUint g_dbgWinShown, g_dbgLastShown, g_dbgGlShown, g_dbgWinUnder;
 static TUint g_dbgEmu, g_dbgBlit, g_dbgSnd, g_dbgOut, g_dbgMaxStep, g_dbgMaxOut;
 static TBool g_dbgStalled;
 static TInt  g_dbgStallFrame;
+static TUint g_dbgWait;
+
+// Frame limiter. Without it a game that runs lighter than real time (menus, videos,
+// loading screens) runs fast, and so does its sound: measured 62-95 frames a second in
+// the NFS menus. The deadline is kept on the fast counter, since User::After rounds to
+// 1/64 s here; a debt of more than a few frames (a slow scene, the menu) is dropped
+// rather than caught up at double speed.
+const TInt KLimitMaxDebt = 4;
+static TBool g_limArmed;
+static TUint32 g_limNext;
+
+// Returns the milliseconds it waited.
+static TUint limitFrame()
+	{
+	const TUint32 freq = ndrc_symbian_fastfreq();
+	// NTSC is 59.94 fields a second, PAL 50.
+	const TUint32 period = Config.PsxType ? freq / 50 : (TUint32)((TInt64)freq * 1001 / 60000);
+	const TUint32 now = ndrc_symbian_fastcount();
+	const TInt32 ahead = (TInt32)(g_limNext - now);
+	if (!g_limArmed || ahead < -(TInt32)period * KLimitMaxDebt || ahead > (TInt32)period * 2)
+		{
+		g_limArmed = ETrue;
+		g_limNext = now + period;
+		return 0;
+		}
+	g_limNext += period;
+	if (ahead <= 0)
+		return 0;
+	const TInt us = (TInt)((TInt64)ahead * 1000000 / freq);
+	if (us < 1000)
+		return 0;
+	const TUint t0 = User::NTickCount();
+	User::AfterHighRes(us);
+	return User::NTickCount() - t0;
+	}
 
 // Disc image selected in menu. Empty - use KDiscImg.
 static char g_discPath[256];
@@ -2172,10 +2207,11 @@ extern "C" void ps1SetDebugLog(int aOn)
 	logEvent("debug", NULL, "log=%d", (int)g_dbgLog);
 	}
 
-static void dbgStep(TUint aIn, TUint aEmu, TUint aBlit, TUint aSnd)
+static void dbgStep(TUint aIn, TUint aEmu, TUint aBlit, TUint aSnd, TUint aWait)
 	{
 	const TUint now = User::NTickCount();
-	const TUint step = now - aIn;
+	// The limiter's wait is not work: a hitch is a frame that took long for another reason.
+	const TUint step = now - aIn - aWait;
 	const TUint out = g_dbgLastEnd ? aIn - g_dbgLastEnd : 0;
 	// Shown means seen: a blit under a system dialog does not count.
 	const TUint shown = voutSymbianPresents() - voutSymbianPresentsHidden() + g_dbgGlShown;
@@ -2189,10 +2225,12 @@ static void dbgStep(TUint aIn, TUint aEmu, TUint aBlit, TUint aSnd)
 		g_dbgWinUnder = under;
 		g_dbgStallFrame = g_pass.i;
 		g_dbgEmu = g_dbgBlit = g_dbgSnd = g_dbgOut = g_dbgMaxStep = g_dbgMaxOut = 0;
+		g_dbgWait = 0;
 		g_dbgLastEnd = User::NTickCount();
 		return;
 		}
 	g_dbgEmu += aEmu;
+	g_dbgWait += aWait;
 	g_dbgBlit += aBlit;
 	g_dbgSnd += aSnd;
 	g_dbgOut += out;
@@ -2231,10 +2269,11 @@ static void dbgStep(TUint aIn, TUint aEmu, TUint aBlit, TUint aSnd)
 		}
 	TInt biggest = 0;
 	const TInt avail = User::Heap().Available(biggest);
-	logEvent("dbg", NULL, "frames=%d shown=%u ms=%u emu=%u blit=%u snd=%u out=%u "
+	logEvent("dbg", NULL, "frames=%d shown=%u ms=%u emu=%u blit=%u snd=%u out=%u wait=%u "
 		"maxstep=%u maxout=%u under=%u heapKb=%d dsa=%d pc=%08x",
 		(int)(g_pass.i - g_dbgWinFrame), (unsigned)(shown - g_dbgWinShown), (unsigned)dt,
 		(unsigned)g_dbgEmu, (unsigned)g_dbgBlit, (unsigned)g_dbgSnd, (unsigned)g_dbgOut,
+		(unsigned)g_dbgWait,
 		(unsigned)g_dbgMaxStep, (unsigned)g_dbgMaxOut, (unsigned)(under - g_dbgWinUnder),
 		(int)(avail / 1024), voutSymbianDsaActive(), (unsigned)psxRegs.pc);
 	g_dbgWinTick = now;
@@ -2242,6 +2281,7 @@ static void dbgStep(TUint aIn, TUint aEmu, TUint aBlit, TUint aSnd)
 	g_dbgWinShown = shown;
 	g_dbgWinUnder = under;
 	g_dbgEmu = g_dbgBlit = g_dbgSnd = g_dbgOut = g_dbgMaxStep = g_dbgMaxOut = 0;
+	g_dbgWait = 0;
 	// After the writes: the log's own card time is not the game's pause.
 	g_dbgLastEnd = User::NTickCount();
 	}
@@ -2483,8 +2523,10 @@ static TBool passStep()
 			gp0Count, dmaCount, fbd, fbda, (unsigned)st,
 			sw, sh, sx, sy, voff, stale, fbChg, fbSeen, (unsigned)fbB0, (unsigned)fbB1);
 		}
+	// Off for command-line runs: they measure how fast the phone can go.
+	const TUint waited = (g_guiMode && !g_cliArgs && g_pass.showScreen) ? limitFrame() : 0;
 	if (g_dbgLog && g_pass.showScreen)
-		dbgStep(t0, t2 - t1, g_pass.tBlit - dbgBlit0, g_pass.tSnd - dbgSnd0);
+		dbgStep(t0, t2 - t1, g_pass.tBlit - dbgBlit0, g_pass.tSnd - dbgSnd0, waited);
 	return ETrue;
 	}
 

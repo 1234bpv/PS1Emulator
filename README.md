@@ -123,6 +123,12 @@ second on a real PlayStation, so at full speed they would show 30 fps, not 60.
 This is why the two numbers in a cell are not proportional across games.
 Differences of a few percent are within the spread of repeated runs.
 
+The emulator never runs a game faster than the real console: 60 frames a second
+for NTSC discs and 50 for PAL ones. Menus, videos and loading screens are light
+enough to exceed that, and without the limit their picture and sound would run
+fast. The table was measured without the limit, so a figure above 100% means
+the game would have run at full speed with time to spare.
+
 ## Before you install
 
 1. **The phone must accept self-signed packages.** It has to be prepared for
