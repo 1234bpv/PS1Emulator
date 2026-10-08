@@ -5,7 +5,7 @@
 ; ASCII only, CRLF only: makesis misparses UTF-8 and LF line endings.
 &EN
 
-#{"PS1Emulator alpha 1.3"},(0xE0001002),1,3,0
+#{"PS1Emulator alpha 1.4"},(0xE0001002),1,4,0
 
 %{"PS1Emulator"}
 :"PS1Emulator"
