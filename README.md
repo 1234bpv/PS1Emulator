@@ -6,8 +6,10 @@
 
 <!-- Video demonstration: to be added here. -->
 
-PS1Emulator is a PlayStation emulator for Nokia smartphones running Symbian
-S60 3rd Edition and Symbian Belle. It is a port of
+PS1Emulator is a PlayStation emulator for Nokia keypad smartphones running
+Symbian 9.1 to 9.3 (S60 3rd Edition). Support for touch-screen phones with
+Symbian 9.4, Symbian^3 and Symbian Belle is planned for later versions. It is
+a port of
 [PCSX-ReARMed](https://github.com/notaz/pcsx_rearmed) by notaz, adapted to the
 ARM11 processors of these phones and to the platform security of Symbian 9.
 Games run on a dynamic recompiler that translates PlayStation machine code
@@ -75,11 +77,13 @@ The emulator offers the following:
 | Nokia N95 8GB (RM-320) | S60 3rd FP1, Symbian 9.2 | OMAP 2420, ARM1136, 330 MHz | PowerVR MBX | reference phone, tested |
 | Nokia E90 (RA-6) | S60 3rd FP1, Symbian 9.2 | OMAP 2420, ARM1136, 330 MHz | PowerVR MBX | tested |
 | Nokia C5-00.2 | S60 3rd FP2 | ARM11, about 600 MHz | none | tested |
-| Nokia 701 | Symbian Belle FP2 | BCM2763, 1 GHz | VideoCore IV | a target, the emulator has not been run on it yet |
+| Nokia 701 | Symbian Belle FP2 | BCM2763, 1 GHz | VideoCore IV | planned for the touch-screen version, not supported yet |
 
-Adaptation to more phones is planned: the touch-screen Nokia phones with the
-Broadcom BCM2727 and BCM2763 chips, such as the Nokia N8, E7, 701 and 808, and
-the Symbian 9.4 phones, such as the Nokia 5800 and N97. Most of them have few
+The current version is made for keypad phones with S60 3rd Edition, that is
+Symbian 9.1 to 9.3, and an ARM11 processor. Support for touch-screen phones is
+planned for later versions: the Symbian 9.4 phones, such as the Nokia 5800
+and N97, and the Symbian^3 and Belle phones, such as the Nokia N8, E7, 701
+and 808. Most of them have few
 or no game-friendly hardware keys, so the main work there is on-screen
 controls and the screen sizes these phones use. Because this is a hobby
 project, there is no schedule for it.
@@ -134,9 +138,7 @@ the game would have run at full speed with time to spare.
 1. **The phone must accept self-signed packages.** It has to be prepared for
    homebrew software ("hacked") in the way usual for Symbian 9. On S60 3rd
    Edition up to FP1 this is done with `Dr Web RomPatcher plus light` and its
-   `Open4all`, `universal` and `Install server` patches. On Symbian Belle FP2
-   the antivirus route no longer works; there `SafeManager` is used first and
-   `RomPatcher+` after it.
+   `Open4all`, `universal` and `Install server` patches.
 2. **A PlayStation BIOS is strongly recommended.** Put a dump of your own
    console's BIOS (for example `scph7502.bin`, `scph1001.bin` or
    `scph5500.bin`) into `E:\PS1\bios\`. Without one the emulator warns before
@@ -457,7 +459,9 @@ and its `evidence` folder.
   processor together with its geometry and sound chips is heavy work for a
   330 MHz phone. Of the twelve games measured, only Wing Commander III reaches
   full speed, and only on the C5-00.2 and an overclocked N95.
-- **The Nokia 701 is untested.**
+- **Touch-screen phones are not supported yet.** The current version needs
+  hardware keys. Support for phones with Symbian 9.4, Symbian^3 and Belle,
+  such as the Nokia 5800, N8 and 701, is planned for later versions.
 
 ## Translations
 
