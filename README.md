@@ -106,18 +106,23 @@ per second that reach the screen.
 | Colin McRae Rally 2.0 | 32.0% / 9.5 fps | 22.3% / 6.6 fps | 28.5% / 8.5 fps |
 | Colony Wars | 65.0% / 19.5 fps | 51.7% / 15.5 fps | 68.0% / 20.4 fps |
 | Crash Bandicoot | 52.8% / 15.9 fps | 35.1% / 10.5 fps | 45.0% / 13.5 fps |
+| Final Fantasy VII | 116.2% / 34.9 fps | 88.9% / 26.7 fps | 111.1% / 33.4 fps |
 | Gran Turismo | 58.3% / 17.5 fps | 43.8% / 13.2 fps | 57.1% / 17.1 fps |
 | Need for Speed: Porsche Unleashed | 46.7% / 13.8 fps | 34.8% / 10.3 fps | 44.9% / 13.3 fps |
 | Rayman | 66.0% / 39.6 fps | 65.2% / 39.1 fps | 84.6% / 50.8 fps |
 | RC Helicopter | 53.1% / 31.9 fps | 40.4% / 24.2 fps | 52.1% / 31.3 fps |
 | Star Trek: Invasion | 84.7% / 25.4 fps | 71.1% / 21.3 fps | 93.0% / 27.9 fps |
+| Tekken 3 | 30.0% / 18.0 fps | 23.0% / 13.8 fps | 29.4% / 17.6 fps |
 | Warzone 2100 | 82.3% / 16.5 fps | 57.7% / 11.5 fps | 74.3% / 14.9 fps |
 | Wing Commander III | 100.1% / 24.0 fps | 79.4% / 19.1 fps | 104.3% / 25.0 fps |
 | WipEout | 68.5% / 20.6 fps | 52.6% / 15.8 fps | 67.9% / 20.4 fps |
 
 The third column is the N95 8GB overclocked to 426 MHz with
 [SymbianOverclock](https://github.com/1234bpv/SymbianOverclock), which raises
-the processor and the memory bus by 29% and makes every game about 30% faster.
+the processor and the memory bus by 29% and makes the games 25-32% faster.
+Final Fantasy VII and Tekken 3 were measured later, on 2026-10-18-20 with
+release 1.4, in the same way. Repeated sets of three runs of Final Fantasy VII
+on the N95 differed by up to 10%, so its N95 figures are medians of nine runs.
 The C5-00.2 is between as fast as and 1.5 times as fast as the N95 at its
 factory clock.
 
@@ -136,9 +141,11 @@ the game would have run at full speed with time to spare.
 ## Before you install
 
 1. **The phone must accept self-signed packages.** It has to be prepared for
-   homebrew software ("hacked") in the way usual for Symbian 9. On S60 3rd
-   Edition up to FP1 this is done with `Dr Web RomPatcher plus light` and its
-   `Open4all`, `universal` and `Install server` patches.
+   homebrew software ("hacked") in the way usual for Symbian 9. The author's
+   C5-00.2 (S60 3rd Edition FP2) was prepared with `Dr Web RomPatcher plus
+   light` and its `Open4all`, `universal` and `Install server` patches, the
+   N95 8GB (FP1) with Dr Web and RomPatcher as well, and the E90 (FP1) with
+   Trend Micro Mobile Security and `RP Domain Plus`.
 2. **A PlayStation BIOS is strongly recommended.** Put a dump of your own
    console's BIOS (for example `scph7502.bin`, `scph1001.bin` or
    `scph5500.bin`) into `E:\PS1\bios\`. Without one the emulator warns before
