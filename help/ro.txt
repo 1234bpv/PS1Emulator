@@ -40,13 +40,14 @@
 
 [hint.sec.input] OK deschide sau închide secţiunea: configuraţiile de taste, atribuirea tastelor şi controlul prin înclinare.
 [hint.preset] Înlocuieşte toate atribuirile de taste cu o configuraţie gata pregătită. Stânga/Dreapta alege, OK aplică. Atribuirile proprii se pierd.
-[hint.keybase] Configuraţia de bază: N95 este cea implicită; C5 acceptă şi 2, 4, 6, 8 ca a doua tastă pentru direcţii. OK o aplică şi înlocuieşte atribuirile.
-[hint.keys] Deschide pagina de atribuire a tastelor: OK, apoi apasă tasta. Stânga/Dreapta activează sau dezactivează opţiunea Ţine pentru un buton. Ultimul rând este tasta de resetare a înclinării.
+[hint.keybase] Configuraţia de bază: N95 este cea implicită; C5 acceptă şi 2, 4, 6, 8 ca a doua tastă pentru direcţii; E90 se joacă pe tastatura internă; Slider pune butoanele de acţiune pe tastele media ale unui telefon cu dublu slider (N95, N96, N85, N86, N81). OK o aplică şi înlocuieşte atribuirile.
+[hint.keys] Deschide pagina de atribuire a tastelor: OK deschide alegerea tastei principale, secundare sau şterge, apoi apasă tasta. Stânga/Dreapta activează sau dezactivează opţiunea Ţine pentru un buton. Ultimul rând este tasta de resetare a înclinării.
 [hint.tilt] Virează prin înclinarea telefonului (accelerometru). Modul în care ţii telefonul când revii în joc reprezintă poziţia neutră, iar tasta de resetare a înclinării (implicit C) o setează din nou în orice moment.
 [hint.tiltside] Axa manetei care urmăreşte înclinarea laterală (LX, LY, RX, RY; minus o inversează). Implicit LX.
 [hint.tiltpitch] Axa manetei care urmăreşte înclinarea faţă-spate (LX, LY, RX, RY; minus o inversează). Implicit LY.
 [hint.tiltdead] Înclinarea mai mică de atât este ignorată. De la 0 la 40, implicit 10.
 [hint.tiltsens] Cât de puternic urmăreşte maneta înclinarea: de la 40% la 300%, implicit 100%.
+[hint.resetkeys] Readuce doar controalele la valorile implicite: atribuirile de taste, Ţine, tasta de resetare a înclinării şi setările de înclinare. Apasă OK de două ori. Celelalte setări nu sunt afectate.
 
 [hint.sec.system] OK deschide sau închide secţiunea: limba, BIOS-ul, profilurile per joc şi resetarea.
 [hint.lang] Limba meniului. Se schimbă imediat. Textele de ajutor o urmează; engleza este folosită unde lipseşte un text.

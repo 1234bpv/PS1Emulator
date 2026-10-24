@@ -40,13 +40,14 @@
 
 [hint.sec.input] OK avaa tai sulkee osion: näppäinasettelut, näppäinmääritykset ja kallistusohjaus.
 [hint.preset] Korvaa kaikki näppäinmääritykset valmiilla asettelulla. Vasen/Oikea valitsee, OK ottaa käyttöön. Omat määritykset menetetään.
-[hint.keybase] Perusasettelu: N95 on oletus; C5 hyväksyy myös numerot 2, 4, 6, 8 toisina suuntanäppäiminä. OK ottaa sen käyttöön ja korvaa määritykset.
-[hint.keys] Avaa näppäinmäärityssivun: OK, paina sitten näppäintä. Vasen/Oikea ottaa Pidon käyttöön tai pois painikkeelta. Viimeinen rivi on kallistuksen nollausnäppäin.
+[hint.keybase] Perusasettelu: N95 on oletus; C5 hyväksyy myös numerot 2, 4, 6, 8 toisina suuntanäppäiminä; E90 pelaa sisänäppäimistöllä; Slider sijoittaa toimintopainikkeet kaksoisliukupuhelimen (N95, N96, N85, N86, N81). OK ottaa sen käyttöön ja korvaa määritykset.
+[hint.keys] Avaa näppäinmäärityssivun: OK avaa valinnan: päänäppäin, toinen näppäin tai tyhjennä, paina sitten näppäintä. Vasen/Oikea ottaa Pidon käyttöön tai pois painikkeelta. Viimeinen rivi on kallistuksen nollausnäppäin.
 [hint.tilt] Ohjaa puhelimen kallistuksella (kiihtyvyysanturi). Asento, jossa pitelet puhelinta palatessasi peliin, on neutraaliasento, ja kallistuksen nollausnäppäin (oletuksena C) asettaa sen uudelleen milloin tahansa.
 [hint.tiltside] Ohjainsauvan akseli, joka seuraa sivukallistusta (LX, LY, RX, RY; miinus kääntää sen). Oletus LX.
 [hint.tiltpitch] Ohjainsauvan akseli, joka seuraa eteen- ja taaksekallistusta (LX, LY, RX, RY; miinus kääntää sen). Oletus LY.
 [hint.tiltdead] Tätä pienempi kallistus jätetään huomiotta. Väliltä 0-40, oletus 10.
 [hint.tiltsens] Kuinka voimakkaasti ohjainsauva seuraa kallistusta: 40% - 300%, oletus 100%.
+[hint.resetkeys] Palauttaa vain ohjaimet oletusarvoihinsa: näppäinmääritykset, Pidon, kallistuksen nollausnäppäimen ja kallistusasetukset. Paina OK kahdesti. Muihin asetuksiin ei kosketa.
 
 [hint.sec.system] OK avaa tai sulkee osion: kieli, BIOS, peliprofiilit ja palautus.
 [hint.lang] Valikon kieli. Vaihtuu heti. Ohjetekstit seuraavat sitä; englantia käytetään siellä, mistä teksti puuttuu.

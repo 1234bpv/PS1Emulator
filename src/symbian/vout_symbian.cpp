@@ -561,12 +561,30 @@ static void keyMapDefaults()
 	g_keyMapReady = ETrue;
 	}
 
+// Pseudo scan codes of RemCon media operations (matching TRemConKey in app_symbian.cpp).
+const TInt KRemConKeyPlay = 0x1002;
+const TInt KRemConKeyStop = 0x1004;
+const TInt KRemConKeyNext = 0x1007;
+const TInt KRemConKeyPrev = 0x1008;
+
 // Some firmwares send center nav key as Enter. Normalize codes BEFORE lookup in
 // table so remapping center also remaps Enter.
+// Media keys: hardware application scan codes, and the F21..F24 the ps1slide anim renames
+// them to, are normalized to RemCon pseudo keys so bindings match however a key arrives.
 static TInt aliasScan(TInt aScan)
 	{
 	if (aScan == EStdKeyEnter || aScan == EStdKeyNkpEnter)
 		return EStdKeyDevice3;
+	if (aScan == EStdKeyApplication2) return KRemConKeyPlay;
+	if (aScan == EStdKeyApplication3) return KRemConKeyStop;
+	if (aScan == EStdKeyApplication4) return KRemConKeyNext;
+	if (aScan == EStdKeyApplication5) return KRemConKeyPrev;
+	if (aScan == EStdKeyF21) return KRemConKeyPlay;
+	if (aScan == EStdKeyF22) return KRemConKeyStop;
+	if (aScan == EStdKeyF23) return KRemConKeyNext;
+	if (aScan == EStdKeyF24) return KRemConKeyPrev;
+	// The N95 8GB gallery key, renamed by the anim so the firmware does not open the gallery.
+	if (aScan == EStdKeyF20) return EStdKeyApplication1D;
 	return aScan;
 	}
 
@@ -2311,6 +2329,12 @@ extern "C" int voutSymbianKeyEvent(int aScanCode, int aDown)
 		return 0;
 	padApply(m, aDown);
 	return 1;
+	}
+
+// The code a binding must hold to match this key: the menu stores it, not the raw one.
+extern "C" int voutSymbianAliasKey(int aScanCode)
+	{
+	return aliasScan(aScanCode);
 	}
 
 // Layout from menu: one primary and one secondary keycode per button in order

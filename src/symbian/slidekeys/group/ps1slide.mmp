@@ -1,0 +1,15 @@
+TARGET          ps1slide.dll
+TARGETTYPE      ani
+UID             0x10003b22 0xE0001020
+CAPABILITY      PowerMgmt ReadDeviceData WriteDeviceData ProtServ
+SECUREID        0xE0001020
+
+SOURCEPATH      ..
+SOURCE          slideanim.cpp
+
+USERINCLUDE     ..
+SYSTEMINCLUDE   \epoc32\include
+
+LIBRARY         euser.lib
+
+EXPORTUNFROZEN

@@ -40,13 +40,14 @@
 
 [hint.sec.input] OK abre o cierra la sección: distribuciones de teclas, asignación de controles y control por inclinación.
 [hint.preset] Sustituye todas las asignaciones de teclas por una distribución lista. Izq/Der elige, OK aplica. Tus asignaciones se perderán.
-[hint.keybase] Distribución base: N95 es la predeterminada; C5 también acepta 2, 4, 6, 8 como segunda tecla para las direcciones. OK la aplica y sustituye las asignaciones.
-[hint.keys] Abre la asignación de teclas: OK, luego pulsa la tecla. Izq/Der activa o desactiva Mantener para un botón. La última fila es la tecla de inclinación cero.
+[hint.keybase] Distribución base: N95 es la predeterminada; C5 también acepta 2, 4, 6, 8 como segunda tecla para las direcciones; E90 juega en el teclado interno; Slider pone los botones de acción en las teclas multimedia de un teléfono de doble slider (N95, N96, N85, N86, N81). OK la aplica y sustituye las asignaciones.
+[hint.keys] Abre la asignación de teclas: OK abre la elección de tecla principal, secundaria o borrar, luego pulsa la tecla. Izq/Der activa o desactiva Mantener para un botón. La última fila es la tecla de inclinación cero.
 [hint.tilt] Conduce con la inclinación del teléfono (acelerómetro). La posición al volver al juego se toma como punto neutro, y la tecla de inclinación cero (C por defecto) lo restablece en cualquier momento.
 [hint.tiltside] Eje de palanca que sigue la inclinación lateral (LX, LY, RX, RY; un signo menos lo invierte). Por defecto LX.
 [hint.tiltpitch] Eje de palanca que sigue la inclinación adelante-atrás (LX, LY, RX, RY; un signo menos lo invierte). Por defecto LY.
 [hint.tiltdead] Una inclinación menor a esto se ignora. De 0 a 40, por defecto 10.
 [hint.tiltsens] Intensidad con la que la palanca sigue la inclinación: 40% a 300%, por defecto 100%.
+[hint.resetkeys] Restablece solo los controles a sus valores por defecto: las asignaciones de teclas, Mantener, la tecla de inclinación cero y los ajustes de inclinación. Pulsa OK dos veces. No afecta a los demás ajustes.
 
 [hint.sec.system] OK abre o cierra la sección: idioma, BIOS, perfiles por juego y restauración.
 [hint.lang] El idioma del menú. Cambia al instante. Los textos de ayuda lo siguen; se usa inglés donde falte un texto.

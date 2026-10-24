@@ -40,13 +40,14 @@
 
 [hint.sec.input] OK apre o chiude la sezione: layout dei tasti, assegnazione tasti e controllo con inclinazione.
 [hint.preset] Sostituisce tutte le assegnazioni dei tasti con un layout pronto. Sinistra/Destra sceglie, OK applica. Le tue assegnazioni andranno perse.
-[hint.keybase] Il layout di base: N95 è quello predefinito; C5 accetta anche 2, 4, 6, 8 come secondi tasti per le direzioni. OK lo applica e sostituisce le assegnazioni.
-[hint.keys] Apre la pagina di assegnazione tasti: OK, poi premi il tasto. Sinistra/Destra attiva o disattiva Tieni per un pulsante. L'ultima riga è il tasto di inclinazione zero.
+[hint.keybase] Il layout di base: N95 è quello predefinito; C5 accetta anche 2, 4, 6, 8 come secondi tasti per le direzioni; E90 gioca sulla tastiera interna; Slider assegna i tasti azione ai tasti multimediali di un telefono a doppio scorrimento (N95, N96, N85, N86, N81). OK lo applica e sostituisce le assegnazioni.
+[hint.keys] Apre la pagina di assegnazione tasti: OK apre la scelta tra tasto principale, secondario o cancella, poi premi il tasto. Sinistra/Destra attiva o disattiva Tieni per un pulsante. L'ultima riga è il tasto di inclinazione zero.
 [hint.tilt] Sterza con l'inclinazione del telefono (accelerometro). Come tieni il telefono al ritorno al gioco determina la posizione neutra, e il tasto di inclinazione zero (C per impostazione predefinita) la reimposta in qualsiasi momento.
 [hint.tiltside] L'asse della levetta che segue l'inclinazione laterale (LX, LY, RX, RY; un meno la inverte). Predefinito LX.
 [hint.tiltpitch] L'asse della levetta che segue l'inclinazione avanti-indietro (LX, LY, RX, RY; un meno la inverte). Predefinito LY.
 [hint.tiltdead] Un'inclinazione inferiore a questo valore viene ignorata. Da 0 a 40, predefinito 10.
 [hint.tiltsens] Quanto la levetta segue l'inclinazione: da 40% a 300%, predefinito 100%.
+[hint.resetkeys] Riporta solo i comandi ai valori predefiniti: le assegnazioni dei tasti, Tieni, il tasto di inclinazione zero e le impostazioni di inclinazione. Premi OK due volte. Le altre impostazioni non vengono modificate.
 
 [hint.sec.system] OK apre o chiude la sezione: lingua, BIOS, profili per gioco e ripristino.
 [hint.lang] La lingua del menu. Cambia subito. I testi della guida la seguono; l'inglese viene usato dove manca un testo.

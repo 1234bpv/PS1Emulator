@@ -40,13 +40,14 @@
 
 [hint.sec.input] OK öffnet oder schließt den Abschnitt: Tastenbelegungen, Tastenkonfiguration und Neigungssteuerung.
 [hint.preset] Ersetzt alle Tastenbelegungen durch ein fertiges Layout. Links/Rechts wählt aus, OK übernimmt. Eigene Belegungen gehen verloren.
-[hint.keybase] Das Basisschema: N95 ist Standard; C5 akzeptiert auch 2, 4, 6, 8 als Zweittaste für die Richtungen. OK übernimmt es und ersetzt die Belegungen.
-[hint.keys] Öffnet die Tastenbelegung: OK, dann Taste drücken. Links/Rechts schaltet Halten für eine Taste ein oder aus. Die letzte Zeile ist die Taste zum Nullen der Neigung.
+[hint.keybase] Das Basisschema: N95 ist Standard; C5 akzeptiert auch 2, 4, 6, 8 als Zweittaste für die Richtungen; E90 spielt auf der internen Tastatur; Slider legt die Aktionstasten auf die Medientasten eines Dual-Slider-Telefons (N95, N96, N85, N86, N81). OK übernimmt es und ersetzt die Belegungen.
+[hint.keys] Öffnet die Tastenbelegung: OK öffnet die Auswahl für Haupttaste, Zweittaste oder Löschen, dann Taste drücken. Links/Rechts schaltet Halten für eine Taste ein oder aus. Die letzte Zeile ist die Taste zum Nullen der Neigung.
 [hint.tilt] Steuert über das Neigen des Telefons (Beschleunigungssensor). Die Haltung des Telefons bei der Rückkehr ins Spiel ist die Neutralstellung, und die Taste zum Nullen der Neigung (standardmäßig C) setzt sie jederzeit neu.
 [hint.tiltside] Die Stick-Achse für seitliche Neigung (LX, LY, RX, RY; ein Minus kehrt sie um). Standard LX.
 [hint.tiltpitch] Die Stick-Achse für Vor- und Zurückneigung (LX, LY, RX, RY; ein Minus kehrt sie um). Standard LY.
 [hint.tiltdead] Eine geringere Neigung wird ignoriert. Von 0 bis 40, Standard 10.
 [hint.tiltsens] Wie stark der Stick der Neigung folgt: 40% bis 300%, Standard 100%.
+[hint.resetkeys] Setzt nur die Steuerung auf Standard zurück: die Tastenbelegungen, Halten, die Taste zum Nullen der Neigung und die Neigungseinstellungen. OK zweimal drücken. Andere Einstellungen bleiben unberührt.
 
 [hint.sec.system] OK öffnet oder schließt den Abschnitt: Sprache, BIOS, Spielprofile und Standardwerte.
 [hint.lang] Die Menüsprache. Ändert sich sofort. Die Hilfetexte folgen ihr; fehlt ein Text, wird Englisch verwendet.

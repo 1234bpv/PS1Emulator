@@ -8,6 +8,8 @@
 #        carries the application resource (every phone the deploy daemon set up).
 # full - the same plus \resource\apps\ps1stage1.rsc. A phone that has never seen
 #        the daemon panics USER 23 on launch without it.
+# Both carry ps1slide.dll, the media key anim of the Slider base, built by hand
+# (src\symbian\slidekeys\group: bldmake bldfiles, abld build gcce urel).
 #
 # Both are self-signed with configs\sign\sha1.{cer,key}: the phone must be
 # hacked to install them, which every target phone here is.
@@ -34,6 +36,8 @@ New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
 $OutDir = (Resolve-Path -LiteralPath $OutDir).Path
 
 if (-not (Test-Path $Exe)) { throw "no EXE to package: $Exe" }
+$SlideDll = "$Sdk\Epoc32\release\gcce\urel\ps1slide.dll"
+if (-not (Test-Path $SlideDll)) { throw "no ps1slide.dll to package: build src\symbian\slidekeys\group" }
 # configs\ is not in the repository, so a clean clone has neither the package
 # descriptions nor the signing pair. Both are recoverable: tools-patches carries
 # the descriptions, and a self-signed pair can be generated. A generated pair is

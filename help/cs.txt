@@ -40,13 +40,14 @@
 
 [hint.sec.input] OK otevře nebo zavře sekci: rozložení kláves, přiřazení kláves a ovládání náklonem.
 [hint.preset] Nahradí všechna přiřazení kláves hotovým rozložením. Vlevo/Vpravo výběr, OK použije. Vlastní přiřazení budou ztracena.
-[hint.keybase] Základní rozložení: N95 je výchozí; C5 navíc přijímá 2, 4, 6, 8 jako druhou klávesu pro směry. OK jej použije a nahradí přiřazení.
-[hint.keys] Otevře stránku přiřazení kláves: OK, poté stiskněte klávesu. Vlevo/Vpravo zapne nebo vypne Držet pro tlačítko. Poslední řádek je klávesa pro vynulování náklonu.
+[hint.keybase] Základní rozložení: N95 je výchozí; C5 navíc přijímá 2, 4, 6, 8 jako druhou klávesu pro směry; E90 hraje na vnitřní klávesnici; Slider umístí akční tlačítka na multimediální klávesy telefonu s dvojitým sliderem (N95, N96, N85, N86, N81). OK jej použije a nahradí přiřazení.
+[hint.keys] Otevře stránku přiřazení kláves: OK otevře volbu hlavní klávesy, druhé klávesy nebo vymazání, poté stiskněte klávesu. Vlevo/Vpravo zapne nebo vypne Držet pro tlačítko. Poslední řádek je klávesa pro vynulování náklonu.
 [hint.tilt] Řídí náklonem telefonu (akcelerometr). Způsob, jakým držíte telefon při návratu do hry, je neutrální poloha, a klávesa pro vynulování náklonu (výchozí C) ji kdykoli znovu nastaví.
 [hint.tiltside] Osa páčky, která sleduje náklon do stran (LX, LY, RX, RY; mínus ji obrátí). Výchozí LX.
 [hint.tiltpitch] Osa páčky, která sleduje náklon vpřed a vzad (LX, LY, RX, RY; mínus ji obrátí). Výchozí LY.
 [hint.tiltdead] Náklon menší než tato hodnota se ignoruje. Od 0 do 40, výchozí 10.
 [hint.tiltsens] Jak silně páčka sleduje náklon: 40% až 300%, výchozí 100%.
+[hint.resetkeys] Vrátí na výchozí hodnoty pouze ovládání: přiřazení kláves, Držet, klávesu pro vynulování náklonu a nastavení náklonu. Stiskněte OK dvakrát. Ostatní nastavení zůstanou nedotčena.
 
 [hint.sec.system] OK otevře nebo zavře sekci: jazyk, BIOS, profily pro hru a reset.
 [hint.lang] Jazyk menu. Změní se ihned. Texty nápovědy se mu přizpůsobí; kde text chybí, použije se angličtina.

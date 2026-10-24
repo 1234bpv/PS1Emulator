@@ -40,13 +40,14 @@
 
 [hint.sec.input] OK åbner eller lukker afsnittet: tastaturlayouter, tastetildeling og vippestyring.
 [hint.preset] Erstatter alle tastetildelinger med et færdigt layout. Venstre/Højre vælger, OK anvender. Dine egne tildelinger går tabt.
-[hint.keybase] Grundlayoutet: N95 er standard; C5 accepterer også 2, 4, 6, 8 som en ekstra tast til retningerne. OK anvender det og erstatter tildelingerne.
-[hint.keys] Åbner siden til tastetildeling: OK, tryk derefter på tasten. Venstre/Højre slår Hold til eller fra for en knap. Den sidste række er tasten til nulstil vipning.
+[hint.keybase] Grundlayoutet: N95 er standard; C5 accepterer også 2, 4, 6, 8 som en ekstra tast til retningerne; E90 spilles på det indre tastatur; Slider placerer handlingsknapperne på medietasterne på en dual-slider-telefon (N95, N96, N85, N86, N81). OK anvender det og erstatter tildelingerne.
+[hint.keys] Åbner siden til tastetildeling: OK åbner valg af hovedtast, sekundær tast eller ryd, tryk derefter på tasten. Venstre/Højre slår Hold til eller fra for en knap. Den sidste række er tasten til nulstil vipning.
 [hint.tilt] Styrer med telefonens vipning (accelerometer). Den position, du holder telefonen i, når du vender tilbage til spillet, er neutralpositionen, og tasten til nulstil vipning (som standard C) indstiller den igen når som helst.
 [hint.tiltside] Den styrepindsakse, der følger vipning sidelæns (LX, LY, RX, RY; et minus vender den om). Standard LX.
 [hint.tiltpitch] Den styrepindsakse, der følger vipning fremad og tilbage (LX, LY, RX, RY; et minus vender den om). Standard LY.
 [hint.tiltdead] Vipning mindre end dette ignoreres. Fra 0 til 40, standard 10.
 [hint.tiltsens] Hvor kraftigt styrepinden følger vipningen: 40% til 300%, standard 100%.
+[hint.resetkeys] Nulstiller kun styringen til standard: tastetildelingerne, Hold, tasten til nulstil vipning og vipningsindstillingerne. Tryk OK to gange. Andre indstillinger berøres ikke.
 
 [hint.sec.system] OK åbner eller lukker afsnittet: sprog, BIOS, spilprofiler og nulstilling.
 [hint.lang] Menuens sprog. Ændres med det samme. Hjælpeteksterne følger det; engelsk bruges, hvor en tekst mangler.

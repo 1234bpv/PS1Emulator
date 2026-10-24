@@ -173,6 +173,8 @@ static const TText *const KStr_en_EStrValPresetRpg = _S("RPG");
 static const TText *const KStr_en_EStrItemKeyBase = _S("Keyboard");
 static const TText *const KStr_en_EStrValBaseN95 = _S("N95");
 static const TText *const KStr_en_EStrValBaseC5 = _S("C5");
+static const TText *const KStr_en_EStrValBaseE90 = _S("E90");
+static const TText *const KStr_en_EStrValBaseSlider = _S("Slider");
 static const TText *const KStr_en_EStrItemWsola = _S("Preserve pitch");
 static const TText *const KStr_en_EStrItemHelp = _S("Help");
 static const TText *const KStr_en_EStrItemGames = _S("Games");
@@ -191,6 +193,21 @@ static const TText *const KStr_en_EStrAskContinue = _S("Continue");
 static const TText *const KStr_en_EStrAskPickBios = _S("Select BIOS");
 static const TText *const KStr_en_EStrItemDebug = _S("Debug log");
 static const TText *const KStr_en_EStrBtnTiltZero = _S("Tilt zero");
+static const TText *const KStr_en_EStrKeyPlayPause = _S("Play/Pause");
+static const TText *const KStr_en_EStrKeyPlay = _S("Play");
+static const TText *const KStr_en_EStrKeyPause = _S("Pause");
+static const TText *const KStr_en_EStrKeyStop = _S("Stop");
+static const TText *const KStr_en_EStrKeyRewind = _S("Rewind");
+static const TText *const KStr_en_EStrKeyFastFwd = _S("Fast fwd");
+static const TText *const KStr_en_EStrKeyNext = _S("Next");
+static const TText *const KStr_en_EStrKeyPrev = _S("Prev");
+static const TText *const KStr_en_EStrItemResetKeys = _S("Reset controls");
+static const TText *const KStr_en_EStrSlideKeysErr = _S("Media keys unavailable");
+static const TText *const KStr_en_EStrKeyActMain = _S("Main key");
+static const TText *const KStr_en_EStrKeyActSecond = _S("Second key");
+static const TText *const KStr_en_EStrKeyActClear = _S("Clear");
+static const TText *const KStr_en_EStrHintKeyMenu = _S("OK choose, RSK cancels");
+static const TText *const KStr_en_EStrKeyTakenFmt = _S("Already on %S. OK: move it here");
 
 // --- Ukrainian (uk) ---
 static const TText KStr_uk_EStrSecGame[] = { 0x0413, 0x0420, 0x0410, 0 };
@@ -315,6 +332,7 @@ static const TText KStr_uk_EStrValPresetRacing[] = { 0x041F, 0x0435, 0x0440, 0x0
 static const TText KStr_uk_EStrValPresetFighting[] = { 0x0424, 0x0430, 0x0439, 0x0442, 0x0438, 0x043D, 0x0433, 0 };
 static const TText KStr_uk_EStrValPresetRpg[] = { 0x0420, 0x041F, 0x0413, 0 };
 static const TText KStr_uk_EStrItemKeyBase[] = { 0x041A, 0x043B, 0x0430, 0x0432, 0x0456, 0x0430, 0x0442, 0x0443, 0x0440, 0x0430, 0 };
+static const TText KStr_uk_EStrValBaseSlider[] = { 0x0421, 0x043B, 0x0430, 0x0439, 0x0434, 0x0435, 0x0440, 0 };
 static const TText KStr_uk_EStrItemWsola[] = { 0x0417, 0x0431, 0x0435, 0x0440, 0x0456, 0x0433, 0x0430, 0x0442, 0x0438, 0x0020, 0x0442, 0x043E, 0x043D, 0 };
 static const TText KStr_uk_EStrItemHelp[] = { 0x0414, 0x043E, 0x0432, 0x0456, 0x0434, 0x043A, 0x0430, 0 };
 static const TText KStr_uk_EStrItemGames[] = { 0x0406, 0x0433, 0x0440, 0x0438, 0 };
@@ -333,6 +351,13 @@ static const TText KStr_uk_EStrAskContinue[] = { 0x041F, 0x0440, 0x043E, 0x0434,
 static const TText KStr_uk_EStrAskPickBios[] = { 0x0412, 0x0438, 0x0431, 0x0440, 0x0430, 0x0442, 0x0438, 0x0020, 0x0042, 0x0049, 0x004F, 0x0053, 0 };
 static const TText KStr_uk_EStrItemDebug[] = { 0x0416, 0x0443, 0x0440, 0x043D, 0x0430, 0x043B, 0x0020, 0x043D, 0x0430, 0x043B, 0x0430, 0x0433, 0x043E, 0x0434, 0x0436, 0x0435, 0x043D, 0x043D, 0x044F, 0 };
 static const TText KStr_uk_EStrBtnTiltZero[] = { 0x041E, 0x0431, 0x043D, 0x0443, 0x043B, 0x0438, 0x0442, 0x0438, 0x0020, 0x043D, 0x0430, 0x0445, 0x0438, 0x043B, 0 };
+static const TText KStr_uk_EStrItemResetKeys[] = { 0x0421, 0x043A, 0x0438, 0x043D, 0x0443, 0x0442, 0x0438, 0x0020, 0x043A, 0x0435, 0x0440, 0x0443, 0x0432, 0x0430, 0x043D, 0x043D, 0x044F, 0 };
+static const TText KStr_uk_EStrSlideKeysErr[] = { 0x041C, 0x0435, 0x0434, 0x0456, 0x0430, 0x043A, 0x043B, 0x0430, 0x0432, 0x0456, 0x0448, 0x0456, 0x0020, 0x043D, 0x0435, 0x0434, 0x043E, 0x0441, 0x0442, 0x0443, 0x043F, 0x043D, 0x0456, 0 };
+static const TText KStr_uk_EStrKeyActMain[] = { 0x041E, 0x0441, 0x043D, 0x043E, 0x0432, 0x043D, 0x0430, 0x0020, 0x043A, 0x043B, 0x0430, 0x0432, 0x0456, 0x0448, 0x0430, 0 };
+static const TText KStr_uk_EStrKeyActSecond[] = { 0x0414, 0x0440, 0x0443, 0x0433, 0x0430, 0x0020, 0x043A, 0x043B, 0x0430, 0x0432, 0x0456, 0x0448, 0x0430, 0 };
+static const TText KStr_uk_EStrKeyActClear[] = { 0x0421, 0x0442, 0x0435, 0x0440, 0x0442, 0x0438, 0 };
+static const TText KStr_uk_EStrHintKeyMenu[] = { 0x004F, 0x004B, 0x0020, 0x0432, 0x0438, 0x0431, 0x0440, 0x0430, 0x0442, 0x0438, 0x002C, 0x0020, 0x041F, 0x0421, 0x041A, 0x0020, 0x0441, 0x043A, 0x0430, 0x0441, 0x0443, 0x0432, 0x0430, 0x0442, 0x0438, 0 };
+static const TText KStr_uk_EStrKeyTakenFmt[] = { 0x0412, 0x0436, 0x0435, 0x0020, 0x043D, 0x0430, 0x0020, 0x0025, 0x0053, 0x002E, 0x0020, 0x004F, 0x004B, 0x003A, 0x0020, 0x043F, 0x0435, 0x0440, 0x0435, 0x043D, 0x0435, 0x0441, 0x0442, 0x0438, 0x0020, 0x0441, 0x044E, 0x0434, 0x0438, 0 };
 
 // --- Chinese (zh) ---
 static const TText KStr_zh_EStrSecGame[] = { 0x6E38, 0x620F, 0 };
@@ -456,6 +481,7 @@ static const TText KStr_zh_EStrValPresetDefault[] = { 0x9ED8, 0x8BA4, 0 };
 static const TText KStr_zh_EStrValPresetRacing[] = { 0x8D5B, 0x8F66, 0 };
 static const TText KStr_zh_EStrValPresetFighting[] = { 0x683C, 0x6597, 0 };
 static const TText KStr_zh_EStrItemKeyBase[] = { 0x952E, 0x76D8, 0 };
+static const TText KStr_zh_EStrValBaseSlider[] = { 0x6ED1, 0x76D6, 0 };
 static const TText KStr_zh_EStrItemWsola[] = { 0x4FDD, 0x6301, 0x97F3, 0x8C03, 0 };
 static const TText KStr_zh_EStrItemHelp[] = { 0x5E2E, 0x52A9, 0 };
 static const TText KStr_zh_EStrItemGames[] = { 0x6E38, 0x620F, 0 };
@@ -474,6 +500,13 @@ static const TText KStr_zh_EStrAskContinue[] = { 0x7EE7, 0x7EED, 0 };
 static const TText KStr_zh_EStrAskPickBios[] = { 0x9009, 0x62E9, 0x0042, 0x0049, 0x004F, 0x0053, 0 };
 static const TText KStr_zh_EStrItemDebug[] = { 0x8C03, 0x8BD5, 0x65E5, 0x5FD7, 0 };
 static const TText KStr_zh_EStrBtnTiltZero[] = { 0x503E, 0x659C, 0x5F52, 0x96F6, 0 };
+static const TText KStr_zh_EStrItemResetKeys[] = { 0x6062, 0x590D, 0x9ED8, 0x8BA4, 0x6309, 0x952E, 0 };
+static const TText KStr_zh_EStrSlideKeysErr[] = { 0x5A92, 0x4F53, 0x952E, 0x4E0D, 0x53EF, 0x7528, 0 };
+static const TText KStr_zh_EStrKeyActMain[] = { 0x4E3B, 0x952E, 0 };
+static const TText KStr_zh_EStrKeyActSecond[] = { 0x526F, 0x952E, 0 };
+static const TText KStr_zh_EStrKeyActClear[] = { 0x6E05, 0x9664, 0 };
+static const TText KStr_zh_EStrHintKeyMenu[] = { 0x004F, 0x004B, 0x9009, 0x62E9, 0xFF0C, 0x53F3, 0x8F6F, 0x952E, 0x53D6, 0x6D88, 0 };
+static const TText KStr_zh_EStrKeyTakenFmt[] = { 0x5DF2, 0x8BBE, 0x4E3A, 0x0025, 0x0053, 0x3002, 0x004F, 0x004B, 0xFF1A, 0x79FB, 0x81F3, 0x6B64, 0x5904, 0 };
 
 // --- German (de) ---
 static const TText *const KStr_de_EStrSecGame = _S("SPIEL");
@@ -610,6 +643,13 @@ static const TText *const KStr_de_EStrAskContinue = _S("Fortfahren");
 static const TText KStr_de_EStrAskPickBios[] = { 0x0042, 0x0049, 0x004F, 0x0053, 0x0020, 0x0077, 0x00E4, 0x0068, 0x006C, 0x0065, 0x006E, 0 };
 static const TText *const KStr_de_EStrItemDebug = _S("Debug-Protokoll");
 static const TText *const KStr_de_EStrBtnTiltZero = _S("Neigung nullen");
+static const TText KStr_de_EStrItemResetKeys[] = { 0x0053, 0x0074, 0x0065, 0x0075, 0x0065, 0x0072, 0x0075, 0x006E, 0x0067, 0x0020, 0x007A, 0x0075, 0x0072, 0x00FC, 0x0063, 0x006B, 0x0073, 0x0065, 0x0074, 0x007A, 0x0065, 0x006E, 0 };
+static const TText KStr_de_EStrSlideKeysErr[] = { 0x004D, 0x0065, 0x0064, 0x0069, 0x0065, 0x006E, 0x0074, 0x0061, 0x0073, 0x0074, 0x0065, 0x006E, 0x0020, 0x006E, 0x0069, 0x0063, 0x0068, 0x0074, 0x0020, 0x0076, 0x0065, 0x0072, 0x0066, 0x00FC, 0x0067, 0x0062, 0x0061, 0x0072, 0 };
+static const TText *const KStr_de_EStrKeyActMain = _S("Haupttaste");
+static const TText *const KStr_de_EStrKeyActSecond = _S("Zweittaste");
+static const TText KStr_de_EStrKeyActClear[] = { 0x004C, 0x00F6, 0x0073, 0x0063, 0x0068, 0x0065, 0x006E, 0 };
+static const TText KStr_de_EStrHintKeyMenu[] = { 0x004F, 0x004B, 0x0020, 0x0077, 0x00E4, 0x0068, 0x006C, 0x0065, 0x006E, 0x002C, 0x0020, 0x0052, 0x0053, 0x004B, 0x0020, 0x0062, 0x0072, 0x0069, 0x0063, 0x0068, 0x0074, 0x0020, 0x0061, 0x0062, 0 };
+static const TText *const KStr_de_EStrKeyTakenFmt = _S("Bereits auf %S. OK: hierher verschieben");
 
 // --- French (fr) ---
 static const TText *const KStr_fr_EStrSecGame = _S("JEU");
@@ -741,6 +781,13 @@ static const TText *const KStr_fr_EStrAskContinue = _S("Continuer");
 static const TText *const KStr_fr_EStrAskPickBios = _S("Choisir BIOS");
 static const TText KStr_fr_EStrItemDebug[] = { 0x004A, 0x006F, 0x0075, 0x0072, 0x006E, 0x0061, 0x006C, 0x0020, 0x0064, 0x0065, 0x0020, 0x0064, 0x00E9, 0x0062, 0x006F, 0x0067, 0x0061, 0x0067, 0x0065, 0 };
 static const TText KStr_fr_EStrBtnTiltZero[] = { 0x0049, 0x006E, 0x0063, 0x006C, 0x0069, 0x006E, 0x0061, 0x0069, 0x0073, 0x006F, 0x006E, 0x0020, 0x007A, 0x00E9, 0x0072, 0x006F, 0 };
+static const TText KStr_fr_EStrItemResetKeys[] = { 0x0052, 0x00E9, 0x0069, 0x006E, 0x0069, 0x0074, 0x002E, 0x0020, 0x0063, 0x006F, 0x006D, 0x006D, 0x0061, 0x006E, 0x0064, 0x0065, 0x0073, 0 };
+static const TText KStr_fr_EStrSlideKeysErr[] = { 0x0054, 0x006F, 0x0075, 0x0063, 0x0068, 0x0065, 0x0073, 0x0020, 0x006D, 0x00E9, 0x0064, 0x0069, 0x0061, 0x0020, 0x0069, 0x006E, 0x0064, 0x0069, 0x0073, 0x0070, 0x006F, 0x006E, 0x0069, 0x0062, 0x006C, 0x0065, 0x0073, 0 };
+static const TText *const KStr_fr_EStrKeyActMain = _S("Touche principale");
+static const TText *const KStr_fr_EStrKeyActSecond = _S("Touche secondaire");
+static const TText *const KStr_fr_EStrKeyActClear = _S("Effacer");
+static const TText *const KStr_fr_EStrHintKeyMenu = _S("OK choisir, RSK annule");
+static const TText KStr_fr_EStrKeyTakenFmt[] = { 0x0044, 0x00E9, 0x006A, 0x00E0, 0x0020, 0x0073, 0x0075, 0x0072, 0x0020, 0x0025, 0x0053, 0x002E, 0x0020, 0x004F, 0x004B, 0x0020, 0x003A, 0x0020, 0x0064, 0x00E9, 0x0070, 0x006C, 0x0061, 0x0063, 0x0065, 0x0072, 0x0020, 0x0069, 0x0063, 0x0069, 0 };
 
 // --- Spanish (es) ---
 static const TText *const KStr_es_EStrSecGame = _S("JUEGO");
@@ -873,6 +920,13 @@ static const TText *const KStr_es_EStrAskContinue = _S("Continuar");
 static const TText *const KStr_es_EStrAskPickBios = _S("Elegir BIOS");
 static const TText KStr_es_EStrItemDebug[] = { 0x0052, 0x0065, 0x0067, 0x0069, 0x0073, 0x0074, 0x0072, 0x006F, 0x0020, 0x0064, 0x0065, 0x0020, 0x0064, 0x0065, 0x0070, 0x0075, 0x0072, 0x0061, 0x0063, 0x0069, 0x00F3, 0x006E, 0 };
 static const TText KStr_es_EStrBtnTiltZero[] = { 0x0049, 0x006E, 0x0063, 0x006C, 0x0069, 0x006E, 0x0061, 0x0063, 0x0069, 0x00F3, 0x006E, 0x0020, 0x0063, 0x0065, 0x0072, 0x006F, 0 };
+static const TText *const KStr_es_EStrItemResetKeys = _S("Restaurar controles");
+static const TText *const KStr_es_EStrSlideKeysErr = _S("Teclas multimedia no disponibles");
+static const TText *const KStr_es_EStrKeyActMain = _S("Tecla principal");
+static const TText *const KStr_es_EStrKeyActSecond = _S("Tecla secundaria");
+static const TText *const KStr_es_EStrKeyActClear = _S("Borrar");
+static const TText *const KStr_es_EStrHintKeyMenu = _S("OK elige, RSK cancela");
+static const TText KStr_es_EStrKeyTakenFmt[] = { 0x0059, 0x0061, 0x0020, 0x0065, 0x0073, 0x0074, 0x00E1, 0x0020, 0x0065, 0x006E, 0x0020, 0x0025, 0x0053, 0x002E, 0x0020, 0x004F, 0x004B, 0x003A, 0x0020, 0x006D, 0x006F, 0x0076, 0x0065, 0x0072, 0x0020, 0x0061, 0x0071, 0x0075, 0x00ED, 0 };
 
 // --- Russian (ru) ---
 static const TText KStr_ru_EStrSecGame[] = { 0x0418, 0x0413, 0x0420, 0x0410, 0 };
@@ -996,6 +1050,7 @@ static const TText KStr_ru_EStrValPresetDefault[] = { 0x0421, 0x0442, 0x0430, 0x
 static const TText KStr_ru_EStrValPresetRacing[] = { 0x0413, 0x043E, 0x043D, 0x043A, 0x0438, 0 };
 static const TText KStr_ru_EStrValPresetFighting[] = { 0x0424, 0x0430, 0x0439, 0x0442, 0x0438, 0x043D, 0x0433, 0 };
 static const TText KStr_ru_EStrItemKeyBase[] = { 0x041A, 0x043B, 0x0430, 0x0432, 0x0438, 0x0430, 0x0442, 0x0443, 0x0440, 0x0430, 0 };
+static const TText KStr_ru_EStrValBaseSlider[] = { 0x0421, 0x043B, 0x0430, 0x0439, 0x0434, 0x0435, 0x0440, 0 };
 static const TText KStr_ru_EStrItemWsola[] = { 0x0421, 0x043E, 0x0445, 0x0440, 0x0430, 0x043D, 0x044F, 0x0442, 0x044C, 0x0020, 0x0442, 0x043E, 0x043D, 0 };
 static const TText KStr_ru_EStrItemHelp[] = { 0x0421, 0x043F, 0x0440, 0x0430, 0x0432, 0x043A, 0x0430, 0 };
 static const TText KStr_ru_EStrItemGames[] = { 0x0418, 0x0433, 0x0440, 0x044B, 0 };
@@ -1014,6 +1069,13 @@ static const TText KStr_ru_EStrAskContinue[] = { 0x041F, 0x0440, 0x043E, 0x0434,
 static const TText KStr_ru_EStrAskPickBios[] = { 0x0412, 0x044B, 0x0431, 0x0440, 0x0430, 0x0442, 0x044C, 0x0020, 0x0042, 0x0049, 0x004F, 0x0053, 0 };
 static const TText KStr_ru_EStrItemDebug[] = { 0x0416, 0x0443, 0x0440, 0x043D, 0x0430, 0x043B, 0x0020, 0x043E, 0x0442, 0x043B, 0x0430, 0x0434, 0x043A, 0x0438, 0 };
 static const TText KStr_ru_EStrBtnTiltZero[] = { 0x0421, 0x0431, 0x0440, 0x043E, 0x0441, 0x0020, 0x043D, 0x0430, 0x043A, 0x043B, 0x043E, 0x043D, 0x0430, 0 };
+static const TText KStr_ru_EStrItemResetKeys[] = { 0x0421, 0x0431, 0x0440, 0x043E, 0x0441, 0x0438, 0x0442, 0x044C, 0x0020, 0x0443, 0x043F, 0x0440, 0x0430, 0x0432, 0x043B, 0x0435, 0x043D, 0x0438, 0x0435, 0 };
+static const TText KStr_ru_EStrSlideKeysErr[] = { 0x041C, 0x0435, 0x0434, 0x0438, 0x0430, 0x043A, 0x043B, 0x0430, 0x0432, 0x0438, 0x0448, 0x0438, 0x0020, 0x043D, 0x0435, 0x0434, 0x043E, 0x0441, 0x0442, 0x0443, 0x043F, 0x043D, 0x044B, 0 };
+static const TText KStr_ru_EStrKeyActMain[] = { 0x041E, 0x0441, 0x043D, 0x043E, 0x0432, 0x043D, 0x0430, 0x044F, 0x0020, 0x043A, 0x043B, 0x0430, 0x0432, 0x0438, 0x0448, 0x0430, 0 };
+static const TText KStr_ru_EStrKeyActSecond[] = { 0x0412, 0x0442, 0x043E, 0x0440, 0x0430, 0x044F, 0x0020, 0x043A, 0x043B, 0x0430, 0x0432, 0x0438, 0x0448, 0x0430, 0 };
+static const TText KStr_ru_EStrKeyActClear[] = { 0x041E, 0x0447, 0x0438, 0x0441, 0x0442, 0x0438, 0x0442, 0x044C, 0 };
+static const TText KStr_ru_EStrHintKeyMenu[] = { 0x004F, 0x004B, 0x0020, 0x0432, 0x044B, 0x0431, 0x043E, 0x0440, 0x002C, 0x0020, 0x041F, 0x0421, 0x041A, 0x0020, 0x043E, 0x0442, 0x043C, 0x0435, 0x043D, 0x0430, 0 };
+static const TText KStr_ru_EStrKeyTakenFmt[] = { 0x0423, 0x0436, 0x0435, 0x0020, 0x043D, 0x0430, 0x0020, 0x0025, 0x0053, 0x002E, 0x0020, 0x004F, 0x004B, 0x003A, 0x0020, 0x043F, 0x0435, 0x0440, 0x0435, 0x043D, 0x0435, 0x0441, 0x0442, 0x0438, 0x0020, 0x0441, 0x044E, 0x0434, 0x0430, 0 };
 
 // --- Portuguese (pt) ---
 static const TText *const KStr_pt_EStrSecGame = _S("JOGO");
@@ -1146,6 +1208,13 @@ static const TText *const KStr_pt_EStrAskContinue = _S("Continuar");
 static const TText *const KStr_pt_EStrAskPickBios = _S("Selecionar BIOS");
 static const TText KStr_pt_EStrItemDebug[] = { 0x0052, 0x0065, 0x0067, 0x0069, 0x0073, 0x0074, 0x0072, 0x006F, 0x0020, 0x0064, 0x0065, 0x0020, 0x0064, 0x0065, 0x0070, 0x0075, 0x0072, 0x0061, 0x00E7, 0x00E3, 0x006F, 0 };
 static const TText KStr_pt_EStrBtnTiltZero[] = { 0x0049, 0x006E, 0x0063, 0x006C, 0x0069, 0x006E, 0x0061, 0x00E7, 0x00E3, 0x006F, 0x0020, 0x007A, 0x0065, 0x0072, 0x006F, 0 };
+static const TText *const KStr_pt_EStrItemResetKeys = _S("Redefinir controles");
+static const TText KStr_pt_EStrSlideKeysErr[] = { 0x0054, 0x0065, 0x0063, 0x006C, 0x0061, 0x0073, 0x0020, 0x0064, 0x0065, 0x0020, 0x006D, 0x00ED, 0x0064, 0x0069, 0x0061, 0x0020, 0x0069, 0x006E, 0x0064, 0x0069, 0x0073, 0x0070, 0x006F, 0x006E, 0x00ED, 0x0076, 0x0065, 0x0069, 0x0073, 0 };
+static const TText *const KStr_pt_EStrKeyActMain = _S("Tecla principal");
+static const TText KStr_pt_EStrKeyActSecond[] = { 0x0054, 0x0065, 0x0063, 0x006C, 0x0061, 0x0020, 0x0073, 0x0065, 0x0063, 0x0075, 0x006E, 0x0064, 0x00E1, 0x0072, 0x0069, 0x0061, 0 };
+static const TText *const KStr_pt_EStrKeyActClear = _S("Limpar");
+static const TText *const KStr_pt_EStrHintKeyMenu = _S("OK escolhe, RSK cancela");
+static const TText KStr_pt_EStrKeyTakenFmt[] = { 0x004A, 0x00E1, 0x0020, 0x0065, 0x006D, 0x0020, 0x0025, 0x0053, 0x002E, 0x0020, 0x004F, 0x004B, 0x003A, 0x0020, 0x006D, 0x006F, 0x0076, 0x0065, 0x0072, 0x0020, 0x0070, 0x0061, 0x0072, 0x0061, 0x0020, 0x0063, 0x00E1, 0 };
 
 // --- Italian (it) ---
 static const TText *const KStr_it_EStrSecGame = _S("GIOCO");
@@ -1277,6 +1346,13 @@ static const TText *const KStr_it_EStrAskContinue = _S("Continua");
 static const TText *const KStr_it_EStrAskPickBios = _S("Scegli BIOS");
 static const TText *const KStr_it_EStrItemDebug = _S("Registro di debug");
 static const TText *const KStr_it_EStrBtnTiltZero = _S("Inclinazione zero");
+static const TText *const KStr_it_EStrItemResetKeys = _S("Ripristina comandi");
+static const TText *const KStr_it_EStrSlideKeysErr = _S("Tasti multimediali non disponibili");
+static const TText *const KStr_it_EStrKeyActMain = _S("Tasto principale");
+static const TText *const KStr_it_EStrKeyActSecond = _S("Tasto secondario");
+static const TText *const KStr_it_EStrKeyActClear = _S("Cancella");
+static const TText *const KStr_it_EStrHintKeyMenu = _S("OK scegli, RSK annulla");
+static const TText KStr_it_EStrKeyTakenFmt[] = { 0x0047, 0x0069, 0x00E0, 0x0020, 0x0073, 0x0075, 0x0020, 0x0025, 0x0053, 0x002E, 0x0020, 0x004F, 0x004B, 0x003A, 0x0020, 0x0073, 0x0070, 0x006F, 0x0073, 0x0074, 0x0061, 0x0020, 0x0071, 0x0075, 0x0069, 0 };
 
 // --- Polish (pl) ---
 static const TText *const KStr_pl_EStrSecGame = _S("GRA");
@@ -1409,6 +1485,13 @@ static const TText *const KStr_pl_EStrAskContinue = _S("Kontynuuj");
 static const TText *const KStr_pl_EStrAskPickBios = _S("Wybierz BIOS");
 static const TText *const KStr_pl_EStrItemDebug = _S("Dziennik debugowania");
 static const TText KStr_pl_EStrBtnTiltZero[] = { 0x005A, 0x0065, 0x0072, 0x006F, 0x0077, 0x0061, 0x006E, 0x0069, 0x0065, 0x0020, 0x0070, 0x0072, 0x007A, 0x0065, 0x0063, 0x0068, 0x0079, 0x0142, 0x0075, 0 };
+static const TText *const KStr_pl_EStrItemResetKeys = _S("Resetuj sterowanie");
+static const TText KStr_pl_EStrSlideKeysErr[] = { 0x004B, 0x006C, 0x0061, 0x0077, 0x0069, 0x0073, 0x007A, 0x0065, 0x0020, 0x006D, 0x0075, 0x006C, 0x0074, 0x0069, 0x006D, 0x0065, 0x0064, 0x0069, 0x0061, 0x006C, 0x006E, 0x0065, 0x0020, 0x006E, 0x0069, 0x0065, 0x0064, 0x006F, 0x0073, 0x0074, 0x0119, 0x0070, 0x006E, 0x0065, 0 };
+static const TText KStr_pl_EStrKeyActMain[] = { 0x0047, 0x0142, 0x00F3, 0x0077, 0x006E, 0x0079, 0x0020, 0x006B, 0x006C, 0x0061, 0x0077, 0x0069, 0x0073, 0x007A, 0 };
+static const TText *const KStr_pl_EStrKeyActSecond = _S("Drugi klawisz");
+static const TText KStr_pl_EStrKeyActClear[] = { 0x0057, 0x0079, 0x0063, 0x007A, 0x0079, 0x015B, 0x0107, 0 };
+static const TText KStr_pl_EStrHintKeyMenu[] = { 0x004F, 0x004B, 0x0020, 0x0077, 0x0079, 0x0062, 0x00F3, 0x0072, 0x002C, 0x0020, 0x0052, 0x0053, 0x004B, 0x0020, 0x0061, 0x006E, 0x0075, 0x006C, 0x0075, 0x006A, 0x0065, 0 };
+static const TText KStr_pl_EStrKeyTakenFmt[] = { 0x004A, 0x0075, 0x017C, 0x0020, 0x006E, 0x0061, 0x0020, 0x0025, 0x0053, 0x002E, 0x0020, 0x004F, 0x004B, 0x003A, 0x0020, 0x0070, 0x0072, 0x007A, 0x0065, 0x006E, 0x0069, 0x0065, 0x015B, 0x0020, 0x0074, 0x0075, 0x0074, 0x0061, 0x006A, 0 };
 
 // --- Turkish (tr) ---
 static const TText *const KStr_tr_EStrSecGame = _S("OYUN");
@@ -1546,6 +1629,13 @@ static const TText *const KStr_tr_EStrAskContinue = _S("Devam et");
 static const TText KStr_tr_EStrAskPickBios[] = { 0x0042, 0x0049, 0x004F, 0x0053, 0x0020, 0x0073, 0x0065, 0x00E7, 0 };
 static const TText KStr_tr_EStrItemDebug[] = { 0x0048, 0x0061, 0x0074, 0x0061, 0x0020, 0x0061, 0x0079, 0x0131, 0x006B, 0x006C, 0x0061, 0x006D, 0x0061, 0x0020, 0x0067, 0x00FC, 0x006E, 0x006C, 0x00FC, 0x011F, 0x00FC, 0 };
 static const TText KStr_tr_EStrBtnTiltZero[] = { 0x0045, 0x011F, 0x0069, 0x006D, 0x0069, 0x0020, 0x0073, 0x0131, 0x0066, 0x0131, 0x0072, 0x006C, 0x0061, 0 };
+static const TText KStr_tr_EStrItemResetKeys[] = { 0x004B, 0x006F, 0x006E, 0x0074, 0x0072, 0x006F, 0x006C, 0x006C, 0x0065, 0x0072, 0x0069, 0x0020, 0x0073, 0x0131, 0x0066, 0x0131, 0x0072, 0x006C, 0x0061, 0 };
+static const TText KStr_tr_EStrSlideKeysErr[] = { 0x004D, 0x0065, 0x0064, 0x0079, 0x0061, 0x0020, 0x0074, 0x0075, 0x015F, 0x006C, 0x0061, 0x0072, 0x0131, 0x0020, 0x006B, 0x0075, 0x006C, 0x006C, 0x0061, 0x006E, 0x0131, 0x006C, 0x0061, 0x006D, 0x0131, 0x0079, 0x006F, 0x0072, 0 };
+static const TText KStr_tr_EStrKeyActMain[] = { 0x0041, 0x006E, 0x0061, 0x0020, 0x0074, 0x0075, 0x015F, 0 };
+static const TText KStr_tr_EStrKeyActSecond[] = { 0x0130, 0x006B, 0x0069, 0x006E, 0x0063, 0x0069, 0x0020, 0x0074, 0x0075, 0x015F, 0 };
+static const TText *const KStr_tr_EStrKeyActClear = _S("Temizle");
+static const TText KStr_tr_EStrHintKeyMenu[] = { 0x004F, 0x004B, 0x0020, 0x0073, 0x0065, 0x00E7, 0x002C, 0x0020, 0x0052, 0x0053, 0x004B, 0x0020, 0x0069, 0x0070, 0x0074, 0x0061, 0x006C, 0 };
+static const TText KStr_tr_EStrKeyTakenFmt[] = { 0x005A, 0x0061, 0x0074, 0x0065, 0x006E, 0x0020, 0x0025, 0x0053, 0x0020, 0x00FC, 0x007A, 0x0065, 0x0072, 0x0069, 0x006E, 0x0064, 0x0065, 0x002E, 0x0020, 0x004F, 0x004B, 0x003A, 0x0020, 0x0062, 0x0075, 0x0072, 0x0061, 0x0079, 0x0061, 0x0020, 0x0074, 0x0061, 0x015F, 0x0131, 0 };
 
 // --- Japanese (ja) ---
 static const TText KStr_ja_EStrSecGame[] = { 0x30B2, 0x30FC, 0x30E0, 0 };
@@ -1670,6 +1760,7 @@ static const TText KStr_ja_EStrValPresetDefault[] = { 0x6A19, 0x6E96, 0 };
 static const TText KStr_ja_EStrValPresetRacing[] = { 0x30EC, 0x30FC, 0x30B9, 0 };
 static const TText KStr_ja_EStrValPresetFighting[] = { 0x683C, 0x95D8, 0 };
 static const TText KStr_ja_EStrItemKeyBase[] = { 0x30AD, 0x30FC, 0x30DC, 0x30FC, 0x30C9, 0 };
+static const TText KStr_ja_EStrValBaseSlider[] = { 0x30B9, 0x30E9, 0x30A4, 0x30C0, 0x30FC, 0 };
 static const TText KStr_ja_EStrItemWsola[] = { 0x97F3, 0x7A0B, 0x7DAD, 0x6301, 0 };
 static const TText KStr_ja_EStrItemHelp[] = { 0x30D8, 0x30EB, 0x30D7, 0 };
 static const TText KStr_ja_EStrItemGames[] = { 0x30B2, 0x30FC, 0x30E0, 0 };
@@ -1688,6 +1779,13 @@ static const TText KStr_ja_EStrAskContinue[] = { 0x7D9A, 0x884C, 0 };
 static const TText KStr_ja_EStrAskPickBios[] = { 0x0042, 0x0049, 0x004F, 0x0053, 0x3092, 0x9078, 0x629E, 0 };
 static const TText KStr_ja_EStrItemDebug[] = { 0x30C7, 0x30D0, 0x30C3, 0x30B0, 0x30ED, 0x30B0, 0 };
 static const TText KStr_ja_EStrBtnTiltZero[] = { 0x50BE, 0x304D, 0x30BC, 0x30ED, 0 };
+static const TText KStr_ja_EStrItemResetKeys[] = { 0x64CD, 0x4F5C, 0x3092, 0x521D, 0x671F, 0x5316, 0 };
+static const TText KStr_ja_EStrSlideKeysErr[] = { 0x30E1, 0x30C7, 0x30A3, 0x30A2, 0x30AD, 0x30FC, 0x306F, 0x4F7F, 0x7528, 0x4E0D, 0x53EF, 0 };
+static const TText KStr_ja_EStrKeyActMain[] = { 0x30E1, 0x30A4, 0x30F3, 0x30AD, 0x30FC, 0 };
+static const TText KStr_ja_EStrKeyActSecond[] = { 0x30B5, 0x30D6, 0x30AD, 0x30FC, 0 };
+static const TText KStr_ja_EStrKeyActClear[] = { 0x30AF, 0x30EA, 0x30A2, 0 };
+static const TText KStr_ja_EStrHintKeyMenu[] = { 0x004F, 0x004B, 0x9078, 0x629E, 0x3001, 0x53F3, 0x0053, 0x004B, 0x30AD, 0x30E3, 0x30F3, 0x30BB, 0x30EB, 0 };
+static const TText KStr_ja_EStrKeyTakenFmt[] = { 0x65E2, 0x306B, 0x0025, 0x0053, 0x306B, 0x8A2D, 0x5B9A, 0x6E08, 0x3002, 0x004F, 0x004B, 0x3067, 0x3053, 0x3053, 0x3078, 0x79FB, 0x52D5, 0 };
 
 // --- Hindi (hi) ---
 static const TText KStr_hi_EStrSecGame[] = { 0x0916, 0x0947, 0x0932, 0 };
@@ -1808,6 +1906,7 @@ static const TText KStr_hi_EStrValPresetDefault[] = { 0x0921, 0x093F, 0x092B, 0x
 static const TText KStr_hi_EStrValPresetRacing[] = { 0x0930, 0x0947, 0x0938, 0x093F, 0x0902, 0x0917, 0 };
 static const TText KStr_hi_EStrValPresetFighting[] = { 0x092B, 0x093E, 0x0907, 0x091F, 0x093F, 0x0902, 0x0917, 0 };
 static const TText KStr_hi_EStrItemKeyBase[] = { 0x0915, 0x0940, 0x092C, 0x094B, 0x0930, 0x094D, 0x0921, 0 };
+static const TText KStr_hi_EStrValBaseSlider[] = { 0x0938, 0x094D, 0x0932, 0x093E, 0x0907, 0x0921, 0x0930, 0 };
 static const TText KStr_hi_EStrItemWsola[] = { 0x092A, 0x093F, 0x091A, 0x0020, 0x092C, 0x0928, 0x093E, 0x090F, 0x0020, 0x0930, 0x0916, 0x0947, 0x0902, 0 };
 static const TText KStr_hi_EStrItemHelp[] = { 0x092E, 0x0926, 0x0926, 0 };
 static const TText KStr_hi_EStrItemGames[] = { 0x0916, 0x0947, 0x0932, 0 };
@@ -1826,6 +1925,13 @@ static const TText KStr_hi_EStrAskContinue[] = { 0x091C, 0x093E, 0x0930, 0x0940,
 static const TText KStr_hi_EStrAskPickBios[] = { 0x0042, 0x0049, 0x004F, 0x0053, 0x0020, 0x091A, 0x0941, 0x0928, 0x0947, 0x0902, 0 };
 static const TText KStr_hi_EStrItemDebug[] = { 0x0921, 0x0940, 0x092C, 0x0917, 0x0020, 0x0932, 0x0949, 0x0917, 0 };
 static const TText KStr_hi_EStrBtnTiltZero[] = { 0x091D, 0x0941, 0x0915, 0x093E, 0x0935, 0x0020, 0x0936, 0x0942, 0x0928, 0x094D, 0x092F, 0 };
+static const TText KStr_hi_EStrItemResetKeys[] = { 0x0928, 0x093F, 0x092F, 0x0902, 0x0924, 0x094D, 0x0930, 0x0923, 0x0020, 0x0930, 0x0940, 0x0938, 0x0947, 0x091F, 0 };
+static const TText KStr_hi_EStrSlideKeysErr[] = { 0x092E, 0x0940, 0x0921, 0x093F, 0x092F, 0x093E, 0x0020, 0x0915, 0x0941, 0x0902, 0x091C, 0x093F, 0x092F, 0x093E, 0x0901, 0x0020, 0x0909, 0x092A, 0x0932, 0x092C, 0x094D, 0x0927, 0x0020, 0x0928, 0x0939, 0x0940, 0x0902, 0 };
+static const TText KStr_hi_EStrKeyActMain[] = { 0x092E, 0x0941, 0x0916, 0x094D, 0x092F, 0x0020, 0x0915, 0x0941, 0x0902, 0x091C, 0x0940, 0 };
+static const TText KStr_hi_EStrKeyActSecond[] = { 0x0926, 0x0942, 0x0938, 0x0930, 0x0940, 0x0020, 0x0915, 0x0941, 0x0902, 0x091C, 0x0940, 0 };
+static const TText KStr_hi_EStrKeyActClear[] = { 0x0938, 0x093E, 0x092B, 0x093C, 0x0020, 0x0915, 0x0930, 0x0947, 0x0902, 0 };
+static const TText KStr_hi_EStrHintKeyMenu[] = { 0x004F, 0x004B, 0x0020, 0x091A, 0x0941, 0x0928, 0x0947, 0x0902, 0x002C, 0x0020, 0x0052, 0x0053, 0x004B, 0x0020, 0x0930, 0x0926, 0x094D, 0x0926, 0x0020, 0x0915, 0x0930, 0x0924, 0x093E, 0x0020, 0x0939, 0x0948, 0 };
+static const TText KStr_hi_EStrKeyTakenFmt[] = { 0x092A, 0x0939, 0x0932, 0x0947, 0x0020, 0x0938, 0x0947, 0x0020, 0x0025, 0x0053, 0x0020, 0x092A, 0x0930, 0x0020, 0x0939, 0x0948, 0x0964, 0x0020, 0x004F, 0x004B, 0x003A, 0x0020, 0x092F, 0x0939, 0x093E, 0x0902, 0x0020, 0x0932, 0x093E, 0x090F, 0x0902, 0 };
 
 // --- Arabic (ar) ---
 static const TText KStr_ar_EStrSecGame[] = { 0x0627, 0x0644, 0x0644, 0x0639, 0x0628, 0x0629, 0 };
@@ -1949,6 +2055,7 @@ static const TText KStr_ar_EStrValPresetDefault[] = { 0x0627, 0x0641, 0x062A, 0x
 static const TText KStr_ar_EStrValPresetRacing[] = { 0x0633, 0x0628, 0x0627, 0x0642, 0 };
 static const TText KStr_ar_EStrValPresetFighting[] = { 0x0642, 0x062A, 0x0627, 0x0644, 0 };
 static const TText KStr_ar_EStrItemKeyBase[] = { 0x0644, 0x0648, 0x062D, 0x0629, 0x0020, 0x0627, 0x0644, 0x0645, 0x0641, 0x0627, 0x062A, 0x064A, 0x062D, 0 };
+static const TText KStr_ar_EStrValBaseSlider[] = { 0x0633, 0x0644, 0x0627, 0x064A, 0x062F, 0x0631, 0 };
 static const TText KStr_ar_EStrItemWsola[] = { 0x062D, 0x0641, 0x0638, 0x0020, 0x0637, 0x0628, 0x0642, 0x0629, 0x0020, 0x0627, 0x0644, 0x0635, 0x0648, 0x062A, 0 };
 static const TText KStr_ar_EStrItemHelp[] = { 0x062A, 0x0639, 0x0644, 0x064A, 0x0645, 0x0627, 0x062A, 0 };
 static const TText KStr_ar_EStrItemGames[] = { 0x0623, 0x0644, 0x0639, 0x0627, 0x0628, 0 };
@@ -1967,6 +2074,13 @@ static const TText KStr_ar_EStrAskContinue[] = { 0x0645, 0x062A, 0x0627, 0x0628,
 static const TText KStr_ar_EStrAskPickBios[] = { 0x0627, 0x062E, 0x062A, 0x0631, 0x0020, 0x0042, 0x0049, 0x004F, 0x0053, 0 };
 static const TText KStr_ar_EStrItemDebug[] = { 0x0633, 0x062C, 0x0644, 0x0020, 0x0627, 0x0644, 0x062A, 0x0635, 0x062D, 0x064A, 0x062D, 0 };
 static const TText KStr_ar_EStrBtnTiltZero[] = { 0x062A, 0x0635, 0x0641, 0x064A, 0x0631, 0x0020, 0x0627, 0x0644, 0x0625, 0x0645, 0x0627, 0x0644, 0x0629, 0 };
+static const TText KStr_ar_EStrItemResetKeys[] = { 0x0625, 0x0639, 0x0627, 0x062F, 0x0629, 0x0020, 0x0636, 0x0628, 0x0637, 0x0020, 0x0627, 0x0644, 0x062A, 0x062D, 0x0643, 0x0645, 0 };
+static const TText KStr_ar_EStrSlideKeysErr[] = { 0x0645, 0x0641, 0x0627, 0x062A, 0x064A, 0x062D, 0x0020, 0x0627, 0x0644, 0x0648, 0x0633, 0x0627, 0x0626, 0x0637, 0x0020, 0x063A, 0x064A, 0x0631, 0x0020, 0x0645, 0x062A, 0x0627, 0x062D, 0x0629, 0 };
+static const TText KStr_ar_EStrKeyActMain[] = { 0x0627, 0x0644, 0x0645, 0x0641, 0x062A, 0x0627, 0x062D, 0x0020, 0x0627, 0x0644, 0x0631, 0x0626, 0x064A, 0x0633, 0x064A, 0 };
+static const TText KStr_ar_EStrKeyActSecond[] = { 0x0627, 0x0644, 0x0645, 0x0641, 0x062A, 0x0627, 0x062D, 0x0020, 0x0627, 0x0644, 0x062B, 0x0627, 0x0646, 0x064A, 0 };
+static const TText KStr_ar_EStrKeyActClear[] = { 0x0645, 0x0633, 0x062D, 0 };
+static const TText KStr_ar_EStrHintKeyMenu[] = { 0x004F, 0x004B, 0x0020, 0x0644, 0x0644, 0x0627, 0x062E, 0x062A, 0x064A, 0x0627, 0x0631, 0x060C, 0x0020, 0x0052, 0x0053, 0x004B, 0x0020, 0x0644, 0x0644, 0x0625, 0x0644, 0x063A, 0x0627, 0x0621, 0 };
+static const TText KStr_ar_EStrKeyTakenFmt[] = { 0x0645, 0x0648, 0x062C, 0x0648, 0x062F, 0x0020, 0x0639, 0x0644, 0x0649, 0x0020, 0x0025, 0x0053, 0x002E, 0x0020, 0x004F, 0x004B, 0x003A, 0x0020, 0x0627, 0x0646, 0x0642, 0x0644, 0x0647, 0x0020, 0x0647, 0x0646, 0x0627, 0 };
 
 // --- Korean (ko) ---
 static const TText KStr_ko_EStrSecGame[] = { 0xAC8C, 0xC784, 0 };
@@ -2089,6 +2203,7 @@ static const TText KStr_ko_EStrValPresetDefault[] = { 0xAE30, 0xBCF8, 0xAC12, 0 
 static const TText KStr_ko_EStrValPresetRacing[] = { 0xB808, 0xC774, 0xC2F1, 0 };
 static const TText KStr_ko_EStrValPresetFighting[] = { 0xACA9, 0xD22C, 0 };
 static const TText KStr_ko_EStrItemKeyBase[] = { 0xD0A4, 0xBCF4, 0xB4DC, 0 };
+static const TText KStr_ko_EStrValBaseSlider[] = { 0xC2AC, 0xB77C, 0xC774, 0xB354, 0 };
 static const TText KStr_ko_EStrItemWsola[] = { 0xC74C, 0xC815, 0x0020, 0xC720, 0xC9C0, 0 };
 static const TText KStr_ko_EStrItemHelp[] = { 0xB3C4, 0xC6C0, 0xB9D0, 0 };
 static const TText KStr_ko_EStrItemGames[] = { 0xAC8C, 0xC784, 0 };
@@ -2107,6 +2222,13 @@ static const TText KStr_ko_EStrAskContinue[] = { 0xACC4, 0xC18D, 0 };
 static const TText KStr_ko_EStrAskPickBios[] = { 0x0042, 0x0049, 0x004F, 0x0053, 0x0020, 0xC120, 0xD0DD, 0 };
 static const TText KStr_ko_EStrItemDebug[] = { 0xB514, 0xBC84, 0xADF8, 0x0020, 0xB85C, 0xADF8, 0 };
 static const TText KStr_ko_EStrBtnTiltZero[] = { 0xAE30, 0xC6B8, 0xAE30, 0x0020, 0xC601, 0xC810, 0 };
+static const TText KStr_ko_EStrItemResetKeys[] = { 0xC870, 0xC791, 0x0020, 0xCD08, 0xAE30, 0xD654, 0 };
+static const TText KStr_ko_EStrSlideKeysErr[] = { 0xBBF8, 0xB514, 0xC5B4, 0x0020, 0xD0A4, 0x0020, 0xC0AC, 0xC6A9, 0x0020, 0xBD88, 0xAC00, 0 };
+static const TText KStr_ko_EStrKeyActMain[] = { 0xAE30, 0xBCF8, 0x0020, 0xD0A4, 0 };
+static const TText KStr_ko_EStrKeyActSecond[] = { 0xBCF4, 0xC870, 0x0020, 0xD0A4, 0 };
+static const TText KStr_ko_EStrKeyActClear[] = { 0xC9C0, 0xC6B0, 0xAE30, 0 };
+static const TText KStr_ko_EStrHintKeyMenu[] = { 0x004F, 0x004B, 0x0020, 0xC120, 0xD0DD, 0x002C, 0x0020, 0x0052, 0x0053, 0x004B, 0x0020, 0xCDE8, 0xC18C, 0 };
+static const TText KStr_ko_EStrKeyTakenFmt[] = { 0xC774, 0xBBF8, 0x0020, 0x0025, 0x0053, 0xC5D0, 0x0020, 0xC124, 0xC815, 0xB428, 0x002E, 0x0020, 0x004F, 0x004B, 0x003A, 0x0020, 0xC5EC, 0xAE30, 0xB85C, 0x0020, 0xC774, 0xB3D9, 0 };
 
 // --- Czech (cs) ---
 static const TText *const KStr_cs_EStrSecGame = _S("HRA");
@@ -2242,6 +2364,13 @@ static const TText KStr_cs_EStrAskContinue[] = { 0x0050, 0x006F, 0x006B, 0x0072,
 static const TText *const KStr_cs_EStrAskPickBios = _S("Vybrat BIOS");
 static const TText KStr_cs_EStrItemDebug[] = { 0x004C, 0x0061, 0x0064, 0x0069, 0x0063, 0x00ED, 0x0020, 0x0070, 0x0072, 0x006F, 0x0074, 0x006F, 0x006B, 0x006F, 0x006C, 0 };
 static const TText KStr_cs_EStrBtnTiltZero[] = { 0x0056, 0x0079, 0x006E, 0x0075, 0x006C, 0x006F, 0x0076, 0x0061, 0x0074, 0x0020, 0x006E, 0x00E1, 0x006B, 0x006C, 0x006F, 0x006E, 0 };
+static const TText KStr_cs_EStrItemResetKeys[] = { 0x004F, 0x0062, 0x006E, 0x006F, 0x0076, 0x0069, 0x0074, 0x0020, 0x006F, 0x0076, 0x006C, 0x00E1, 0x0064, 0x00E1, 0x006E, 0x00ED, 0 };
+static const TText KStr_cs_EStrSlideKeysErr[] = { 0x004D, 0x0075, 0x006C, 0x0074, 0x0069, 0x006D, 0x0065, 0x0064, 0x0069, 0x00E1, 0x006C, 0x006E, 0x00ED, 0x0020, 0x006B, 0x006C, 0x00E1, 0x0076, 0x0065, 0x0073, 0x0079, 0x0020, 0x006E, 0x0065, 0x0064, 0x006F, 0x0073, 0x0074, 0x0075, 0x0070, 0x006E, 0x00E9, 0 };
+static const TText KStr_cs_EStrKeyActMain[] = { 0x0048, 0x006C, 0x0061, 0x0076, 0x006E, 0x00ED, 0x0020, 0x006B, 0x006C, 0x00E1, 0x0076, 0x0065, 0x0073, 0x0061, 0 };
+static const TText KStr_cs_EStrKeyActSecond[] = { 0x0044, 0x0072, 0x0075, 0x0068, 0x00E1, 0x0020, 0x006B, 0x006C, 0x00E1, 0x0076, 0x0065, 0x0073, 0x0061, 0 };
+static const TText *const KStr_cs_EStrKeyActClear = _S("Vymazat");
+static const TText KStr_cs_EStrHintKeyMenu[] = { 0x004F, 0x004B, 0x0020, 0x0076, 0x0079, 0x0062, 0x0072, 0x0061, 0x0074, 0x002C, 0x0020, 0x0050, 0x0056, 0x004B, 0x0020, 0x007A, 0x0072, 0x0075, 0x0161, 0x00ED, 0 };
+static const TText KStr_cs_EStrKeyTakenFmt[] = { 0x004A, 0x0069, 0x017E, 0x0020, 0x006E, 0x0061, 0x0020, 0x0025, 0x0053, 0x002E, 0x0020, 0x004F, 0x004B, 0x003A, 0x0020, 0x0070, 0x0159, 0x0065, 0x0073, 0x0075, 0x006E, 0x006F, 0x0075, 0x0074, 0x0020, 0x0073, 0x0065, 0x006D, 0 };
 
 // --- Dutch (nl) ---
 static const TText *const KStr_nl_EStrSecGame = _S("SPEL");
@@ -2369,6 +2498,13 @@ static const TText *const KStr_nl_EStrAskContinue = _S("Doorgaan");
 static const TText *const KStr_nl_EStrAskPickBios = _S("BIOS selecteren");
 static const TText *const KStr_nl_EStrItemDebug = _S("Debuglog");
 static const TText *const KStr_nl_EStrBtnTiltZero = _S("Kanteling nul");
+static const TText *const KStr_nl_EStrItemResetKeys = _S("Besturing herstellen");
+static const TText *const KStr_nl_EStrSlideKeysErr = _S("Mediatoetsen niet beschikbaar");
+static const TText *const KStr_nl_EStrKeyActMain = _S("Hoofdtoets");
+static const TText *const KStr_nl_EStrKeyActSecond = _S("Tweede toets");
+static const TText *const KStr_nl_EStrKeyActClear = _S("Wissen");
+static const TText *const KStr_nl_EStrHintKeyMenu = _S("OK kiezen, RSK annuleert");
+static const TText *const KStr_nl_EStrKeyTakenFmt = _S("Al op %S. OK: hierheen verplaatsen");
 
 // --- Swedish (sv) ---
 static const TText *const KStr_sv_EStrSecGame = _S("SPEL");
@@ -2498,6 +2634,13 @@ static const TText KStr_sv_EStrAskContinue[] = { 0x0046, 0x006F, 0x0072, 0x0074,
 static const TText KStr_sv_EStrAskPickBios[] = { 0x0056, 0x00E4, 0x006C, 0x006A, 0x0020, 0x0042, 0x0049, 0x004F, 0x0053, 0 };
 static const TText KStr_sv_EStrItemDebug[] = { 0x0046, 0x0065, 0x006C, 0x0073, 0x00F6, 0x006B, 0x006E, 0x0069, 0x006E, 0x0067, 0x0073, 0x006C, 0x006F, 0x0067, 0x0067, 0 };
 static const TText KStr_sv_EStrBtnTiltZero[] = { 0x004E, 0x006F, 0x006C, 0x006C, 0x0073, 0x0074, 0x00E4, 0x006C, 0x006C, 0x0020, 0x006C, 0x0075, 0x0074, 0x006E, 0x0069, 0x006E, 0x0067, 0 };
+static const TText KStr_sv_EStrItemResetKeys[] = { 0x00C5, 0x0074, 0x0065, 0x0072, 0x0073, 0x0074, 0x00E4, 0x006C, 0x006C, 0x0020, 0x006B, 0x006F, 0x006E, 0x0074, 0x0072, 0x006F, 0x006C, 0x006C, 0x0065, 0x0072, 0 };
+static const TText KStr_sv_EStrSlideKeysErr[] = { 0x004D, 0x0065, 0x0064, 0x0069, 0x0065, 0x006B, 0x006E, 0x0061, 0x0070, 0x0070, 0x0061, 0x0072, 0x0020, 0x0065, 0x006A, 0x0020, 0x0074, 0x0069, 0x006C, 0x006C, 0x0067, 0x00E4, 0x006E, 0x0067, 0x006C, 0x0069, 0x0067, 0x0061, 0 };
+static const TText *const KStr_sv_EStrKeyActMain = _S("Huvudtangent");
+static const TText *const KStr_sv_EStrKeyActSecond = _S("Andra tangent");
+static const TText *const KStr_sv_EStrKeyActClear = _S("Rensa");
+static const TText KStr_sv_EStrHintKeyMenu[] = { 0x004F, 0x004B, 0x0020, 0x0076, 0x00E4, 0x006C, 0x006A, 0x002C, 0x0020, 0x0052, 0x0053, 0x004B, 0x0020, 0x0061, 0x0076, 0x0062, 0x0072, 0x0079, 0x0074, 0x0065, 0x0072, 0 };
+static const TText KStr_sv_EStrKeyTakenFmt[] = { 0x0052, 0x0065, 0x0064, 0x0061, 0x006E, 0x0020, 0x0070, 0x00E5, 0x0020, 0x0025, 0x0053, 0x002E, 0x0020, 0x004F, 0x004B, 0x003A, 0x0020, 0x0066, 0x006C, 0x0079, 0x0074, 0x0074, 0x0061, 0x0020, 0x0068, 0x0069, 0x0074, 0 };
 
 // --- Romanian (ro) ---
 static const TText *const KStr_ro_EStrSecGame = _S("JOC");
@@ -2630,6 +2773,13 @@ static const TText KStr_ro_EStrAskContinue[] = { 0x0043, 0x006F, 0x006E, 0x0074,
 static const TText KStr_ro_EStrAskPickBios[] = { 0x0053, 0x0065, 0x006C, 0x0065, 0x0063, 0x0074, 0x0065, 0x0061, 0x007A, 0x0103, 0x0020, 0x0042, 0x0049, 0x004F, 0x0053, 0 };
 static const TText *const KStr_ro_EStrItemDebug = _S("Jurnal depanare");
 static const TText KStr_ro_EStrBtnTiltZero[] = { 0x0052, 0x0065, 0x0073, 0x0065, 0x0074, 0x0061, 0x0072, 0x0065, 0x0020, 0x00EE, 0x006E, 0x0063, 0x006C, 0x0069, 0x006E, 0x0061, 0x0072, 0x0065, 0 };
+static const TText *const KStr_ro_EStrItemResetKeys = _S("Resetare controale");
+static const TText *const KStr_ro_EStrSlideKeysErr = _S("Taste media indisponibile");
+static const TText KStr_ro_EStrKeyActMain[] = { 0x0054, 0x0061, 0x0073, 0x0074, 0x0103, 0x0020, 0x0070, 0x0072, 0x0069, 0x006E, 0x0063, 0x0069, 0x0070, 0x0061, 0x006C, 0x0103, 0 };
+static const TText KStr_ro_EStrKeyActSecond[] = { 0x0054, 0x0061, 0x0073, 0x0074, 0x0103, 0x0020, 0x0073, 0x0065, 0x0063, 0x0075, 0x006E, 0x0064, 0x0061, 0x0072, 0x0103, 0 };
+static const TText KStr_ro_EStrKeyActClear[] = { 0x015E, 0x0074, 0x0065, 0x0072, 0x0067, 0x0065, 0 };
+static const TText KStr_ro_EStrHintKeyMenu[] = { 0x004F, 0x004B, 0x0020, 0x0061, 0x006C, 0x0065, 0x0067, 0x0065, 0x002C, 0x0020, 0x0052, 0x0053, 0x004B, 0x0020, 0x0061, 0x006E, 0x0075, 0x006C, 0x0065, 0x0061, 0x007A, 0x0103, 0 };
+static const TText KStr_ro_EStrKeyTakenFmt[] = { 0x0044, 0x0065, 0x006A, 0x0061, 0x0020, 0x0070, 0x0065, 0x0020, 0x0025, 0x0053, 0x002E, 0x0020, 0x004F, 0x004B, 0x003A, 0x0020, 0x006D, 0x0075, 0x0074, 0x0103, 0x0020, 0x0061, 0x0069, 0x0063, 0x0069, 0 };
 
 // --- Hungarian (hu) ---
 static const TText KStr_hu_EStrSecGame[] = { 0x004A, 0x00C1, 0x0054, 0x00C9, 0x004B, 0 };
@@ -2767,6 +2917,13 @@ static const TText KStr_hu_EStrAskContinue[] = { 0x0046, 0x006F, 0x006C, 0x0079,
 static const TText KStr_hu_EStrAskPickBios[] = { 0x0042, 0x0049, 0x004F, 0x0053, 0x0020, 0x006B, 0x0069, 0x0076, 0x00E1, 0x006C, 0x0061, 0x0073, 0x007A, 0x0074, 0x00E1, 0x0073, 0x0061, 0 };
 static const TText KStr_hu_EStrItemDebug[] = { 0x0048, 0x0069, 0x0062, 0x0061, 0x006B, 0x0065, 0x0072, 0x0065, 0x0073, 0x00E9, 0x0073, 0x0069, 0x0020, 0x006E, 0x0061, 0x0070, 0x006C, 0x00F3, 0 };
 static const TText KStr_hu_EStrBtnTiltZero[] = { 0x0044, 0x00F6, 0x006E, 0x0074, 0x00E9, 0x0073, 0x0020, 0x006E, 0x0075, 0x006C, 0x006C, 0x00E1, 0x007A, 0x00E1, 0x0073, 0x0061, 0 };
+static const TText KStr_hu_EStrItemResetKeys[] = { 0x0049, 0x0072, 0x00E1, 0x006E, 0x0079, 0x00ED, 0x0074, 0x00E1, 0x0073, 0x0020, 0x0061, 0x006C, 0x0061, 0x0070, 0x0068, 0x0065, 0x006C, 0x0079, 0x007A, 0x0065, 0x0074, 0 };
+static const TText KStr_hu_EStrSlideKeysErr[] = { 0x004D, 0x00E9, 0x0064, 0x0069, 0x0061, 0x0067, 0x006F, 0x006D, 0x0062, 0x006F, 0x006B, 0x0020, 0x006E, 0x0065, 0x006D, 0x0020, 0x0065, 0x006C, 0x00E9, 0x0072, 0x0068, 0x0065, 0x0074, 0x0151, 0x006B, 0 };
+static const TText KStr_hu_EStrKeyActMain[] = { 0x0046, 0x0151, 0x0020, 0x0062, 0x0069, 0x006C, 0x006C, 0x0065, 0x006E, 0x0074, 0x0079, 0x0171, 0 };
+static const TText KStr_hu_EStrKeyActSecond[] = { 0x004D, 0x00E1, 0x0073, 0x006F, 0x0064, 0x0069, 0x006B, 0x0020, 0x0062, 0x0069, 0x006C, 0x006C, 0x0065, 0x006E, 0x0074, 0x0079, 0x0171, 0 };
+static const TText KStr_hu_EStrKeyActClear[] = { 0x0054, 0x00F6, 0x0072, 0x006C, 0x00E9, 0x0073, 0 };
+static const TText KStr_hu_EStrHintKeyMenu[] = { 0x004F, 0x004B, 0x0020, 0x0076, 0x00E1, 0x006C, 0x0061, 0x0073, 0x007A, 0x0074, 0x00E1, 0x0073, 0x002C, 0x0020, 0x004A, 0x0056, 0x004B, 0x0020, 0x006D, 0x00E9, 0x0067, 0x0073, 0x0065, 0 };
+static const TText KStr_hu_EStrKeyTakenFmt[] = { 0x004D, 0x00E1, 0x0072, 0x0020, 0x0061, 0x0028, 0x007A, 0x0029, 0x0020, 0x0025, 0x0053, 0x002D, 0x0065, 0x006E, 0x002E, 0x0020, 0x004F, 0x004B, 0x003A, 0x0020, 0x00E1, 0x0074, 0x0068, 0x0065, 0x006C, 0x0079, 0x0065, 0x007A, 0x00E9, 0x0073, 0x0020, 0x0069, 0x0064, 0x0065, 0 };
 
 // --- Greek (el) ---
 static const TText KStr_el_EStrSecGame[] = { 0x03A0, 0x0391, 0x0399, 0x03A7, 0x039D, 0x0399, 0x0394, 0x0399, 0 };
@@ -2902,6 +3059,13 @@ static const TText KStr_el_EStrAskContinue[] = { 0x03A3, 0x03C5, 0x03BD, 0x03AD,
 static const TText KStr_el_EStrAskPickBios[] = { 0x0395, 0x03C0, 0x03B9, 0x03BB, 0x03BF, 0x03B3, 0x03AE, 0x0020, 0x0042, 0x0049, 0x004F, 0x0053, 0 };
 static const TText KStr_el_EStrItemDebug[] = { 0x039A, 0x03B1, 0x03C4, 0x03B1, 0x03B3, 0x03C1, 0x03B1, 0x03C6, 0x03AE, 0x0020, 0x0064, 0x0065, 0x0062, 0x0075, 0x0067, 0 };
 static const TText KStr_el_EStrBtnTiltZero[] = { 0x039C, 0x03B7, 0x03B4, 0x03B5, 0x03BD, 0x03B9, 0x03C3, 0x03BC, 0x03CC, 0x03C2, 0x0020, 0x03BA, 0x03BB, 0x03AF, 0x03C3, 0x03B7, 0x03C2, 0 };
+static const TText KStr_el_EStrItemResetKeys[] = { 0x0395, 0x03C0, 0x03B1, 0x03BD, 0x03B1, 0x03C6, 0x03BF, 0x03C1, 0x03AC, 0x0020, 0x03C7, 0x03B5, 0x03B9, 0x03C1, 0x03B9, 0x03C3, 0x03BC, 0x03BF, 0x03CD, 0 };
+static const TText KStr_el_EStrSlideKeysErr[] = { 0x03A0, 0x03BB, 0x03AE, 0x03BA, 0x03C4, 0x03C1, 0x03B1, 0x0020, 0x03C0, 0x03BF, 0x03BB, 0x03C5, 0x03BC, 0x03AD, 0x03C3, 0x03C9, 0x03BD, 0x0020, 0x03BC, 0x03B7, 0x0020, 0x03B4, 0x03B9, 0x03B1, 0x03B8, 0x03AD, 0x03C3, 0x03B9, 0x03BC, 0x03B1, 0 };
+static const TText KStr_el_EStrKeyActMain[] = { 0x039A, 0x03CD, 0x03C1, 0x03B9, 0x03BF, 0x0020, 0x03C0, 0x03BB, 0x03AE, 0x03BA, 0x03C4, 0x03C1, 0x03BF, 0 };
+static const TText KStr_el_EStrKeyActSecond[] = { 0x0394, 0x03B5, 0x03CD, 0x03C4, 0x03B5, 0x03C1, 0x03BF, 0x0020, 0x03C0, 0x03BB, 0x03AE, 0x03BA, 0x03C4, 0x03C1, 0x03BF, 0 };
+static const TText KStr_el_EStrKeyActClear[] = { 0x0395, 0x03BA, 0x03BA, 0x03B1, 0x03B8, 0x03AC, 0x03C1, 0x03B9, 0x03C3, 0x03B7, 0 };
+static const TText KStr_el_EStrHintKeyMenu[] = { 0x004F, 0x004B, 0x0020, 0x03B5, 0x03C0, 0x03B9, 0x03BB, 0x03BF, 0x03B3, 0x03AE, 0x002C, 0x0020, 0x0052, 0x0053, 0x004B, 0x0020, 0x03B1, 0x03BA, 0x03C5, 0x03C1, 0x03CE, 0x03BD, 0x03B5, 0x03B9, 0 };
+static const TText KStr_el_EStrKeyTakenFmt[] = { 0x0389, 0x03B4, 0x03B7, 0x0020, 0x03C3, 0x03C4, 0x03BF, 0x0020, 0x0025, 0x0053, 0x002E, 0x0020, 0x004F, 0x004B, 0x003A, 0x0020, 0x03BC, 0x03B5, 0x03C4, 0x03B1, 0x03BA, 0x03AF, 0x03BD, 0x03B7, 0x03C3, 0x03B7, 0x0020, 0x03B5, 0x03B4, 0x03CE, 0 };
 
 // --- Finnish (fi) ---
 static const TText *const KStr_fi_EStrSecGame = _S("PELI");
@@ -3033,6 +3197,13 @@ static const TText *const KStr_fi_EStrAskContinue = _S("Jatka");
 static const TText *const KStr_fi_EStrAskPickBios = _S("Valitse BIOS");
 static const TText *const KStr_fi_EStrItemDebug = _S("Virheenkorjausloki");
 static const TText *const KStr_fi_EStrBtnTiltZero = _S("Kallistuksen nollaus");
+static const TText *const KStr_fi_EStrItemResetKeys = _S("Palauta ohjaimet");
+static const TText KStr_fi_EStrSlideKeysErr[] = { 0x004D, 0x0065, 0x0064, 0x0069, 0x0061, 0x0070, 0x0061, 0x0069, 0x006E, 0x0069, 0x006B, 0x006B, 0x0065, 0x0065, 0x0074, 0x0020, 0x0065, 0x0069, 0x0076, 0x00E4, 0x0074, 0x0020, 0x006B, 0x00E4, 0x0079, 0x0074, 0x00F6, 0x0073, 0x0073, 0x00E4, 0 };
+static const TText KStr_fi_EStrKeyActMain[] = { 0x0050, 0x00E4, 0x00E4, 0x006E, 0x00E4, 0x0070, 0x0070, 0x00E4, 0x0069, 0x006E, 0 };
+static const TText KStr_fi_EStrKeyActSecond[] = { 0x0054, 0x006F, 0x0069, 0x006E, 0x0065, 0x006E, 0x0020, 0x006E, 0x00E4, 0x0070, 0x0070, 0x00E4, 0x0069, 0x006E, 0 };
+static const TText KStr_fi_EStrKeyActClear[] = { 0x0054, 0x0079, 0x0068, 0x006A, 0x0065, 0x006E, 0x006E, 0x00E4, 0 };
+static const TText *const KStr_fi_EStrHintKeyMenu = _S("OK valitse, RSK peruuttaa");
+static const TText KStr_fi_EStrKeyTakenFmt[] = { 0x004A, 0x006F, 0x0020, 0x006B, 0x006F, 0x0068, 0x0074, 0x0065, 0x0065, 0x0073, 0x0073, 0x0061, 0x0020, 0x0025, 0x0053, 0x002E, 0x0020, 0x004F, 0x004B, 0x003A, 0x0020, 0x0073, 0x0069, 0x0069, 0x0072, 0x0072, 0x00E4, 0x0020, 0x0074, 0x00E4, 0x006E, 0x006E, 0x0065, 0 };
 
 // --- Danish (da) ---
 static const TText *const KStr_da_EStrSecGame = _S("SPIL");
@@ -3159,6 +3330,13 @@ static const TText KStr_da_EStrAskContinue[] = { 0x0046, 0x006F, 0x0072, 0x0074,
 static const TText KStr_da_EStrAskPickBios[] = { 0x0056, 0x00E6, 0x006C, 0x0067, 0x0020, 0x0042, 0x0049, 0x004F, 0x0053, 0 };
 static const TText *const KStr_da_EStrItemDebug = _S("Fejlfindingslog");
 static const TText *const KStr_da_EStrBtnTiltZero = _S("Nulstil vipning");
+static const TText *const KStr_da_EStrItemResetKeys = _S("Nulstil styring");
+static const TText KStr_da_EStrSlideKeysErr[] = { 0x004D, 0x0065, 0x0064, 0x0069, 0x0065, 0x0074, 0x0061, 0x0073, 0x0074, 0x0065, 0x0072, 0x0020, 0x0075, 0x0074, 0x0069, 0x006C, 0x0067, 0x00E6, 0x006E, 0x0067, 0x0065, 0x006C, 0x0069, 0x0067, 0x0065, 0 };
+static const TText *const KStr_da_EStrKeyActMain = _S("Hovedtast");
+static const TText KStr_da_EStrKeyActSecond[] = { 0x0053, 0x0065, 0x006B, 0x0075, 0x006E, 0x0064, 0x00E6, 0x0072, 0x0020, 0x0074, 0x0061, 0x0073, 0x0074, 0 };
+static const TText *const KStr_da_EStrKeyActClear = _S("Ryd");
+static const TText KStr_da_EStrHintKeyMenu[] = { 0x004F, 0x004B, 0x0020, 0x0076, 0x00E6, 0x006C, 0x0067, 0x002C, 0x0020, 0x0052, 0x0053, 0x004B, 0x0020, 0x0061, 0x006E, 0x006E, 0x0075, 0x006C, 0x006C, 0x0065, 0x0072, 0x0065, 0x0072, 0 };
+static const TText KStr_da_EStrKeyTakenFmt[] = { 0x0041, 0x006C, 0x006C, 0x0065, 0x0072, 0x0065, 0x0064, 0x0065, 0x0020, 0x0070, 0x00E5, 0x0020, 0x0025, 0x0053, 0x002E, 0x0020, 0x004F, 0x004B, 0x003A, 0x0020, 0x0066, 0x006C, 0x0079, 0x0074, 0x0020, 0x0068, 0x0065, 0x0072, 0x0074, 0x0069, 0x006C, 0 };
 
 // --- Norwegian (no) ---
 static const TText *const KStr_no_EStrSecGame = _S("SPILL");
@@ -3286,6 +3464,13 @@ static const TText *const KStr_no_EStrAskContinue = _S("Fortsett");
 static const TText *const KStr_no_EStrAskPickBios = _S("Velg BIOS");
 static const TText KStr_no_EStrItemDebug[] = { 0x0046, 0x0065, 0x0069, 0x006C, 0x0073, 0x00F8, 0x006B, 0x0069, 0x006E, 0x0067, 0x0073, 0x006C, 0x006F, 0x0067, 0x0067, 0 };
 static const TText *const KStr_no_EStrBtnTiltZero = _S("Nullstill helling");
+static const TText *const KStr_no_EStrItemResetKeys = _S("Tilbakestill kontroller");
+static const TText *const KStr_no_EStrSlideKeysErr = _S("Medietaster utilgjengelige");
+static const TText *const KStr_no_EStrKeyActMain = _S("Hovedtast");
+static const TText KStr_no_EStrKeyActSecond[] = { 0x0053, 0x0065, 0x006B, 0x0075, 0x006E, 0x0064, 0x00E6, 0x0072, 0x0074, 0x0061, 0x0073, 0x0074, 0 };
+static const TText KStr_no_EStrKeyActClear[] = { 0x0054, 0x00F8, 0x006D, 0 };
+static const TText *const KStr_no_EStrHintKeyMenu = _S("OK velg, RSK avbryter");
+static const TText KStr_no_EStrKeyTakenFmt[] = { 0x0041, 0x006C, 0x006C, 0x0065, 0x0072, 0x0065, 0x0064, 0x0065, 0x0020, 0x0070, 0x00E5, 0x0020, 0x0025, 0x0053, 0x002E, 0x0020, 0x004F, 0x004B, 0x003A, 0x0020, 0x0066, 0x006C, 0x0079, 0x0074, 0x0074, 0x0020, 0x0068, 0x0069, 0x0074, 0 };
 
 // --- Slovak (sk) ---
 static const TText *const KStr_sk_EStrSecGame = _S("HRA");
@@ -3421,6 +3606,13 @@ static const TText KStr_sk_EStrAskContinue[] = { 0x0050, 0x006F, 0x006B, 0x0072,
 static const TText KStr_sk_EStrAskPickBios[] = { 0x0056, 0x0079, 0x0062, 0x0072, 0x0061, 0x0165, 0x0020, 0x0042, 0x0049, 0x004F, 0x0053, 0 };
 static const TText KStr_sk_EStrItemDebug[] = { 0x004C, 0x0061, 0x0064, 0x0069, 0x0061, 0x0063, 0x0069, 0x0020, 0x007A, 0x00E1, 0x007A, 0x006E, 0x0061, 0x006D, 0 };
 static const TText KStr_sk_EStrBtnTiltZero[] = { 0x0056, 0x0079, 0x006E, 0x0075, 0x006C, 0x006F, 0x0076, 0x0061, 0x0165, 0x0020, 0x006E, 0x00E1, 0x006B, 0x006C, 0x006F, 0x006E, 0 };
+static const TText KStr_sk_EStrItemResetKeys[] = { 0x004F, 0x0062, 0x006E, 0x006F, 0x0076, 0x0069, 0x0165, 0x0020, 0x006F, 0x0076, 0x006C, 0x00E1, 0x0064, 0x0061, 0x006E, 0x0069, 0x0065, 0 };
+static const TText KStr_sk_EStrSlideKeysErr[] = { 0x004D, 0x0075, 0x006C, 0x0074, 0x0069, 0x006D, 0x0065, 0x0064, 0x0069, 0x00E1, 0x006C, 0x006E, 0x0065, 0x0020, 0x006B, 0x006C, 0x00E1, 0x0076, 0x0065, 0x0073, 0x0079, 0x0020, 0x006E, 0x0065, 0x0064, 0x006F, 0x0073, 0x0074, 0x0075, 0x0070, 0x006E, 0x00E9, 0 };
+static const TText KStr_sk_EStrKeyActMain[] = { 0x0048, 0x006C, 0x0061, 0x0076, 0x006E, 0x00FD, 0x0020, 0x006B, 0x006C, 0x00E1, 0x0076, 0x0065, 0x0073, 0 };
+static const TText KStr_sk_EStrKeyActSecond[] = { 0x0044, 0x0072, 0x0075, 0x0068, 0x00FD, 0x0020, 0x006B, 0x006C, 0x00E1, 0x0076, 0x0065, 0x0073, 0 };
+static const TText KStr_sk_EStrKeyActClear[] = { 0x0056, 0x0079, 0x006D, 0x0061, 0x007A, 0x0061, 0x0165, 0 };
+static const TText KStr_sk_EStrHintKeyMenu[] = { 0x004F, 0x004B, 0x0020, 0x0076, 0x0079, 0x0062, 0x0072, 0x0061, 0x0165, 0x002C, 0x0020, 0x0050, 0x0056, 0x0054, 0x0020, 0x007A, 0x0072, 0x0075, 0x0161, 0x00ED, 0 };
+static const TText KStr_sk_EStrKeyTakenFmt[] = { 0x0055, 0x017E, 0x0020, 0x006E, 0x0061, 0x0020, 0x0025, 0x0053, 0x002E, 0x0020, 0x004F, 0x004B, 0x003A, 0x0020, 0x0070, 0x0072, 0x0065, 0x0073, 0x0075, 0x006E, 0x00FA, 0x0165, 0x0020, 0x0073, 0x0065, 0x006D, 0 };
 
 // --- Bulgarian (bg) ---
 static const TText KStr_bg_EStrSecGame[] = { 0x0418, 0x0413, 0x0420, 0x0410, 0 };
@@ -3541,6 +3733,7 @@ static const TText KStr_bg_EStrValPresetDefault[] = { 0x0421, 0x0442, 0x0430, 0x
 static const TText KStr_bg_EStrValPresetRacing[] = { 0x0421, 0x044A, 0x0441, 0x0442, 0x0435, 0x0437, 0x0430, 0x043D, 0x0438, 0x0435, 0 };
 static const TText KStr_bg_EStrValPresetFighting[] = { 0x0411, 0x043E, 0x0439, 0x043D, 0x0430, 0 };
 static const TText KStr_bg_EStrItemKeyBase[] = { 0x041A, 0x043B, 0x0430, 0x0432, 0x0438, 0x0430, 0x0442, 0x0443, 0x0440, 0x0430, 0 };
+static const TText KStr_bg_EStrValBaseSlider[] = { 0x0421, 0x043B, 0x0430, 0x0439, 0x0434, 0x0435, 0x0440, 0 };
 static const TText KStr_bg_EStrItemWsola[] = { 0x0417, 0x0430, 0x043F, 0x0430, 0x0437, 0x0432, 0x0430, 0x043D, 0x0435, 0x0020, 0x043D, 0x0430, 0x0020, 0x0442, 0x043E, 0x043D, 0 };
 static const TText KStr_bg_EStrItemHelp[] = { 0x041F, 0x043E, 0x043C, 0x043E, 0x0449, 0 };
 static const TText KStr_bg_EStrItemGames[] = { 0x0418, 0x0433, 0x0440, 0x0438, 0 };
@@ -3559,6 +3752,13 @@ static const TText KStr_bg_EStrAskContinue[] = { 0x041F, 0x0440, 0x043E, 0x0434,
 static const TText KStr_bg_EStrAskPickBios[] = { 0x0418, 0x0437, 0x0431, 0x0435, 0x0440, 0x0438, 0x0020, 0x0042, 0x0049, 0x004F, 0x0053, 0 };
 static const TText KStr_bg_EStrItemDebug[] = { 0x0414, 0x043D, 0x0435, 0x0432, 0x043D, 0x0438, 0x043A, 0x0020, 0x0437, 0x0430, 0x0020, 0x0434, 0x0435, 0x0431, 0x044A, 0x0433, 0 };
 static const TText KStr_bg_EStrBtnTiltZero[] = { 0x041D, 0x0443, 0x043B, 0x0438, 0x0440, 0x0430, 0x043D, 0x0435, 0x0020, 0x043D, 0x0430, 0x0020, 0x043D, 0x0430, 0x043A, 0x043B, 0x043E, 0x043D, 0x0430, 0 };
+static const TText KStr_bg_EStrItemResetKeys[] = { 0x041D, 0x0443, 0x043B, 0x0438, 0x0440, 0x0430, 0x043D, 0x0435, 0x0020, 0x043D, 0x0430, 0x0020, 0x043A, 0x043E, 0x043D, 0x0442, 0x0440, 0x043E, 0x043B, 0x0438, 0 };
+static const TText KStr_bg_EStrSlideKeysErr[] = { 0x041C, 0x0435, 0x0434, 0x0438, 0x0439, 0x043D, 0x0438, 0x0442, 0x0435, 0x0020, 0x043A, 0x043B, 0x0430, 0x0432, 0x0438, 0x0448, 0x0438, 0x0020, 0x0441, 0x0430, 0x0020, 0x043D, 0x0435, 0x0434, 0x043E, 0x0441, 0x0442, 0x044A, 0x043F, 0x043D, 0x0438, 0 };
+static const TText KStr_bg_EStrKeyActMain[] = { 0x0413, 0x043B, 0x0430, 0x0432, 0x0435, 0x043D, 0x0020, 0x0431, 0x0443, 0x0442, 0x043E, 0x043D, 0 };
+static const TText KStr_bg_EStrKeyActSecond[] = { 0x0412, 0x0442, 0x043E, 0x0440, 0x0438, 0x0020, 0x0431, 0x0443, 0x0442, 0x043E, 0x043D, 0 };
+static const TText KStr_bg_EStrKeyActClear[] = { 0x0418, 0x0437, 0x0447, 0x0438, 0x0441, 0x0442, 0x0438, 0 };
+static const TText KStr_bg_EStrHintKeyMenu[] = { 0x004F, 0x004B, 0x0020, 0x0438, 0x0437, 0x0431, 0x043E, 0x0440, 0x002C, 0x0020, 0x0414, 0x0421, 0x041A, 0x0020, 0x043E, 0x0442, 0x043A, 0x0430, 0x0437, 0x0432, 0x0430, 0 };
+static const TText KStr_bg_EStrKeyTakenFmt[] = { 0x0412, 0x0435, 0x0447, 0x0435, 0x0020, 0x043D, 0x0430, 0x0020, 0x0025, 0x0053, 0x002E, 0x0020, 0x004F, 0x004B, 0x003A, 0x0020, 0x043F, 0x0440, 0x0435, 0x043C, 0x0435, 0x0441, 0x0442, 0x0438, 0x0020, 0x0442, 0x0443, 0x043A, 0 };
 
 // --- Croatian (hr) ---
 static const TText *const KStr_hr_EStrSecGame = _S("IGRA");
@@ -3695,6 +3895,13 @@ static const TText *const KStr_hr_EStrAskContinue = _S("Nastavi");
 static const TText *const KStr_hr_EStrAskPickBios = _S("Odaberi BIOS");
 static const TText *const KStr_hr_EStrItemDebug = _S("Dnevnik otklanjanja");
 static const TText *const KStr_hr_EStrBtnTiltZero = _S("Nuliranje nagiba");
+static const TText *const KStr_hr_EStrItemResetKeys = _S("Vrati kontrole");
+static const TText *const KStr_hr_EStrSlideKeysErr = _S("Medijske tipke nedostupne");
+static const TText *const KStr_hr_EStrKeyActMain = _S("Glavna tipka");
+static const TText *const KStr_hr_EStrKeyActSecond = _S("Druga tipka");
+static const TText KStr_hr_EStrKeyActClear[] = { 0x004F, 0x010D, 0x0069, 0x0073, 0x0074, 0x0069, 0 };
+static const TText *const KStr_hr_EStrHintKeyMenu = _S("OK odabir, DFT prekida");
+static const TText KStr_hr_EStrKeyTakenFmt[] = { 0x0056, 0x0065, 0x0107, 0x0020, 0x006E, 0x0061, 0x0020, 0x0025, 0x0053, 0x002E, 0x0020, 0x004F, 0x004B, 0x003A, 0x0020, 0x0070, 0x0072, 0x0065, 0x006D, 0x006A, 0x0065, 0x0073, 0x0074, 0x0069, 0x0020, 0x006F, 0x0076, 0x0064, 0x006A, 0x0065, 0 };
 
 // --- Slovenian (sl) ---
 static const TText *const KStr_sl_EStrSecGame = _S("IGRA");
@@ -3832,6 +4039,13 @@ static const TText *const KStr_sl_EStrAskContinue = _S("Nadaljuj");
 static const TText *const KStr_sl_EStrAskPickBios = _S("Izberi BIOS");
 static const TText KStr_sl_EStrItemDebug[] = { 0x0044, 0x006E, 0x0065, 0x0076, 0x006E, 0x0069, 0x006B, 0x0020, 0x0072, 0x0061, 0x007A, 0x0068, 0x0072, 0x006F, 0x0161, 0x010D, 0x0065, 0x0076, 0x0061, 0x006E, 0x006A, 0x0061, 0 };
 static const TText KStr_sl_EStrBtnTiltZero[] = { 0x004E, 0x0069, 0x010D, 0x006C, 0x0061, 0x0020, 0x006E, 0x0061, 0x0067, 0x0069, 0x0062, 0x0061, 0 };
+static const TText *const KStr_sl_EStrItemResetKeys = _S("Ponastavi kontrole");
+static const TText *const KStr_sl_EStrSlideKeysErr = _S("Predstavnostne tipke niso na voljo");
+static const TText *const KStr_sl_EStrKeyActMain = _S("Glavna tipka");
+static const TText *const KStr_sl_EStrKeyActSecond = _S("Druga tipka");
+static const TText KStr_sl_EStrKeyActClear[] = { 0x0050, 0x006F, 0x010D, 0x0069, 0x0073, 0x0074, 0x0069, 0 };
+static const TText KStr_sl_EStrHintKeyMenu[] = { 0x004F, 0x004B, 0x0020, 0x0069, 0x007A, 0x0062, 0x0069, 0x0072, 0x0061, 0x002C, 0x0020, 0x0044, 0x0046, 0x0054, 0x0020, 0x0070, 0x0072, 0x0065, 0x006B, 0x006C, 0x0069, 0x010D, 0x0065, 0 };
+static const TText KStr_sl_EStrKeyTakenFmt[] = { 0x017D, 0x0065, 0x0020, 0x006E, 0x0061, 0x0020, 0x0025, 0x0053, 0x002E, 0x0020, 0x004F, 0x004B, 0x003A, 0x0020, 0x0070, 0x0072, 0x0065, 0x006D, 0x0061, 0x006B, 0x006E, 0x0069, 0x0020, 0x0073, 0x0065, 0x006D, 0 };
 
 // --- Serbian (sr) ---
 static const TText *const KStr_sr_EStrSecGame = _S("IGRA");
@@ -3950,6 +4164,7 @@ static const TText *const KStr_sr_EStrValPresetDefault = _S("Podrazumevano");
 static const TText *const KStr_sr_EStrValPresetRacing = _S("Trke");
 static const TText *const KStr_sr_EStrValPresetFighting = _S("Borbe");
 static const TText *const KStr_sr_EStrItemKeyBase = _S("Tastatura");
+static const TText KStr_sr_EStrValBaseSlider[] = { 0x0421, 0x043B, 0x0430, 0x0458, 0x0434, 0x0435, 0x0440, 0 };
 static const TText KStr_sr_EStrItemWsola[] = { 0x004F, 0x010D, 0x0075, 0x0076, 0x0061, 0x006A, 0x0020, 0x0076, 0x0069, 0x0073, 0x0069, 0x006E, 0x0075, 0x0020, 0x0074, 0x006F, 0x006E, 0x0061, 0 };
 static const TText KStr_sr_EStrItemHelp[] = { 0x0050, 0x006F, 0x006D, 0x006F, 0x0107, 0 };
 static const TText *const KStr_sr_EStrItemGames = _S("Igre");
@@ -3968,6 +4183,13 @@ static const TText *const KStr_sr_EStrAskContinue = _S("Nastavi");
 static const TText *const KStr_sr_EStrAskPickBios = _S("Izaberi BIOS");
 static const TText *const KStr_sr_EStrItemDebug = _S("Dnevnik otklanjanja");
 static const TText *const KStr_sr_EStrBtnTiltZero = _S("Nuliranje nagiba");
+static const TText *const KStr_sr_EStrItemResetKeys = _S("Resetuj kontrole");
+static const TText *const KStr_sr_EStrSlideKeysErr = _S("Medijski tasteri nedostupni");
+static const TText *const KStr_sr_EStrKeyActMain = _S("Glavni taster");
+static const TText *const KStr_sr_EStrKeyActSecond = _S("Drugi taster");
+static const TText KStr_sr_EStrKeyActClear[] = { 0x004F, 0x010D, 0x0069, 0x0073, 0x0074, 0x0069, 0 };
+static const TText *const KStr_sr_EStrHintKeyMenu = _S("OK izbor, DFT otkazuje");
+static const TText KStr_sr_EStrKeyTakenFmt[] = { 0x0056, 0x0065, 0x0107, 0x0020, 0x006E, 0x0061, 0x0020, 0x0025, 0x0053, 0x002E, 0x0020, 0x004F, 0x004B, 0x003A, 0x0020, 0x0070, 0x0072, 0x0065, 0x006D, 0x0065, 0x0073, 0x0074, 0x0069, 0x0020, 0x006F, 0x0076, 0x0064, 0x0065, 0 };
 
 // --- Estonian (et) ---
 static const TText KStr_et_EStrSecGame[] = { 0x004D, 0x00C4, 0x004E, 0x0047, 0 };
@@ -4101,6 +4323,13 @@ static const TText KStr_et_EStrAskContinue[] = { 0x004A, 0x00E4, 0x0074, 0x006B,
 static const TText *const KStr_et_EStrAskPickBios = _S("Vali BIOS");
 static const TText *const KStr_et_EStrItemDebug = _S("Silumislogi");
 static const TText *const KStr_et_EStrBtnTiltZero = _S("Kallutuse nullimine");
+static const TText KStr_et_EStrItemResetKeys[] = { 0x004C, 0x00E4, 0x0068, 0x0074, 0x0065, 0x0073, 0x0074, 0x0061, 0x0020, 0x006A, 0x0075, 0x0068, 0x0074, 0x0069, 0x006D, 0x0069, 0x006E, 0x0065, 0 };
+static const TText *const KStr_et_EStrSlideKeysErr = _S("Meediaklahvid pole saadaval");
+static const TText KStr_et_EStrKeyActMain[] = { 0x0050, 0x00F5, 0x0068, 0x0069, 0x006E, 0x0075, 0x0070, 0x0070, 0 };
+static const TText *const KStr_et_EStrKeyActSecond = _S("Teine nupp");
+static const TText KStr_et_EStrKeyActClear[] = { 0x0054, 0x00FC, 0x0068, 0x006A, 0x0065, 0x006E, 0x0064, 0x0061, 0 };
+static const TText *const KStr_et_EStrHintKeyMenu = _S("OK vali, PTN katkestab");
+static const TText *const KStr_et_EStrKeyTakenFmt = _S("Juba nupul %S. OK: liiguta siia");
 
 // --- Latvian (lv) ---
 static const TText KStr_lv_EStrSecGame[] = { 0x0053, 0x0050, 0x0112, 0x004C, 0x0045, 0 };
@@ -4237,6 +4466,13 @@ static const TText KStr_lv_EStrAskContinue[] = { 0x0054, 0x0075, 0x0072, 0x0070,
 static const TText KStr_lv_EStrAskPickBios[] = { 0x0049, 0x007A, 0x0076, 0x0113, 0x006C, 0x0113, 0x0074, 0x0069, 0x0065, 0x0073, 0x0020, 0x0042, 0x0049, 0x004F, 0x0053, 0 };
 static const TText KStr_lv_EStrItemDebug[] = { 0x0041, 0x0074, 0x006B, 0x013C, 0x016B, 0x0064, 0x006F, 0x0161, 0x0061, 0x006E, 0x0061, 0x0073, 0x0020, 0x017E, 0x0075, 0x0072, 0x006E, 0x0101, 0x006C, 0x0073, 0 };
 static const TText KStr_lv_EStrBtnTiltZero[] = { 0x0053, 0x0061, 0x0073, 0x0076, 0x0113, 0x0072, 0x0161, 0x0061, 0x006E, 0x0061, 0x0073, 0x0020, 0x006E, 0x0075, 0x006C, 0x006C, 0x0065, 0 };
+static const TText KStr_lv_EStrItemResetKeys[] = { 0x0041, 0x0074, 0x0069, 0x0065, 0x0073, 0x0074, 0x0061, 0x0074, 0x012B, 0x0074, 0x0020, 0x0076, 0x0061, 0x0064, 0x012B, 0x0062, 0x0075, 0 };
+static const TText KStr_lv_EStrSlideKeysErr[] = { 0x004D, 0x0075, 0x006C, 0x0074, 0x0069, 0x0076, 0x0069, 0x0064, 0x0065, 0x0073, 0x0020, 0x0074, 0x0061, 0x0075, 0x0073, 0x0074, 0x0069, 0x0146, 0x0069, 0x0020, 0x006E, 0x0061, 0x0076, 0x0020, 0x0070, 0x0069, 0x0065, 0x0065, 0x006A, 0x0061, 0x006D, 0x0069, 0 };
+static const TText KStr_lv_EStrKeyActMain[] = { 0x0047, 0x0061, 0x006C, 0x0076, 0x0065, 0x006E, 0x0061, 0x0069, 0x0073, 0x0020, 0x0074, 0x0061, 0x0075, 0x0073, 0x0074, 0x0069, 0x0146, 0x0161, 0 };
+static const TText KStr_lv_EStrKeyActSecond[] = { 0x004F, 0x0074, 0x0072, 0x0073, 0x0020, 0x0074, 0x0061, 0x0075, 0x0073, 0x0074, 0x0069, 0x0146, 0x0161, 0 };
+static const TText KStr_lv_EStrKeyActClear[] = { 0x004E, 0x006F, 0x0074, 0x012B, 0x0072, 0x012B, 0x0074, 0 };
+static const TText KStr_lv_EStrHintKeyMenu[] = { 0x004F, 0x004B, 0x0020, 0x0069, 0x007A, 0x0076, 0x0113, 0x006C, 0x0113, 0x0074, 0x0069, 0x0065, 0x0073, 0x002C, 0x0020, 0x004C, 0x0050, 0x0054, 0x0020, 0x0061, 0x0074, 0x0063, 0x0065, 0x013C, 0 };
+static const TText KStr_lv_EStrKeyTakenFmt[] = { 0x004A, 0x0061, 0x0075, 0x0020, 0x0075, 0x007A, 0x0020, 0x0025, 0x0053, 0x002E, 0x0020, 0x004F, 0x004B, 0x003A, 0x0020, 0x0070, 0x0101, 0x0072, 0x0076, 0x0069, 0x0065, 0x0074, 0x006F, 0x0074, 0x0020, 0x0161, 0x0065, 0x0069, 0x0074, 0 };
 
 // --- Lithuanian (lt) ---
 static const TText KStr_lt_EStrSecGame[] = { 0x017D, 0x0041, 0x0049, 0x0044, 0x0049, 0x004D, 0x0041, 0x0053, 0 };
@@ -4375,6 +4611,13 @@ static const TText KStr_lt_EStrAskContinue[] = { 0x0054, 0x0119, 0x0073, 0x0074,
 static const TText *const KStr_lt_EStrAskPickBios = _S("Pasirinkti BIOS");
 static const TText KStr_lt_EStrItemDebug[] = { 0x0044, 0x0065, 0x0072, 0x0069, 0x006E, 0x0069, 0x006D, 0x006F, 0x0020, 0x017E, 0x0075, 0x0072, 0x006E, 0x0061, 0x006C, 0x0061, 0x0073, 0 };
 static const TText *const KStr_lt_EStrBtnTiltZero = _S("Pakreipimo nulis");
+static const TText KStr_lt_EStrItemResetKeys[] = { 0x0041, 0x0074, 0x0073, 0x0074, 0x0061, 0x0074, 0x0079, 0x0074, 0x0069, 0x0020, 0x0076, 0x0061, 0x006C, 0x0064, 0x0079, 0x006D, 0x0105, 0 };
+static const TText KStr_lt_EStrSlideKeysErr[] = { 0x004D, 0x0065, 0x0064, 0x0069, 0x006A, 0x006F, 0x0073, 0x0020, 0x006B, 0x006C, 0x0061, 0x0076, 0x0069, 0x0161, 0x0061, 0x0069, 0x0020, 0x006E, 0x0065, 0x0070, 0x0072, 0x0069, 0x0065, 0x0069, 0x006E, 0x0061, 0x006D, 0x0069, 0 };
+static const TText KStr_lt_EStrKeyActMain[] = { 0x0050, 0x0061, 0x0067, 0x0072, 0x0069, 0x006E, 0x0064, 0x0069, 0x006E, 0x0069, 0x0073, 0x0020, 0x006B, 0x006C, 0x0061, 0x0076, 0x0069, 0x0161, 0x0061, 0x0073, 0 };
+static const TText KStr_lt_EStrKeyActSecond[] = { 0x0041, 0x006E, 0x0074, 0x0072, 0x0061, 0x0073, 0x0020, 0x006B, 0x006C, 0x0061, 0x0076, 0x0069, 0x0161, 0x0061, 0x0073, 0 };
+static const TText KStr_lt_EStrKeyActClear[] = { 0x0049, 0x0161, 0x0076, 0x0061, 0x006C, 0x0079, 0x0074, 0x0069, 0 };
+static const TText *const KStr_lt_EStrHintKeyMenu = _S("OK pasirinkti, DFK nutraukia");
+static const TText KStr_lt_EStrKeyTakenFmt[] = { 0x004A, 0x0061, 0x0075, 0x0020, 0x0070, 0x0072, 0x0069, 0x0073, 0x006B, 0x0069, 0x0072, 0x0074, 0x0061, 0x0073, 0x0020, 0x0025, 0x0053, 0x002E, 0x0020, 0x004F, 0x004B, 0x003A, 0x0020, 0x0070, 0x0065, 0x0072, 0x006B, 0x0065, 0x006C, 0x0074, 0x0069, 0x0020, 0x010D, 0x0069, 0x0061, 0 };
 
 // --- Catalan (ca) ---
 static const TText *const KStr_ca_EStrSecGame = _S("JOC");
@@ -4506,6 +4749,13 @@ static const TText *const KStr_ca_EStrAskContinue = _S("Continuar");
 static const TText *const KStr_ca_EStrAskPickBios = _S("Triar BIOS");
 static const TText KStr_ca_EStrItemDebug[] = { 0x0052, 0x0065, 0x0067, 0x0069, 0x0073, 0x0074, 0x0072, 0x0065, 0x0020, 0x0064, 0x0065, 0x0020, 0x0064, 0x0065, 0x0070, 0x0075, 0x0072, 0x0061, 0x0063, 0x0069, 0x00F3, 0 };
 static const TText KStr_ca_EStrBtnTiltZero[] = { 0x005A, 0x0065, 0x0072, 0x006F, 0x0020, 0x0064, 0x0027, 0x0069, 0x006E, 0x0063, 0x006C, 0x0069, 0x006E, 0x0061, 0x0063, 0x0069, 0x00F3, 0 };
+static const TText *const KStr_ca_EStrItemResetKeys = _S("Reiniciar controls");
+static const TText KStr_ca_EStrSlideKeysErr[] = { 0x0054, 0x0065, 0x0063, 0x006C, 0x0065, 0x0073, 0x0020, 0x006D, 0x0075, 0x006C, 0x0074, 0x0069, 0x006D, 0x00E8, 0x0064, 0x0069, 0x0061, 0x0020, 0x006E, 0x006F, 0x0020, 0x0064, 0x0069, 0x0073, 0x0070, 0x006F, 0x006E, 0x0069, 0x0062, 0x006C, 0x0065, 0x0073, 0 };
+static const TText *const KStr_ca_EStrKeyActMain = _S("Tecla principal");
+static const TText KStr_ca_EStrKeyActSecond[] = { 0x0054, 0x0065, 0x0063, 0x006C, 0x0061, 0x0020, 0x0073, 0x0065, 0x0063, 0x0075, 0x006E, 0x0064, 0x00E0, 0x0072, 0x0069, 0x0061, 0 };
+static const TText *const KStr_ca_EStrKeyActClear = _S("Esborrar");
+static const TText KStr_ca_EStrHintKeyMenu[] = { 0x004F, 0x004B, 0x0020, 0x0074, 0x0072, 0x0069, 0x0061, 0x002C, 0x0020, 0x0054, 0x0053, 0x0044, 0x0020, 0x0063, 0x0061, 0x006E, 0x0063, 0x0065, 0x006C, 0x00B7, 0x006C, 0x0061, 0 };
+static const TText KStr_ca_EStrKeyTakenFmt[] = { 0x004A, 0x0061, 0x0020, 0x0061, 0x0020, 0x0025, 0x0053, 0x002E, 0x0020, 0x004F, 0x004B, 0x003A, 0x0020, 0x006D, 0x006F, 0x0075, 0x002D, 0x0068, 0x006F, 0x0020, 0x0061, 0x0071, 0x0075, 0x00ED, 0 };
 
 static const TText *const KTable_en[EStrCount] =
 	{
@@ -4641,6 +4891,8 @@ static const TText *const KTable_en[EStrCount] =
 	KStr_en_EStrItemKeyBase,
 	KStr_en_EStrValBaseN95,
 	KStr_en_EStrValBaseC5,
+	KStr_en_EStrValBaseE90,
+	KStr_en_EStrValBaseSlider,
 	KStr_en_EStrItemWsola,
 	KStr_en_EStrItemHelp,
 	KStr_en_EStrItemGames,
@@ -4659,6 +4911,21 @@ static const TText *const KTable_en[EStrCount] =
 	KStr_en_EStrAskPickBios,
 	KStr_en_EStrItemDebug,
 	KStr_en_EStrBtnTiltZero,
+	KStr_en_EStrKeyPlayPause,
+	KStr_en_EStrKeyPlay,
+	KStr_en_EStrKeyPause,
+	KStr_en_EStrKeyStop,
+	KStr_en_EStrKeyRewind,
+	KStr_en_EStrKeyFastFwd,
+	KStr_en_EStrKeyNext,
+	KStr_en_EStrKeyPrev,
+	KStr_en_EStrItemResetKeys,
+	KStr_en_EStrSlideKeysErr,
+	KStr_en_EStrKeyActMain,
+	KStr_en_EStrKeyActSecond,
+	KStr_en_EStrKeyActClear,
+	KStr_en_EStrHintKeyMenu,
+	KStr_en_EStrKeyTakenFmt,
 	};
 
 static const TText *const KTable_uk[EStrCount] =
@@ -4795,6 +5062,8 @@ static const TText *const KTable_uk[EStrCount] =
 	KStr_uk_EStrItemKeyBase,
 	KStr_en_EStrValBaseN95,
 	KStr_en_EStrValBaseC5,
+	KStr_en_EStrValBaseE90,
+	KStr_uk_EStrValBaseSlider,
 	KStr_uk_EStrItemWsola,
 	KStr_uk_EStrItemHelp,
 	KStr_uk_EStrItemGames,
@@ -4813,6 +5082,21 @@ static const TText *const KTable_uk[EStrCount] =
 	KStr_uk_EStrAskPickBios,
 	KStr_uk_EStrItemDebug,
 	KStr_uk_EStrBtnTiltZero,
+	KStr_en_EStrKeyPlayPause,
+	KStr_en_EStrKeyPlay,
+	KStr_en_EStrKeyPause,
+	KStr_en_EStrKeyStop,
+	KStr_en_EStrKeyRewind,
+	KStr_en_EStrKeyFastFwd,
+	KStr_en_EStrKeyNext,
+	KStr_en_EStrKeyPrev,
+	KStr_uk_EStrItemResetKeys,
+	KStr_uk_EStrSlideKeysErr,
+	KStr_uk_EStrKeyActMain,
+	KStr_uk_EStrKeyActSecond,
+	KStr_uk_EStrKeyActClear,
+	KStr_uk_EStrHintKeyMenu,
+	KStr_uk_EStrKeyTakenFmt,
 	};
 
 static const TText *const KTable_zh[EStrCount] =
@@ -4949,6 +5233,8 @@ static const TText *const KTable_zh[EStrCount] =
 	KStr_zh_EStrItemKeyBase,
 	KStr_en_EStrValBaseN95,
 	KStr_en_EStrValBaseC5,
+	KStr_en_EStrValBaseE90,
+	KStr_zh_EStrValBaseSlider,
 	KStr_zh_EStrItemWsola,
 	KStr_zh_EStrItemHelp,
 	KStr_zh_EStrItemGames,
@@ -4967,6 +5253,21 @@ static const TText *const KTable_zh[EStrCount] =
 	KStr_zh_EStrAskPickBios,
 	KStr_zh_EStrItemDebug,
 	KStr_zh_EStrBtnTiltZero,
+	KStr_en_EStrKeyPlayPause,
+	KStr_en_EStrKeyPlay,
+	KStr_en_EStrKeyPause,
+	KStr_en_EStrKeyStop,
+	KStr_en_EStrKeyRewind,
+	KStr_en_EStrKeyFastFwd,
+	KStr_en_EStrKeyNext,
+	KStr_en_EStrKeyPrev,
+	KStr_zh_EStrItemResetKeys,
+	KStr_zh_EStrSlideKeysErr,
+	KStr_zh_EStrKeyActMain,
+	KStr_zh_EStrKeyActSecond,
+	KStr_zh_EStrKeyActClear,
+	KStr_zh_EStrHintKeyMenu,
+	KStr_zh_EStrKeyTakenFmt,
 	};
 
 static const TText *const KTable_de[EStrCount] =
@@ -5103,6 +5404,8 @@ static const TText *const KTable_de[EStrCount] =
 	KStr_de_EStrItemKeyBase,
 	KStr_en_EStrValBaseN95,
 	KStr_en_EStrValBaseC5,
+	KStr_en_EStrValBaseE90,
+	KStr_en_EStrValBaseSlider,
 	KStr_de_EStrItemWsola,
 	KStr_de_EStrItemHelp,
 	KStr_de_EStrItemGames,
@@ -5121,6 +5424,21 @@ static const TText *const KTable_de[EStrCount] =
 	KStr_de_EStrAskPickBios,
 	KStr_de_EStrItemDebug,
 	KStr_de_EStrBtnTiltZero,
+	KStr_en_EStrKeyPlayPause,
+	KStr_en_EStrKeyPlay,
+	KStr_en_EStrKeyPause,
+	KStr_en_EStrKeyStop,
+	KStr_en_EStrKeyRewind,
+	KStr_en_EStrKeyFastFwd,
+	KStr_en_EStrKeyNext,
+	KStr_en_EStrKeyPrev,
+	KStr_de_EStrItemResetKeys,
+	KStr_de_EStrSlideKeysErr,
+	KStr_de_EStrKeyActMain,
+	KStr_de_EStrKeyActSecond,
+	KStr_de_EStrKeyActClear,
+	KStr_de_EStrHintKeyMenu,
+	KStr_de_EStrKeyTakenFmt,
 	};
 
 static const TText *const KTable_fr[EStrCount] =
@@ -5257,6 +5575,8 @@ static const TText *const KTable_fr[EStrCount] =
 	KStr_fr_EStrItemKeyBase,
 	KStr_en_EStrValBaseN95,
 	KStr_en_EStrValBaseC5,
+	KStr_en_EStrValBaseE90,
+	KStr_en_EStrValBaseSlider,
 	KStr_fr_EStrItemWsola,
 	KStr_fr_EStrItemHelp,
 	KStr_fr_EStrItemGames,
@@ -5275,6 +5595,21 @@ static const TText *const KTable_fr[EStrCount] =
 	KStr_fr_EStrAskPickBios,
 	KStr_fr_EStrItemDebug,
 	KStr_fr_EStrBtnTiltZero,
+	KStr_en_EStrKeyPlayPause,
+	KStr_en_EStrKeyPlay,
+	KStr_en_EStrKeyPause,
+	KStr_en_EStrKeyStop,
+	KStr_en_EStrKeyRewind,
+	KStr_en_EStrKeyFastFwd,
+	KStr_en_EStrKeyNext,
+	KStr_en_EStrKeyPrev,
+	KStr_fr_EStrItemResetKeys,
+	KStr_fr_EStrSlideKeysErr,
+	KStr_fr_EStrKeyActMain,
+	KStr_fr_EStrKeyActSecond,
+	KStr_fr_EStrKeyActClear,
+	KStr_fr_EStrHintKeyMenu,
+	KStr_fr_EStrKeyTakenFmt,
 	};
 
 static const TText *const KTable_es[EStrCount] =
@@ -5411,6 +5746,8 @@ static const TText *const KTable_es[EStrCount] =
 	KStr_es_EStrItemKeyBase,
 	KStr_en_EStrValBaseN95,
 	KStr_en_EStrValBaseC5,
+	KStr_en_EStrValBaseE90,
+	KStr_en_EStrValBaseSlider,
 	KStr_es_EStrItemWsola,
 	KStr_es_EStrItemHelp,
 	KStr_es_EStrItemGames,
@@ -5429,6 +5766,21 @@ static const TText *const KTable_es[EStrCount] =
 	KStr_es_EStrAskPickBios,
 	KStr_es_EStrItemDebug,
 	KStr_es_EStrBtnTiltZero,
+	KStr_en_EStrKeyPlayPause,
+	KStr_en_EStrKeyPlay,
+	KStr_en_EStrKeyPause,
+	KStr_en_EStrKeyStop,
+	KStr_en_EStrKeyRewind,
+	KStr_en_EStrKeyFastFwd,
+	KStr_en_EStrKeyNext,
+	KStr_en_EStrKeyPrev,
+	KStr_es_EStrItemResetKeys,
+	KStr_es_EStrSlideKeysErr,
+	KStr_es_EStrKeyActMain,
+	KStr_es_EStrKeyActSecond,
+	KStr_es_EStrKeyActClear,
+	KStr_es_EStrHintKeyMenu,
+	KStr_es_EStrKeyTakenFmt,
 	};
 
 static const TText *const KTable_ru[EStrCount] =
@@ -5565,6 +5917,8 @@ static const TText *const KTable_ru[EStrCount] =
 	KStr_ru_EStrItemKeyBase,
 	KStr_en_EStrValBaseN95,
 	KStr_en_EStrValBaseC5,
+	KStr_en_EStrValBaseE90,
+	KStr_ru_EStrValBaseSlider,
 	KStr_ru_EStrItemWsola,
 	KStr_ru_EStrItemHelp,
 	KStr_ru_EStrItemGames,
@@ -5583,6 +5937,21 @@ static const TText *const KTable_ru[EStrCount] =
 	KStr_ru_EStrAskPickBios,
 	KStr_ru_EStrItemDebug,
 	KStr_ru_EStrBtnTiltZero,
+	KStr_en_EStrKeyPlayPause,
+	KStr_en_EStrKeyPlay,
+	KStr_en_EStrKeyPause,
+	KStr_en_EStrKeyStop,
+	KStr_en_EStrKeyRewind,
+	KStr_en_EStrKeyFastFwd,
+	KStr_en_EStrKeyNext,
+	KStr_en_EStrKeyPrev,
+	KStr_ru_EStrItemResetKeys,
+	KStr_ru_EStrSlideKeysErr,
+	KStr_ru_EStrKeyActMain,
+	KStr_ru_EStrKeyActSecond,
+	KStr_ru_EStrKeyActClear,
+	KStr_ru_EStrHintKeyMenu,
+	KStr_ru_EStrKeyTakenFmt,
 	};
 
 static const TText *const KTable_pt[EStrCount] =
@@ -5719,6 +6088,8 @@ static const TText *const KTable_pt[EStrCount] =
 	KStr_pt_EStrItemKeyBase,
 	KStr_en_EStrValBaseN95,
 	KStr_en_EStrValBaseC5,
+	KStr_en_EStrValBaseE90,
+	KStr_en_EStrValBaseSlider,
 	KStr_pt_EStrItemWsola,
 	KStr_pt_EStrItemHelp,
 	KStr_pt_EStrItemGames,
@@ -5737,6 +6108,21 @@ static const TText *const KTable_pt[EStrCount] =
 	KStr_pt_EStrAskPickBios,
 	KStr_pt_EStrItemDebug,
 	KStr_pt_EStrBtnTiltZero,
+	KStr_en_EStrKeyPlayPause,
+	KStr_en_EStrKeyPlay,
+	KStr_en_EStrKeyPause,
+	KStr_en_EStrKeyStop,
+	KStr_en_EStrKeyRewind,
+	KStr_en_EStrKeyFastFwd,
+	KStr_en_EStrKeyNext,
+	KStr_en_EStrKeyPrev,
+	KStr_pt_EStrItemResetKeys,
+	KStr_pt_EStrSlideKeysErr,
+	KStr_pt_EStrKeyActMain,
+	KStr_pt_EStrKeyActSecond,
+	KStr_pt_EStrKeyActClear,
+	KStr_pt_EStrHintKeyMenu,
+	KStr_pt_EStrKeyTakenFmt,
 	};
 
 static const TText *const KTable_it[EStrCount] =
@@ -5873,6 +6259,8 @@ static const TText *const KTable_it[EStrCount] =
 	KStr_it_EStrItemKeyBase,
 	KStr_en_EStrValBaseN95,
 	KStr_en_EStrValBaseC5,
+	KStr_en_EStrValBaseE90,
+	KStr_en_EStrValBaseSlider,
 	KStr_it_EStrItemWsola,
 	KStr_it_EStrItemHelp,
 	KStr_it_EStrItemGames,
@@ -5891,6 +6279,21 @@ static const TText *const KTable_it[EStrCount] =
 	KStr_it_EStrAskPickBios,
 	KStr_it_EStrItemDebug,
 	KStr_it_EStrBtnTiltZero,
+	KStr_en_EStrKeyPlayPause,
+	KStr_en_EStrKeyPlay,
+	KStr_en_EStrKeyPause,
+	KStr_en_EStrKeyStop,
+	KStr_en_EStrKeyRewind,
+	KStr_en_EStrKeyFastFwd,
+	KStr_en_EStrKeyNext,
+	KStr_en_EStrKeyPrev,
+	KStr_it_EStrItemResetKeys,
+	KStr_it_EStrSlideKeysErr,
+	KStr_it_EStrKeyActMain,
+	KStr_it_EStrKeyActSecond,
+	KStr_it_EStrKeyActClear,
+	KStr_it_EStrHintKeyMenu,
+	KStr_it_EStrKeyTakenFmt,
 	};
 
 static const TText *const KTable_pl[EStrCount] =
@@ -6027,6 +6430,8 @@ static const TText *const KTable_pl[EStrCount] =
 	KStr_pl_EStrItemKeyBase,
 	KStr_en_EStrValBaseN95,
 	KStr_en_EStrValBaseC5,
+	KStr_en_EStrValBaseE90,
+	KStr_en_EStrValBaseSlider,
 	KStr_pl_EStrItemWsola,
 	KStr_pl_EStrItemHelp,
 	KStr_pl_EStrItemGames,
@@ -6045,6 +6450,21 @@ static const TText *const KTable_pl[EStrCount] =
 	KStr_pl_EStrAskPickBios,
 	KStr_pl_EStrItemDebug,
 	KStr_pl_EStrBtnTiltZero,
+	KStr_en_EStrKeyPlayPause,
+	KStr_en_EStrKeyPlay,
+	KStr_en_EStrKeyPause,
+	KStr_en_EStrKeyStop,
+	KStr_en_EStrKeyRewind,
+	KStr_en_EStrKeyFastFwd,
+	KStr_en_EStrKeyNext,
+	KStr_en_EStrKeyPrev,
+	KStr_pl_EStrItemResetKeys,
+	KStr_pl_EStrSlideKeysErr,
+	KStr_pl_EStrKeyActMain,
+	KStr_pl_EStrKeyActSecond,
+	KStr_pl_EStrKeyActClear,
+	KStr_pl_EStrHintKeyMenu,
+	KStr_pl_EStrKeyTakenFmt,
 	};
 
 static const TText *const KTable_tr[EStrCount] =
@@ -6181,6 +6601,8 @@ static const TText *const KTable_tr[EStrCount] =
 	KStr_tr_EStrItemKeyBase,
 	KStr_en_EStrValBaseN95,
 	KStr_en_EStrValBaseC5,
+	KStr_en_EStrValBaseE90,
+	KStr_en_EStrValBaseSlider,
 	KStr_tr_EStrItemWsola,
 	KStr_tr_EStrItemHelp,
 	KStr_tr_EStrItemGames,
@@ -6199,6 +6621,21 @@ static const TText *const KTable_tr[EStrCount] =
 	KStr_tr_EStrAskPickBios,
 	KStr_tr_EStrItemDebug,
 	KStr_tr_EStrBtnTiltZero,
+	KStr_en_EStrKeyPlayPause,
+	KStr_en_EStrKeyPlay,
+	KStr_en_EStrKeyPause,
+	KStr_en_EStrKeyStop,
+	KStr_en_EStrKeyRewind,
+	KStr_en_EStrKeyFastFwd,
+	KStr_en_EStrKeyNext,
+	KStr_en_EStrKeyPrev,
+	KStr_tr_EStrItemResetKeys,
+	KStr_tr_EStrSlideKeysErr,
+	KStr_tr_EStrKeyActMain,
+	KStr_tr_EStrKeyActSecond,
+	KStr_tr_EStrKeyActClear,
+	KStr_tr_EStrHintKeyMenu,
+	KStr_tr_EStrKeyTakenFmt,
 	};
 
 static const TText *const KTable_ja[EStrCount] =
@@ -6335,6 +6772,8 @@ static const TText *const KTable_ja[EStrCount] =
 	KStr_ja_EStrItemKeyBase,
 	KStr_en_EStrValBaseN95,
 	KStr_en_EStrValBaseC5,
+	KStr_en_EStrValBaseE90,
+	KStr_ja_EStrValBaseSlider,
 	KStr_ja_EStrItemWsola,
 	KStr_ja_EStrItemHelp,
 	KStr_ja_EStrItemGames,
@@ -6353,6 +6792,21 @@ static const TText *const KTable_ja[EStrCount] =
 	KStr_ja_EStrAskPickBios,
 	KStr_ja_EStrItemDebug,
 	KStr_ja_EStrBtnTiltZero,
+	KStr_en_EStrKeyPlayPause,
+	KStr_en_EStrKeyPlay,
+	KStr_en_EStrKeyPause,
+	KStr_en_EStrKeyStop,
+	KStr_en_EStrKeyRewind,
+	KStr_en_EStrKeyFastFwd,
+	KStr_en_EStrKeyNext,
+	KStr_en_EStrKeyPrev,
+	KStr_ja_EStrItemResetKeys,
+	KStr_ja_EStrSlideKeysErr,
+	KStr_ja_EStrKeyActMain,
+	KStr_ja_EStrKeyActSecond,
+	KStr_ja_EStrKeyActClear,
+	KStr_ja_EStrHintKeyMenu,
+	KStr_ja_EStrKeyTakenFmt,
 	};
 
 static const TText *const KTable_hi[EStrCount] =
@@ -6489,6 +6943,8 @@ static const TText *const KTable_hi[EStrCount] =
 	KStr_hi_EStrItemKeyBase,
 	KStr_en_EStrValBaseN95,
 	KStr_en_EStrValBaseC5,
+	KStr_en_EStrValBaseE90,
+	KStr_hi_EStrValBaseSlider,
 	KStr_hi_EStrItemWsola,
 	KStr_hi_EStrItemHelp,
 	KStr_hi_EStrItemGames,
@@ -6507,6 +6963,21 @@ static const TText *const KTable_hi[EStrCount] =
 	KStr_hi_EStrAskPickBios,
 	KStr_hi_EStrItemDebug,
 	KStr_hi_EStrBtnTiltZero,
+	KStr_en_EStrKeyPlayPause,
+	KStr_en_EStrKeyPlay,
+	KStr_en_EStrKeyPause,
+	KStr_en_EStrKeyStop,
+	KStr_en_EStrKeyRewind,
+	KStr_en_EStrKeyFastFwd,
+	KStr_en_EStrKeyNext,
+	KStr_en_EStrKeyPrev,
+	KStr_hi_EStrItemResetKeys,
+	KStr_hi_EStrSlideKeysErr,
+	KStr_hi_EStrKeyActMain,
+	KStr_hi_EStrKeyActSecond,
+	KStr_hi_EStrKeyActClear,
+	KStr_hi_EStrHintKeyMenu,
+	KStr_hi_EStrKeyTakenFmt,
 	};
 
 static const TText *const KTable_ar[EStrCount] =
@@ -6643,6 +7114,8 @@ static const TText *const KTable_ar[EStrCount] =
 	KStr_ar_EStrItemKeyBase,
 	KStr_en_EStrValBaseN95,
 	KStr_en_EStrValBaseC5,
+	KStr_en_EStrValBaseE90,
+	KStr_ar_EStrValBaseSlider,
 	KStr_ar_EStrItemWsola,
 	KStr_ar_EStrItemHelp,
 	KStr_ar_EStrItemGames,
@@ -6661,6 +7134,21 @@ static const TText *const KTable_ar[EStrCount] =
 	KStr_ar_EStrAskPickBios,
 	KStr_ar_EStrItemDebug,
 	KStr_ar_EStrBtnTiltZero,
+	KStr_en_EStrKeyPlayPause,
+	KStr_en_EStrKeyPlay,
+	KStr_en_EStrKeyPause,
+	KStr_en_EStrKeyStop,
+	KStr_en_EStrKeyRewind,
+	KStr_en_EStrKeyFastFwd,
+	KStr_en_EStrKeyNext,
+	KStr_en_EStrKeyPrev,
+	KStr_ar_EStrItemResetKeys,
+	KStr_ar_EStrSlideKeysErr,
+	KStr_ar_EStrKeyActMain,
+	KStr_ar_EStrKeyActSecond,
+	KStr_ar_EStrKeyActClear,
+	KStr_ar_EStrHintKeyMenu,
+	KStr_ar_EStrKeyTakenFmt,
 	};
 
 static const TText *const KTable_ko[EStrCount] =
@@ -6797,6 +7285,8 @@ static const TText *const KTable_ko[EStrCount] =
 	KStr_ko_EStrItemKeyBase,
 	KStr_en_EStrValBaseN95,
 	KStr_en_EStrValBaseC5,
+	KStr_en_EStrValBaseE90,
+	KStr_ko_EStrValBaseSlider,
 	KStr_ko_EStrItemWsola,
 	KStr_ko_EStrItemHelp,
 	KStr_ko_EStrItemGames,
@@ -6815,6 +7305,21 @@ static const TText *const KTable_ko[EStrCount] =
 	KStr_ko_EStrAskPickBios,
 	KStr_ko_EStrItemDebug,
 	KStr_ko_EStrBtnTiltZero,
+	KStr_en_EStrKeyPlayPause,
+	KStr_en_EStrKeyPlay,
+	KStr_en_EStrKeyPause,
+	KStr_en_EStrKeyStop,
+	KStr_en_EStrKeyRewind,
+	KStr_en_EStrKeyFastFwd,
+	KStr_en_EStrKeyNext,
+	KStr_en_EStrKeyPrev,
+	KStr_ko_EStrItemResetKeys,
+	KStr_ko_EStrSlideKeysErr,
+	KStr_ko_EStrKeyActMain,
+	KStr_ko_EStrKeyActSecond,
+	KStr_ko_EStrKeyActClear,
+	KStr_ko_EStrHintKeyMenu,
+	KStr_ko_EStrKeyTakenFmt,
 	};
 
 static const TText *const KTable_cs[EStrCount] =
@@ -6951,6 +7456,8 @@ static const TText *const KTable_cs[EStrCount] =
 	KStr_cs_EStrItemKeyBase,
 	KStr_en_EStrValBaseN95,
 	KStr_en_EStrValBaseC5,
+	KStr_en_EStrValBaseE90,
+	KStr_en_EStrValBaseSlider,
 	KStr_cs_EStrItemWsola,
 	KStr_cs_EStrItemHelp,
 	KStr_cs_EStrItemGames,
@@ -6969,6 +7476,21 @@ static const TText *const KTable_cs[EStrCount] =
 	KStr_cs_EStrAskPickBios,
 	KStr_cs_EStrItemDebug,
 	KStr_cs_EStrBtnTiltZero,
+	KStr_en_EStrKeyPlayPause,
+	KStr_en_EStrKeyPlay,
+	KStr_en_EStrKeyPause,
+	KStr_en_EStrKeyStop,
+	KStr_en_EStrKeyRewind,
+	KStr_en_EStrKeyFastFwd,
+	KStr_en_EStrKeyNext,
+	KStr_en_EStrKeyPrev,
+	KStr_cs_EStrItemResetKeys,
+	KStr_cs_EStrSlideKeysErr,
+	KStr_cs_EStrKeyActMain,
+	KStr_cs_EStrKeyActSecond,
+	KStr_cs_EStrKeyActClear,
+	KStr_cs_EStrHintKeyMenu,
+	KStr_cs_EStrKeyTakenFmt,
 	};
 
 static const TText *const KTable_nl[EStrCount] =
@@ -7105,6 +7627,8 @@ static const TText *const KTable_nl[EStrCount] =
 	KStr_nl_EStrItemKeyBase,
 	KStr_en_EStrValBaseN95,
 	KStr_en_EStrValBaseC5,
+	KStr_en_EStrValBaseE90,
+	KStr_en_EStrValBaseSlider,
 	KStr_nl_EStrItemWsola,
 	KStr_en_EStrItemHelp,
 	KStr_nl_EStrItemGames,
@@ -7123,6 +7647,21 @@ static const TText *const KTable_nl[EStrCount] =
 	KStr_nl_EStrAskPickBios,
 	KStr_nl_EStrItemDebug,
 	KStr_nl_EStrBtnTiltZero,
+	KStr_en_EStrKeyPlayPause,
+	KStr_en_EStrKeyPlay,
+	KStr_en_EStrKeyPause,
+	KStr_en_EStrKeyStop,
+	KStr_en_EStrKeyRewind,
+	KStr_en_EStrKeyFastFwd,
+	KStr_en_EStrKeyNext,
+	KStr_en_EStrKeyPrev,
+	KStr_nl_EStrItemResetKeys,
+	KStr_nl_EStrSlideKeysErr,
+	KStr_nl_EStrKeyActMain,
+	KStr_nl_EStrKeyActSecond,
+	KStr_nl_EStrKeyActClear,
+	KStr_nl_EStrHintKeyMenu,
+	KStr_nl_EStrKeyTakenFmt,
 	};
 
 static const TText *const KTable_sv[EStrCount] =
@@ -7259,6 +7798,8 @@ static const TText *const KTable_sv[EStrCount] =
 	KStr_sv_EStrItemKeyBase,
 	KStr_en_EStrValBaseN95,
 	KStr_en_EStrValBaseC5,
+	KStr_en_EStrValBaseE90,
+	KStr_en_EStrValBaseSlider,
 	KStr_sv_EStrItemWsola,
 	KStr_sv_EStrItemHelp,
 	KStr_sv_EStrItemGames,
@@ -7277,6 +7818,21 @@ static const TText *const KTable_sv[EStrCount] =
 	KStr_sv_EStrAskPickBios,
 	KStr_sv_EStrItemDebug,
 	KStr_sv_EStrBtnTiltZero,
+	KStr_en_EStrKeyPlayPause,
+	KStr_en_EStrKeyPlay,
+	KStr_en_EStrKeyPause,
+	KStr_en_EStrKeyStop,
+	KStr_en_EStrKeyRewind,
+	KStr_en_EStrKeyFastFwd,
+	KStr_en_EStrKeyNext,
+	KStr_en_EStrKeyPrev,
+	KStr_sv_EStrItemResetKeys,
+	KStr_sv_EStrSlideKeysErr,
+	KStr_sv_EStrKeyActMain,
+	KStr_sv_EStrKeyActSecond,
+	KStr_sv_EStrKeyActClear,
+	KStr_sv_EStrHintKeyMenu,
+	KStr_sv_EStrKeyTakenFmt,
 	};
 
 static const TText *const KTable_ro[EStrCount] =
@@ -7413,6 +7969,8 @@ static const TText *const KTable_ro[EStrCount] =
 	KStr_ro_EStrItemKeyBase,
 	KStr_en_EStrValBaseN95,
 	KStr_en_EStrValBaseC5,
+	KStr_en_EStrValBaseE90,
+	KStr_en_EStrValBaseSlider,
 	KStr_ro_EStrItemWsola,
 	KStr_ro_EStrItemHelp,
 	KStr_ro_EStrItemGames,
@@ -7431,6 +7989,21 @@ static const TText *const KTable_ro[EStrCount] =
 	KStr_ro_EStrAskPickBios,
 	KStr_ro_EStrItemDebug,
 	KStr_ro_EStrBtnTiltZero,
+	KStr_en_EStrKeyPlayPause,
+	KStr_en_EStrKeyPlay,
+	KStr_en_EStrKeyPause,
+	KStr_en_EStrKeyStop,
+	KStr_en_EStrKeyRewind,
+	KStr_en_EStrKeyFastFwd,
+	KStr_en_EStrKeyNext,
+	KStr_en_EStrKeyPrev,
+	KStr_ro_EStrItemResetKeys,
+	KStr_ro_EStrSlideKeysErr,
+	KStr_ro_EStrKeyActMain,
+	KStr_ro_EStrKeyActSecond,
+	KStr_ro_EStrKeyActClear,
+	KStr_ro_EStrHintKeyMenu,
+	KStr_ro_EStrKeyTakenFmt,
 	};
 
 static const TText *const KTable_hu[EStrCount] =
@@ -7567,6 +8140,8 @@ static const TText *const KTable_hu[EStrCount] =
 	KStr_hu_EStrItemKeyBase,
 	KStr_en_EStrValBaseN95,
 	KStr_en_EStrValBaseC5,
+	KStr_en_EStrValBaseE90,
+	KStr_en_EStrValBaseSlider,
 	KStr_hu_EStrItemWsola,
 	KStr_hu_EStrItemHelp,
 	KStr_hu_EStrItemGames,
@@ -7585,6 +8160,21 @@ static const TText *const KTable_hu[EStrCount] =
 	KStr_hu_EStrAskPickBios,
 	KStr_hu_EStrItemDebug,
 	KStr_hu_EStrBtnTiltZero,
+	KStr_en_EStrKeyPlayPause,
+	KStr_en_EStrKeyPlay,
+	KStr_en_EStrKeyPause,
+	KStr_en_EStrKeyStop,
+	KStr_en_EStrKeyRewind,
+	KStr_en_EStrKeyFastFwd,
+	KStr_en_EStrKeyNext,
+	KStr_en_EStrKeyPrev,
+	KStr_hu_EStrItemResetKeys,
+	KStr_hu_EStrSlideKeysErr,
+	KStr_hu_EStrKeyActMain,
+	KStr_hu_EStrKeyActSecond,
+	KStr_hu_EStrKeyActClear,
+	KStr_hu_EStrHintKeyMenu,
+	KStr_hu_EStrKeyTakenFmt,
 	};
 
 static const TText *const KTable_el[EStrCount] =
@@ -7721,6 +8311,8 @@ static const TText *const KTable_el[EStrCount] =
 	KStr_el_EStrItemKeyBase,
 	KStr_en_EStrValBaseN95,
 	KStr_en_EStrValBaseC5,
+	KStr_en_EStrValBaseE90,
+	KStr_en_EStrValBaseSlider,
 	KStr_el_EStrItemWsola,
 	KStr_el_EStrItemHelp,
 	KStr_el_EStrItemGames,
@@ -7739,6 +8331,21 @@ static const TText *const KTable_el[EStrCount] =
 	KStr_el_EStrAskPickBios,
 	KStr_el_EStrItemDebug,
 	KStr_el_EStrBtnTiltZero,
+	KStr_en_EStrKeyPlayPause,
+	KStr_en_EStrKeyPlay,
+	KStr_en_EStrKeyPause,
+	KStr_en_EStrKeyStop,
+	KStr_en_EStrKeyRewind,
+	KStr_en_EStrKeyFastFwd,
+	KStr_en_EStrKeyNext,
+	KStr_en_EStrKeyPrev,
+	KStr_el_EStrItemResetKeys,
+	KStr_el_EStrSlideKeysErr,
+	KStr_el_EStrKeyActMain,
+	KStr_el_EStrKeyActSecond,
+	KStr_el_EStrKeyActClear,
+	KStr_el_EStrHintKeyMenu,
+	KStr_el_EStrKeyTakenFmt,
 	};
 
 static const TText *const KTable_fi[EStrCount] =
@@ -7875,6 +8482,8 @@ static const TText *const KTable_fi[EStrCount] =
 	KStr_fi_EStrItemKeyBase,
 	KStr_en_EStrValBaseN95,
 	KStr_en_EStrValBaseC5,
+	KStr_en_EStrValBaseE90,
+	KStr_en_EStrValBaseSlider,
 	KStr_fi_EStrItemWsola,
 	KStr_fi_EStrItemHelp,
 	KStr_fi_EStrItemGames,
@@ -7893,6 +8502,21 @@ static const TText *const KTable_fi[EStrCount] =
 	KStr_fi_EStrAskPickBios,
 	KStr_fi_EStrItemDebug,
 	KStr_fi_EStrBtnTiltZero,
+	KStr_en_EStrKeyPlayPause,
+	KStr_en_EStrKeyPlay,
+	KStr_en_EStrKeyPause,
+	KStr_en_EStrKeyStop,
+	KStr_en_EStrKeyRewind,
+	KStr_en_EStrKeyFastFwd,
+	KStr_en_EStrKeyNext,
+	KStr_en_EStrKeyPrev,
+	KStr_fi_EStrItemResetKeys,
+	KStr_fi_EStrSlideKeysErr,
+	KStr_fi_EStrKeyActMain,
+	KStr_fi_EStrKeyActSecond,
+	KStr_fi_EStrKeyActClear,
+	KStr_fi_EStrHintKeyMenu,
+	KStr_fi_EStrKeyTakenFmt,
 	};
 
 static const TText *const KTable_da[EStrCount] =
@@ -8029,6 +8653,8 @@ static const TText *const KTable_da[EStrCount] =
 	KStr_da_EStrItemKeyBase,
 	KStr_en_EStrValBaseN95,
 	KStr_en_EStrValBaseC5,
+	KStr_en_EStrValBaseE90,
+	KStr_en_EStrValBaseSlider,
 	KStr_da_EStrItemWsola,
 	KStr_da_EStrItemHelp,
 	KStr_da_EStrItemGames,
@@ -8047,6 +8673,21 @@ static const TText *const KTable_da[EStrCount] =
 	KStr_da_EStrAskPickBios,
 	KStr_da_EStrItemDebug,
 	KStr_da_EStrBtnTiltZero,
+	KStr_en_EStrKeyPlayPause,
+	KStr_en_EStrKeyPlay,
+	KStr_en_EStrKeyPause,
+	KStr_en_EStrKeyStop,
+	KStr_en_EStrKeyRewind,
+	KStr_en_EStrKeyFastFwd,
+	KStr_en_EStrKeyNext,
+	KStr_en_EStrKeyPrev,
+	KStr_da_EStrItemResetKeys,
+	KStr_da_EStrSlideKeysErr,
+	KStr_da_EStrKeyActMain,
+	KStr_da_EStrKeyActSecond,
+	KStr_da_EStrKeyActClear,
+	KStr_da_EStrHintKeyMenu,
+	KStr_da_EStrKeyTakenFmt,
 	};
 
 static const TText *const KTable_no[EStrCount] =
@@ -8183,6 +8824,8 @@ static const TText *const KTable_no[EStrCount] =
 	KStr_no_EStrItemKeyBase,
 	KStr_en_EStrValBaseN95,
 	KStr_en_EStrValBaseC5,
+	KStr_en_EStrValBaseE90,
+	KStr_en_EStrValBaseSlider,
 	KStr_no_EStrItemWsola,
 	KStr_no_EStrItemHelp,
 	KStr_no_EStrItemGames,
@@ -8201,6 +8844,21 @@ static const TText *const KTable_no[EStrCount] =
 	KStr_no_EStrAskPickBios,
 	KStr_no_EStrItemDebug,
 	KStr_no_EStrBtnTiltZero,
+	KStr_en_EStrKeyPlayPause,
+	KStr_en_EStrKeyPlay,
+	KStr_en_EStrKeyPause,
+	KStr_en_EStrKeyStop,
+	KStr_en_EStrKeyRewind,
+	KStr_en_EStrKeyFastFwd,
+	KStr_en_EStrKeyNext,
+	KStr_en_EStrKeyPrev,
+	KStr_no_EStrItemResetKeys,
+	KStr_no_EStrSlideKeysErr,
+	KStr_no_EStrKeyActMain,
+	KStr_no_EStrKeyActSecond,
+	KStr_no_EStrKeyActClear,
+	KStr_no_EStrHintKeyMenu,
+	KStr_no_EStrKeyTakenFmt,
 	};
 
 static const TText *const KTable_sk[EStrCount] =
@@ -8337,6 +8995,8 @@ static const TText *const KTable_sk[EStrCount] =
 	KStr_sk_EStrItemKeyBase,
 	KStr_en_EStrValBaseN95,
 	KStr_en_EStrValBaseC5,
+	KStr_en_EStrValBaseE90,
+	KStr_en_EStrValBaseSlider,
 	KStr_sk_EStrItemWsola,
 	KStr_sk_EStrItemHelp,
 	KStr_sk_EStrItemGames,
@@ -8355,6 +9015,21 @@ static const TText *const KTable_sk[EStrCount] =
 	KStr_sk_EStrAskPickBios,
 	KStr_sk_EStrItemDebug,
 	KStr_sk_EStrBtnTiltZero,
+	KStr_en_EStrKeyPlayPause,
+	KStr_en_EStrKeyPlay,
+	KStr_en_EStrKeyPause,
+	KStr_en_EStrKeyStop,
+	KStr_en_EStrKeyRewind,
+	KStr_en_EStrKeyFastFwd,
+	KStr_en_EStrKeyNext,
+	KStr_en_EStrKeyPrev,
+	KStr_sk_EStrItemResetKeys,
+	KStr_sk_EStrSlideKeysErr,
+	KStr_sk_EStrKeyActMain,
+	KStr_sk_EStrKeyActSecond,
+	KStr_sk_EStrKeyActClear,
+	KStr_sk_EStrHintKeyMenu,
+	KStr_sk_EStrKeyTakenFmt,
 	};
 
 static const TText *const KTable_bg[EStrCount] =
@@ -8491,6 +9166,8 @@ static const TText *const KTable_bg[EStrCount] =
 	KStr_bg_EStrItemKeyBase,
 	KStr_en_EStrValBaseN95,
 	KStr_en_EStrValBaseC5,
+	KStr_en_EStrValBaseE90,
+	KStr_bg_EStrValBaseSlider,
 	KStr_bg_EStrItemWsola,
 	KStr_bg_EStrItemHelp,
 	KStr_bg_EStrItemGames,
@@ -8509,6 +9186,21 @@ static const TText *const KTable_bg[EStrCount] =
 	KStr_bg_EStrAskPickBios,
 	KStr_bg_EStrItemDebug,
 	KStr_bg_EStrBtnTiltZero,
+	KStr_en_EStrKeyPlayPause,
+	KStr_en_EStrKeyPlay,
+	KStr_en_EStrKeyPause,
+	KStr_en_EStrKeyStop,
+	KStr_en_EStrKeyRewind,
+	KStr_en_EStrKeyFastFwd,
+	KStr_en_EStrKeyNext,
+	KStr_en_EStrKeyPrev,
+	KStr_bg_EStrItemResetKeys,
+	KStr_bg_EStrSlideKeysErr,
+	KStr_bg_EStrKeyActMain,
+	KStr_bg_EStrKeyActSecond,
+	KStr_bg_EStrKeyActClear,
+	KStr_bg_EStrHintKeyMenu,
+	KStr_bg_EStrKeyTakenFmt,
 	};
 
 static const TText *const KTable_hr[EStrCount] =
@@ -8645,6 +9337,8 @@ static const TText *const KTable_hr[EStrCount] =
 	KStr_hr_EStrItemKeyBase,
 	KStr_en_EStrValBaseN95,
 	KStr_en_EStrValBaseC5,
+	KStr_en_EStrValBaseE90,
+	KStr_en_EStrValBaseSlider,
 	KStr_hr_EStrItemWsola,
 	KStr_hr_EStrItemHelp,
 	KStr_hr_EStrItemGames,
@@ -8663,6 +9357,21 @@ static const TText *const KTable_hr[EStrCount] =
 	KStr_hr_EStrAskPickBios,
 	KStr_hr_EStrItemDebug,
 	KStr_hr_EStrBtnTiltZero,
+	KStr_en_EStrKeyPlayPause,
+	KStr_en_EStrKeyPlay,
+	KStr_en_EStrKeyPause,
+	KStr_en_EStrKeyStop,
+	KStr_en_EStrKeyRewind,
+	KStr_en_EStrKeyFastFwd,
+	KStr_en_EStrKeyNext,
+	KStr_en_EStrKeyPrev,
+	KStr_hr_EStrItemResetKeys,
+	KStr_hr_EStrSlideKeysErr,
+	KStr_hr_EStrKeyActMain,
+	KStr_hr_EStrKeyActSecond,
+	KStr_hr_EStrKeyActClear,
+	KStr_hr_EStrHintKeyMenu,
+	KStr_hr_EStrKeyTakenFmt,
 	};
 
 static const TText *const KTable_sl[EStrCount] =
@@ -8799,6 +9508,8 @@ static const TText *const KTable_sl[EStrCount] =
 	KStr_sl_EStrItemKeyBase,
 	KStr_en_EStrValBaseN95,
 	KStr_en_EStrValBaseC5,
+	KStr_en_EStrValBaseE90,
+	KStr_en_EStrValBaseSlider,
 	KStr_sl_EStrItemWsola,
 	KStr_sl_EStrItemHelp,
 	KStr_sl_EStrItemGames,
@@ -8817,6 +9528,21 @@ static const TText *const KTable_sl[EStrCount] =
 	KStr_sl_EStrAskPickBios,
 	KStr_sl_EStrItemDebug,
 	KStr_sl_EStrBtnTiltZero,
+	KStr_en_EStrKeyPlayPause,
+	KStr_en_EStrKeyPlay,
+	KStr_en_EStrKeyPause,
+	KStr_en_EStrKeyStop,
+	KStr_en_EStrKeyRewind,
+	KStr_en_EStrKeyFastFwd,
+	KStr_en_EStrKeyNext,
+	KStr_en_EStrKeyPrev,
+	KStr_sl_EStrItemResetKeys,
+	KStr_sl_EStrSlideKeysErr,
+	KStr_sl_EStrKeyActMain,
+	KStr_sl_EStrKeyActSecond,
+	KStr_sl_EStrKeyActClear,
+	KStr_sl_EStrHintKeyMenu,
+	KStr_sl_EStrKeyTakenFmt,
 	};
 
 static const TText *const KTable_sr[EStrCount] =
@@ -8953,6 +9679,8 @@ static const TText *const KTable_sr[EStrCount] =
 	KStr_sr_EStrItemKeyBase,
 	KStr_en_EStrValBaseN95,
 	KStr_en_EStrValBaseC5,
+	KStr_en_EStrValBaseE90,
+	KStr_sr_EStrValBaseSlider,
 	KStr_sr_EStrItemWsola,
 	KStr_sr_EStrItemHelp,
 	KStr_sr_EStrItemGames,
@@ -8971,6 +9699,21 @@ static const TText *const KTable_sr[EStrCount] =
 	KStr_sr_EStrAskPickBios,
 	KStr_sr_EStrItemDebug,
 	KStr_sr_EStrBtnTiltZero,
+	KStr_en_EStrKeyPlayPause,
+	KStr_en_EStrKeyPlay,
+	KStr_en_EStrKeyPause,
+	KStr_en_EStrKeyStop,
+	KStr_en_EStrKeyRewind,
+	KStr_en_EStrKeyFastFwd,
+	KStr_en_EStrKeyNext,
+	KStr_en_EStrKeyPrev,
+	KStr_sr_EStrItemResetKeys,
+	KStr_sr_EStrSlideKeysErr,
+	KStr_sr_EStrKeyActMain,
+	KStr_sr_EStrKeyActSecond,
+	KStr_sr_EStrKeyActClear,
+	KStr_sr_EStrHintKeyMenu,
+	KStr_sr_EStrKeyTakenFmt,
 	};
 
 static const TText *const KTable_et[EStrCount] =
@@ -9107,6 +9850,8 @@ static const TText *const KTable_et[EStrCount] =
 	KStr_et_EStrItemKeyBase,
 	KStr_en_EStrValBaseN95,
 	KStr_en_EStrValBaseC5,
+	KStr_en_EStrValBaseE90,
+	KStr_en_EStrValBaseSlider,
 	KStr_et_EStrItemWsola,
 	KStr_et_EStrItemHelp,
 	KStr_et_EStrItemGames,
@@ -9125,6 +9870,21 @@ static const TText *const KTable_et[EStrCount] =
 	KStr_et_EStrAskPickBios,
 	KStr_et_EStrItemDebug,
 	KStr_et_EStrBtnTiltZero,
+	KStr_en_EStrKeyPlayPause,
+	KStr_en_EStrKeyPlay,
+	KStr_en_EStrKeyPause,
+	KStr_en_EStrKeyStop,
+	KStr_en_EStrKeyRewind,
+	KStr_en_EStrKeyFastFwd,
+	KStr_en_EStrKeyNext,
+	KStr_en_EStrKeyPrev,
+	KStr_et_EStrItemResetKeys,
+	KStr_et_EStrSlideKeysErr,
+	KStr_et_EStrKeyActMain,
+	KStr_et_EStrKeyActSecond,
+	KStr_et_EStrKeyActClear,
+	KStr_et_EStrHintKeyMenu,
+	KStr_et_EStrKeyTakenFmt,
 	};
 
 static const TText *const KTable_lv[EStrCount] =
@@ -9261,6 +10021,8 @@ static const TText *const KTable_lv[EStrCount] =
 	KStr_lv_EStrItemKeyBase,
 	KStr_en_EStrValBaseN95,
 	KStr_en_EStrValBaseC5,
+	KStr_en_EStrValBaseE90,
+	KStr_en_EStrValBaseSlider,
 	KStr_lv_EStrItemWsola,
 	KStr_lv_EStrItemHelp,
 	KStr_lv_EStrItemGames,
@@ -9279,6 +10041,21 @@ static const TText *const KTable_lv[EStrCount] =
 	KStr_lv_EStrAskPickBios,
 	KStr_lv_EStrItemDebug,
 	KStr_lv_EStrBtnTiltZero,
+	KStr_en_EStrKeyPlayPause,
+	KStr_en_EStrKeyPlay,
+	KStr_en_EStrKeyPause,
+	KStr_en_EStrKeyStop,
+	KStr_en_EStrKeyRewind,
+	KStr_en_EStrKeyFastFwd,
+	KStr_en_EStrKeyNext,
+	KStr_en_EStrKeyPrev,
+	KStr_lv_EStrItemResetKeys,
+	KStr_lv_EStrSlideKeysErr,
+	KStr_lv_EStrKeyActMain,
+	KStr_lv_EStrKeyActSecond,
+	KStr_lv_EStrKeyActClear,
+	KStr_lv_EStrHintKeyMenu,
+	KStr_lv_EStrKeyTakenFmt,
 	};
 
 static const TText *const KTable_lt[EStrCount] =
@@ -9415,6 +10192,8 @@ static const TText *const KTable_lt[EStrCount] =
 	KStr_lt_EStrItemKeyBase,
 	KStr_en_EStrValBaseN95,
 	KStr_en_EStrValBaseC5,
+	KStr_en_EStrValBaseE90,
+	KStr_en_EStrValBaseSlider,
 	KStr_lt_EStrItemWsola,
 	KStr_lt_EStrItemHelp,
 	KStr_lt_EStrItemGames,
@@ -9433,6 +10212,21 @@ static const TText *const KTable_lt[EStrCount] =
 	KStr_lt_EStrAskPickBios,
 	KStr_lt_EStrItemDebug,
 	KStr_lt_EStrBtnTiltZero,
+	KStr_en_EStrKeyPlayPause,
+	KStr_en_EStrKeyPlay,
+	KStr_en_EStrKeyPause,
+	KStr_en_EStrKeyStop,
+	KStr_en_EStrKeyRewind,
+	KStr_en_EStrKeyFastFwd,
+	KStr_en_EStrKeyNext,
+	KStr_en_EStrKeyPrev,
+	KStr_lt_EStrItemResetKeys,
+	KStr_lt_EStrSlideKeysErr,
+	KStr_lt_EStrKeyActMain,
+	KStr_lt_EStrKeyActSecond,
+	KStr_lt_EStrKeyActClear,
+	KStr_lt_EStrHintKeyMenu,
+	KStr_lt_EStrKeyTakenFmt,
 	};
 
 static const TText *const KTable_ca[EStrCount] =
@@ -9569,6 +10363,8 @@ static const TText *const KTable_ca[EStrCount] =
 	KStr_ca_EStrItemKeyBase,
 	KStr_en_EStrValBaseN95,
 	KStr_en_EStrValBaseC5,
+	KStr_en_EStrValBaseE90,
+	KStr_en_EStrValBaseSlider,
 	KStr_ca_EStrItemWsola,
 	KStr_ca_EStrItemHelp,
 	KStr_ca_EStrItemGames,
@@ -9587,6 +10383,21 @@ static const TText *const KTable_ca[EStrCount] =
 	KStr_ca_EStrAskPickBios,
 	KStr_ca_EStrItemDebug,
 	KStr_ca_EStrBtnTiltZero,
+	KStr_en_EStrKeyPlayPause,
+	KStr_en_EStrKeyPlay,
+	KStr_en_EStrKeyPause,
+	KStr_en_EStrKeyStop,
+	KStr_en_EStrKeyRewind,
+	KStr_en_EStrKeyFastFwd,
+	KStr_en_EStrKeyNext,
+	KStr_en_EStrKeyPrev,
+	KStr_ca_EStrItemResetKeys,
+	KStr_ca_EStrSlideKeysErr,
+	KStr_ca_EStrKeyActMain,
+	KStr_ca_EStrKeyActSecond,
+	KStr_ca_EStrKeyActClear,
+	KStr_ca_EStrHintKeyMenu,
+	KStr_ca_EStrKeyTakenFmt,
 	};
 
 static const TText *const *const KAllTables[ELangIdCount] =

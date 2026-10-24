@@ -40,13 +40,14 @@
 
 [hint.sec.input] OK otvara ili zatvara odjeljak: rasporedi tipki, dodjela tipki i upravljanje nagibom.
 [hint.preset] Zamjenjuje sve dodjele tipki gotovim rasporedom. Lijevo/Desno biraju, OK primjenjuje. Vaše dodjele se gube.
-[hint.keybase] Osnovni raspored: N95 je zadani; C5 prihvaća i 2, 4, 6, 8 kao drugu tipku za smjerove. OK ga primjenjuje i zamjenjuje dodjele.
-[hint.keys] Otvara stranicu dodjele tipki: OK, zatim pritisnite tipku. Lijevo/Desno uključuju ili isključuju Drži za gumb. Zadnji red je tipka za nuliranje nagiba.
+[hint.keybase] Osnovni raspored: N95 je zadani; C5 prihvaća i 2, 4, 6, 8 kao drugu tipku za smjerove; E90 igra na unutarnjoj tipkovnici; Slider postavlja akcijske tipke na medijske tipke telefona s dvostrukim sliderom (N95, N96, N85, N86, N81). OK ga primjenjuje i zamjenjuje dodjele.
+[hint.keys] Otvara stranicu dodjele tipki: OK otvara izbor glavne tipke, druge tipke ili očisti, zatim pritisnite tipku. Lijevo/Desno uključuju ili isključuju Drži za gumb. Zadnji red je tipka za nuliranje nagiba.
 [hint.tilt] Upravlja nagibom telefona (akcelerometar). Način na koji držite telefon kad se vratite u igru je neutralni položaj, a tipka za nuliranje nagiba (zadano C) ponovno ga postavlja u bilo kojem trenutku.
 [hint.tiltside] Os palice koja prati bočni nagib (LX, LY, RX, RY; minus je obrće). Zadano LX.
 [hint.tiltpitch] Os palice koja prati nagib naprijed i natrag (LX, LY, RX, RY; minus je obrće). Zadano LY.
 [hint.tiltdead] Nagib manji od ove vrijednosti zanemaruje se. Od 0 do 40, zadano 10.
 [hint.tiltsens] Koliko snažno palica prati nagib: 40% do 300%, zadano 100%.
+[hint.resetkeys] Vraća na zadano samo kontrole: dodjele tipki, Drži, tipku za nuliranje nagiba i postavke nagiba. Pritisnite OK dvaput. Druge postavke ostaju netaknute.
 
 [hint.sec.system] OK otvara ili zatvara odjeljak: jezik, BIOS, profili po igri i vraćanje postavki.
 [hint.lang] Jezik izbornika. Mijenja se odmah. Tekstovi pomoći ga slijede; gdje teksta nema, koristi se engleski.

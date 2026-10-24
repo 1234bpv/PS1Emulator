@@ -40,13 +40,14 @@
 
 [hint.sec.input] OK atidaro arba uždaro skyrių: klavišų išdėstymai, klavišų priskyrimas ir valdymas pakreipimu.
 [hint.preset] Pakeičia visus klavišų priskyrimus paruoštu išdėstymu. Kairė/Dešinė renkasi, OK pritaiko. Jūsų priskyrimai prarandami.
-[hint.keybase] Pagrindinis išdėstymas: N95 yra numatytasis; C5 kryptims taip pat priima 2, 4, 6, 8 kaip antrą klavišą. OK jį pritaiko ir pakeičia priskyrimus.
-[hint.keys] Atidaro klavišų priskyrimo puslapį: OK, tada spauskite klavišą. Kairė/Dešinė įjungia arba išjungia mygtuko laikymą. Paskutinė eilutė yra pakreipimo nulio klavišas.
+[hint.keybase] Pagrindinis išdėstymas: N95 yra numatytasis; C5 kryptims taip pat priima 2, 4, 6, 8 kaip antrą klavišą; E90 žaidžia vidine klaviatūra; Slider veiksmų mygtukus priskiria dvipusio slankiklio telefono (N95, N96, N85, N86, N81). OK jį pritaiko ir pakeičia priskyrimus.
+[hint.keys] Atidaro klavišų priskyrimo puslapį: OK atidaro pagrindinio klavišo, antro klavišo ar išvalymo pasirinkimą, tada spauskite klavišą. Kairė/Dešinė įjungia arba išjungia mygtuko laikymą. Paskutinė eilutė yra pakreipimo nulio klavišas.
 [hint.tilt] Valdo telefono pakreipimu (akselerometras). Telefono laikymo padėtis, kai grįžtate į žaidimą, yra neutrali padėtis, o pakreipimo nulio klavišas (pagal numatymą C) bet kuriuo metu ją nustato iš naujo.
 [hint.tiltside] Lazdelės ašis, sekanti pakreipimą į šoną (LX, LY, RX, RY; minusas ją apverčia). Numatyta LX.
 [hint.tiltpitch] Lazdelės ašis, sekanti pakreipimą pirmyn ir atgal (LX, LY, RX, RY; minusas ją apverčia). Numatyta LY.
 [hint.tiltdead] Už šią reikšmę mažesnis pakreipimas ignoruojamas. Nuo 0 iki 40, numatyta 10.
 [hint.tiltsens] Kaip stipriai lazdelė seka pakreipimą: nuo 40% iki 300%, numatyta 100%.
+[hint.resetkeys] Grąžina į numatytuosius tik valdymą: klavišų priskyrimus, mygtuko laikymą, pakreipimo nulio klavišą ir pakreipimo nustatymus. Spauskite OK du kartus. Kiti nustatymai neliečiami.
 
 [hint.sec.system] OK atidaro arba uždaro skyrių: kalba, BIOS, žaidimų profiliai ir atstatymas.
 [hint.lang] Meniu kalba. Pasikeičia iš karto. Pagalbos tekstai jai paklūsta; kur teksto trūksta, naudojama anglų kalba.

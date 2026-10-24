@@ -40,13 +40,14 @@
 
 [hint.sec.input] OK bölümü açar veya kapatır: tuş düzenleri, tuş atama ve Eğerek kontrol.
 [hint.preset] Tüm tuş atamalarını hazır bir düzenle değiştirir. Sol/Sağ seçer, OK uygular. Kendi atamalarınız kaybolur.
-[hint.keybase] Temel düzen: N95 varsayılandır; C5 ayrıca yönler için ikinci bir tuş olarak 2, 4, 6, 8'i kabul eder. OK uygular ve atamaları değiştirir.
-[hint.keys] Tuş atama sayfasını açar: OK, ardından tuşa basın. Sol/Sağ bir buton için basılı durumunu açar veya kapatır. Son satır eğimi sıfırlama tuşudur.
+[hint.keybase] Temel düzen: N95 varsayılandır; C5 ayrıca yönler için ikinci bir tuş olarak 2, 4, 6, 8'i kabul eder; E90 iç klavyede oynanır; Slider eylem tuşlarını çift kızaklı bir telefonun (N95, N96, N85, N86, N81). OK uygular ve atamaları değiştirir.
+[hint.keys] Tuş atama sayfasını açar: OK; ana tuş, ikinci tuş veya temizle seçimini açar, ardından tuşa basın. Sol/Sağ bir buton için basılı durumunu açar veya kapatır. Son satır eğimi sıfırlama tuşudur.
 [hint.tilt] Telefonun eğimiyle (ivmeölçer) yönlendirir. Oyuna geri döndüğünüzde telefonu tutuş şekliniz nötr konumdur, ve eğimi sıfırlama tuşu (varsayılan olarak C) bunu her an yeniden belirler.
 [hint.tiltside] Yanlara eğimi izleyen analog kol ekseni (LX, LY, RX, RY; eksi işareti tersine çevirir). Varsayılan LX.
 [hint.tiltpitch] İleri ve geri eğimi izleyen analog kol ekseni (LX, LY, RX, RY; eksi işareti tersine çevirir). Varsayılan LY.
 [hint.tiltdead] Bundan daha küçük eğimler yok sayılır. 0 ile 40 arası, varsayılan 10.
 [hint.tiltsens] Analog kolun eğimi ne kadar güçlü izleyeceği: 40% ile 300% arası, varsayılan 100%.
+[hint.resetkeys] Yalnızca kontrolleri varsayılana döndürür: tuş atamaları, basılı, eğimi sıfırlama tuşu ve eğim ayarları. İki kez OK basın. Diğer ayarlara dokunulmaz.
 
 [hint.sec.system] OK bölümü açar veya kapatır: dil, BIOS, oyuna ozel profiller ve sıfırlama.
 [hint.lang] Menünün dili. Anında değişir. Yardım metinleri onu takip eder; metnin eksik olduğu yerlerde İngilizce kullanılır.

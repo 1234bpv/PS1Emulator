@@ -40,13 +40,14 @@
 
 [hint.sec.input] OK abre ou fecha a seção: esquemas de teclas, atribuição de teclas e controle por inclinação.
 [hint.preset] Substitui todas as atribuições de teclas por um esquema pronto. Esquerda/Direita escolhe, OK aplica. Suas próprias atribuições serão perdidas.
-[hint.keybase] O esquema base: N95 é o padrão; C5 também aceita 2, 4, 6, 8 como segunda tecla para as direções. OK aplica e substitui as atribuições.
-[hint.keys] Abre a página de atribuição de teclas: OK e pressione a tecla. Esquerda/Direita ativa ou desativa segurar para o botão. A última linha é a tecla de inclinação zero.
+[hint.keybase] O esquema base: N95 é o padrão; C5 também aceita 2, 4, 6, 8 como segunda tecla para as direções; E90 joga no teclado interno; Slider coloca os botões de ação nas teclas de mídia de um telefone com slider duplo (N95, N96, N85, N86, N81). OK aplica e substitui as atribuições.
+[hint.keys] Abre a página de atribuição de teclas: OK abre a escolha de tecla principal, secundária ou limpar, depois pressione a tecla. Esquerda/Direita ativa ou desativa segurar para o botão. A última linha é a tecla de inclinação zero.
 [hint.tilt] Direciona com a inclinação do telefone (acelerômetro). A posição em que você segura o telefone ao voltar ao jogo é a posição neutra, e a tecla de inclinação zero (C por padrão) define-a novamente a qualquer momento.
 [hint.tiltside] O eixo analógico que segue a inclinação lateral (LX, LY, RX, RY; o sinal de menos inverte). Padrão LX.
 [hint.tiltpitch] O eixo analógico que segue a inclinação frente-trás (LX, LY, RX, RY; o sinal de menos inverte). Padrão LY.
 [hint.tiltdead] Inclinação menor que esta é ignorada. De 0 a 40, padrão 10.
 [hint.tiltsens] A intensidade com que o analógico segue a inclinação: 40% a 300%, padrão 100%.
+[hint.resetkeys] Restaura apenas os controles para o padrão: as atribuições de teclas, segurar, a tecla de inclinação zero e as configurações de inclinação. Pressione OK duas vezes. Outros ajustes não são afetados.
 
 [hint.sec.system] OK abre ou fecha a seção: idioma, BIOS, perfis por jogo e redefinição.
 [hint.lang] O idioma do menu. Muda imediatamente. Os textos de ajuda o acompanham; o inglês é usado onde faltar texto.

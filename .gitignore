@@ -36,3 +36,4 @@ tools-patches/.daemon_ip
 
 # Тимчасовий файл deploy.cmd (шлях останнього каталогу прогону)
 .rundir.tmp
+src/symbian/slidekeys/group/ABLD.BAT

@@ -40,13 +40,14 @@
 
 [hint.sec.input] OK avab või sulgeb jaotise: nupupaigutused, nuppude määramine ja kallutusjuhtimine.
 [hint.preset] Asendab kõik nupumäärangud valmis paigutusega. Left/Right valivad, OK rakendab. Sinu määrangud kaovad.
-[hint.keybase] Baaspaigutus: N95 on vaikimisi; C5 aktsepteerib ka 2, 4, 6, 8 teise nupuna suundade jaoks. OK rakendab ja asendab määrangud.
-[hint.keys] Avab nupumäärangu lehe: OK, seejärel vajuta nuppu. Left/Right lülitavad nupu jaoks Hoia sisse või välja. Viimane rida on kallutuse nullimise nupp.
+[hint.keybase] Baaspaigutus: N95 on vaikimisi; C5 aktsepteerib ka 2, 4, 6, 8 teise nupuna suundade jaoks; E90 mängib sisemisel klaviatuuril; Slider seab tegevusnupud kahesuunalise liuguriga telefoni (N95, N96, N85, N86, N81). OK rakendab ja asendab määrangud.
+[hint.keys] Avab nupumäärangu lehe: OK avab põhinupu, teise nupu või tühjendamise valiku, seejärel vajuta nuppu. Left/Right lülitavad nupu jaoks Hoia sisse või välja. Viimane rida on kallutuse nullimise nupp.
 [hint.tilt] Juhib telefoni kallutamisega (kiirendusandur). Positsioon, kuidas hoiad telefoni mängu juurde naastes, on neutraalne asend, ja kallutuse nullimise nupp (vaikimisi C) seab selle igal hetkel uuesti.
 [hint.tiltside] Juhtkangitelg, mis järgib külgsuunalist kallutust (LX, LY, RX, RY; miinus pöörab ümber). Vaikimisi LX.
 [hint.tiltpitch] Juhtkangitelg, mis järgib ette-taha kallutust (LX, LY, RX, RY; miinus pöörab ümber). Vaikimisi LY.
 [hint.tiltdead] Sellest väiksem kallutus ignoreeritakse. 0 kuni 40, vaikimisi 10.
 [hint.tiltsens] Kui tugevalt juhtkang kallutust järgib: 40% kuni 300%, vaikimisi 100%.
+[hint.resetkeys] Taastab vaikeväärtustele ainult juhtimise: nupumäärangud, Hoia, kallutuse nullimise nupu ja kallutussätted. Vajuta OK kaks korda. Teisi seadeid ei puudutata.
 
 [hint.sec.system] OK avab või sulgeb jaotise: keel, BIOS, mängupõhised profiilid ja lähtestamine.
 [hint.lang] Menüü keel. Muutub kohe. Abiteksid järgivad seda; puuduva teksti korral kasutatakse inglise keelt.

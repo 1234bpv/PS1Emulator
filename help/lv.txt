@@ -40,13 +40,14 @@
 
 [hint.sec.input] OK atver vai aizver sadaļu: taustiņu izkārtojumi, taustiņu piešķiršana un sasvēršanas vadība.
 [hint.preset] Aizstāj visus taustiņu piešķīrumus ar gatavu izkārtojumu. Pa kreisi/Pa labi izvēlas, OK pielieto. Jūsu piešķīrumi tiks zaudēti.
-[hint.keybase] Pamata izkārtojums: N95 ir noklusējuma; C5 virzieniem kā otru taustiņu pieņem arī 2, 4, 6, 8. OK to pielieto un aizstāj piešķīrumus.
-[hint.keys] Atver taustiņu piešķiršanas lapu: OK, tad nospiediet taustiņu. Pa kreisi/Pa labi ieslēdz vai izslēdz pogas turēšanu. Pēdējā rinda ir sasvēršanas nulles taustiņš.
+[hint.keybase] Pamata izkārtojums: N95 ir noklusējuma; C5 virzieniem kā otru taustiņu pieņem arī 2, 4, 6, 8; E90 spēlē uz iekšējās tastatūras; Slider darbības pogas piesaista divvirzienu slīdņa tālruņa (N95, N96, N85, N86, N81). OK to pielieto un aizstāj piešķīrumus.
+[hint.keys] Atver taustiņu piešķiršanas lapu: OK atver galvenā taustiņa, otrā taustiņa vai notīrīšanas izvēli, tad nospiediet taustiņu. Pa kreisi/Pa labi ieslēdz vai izslēdz pogas turēšanu. Pēdējā rinda ir sasvēršanas nulles taustiņš.
 [hint.tilt] Vada ar tālruņa sasvēršanu (akselerometrs). Tālruņa turēšanas veids, atgriežoties spēlē, ir neitrālā pozīcija, un sasvēršanas nulles taustiņš (pēc noklusējuma C) to iestata no jauna jebkurā brīdī.
 [hint.tiltside] Sviras ass, kas seko sasvēršanai uz sāniem (LX, LY, RX, RY; mīnuss apgriež virzienu). Noklusējums LX.
 [hint.tiltpitch] Sviras ass, kas seko sasvēršanai uz priekšu un atpakaļ (LX, LY, RX, RY; mīnuss apgriež virzienu). Noklusējums LY.
 [hint.tiltdead] Mazāka sasvēršana tiek ignorēta. No 0 līdz 40, noklusējums 10.
 [hint.tiltsens] Cik stipri svira seko sasvēršanai: no 40% līdz 300%, noklusējums 100%.
+[hint.resetkeys] Atiestata uz noklusējumu tikai vadību: taustiņu piešķīrumus, pogas turēšanu, sasvēršanas nulles taustiņu un sasvēršanas iestatījumus. Nospiediet OK divreiz. Citi iestatījumi netiek skarti.
 
 [hint.sec.system] OK atver vai aizver sadaļu: valoda, BIOS, profili katrai spēlei un atiestatīšana.
 [hint.lang] Izvēlnes valoda. Mainās uzreiz. Palīdzības teksti tai seko; ja teksta trūkst, tiek izmantota angļu valoda.

@@ -40,13 +40,14 @@
 
 [hint.sec.input] OK ouvre ou ferme la section : dispositions des touches, assignation des touches et contrôle par inclinaison.
 [hint.preset] Remplace toutes les assignations de touches par une disposition prête à l'emploi. Gauche/Droite choisit, OK applique. Vos propres assignations sont perdues.
-[hint.keybase] La disposition de base : N95 est celle par défaut ; C5 accepte aussi 2, 4, 6, 8 comme seconde touche pour les directions. OK l'applique et remplace les assignations.
-[hint.keys] Ouvre la page d'assignation des touches : OK, puis appuyez sur la touche. Gauche/Droite active ou désactive Maintien pour un bouton. La dernière ligne est la touche d'inclinaison zéro.
+[hint.keybase] La disposition de base : N95 est celle par défaut ; C5 accepte aussi 2, 4, 6, 8 comme seconde touche pour les directions ; E90 joue sur le clavier interne ; Slider place les boutons d'action sur les touches média d'un téléphone à double slider (N95, N96, N85, N86, N81). OK l'applique et remplace les assignations.
+[hint.keys] Ouvre la page d'assignation des touches : OK ouvre le choix entre touche principale, secondaire ou effacer, puis appuyez sur la touche. Gauche/Droite active ou désactive Maintien pour un bouton. La dernière ligne est la touche d'inclinaison zéro.
 [hint.tilt] Dirige avec l'inclinaison du téléphone (accéléromètre). La position dans laquelle vous tenez le téléphone en revenant au jeu est la position neutre, et la touche d'inclinaison zéro (C par défaut) la redéfinit à tout moment.
 [hint.tiltside] L'axe du stick qui suit l'inclinaison latérale (LX, LY, RX, RY ; un moins l'inverse). Défaut LX.
 [hint.tiltpitch] L'axe du stick qui suit l'inclinaison avant-arrière (LX, LY, RX, RY ; un moins l'inverse). Défaut LY.
 [hint.tiltdead] Une inclinaison inférieure à cette valeur est ignorée. De 0 à 40, défaut 10.`
 [hint.tiltsens] Sensibilité avec laquelle le stick suit l'inclinaison : 40% à 300%, défaut 100%.
+[hint.resetkeys] Rétablit uniquement les commandes à leurs valeurs par défaut : les assignations de touches, Maintien, la touche d'inclinaison zéro et les paramètres d'inclinaison. Appuyez deux fois sur OK. Les autres réglages ne sont pas touchés.
 
 [hint.sec.system] OK ouvre ou ferme la section : langue, BIOS, profils par jeu et réinitialisation.
 [hint.lang] La langue du menu. Change aussitôt. Les textes d'aide la suivent ; l'anglais est utilisé lorsqu'un texte manque.

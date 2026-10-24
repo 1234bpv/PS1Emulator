@@ -40,13 +40,14 @@
 
 [hint.sec.input] OK obre o tanca la secció: disposicions de tecles, assignació de tecles i control per inclinació.
 [hint.preset] Substitueix totes les assignacions de tecles per una disposició predefinida. Esquerra/Dreta trien, OK aplica. Les vostres assignacions es perden.
-[hint.keybase] La disposició base: N95 és la per defecte; C5 també accepta 2, 4, 6, 8 com a segona tecla per a les direccions. OK l'aplica i substitueix les assignacions.
-[hint.keys] Obre la pàgina d'assignació de tecles: OK, després premeu la tecla. Esquerra/Dreta activen o desactiven Mantenir per a un botó. L'última fila és la tecla de zero d'inclinació.
+[hint.keybase] La disposició base: N95 és la per defecte; C5 també accepta 2, 4, 6, 8 com a segona tecla per a les direccions; E90 juga amb el teclat intern; Slider posa els botons d'acció a les tecles multimèdia d'un telèfon amb doble slider (N95, N96, N85, N86, N81). OK l'aplica i substitueix les assignacions.
+[hint.keys] Obre la pàgina d'assignació de tecles: OK obre la tria de tecla principal, secundària o esborrar, després premeu la tecla. Esquerra/Dreta activen o desactiven Mantenir per a un botó. L'última fila és la tecla de zero d'inclinació.
 [hint.tilt] Controla amb la inclinació del telèfon (acceleròmetre). La posició en què teniu el telèfon quan torneu al joc és la posició neutra, i la tecla de zero d'inclinació (C per defecte) la torna a establir en qualsevol moment.
 [hint.tiltside] L'eix del stick que segueix la inclinació lateral (LX, LY, RX, RY; un menys l'inverteix). Per defecte LX.
 [hint.tiltpitch] L'eix del stick que segueix la inclinació endavant i enrere (LX, LY, RX, RY; un menys l'inverteix). Per defecte LY.
 [hint.tiltdead] Les inclinacions més petites que això s'ignoren. De 0 a 40, per defecte 10.
 [hint.tiltsens] Com de fort el stick segueix la inclinació: 40% a 300%, per defecte 100%.
+[hint.resetkeys] Restaura només els controls als seus valors per defecte: les assignacions de tecles, Mantenir, la tecla de zero d'inclinació i els paràmetres d'inclinació. Premeu OK dues vegades. Els altres paràmetres no es toquen.
 
 [hint.sec.system] OK obre o tanca la secció: idioma, BIOS, perfils per joc i reinici.
 [hint.lang] L'idioma del menú. Canvia immediatament. Els textos d'ajuda el segueixen; l'anglès s'usa quan falta un text.

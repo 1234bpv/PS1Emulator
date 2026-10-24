@@ -40,13 +40,14 @@
 
 [hint.sec.input] OK öppnar eller stänger avsnittet: tangentlayouter, tangenttilldelning och lutningsstyrning.
 [hint.preset] Ersätter alla tangenttilldelningar med en färdig layout. Vänster/Höger väljer, OK tillämpar. Dina egna tilldelningar förloras.
-[hint.keybase] Baslayouten: N95 är standardlayouten; C5 accepterar även 2, 4, 6, 8 som en andra tangent för riktningarna. OK tillämpar den och ersätter tilldelningarna.
-[hint.keys] Öppnar sidan för tangenttilldelning: OK, tryck sedan på tangenten. Vänster/Höger slår på eller av Håll för en knapp. Den sista raden är tangenten för att nollställa lutningen.
+[hint.keybase] Baslayouten: N95 är standardlayouten; C5 accepterar även 2, 4, 6, 8 som en andra tangent för riktningarna; E90 spelas på det inre tangentbordet; Slider lägger åtgärdsknapparna på medieknapparna på en dubbelslider-telefon (N95, N96, N85, N86, N81). OK tillämpar den och ersätter tilldelningarna.
+[hint.keys] Öppnar sidan för tangenttilldelning: OK öppnar val av huvudtangent, andra tangent eller rensa, tryck sedan på tangenten. Vänster/Höger slår på eller av Håll för en knapp. Den sista raden är tangenten för att nollställa lutningen.
 [hint.tilt] Styr med telefonens lutning (accelerometer). Det läge du håller telefonen i när du återgår till spelet är neutralläget, och tangenten för att nollställa lutningen (C som standard) ställer in det igen när som helst.
 [hint.tiltside] Spakaxeln som följer sidolutning (LX, LY, RX, RY; ett minus inverterar). Standard LX.
 [hint.tiltpitch] Spakaxeln som följer lutning framåt och bakåt (LX, LY, RX, RY; ett minus inverterar). Standard LY.
 [hint.tiltdead] Lutning som är mindre än detta ignoreras. Från 0 till 40, standard 10.
 [hint.tiltsens] Hur kraftigt spaken följer lutningen: 40% till 300%, standard 100%.
+[hint.resetkeys] Återställer endast kontrollerna till standard: tangenttilldelningarna, Håll, tangenten för att nollställa lutningen och lutningsinställningarna. Tryck OK två gånger. Övriga inställningar påverkas inte.
 
 [hint.sec.system] OK öppnar eller stänger avsnittet: språk, BIOS, spelprofiler och återställning.
 [hint.lang] Menyns språk. Ändras direkt. Hjälptexterna följer det; engelska används där text saknas.

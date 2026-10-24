@@ -26,6 +26,9 @@
 #include <gdi.h>
 #include <utf.h>
 #include <hal.h>
+#include <remconinterfaceselector.h>
+#include <remconcoreapitarget.h>
+#include <remconcoreapitargetobserver.h>
 
 #include "imgconv.h"
 #include "i18n.h"
@@ -48,6 +51,7 @@ int  ps1SndVolumeStep(int aDelta);
 int  ps1SndVolumeSteps(void);
 void ps1SndResetRate(void);
 int  voutSymbianKeyEvent(int aScanCode, int aDown);
+int  voutSymbianAliasKey(int aScanCode);
 int  voutSymbianFinish(int aHoldMs);
 int  voutSymbianGlActive(void);
 void ps1ScreenShot(void);
@@ -105,7 +109,7 @@ enum TCfgItem
 	ECfgHdrSpeed, ECfgGpuSkip, ECfgCpu, ECfgGteNf, ECfgCycle,
 	ECfgHdrSound, ECfgSound, ECfgWsola,
 	ECfgHdrInput, ECfgPreset, ECfgKeyBase, ECfgKeys,
-	ECfgTilt, ECfgTiltSide, ECfgTiltPitch, ECfgTiltDead, ECfgTiltSens,
+	ECfgTilt, ECfgTiltSide, ECfgTiltPitch, ECfgTiltDead, ECfgTiltSens, ECfgResetKeys,
 	ECfgHdrSystem, ECfgLang, ECfgBios, ECfgProfile, ECfgDebug, ECfgReset,
 	ECfgHelp, ECfgExit,
 	ECfgCount
@@ -133,7 +137,7 @@ static const unsigned char KItemSection[ECfgCount] =
 	ESecSpeed, ESecSpeed, ESecSpeed, ESecSpeed, ESecSpeed,
 	ESecSound, ESecSound, ESecSound,
 	ESecInput, ESecInput, ESecInput, ESecInput, ESecInput, ESecInput, ESecInput,
-	ESecInput, ESecInput,
+	ESecInput, ESecInput, ESecInput,
 	ESecSystem, ESecSystem, ESecSystem, ESecSystem, ESecSystem, ESecSystem,
 	ESecCount, ESecCount
 	};
@@ -149,7 +153,7 @@ static const TStrId KItemLabelStrId[ECfgCount] =
 	EStrSecSound, EStrItemSound, EStrItemWsola,
 	EStrSecControls, EStrItemPreset, EStrItemKeyBase, EStrItemKeys,
 	EStrItemTilt, EStrItemTiltSide, EStrItemTiltPitch, EStrItemTiltDead,
-	EStrItemTiltSens,
+	EStrItemTiltSens, EStrItemResetKeys,
 	EStrSecSystem, EStrItemLang, EStrItemBios, EStrItemProfile, EStrItemDebug,
 	EStrItemReset,
 	EStrItemHelp, EStrItemExit
@@ -167,7 +171,7 @@ static const char *const KCfgKey[ECfgCount] =
 	NULL, "gpuskip", "cpu", "gtenf", "cycle",
 	NULL, "sound", "wsola",
 	NULL, NULL, NULL, NULL, "tilt", "tiltside", "tiltpitch", "tiltdead",
-	"tiltsens",
+	"tiltsens", NULL,
 	NULL, "lang", NULL, "profile", "debug", NULL,
 	NULL, NULL
 	};
@@ -183,7 +187,7 @@ static const char *const KItemHelpId[ECfgCount] =
 	"sec.speed", "gpuskip", "cpu", "gtenf", "cycle",
 	"sec.sound", "sound", "wsola",
 	"sec.input", "preset", "keybase", "keys", "tilt", "tiltside",
-	"tiltpitch", "tiltdead", "tiltsens",
+	"tiltpitch", "tiltdead", "tiltsens", "resetkeys",
 	"sec.system", "lang", "bios", "profile", "debug", "reset",
 	"help", "exit"
 	};
@@ -208,7 +212,8 @@ static TBool isCommand(TInt aItem)
 	{
 	return aItem == ECfgStart || aItem == ECfgGame || aItem == ECfgSaveState ||
 		   aItem == ECfgLoadState || aItem == ECfgAdd || aItem == ECfgBios ||
-		   aItem == ECfgKeys || aItem == ECfgReset || aItem == ECfgHelp ||
+		   aItem == ECfgKeys || aItem == ECfgResetKeys || aItem == ECfgReset ||
+		   aItem == ECfgHelp ||
 		   aItem == ECfgExit || isHeader(aItem);
 	}
 
@@ -277,15 +282,26 @@ static const TInt KPresetHold[EPresetCount - 1][KPresetBtnCount] =
 	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }    // RPG: no holds
 	};
 
+// Pseudo scan codes of the RemCon media operations. They sit above every TStdScanCode
+// (the highest in the SDK is 0xE8) and below 0x8000, since the key map keeps codes in a short.
+enum TRemConKey
+	{
+	ERemConKeyPlayPause = 0x1001, ERemConKeyPlay, ERemConKeyPause, ERemConKeyStop,
+	ERemConKeyRewind, ERemConKeyFastFwd, ERemConKeyNext, ERemConKeyPrev
+	};
+
 // Base layout for the physical keyboard, independent of the game-type preset above:
-// every one of these Nokias has a D-pad, so both bases steer with it. N95 reuses the
+// every one of these Nokias has a D-pad, and the N95 and C5 bases steer with it. N95 reuses the
 // Default layout verbatim. C5-00.2 keeps the D-pad too but also answers to the numeric
 // keypad's 2/4/6/8 as a second key for the four directions (the way the old numpad-only
 // Symbian PS1 emulators did), with 5 on L2 and */# for Select/Start. Each button has
-// one Alt: the directions take the digits, Select and Start take the named codes.
-enum TKeyboardBase { EBaseN95 = 0, EBaseC5, EBaseCount };
+// one Alt: the directions take the digits, Select and Start take the named codes, and
+// L1 and R1 take the volume keys. A bound volume key is consumed by its binding before
+// DispatchKeyL reaches the volume step, so it does not change the volume as well.
+enum TKeyboardBase { EBaseN95 = 0, EBaseC5, EBaseE90, EBaseSlider, EBaseCount };
 
-static const TStrId KBaseNameStrId[EBaseCount] = { EStrValBaseN95, EStrValBaseC5 };
+static const TStrId KBaseNameStrId[EBaseCount] =
+	{ EStrValBaseN95, EStrValBaseC5, EStrValBaseE90, EStrValBaseSlider };
 
 static const TInt KBaseC5Scan[KPresetBtnCount] =
 	{
@@ -297,7 +313,65 @@ static const TInt KBaseC5Scan[KPresetBtnCount] =
 // either the ASCII character or the named code for these two (see the volume
 // handler in OfferKeyEventL, which checks both for the same reason).
 static const TInt KBaseC5Alt[KPresetBtnCount] =
-	{ '2', '8', '4', '6', -1, -1, -1, -1, -1, -1, -1, -1, EStdKeyNkpAsterisk, EStdKeyHash };
+	{ '2', '8', '4', '6', -1, -1, -1, -1, EStdKeyIncVolume, EStdKeyDecVolume,
+	  -1, -1, EStdKeyNkpAsterisk, EStdKeyHash };
+
+// E90 internal keyboard, two hands on two mirrored groups: W/A/S/D steer with Q/E as
+// L1/L2 beside W, the face buttons sit one column right of the home row (O, K, L and the
+// ;/Zh key) with P/I as R1/R2 beside O, and G/H in between are Select and Start. The
+// D-pad is a second set of face buttons in the PlayStation diamond, its centre a second
+// R1 and 0 a second R2. Layout as Pavlo set it on his E90 on 2026-10-24.
+static const TInt KBaseE90Scan[KPresetBtnCount] =
+	{
+	'W', 'S', 'A', 'D',
+	'L', EStdKeySemiColon, 'K', 'O',
+	'Q', 'P', 'E', 'I', 'G', 'H'
+	};
+static const TInt KBaseE90Alt[KPresetBtnCount] =
+	{ -1, -1, -1, -1,
+	  EStdKeyDownArrow, EStdKeyRightArrow, EStdKeyLeftArrow, EStdKeyUpArrow,
+	  -1, EStdKeyDevice3, -1, '0', -1, -1 };
+
+// Dual-slider handsets (N95, N95 8GB, N96, N85, N86, N81), held sideways with the media
+// slider open: the D-pad steers under the right thumb, the four media keys under the left
+// are the face buttons, the volume keys on the top edge are L1/L2, the camera and gallery
+// keys R1/R2, the pencil and the green key are Select and Start, with C and the left
+// soft key as second keys for handsets without a pencil. Layout as Pavlo set it on his
+// N95 8GB on 2026-10-24, where 0xe2 is the camera key and 0xe6 the gallery key. The media
+// keys take the RemCon pseudo codes, which the ps1slide anim and vout's alias produce
+// whichever way a key arrives; the anim is loaded only while a binding uses one.
+static const TInt KBaseSliderScan[KPresetBtnCount] =
+	{
+	EStdKeyUpArrow, EStdKeyDownArrow, EStdKeyLeftArrow, EStdKeyRightArrow,
+	ERemConKeyPlay, ERemConKeyNext, ERemConKeyStop, ERemConKeyPrev,
+	EStdKeyIncVolume, EStdKeyApplication19,
+	EStdKeyDecVolume, EStdKeyApplication1D,
+	EStdKeyLeftShift, EStdKeyYes
+	};
+static const TInt KBaseSliderAlt[KPresetBtnCount] =
+	{
+	-1, -1, -1, -1,
+	-1, -1, -1, -1,
+	-1, -1,
+	-1, -1,
+	EStdKeyBackspace, EStdKeyDevice0
+	};
+
+// What the ps1slide anim renames the raw media scan codes to: F21..F24, which no Nokia
+// keyboard sends and no firmware handler takes, and which vout aliases to the RemCon
+// pseudo codes. The raw codes are the SDK's EKeyPlay..EKeyRewind scan codes; the anim's
+// GetLast, logged on the Controls page, is how a handset that sends others shows them.
+static const TInt KSlideMap[] =
+	{
+	5,
+	EStdKeyApplication2, EStdKeyF21,     // Play
+	EStdKeyApplication3, EStdKeyF22,     // Stop
+	EStdKeyApplication4, EStdKeyF23,     // Forward
+	EStdKeyApplication5, EStdKeyF24,     // Rewind
+	// The N95 8GB gallery key: bound, it still opened the gallery (Pavlo, 2026-10-24).
+	// vout turns F20 back into 0xe6, so bindings keep the key's own code.
+	EStdKeyApplication1D, EStdKeyF20
+	};
 
 // Single emulator directory. Everything it reads and writes lives under it: otherwise
 // the card root got cluttered with files, and which ones belong to which game was unclear.
@@ -314,6 +388,7 @@ class TPs1Cfg
 	{
 public:
 	void SetDefaults();
+	void SetControlDefaults();
 	void Clamp();
 	TInt &Value(TInt aItem);
 	TInt iInterp, iIlace, iLight, iBlend, iPixSkip, iGteNf, iSound, iGl, iWsola;
@@ -340,16 +415,9 @@ void TPs1Cfg::SetDefaults()
 	iDummy = 0;
 	iIntro = 0;
 	iCycle = KCycleDefault;
+	SetControlDefaults();
 	// Averaging during downscale is ON by default: without it in 640x* modes
 	// the decimation eats thin font strokes, and that is an artifact, not a speedup.
-	// Tilt is off until asked for: it costs a sensor session and only one phone has one.
-	iTilt = 0;
-	// Sideways to the left stick X, forward-back to its Y: the binding measured on
-	// the phone, where the stick follows the tilt as a marble on the screen would.
-	iTiltSide = 1;
-	iTiltPitch = 3;
-	iTiltDead = 10;
-	iTiltSens = 100;
 	iSmooth = 1;
 	// Edge anti-aliasing is OFF by default: measured -17% frames on trace, and on a
 	// 320x240 screen the benefit is not visible in every game. Enable deliberately.
@@ -374,6 +442,19 @@ void TPs1Cfg::SetDefaults()
 	// Update() without a region (bitgdi did not know about our write, so it pushed nothing);
 	// with an explicit region the image is correct - verified on N95 8GB.
 	iDsa = 1;
+	}
+
+// The CONTROLS section alone, for its own reset: keys, holds, the tilt zero key and tilt.
+void TPs1Cfg::SetControlDefaults()
+	{
+	// Tilt is off until asked for: it costs a sensor session and only one phone has one.
+	iTilt = 0;
+	// Sideways to the left stick X, forward-back to its Y: the binding measured on
+	// the phone, where the stick follows the tilt as a marble on the screen would.
+	iTiltSide = 1;
+	iTiltPitch = 3;
+	iTiltDead = 10;
+	iTiltSens = 100;
 	for (TInt i = 0; i < KPadMax; i++)
 		{
 		iKeyScan[i] = voutSymbianDefaultKey(i, 0);
@@ -443,6 +524,14 @@ static const TStrId KBtnStrId[14] =
 	EStrBtnL1, EStrBtnR1, EStrBtnL2, EStrBtnR2, EStrBtnSelect, EStrBtnStart
 	};
 
+// Lines of the action menu that OK opens on a row of the CONTROLS list.
+enum TKeyAction { EKeyActMain = 0, EKeyActSecond, EKeyActClear, EKeyActCount };
+
+static const TStrId KKeyActStrId[EKeyActCount] =
+	{
+	EStrKeyActMain, EStrKeyActSecond, EStrKeyActClear
+	};
+
 static void keyName(TInt aScan, TDes &aOut)
 	{
 	switch (aScan)
@@ -457,9 +546,20 @@ static void keyName(TInt aScan, TDes &aOut)
 		case EStdKeyBackspace:   aOut.Copy(Tr(EStrKeyClear));    return;
 		case EStdKeyHash:        aOut.Copy(_L("#"));             return;
 		case EStdKeyNkpAsterisk: aOut.Copy(_L("*"));             return;
+		case EStdKeySemiColon:   aOut.Copy(_L(";"));             return;
 		case EStdKeyIncVolume:   aOut.Copy(Tr(EStrKeyVolPlus));  return;
 		case EStdKeyDecVolume:   aOut.Copy(Tr(EStrKeyVolMinus)); return;
 		case EStdKeyApplication0:aOut.Copy(Tr(EStrKeyMenu));     return;
+		case EStdKeyDevice7:     aOut.Copy(_L("Cam"));           return;
+		case EStdKeyYes:         aOut.Copy(_L("Call"));          return;
+		case ERemConKeyPlayPause:aOut.Copy(Tr(EStrKeyPlayPause)); return;
+		case ERemConKeyPlay:     aOut.Copy(Tr(EStrKeyPlay));      return;
+		case ERemConKeyPause:    aOut.Copy(Tr(EStrKeyPause));     return;
+		case ERemConKeyStop:     aOut.Copy(Tr(EStrKeyStop));      return;
+		case ERemConKeyRewind:   aOut.Copy(Tr(EStrKeyRewind));    return;
+		case ERemConKeyFastFwd:  aOut.Copy(Tr(EStrKeyFastFwd));   return;
+		case ERemConKeyNext:     aOut.Copy(Tr(EStrKeyNext));      return;
+		case ERemConKeyPrev:     aOut.Copy(Tr(EStrKeyPrev));      return;
 		default: break;
 		}
 	if (aScan < 0)
@@ -650,6 +750,25 @@ const TInt KRowGap = 2;          // row height = font height + this
 
 _LIT(KTopicSetup, "topic.setup");
 
+class CPs1RemCon;
+
+// Client side of the ps1slide anim; opcodes are TSlideCommand in slidekeys/slideanim.h.
+class RSlideAnim : public RAnim
+	{
+public:
+	RSlideAnim(RAnimDll &aDll) : RAnim(aDll) {}
+	TInt Construct(const RWindowBase &aDevice)
+		{ return RAnim::Construct(aDevice, 0, KNullDesC8); }
+	TInt Attach() { return CommandReply(1); }
+	void Detach() { CommandReply(2); }
+	TInt SetMap(const TInt *aMap)
+		{
+		const TPtrC8 args((const TUint8 *)aMap, (1 + 2 * aMap[0]) * sizeof(TInt));
+		return CommandReply(3, args);
+		}
+	TInt GetLast() { return CommandReply(4); }
+	};
+
 class CPs1Container : public CCoeControl
 	{
 public:
@@ -657,6 +776,7 @@ public:
 	~CPs1Container();
 	TKeyResponse OfferKeyEventL(const TKeyEvent &aKeyEvent, TEventCode aType);
 	TKeyResponse DispatchKeyL(const TKeyEvent &aKeyEvent, TEventCode aType);
+	void RemConKey(TInt aScan, TBool aDown);
 	// CCoeControl::Window() is protected, and the output needs exactly this window.
 	RWindow &FrameWindow() { return Window(); }
 	TBool MenuActive() const { return iPage != EPageNone; }
@@ -682,6 +802,7 @@ private:
 	                 TInt aHintPx = -1) const;
 	void DrawMain(CWindowGc &gc, const TRect &aBody) const;
 	void DrawKeys(CWindowGc &gc, const TRect &aBody) const;
+	void DrawKeyMenu(CWindowGc &gc, const TRect &aBody, TInt aFirst) const;
 	void DrawFiles(CWindowGc &gc, const TRect &aBody) const;
 	void DrawAsk(CWindowGc &gc, const TRect &aBody) const;
 	void DrawError(CWindowGc &gc, const TRect &aBody) const;
@@ -708,6 +829,9 @@ private:
 	TKeyResponse MainKeyL(TInt aScan);
 	TKeyResponse FilesKeyL(TInt aScan);
 	TKeyResponse KeysKeyL(TInt aScan);
+	void StoreKey(TInt aRow, TBool aAlt, TInt aKey);
+	void TakeKey(TInt aRow, TInt aKey);
+	TInt KeyRowUsing(TInt aKey, TInt aExcept) const;
 	TKeyResponse ImportKeyL(TInt aScan);
 	TKeyResponse BiosKeyL(TInt aScan);
 	TKeyResponse AskKeyL(TInt aScan);
@@ -767,6 +891,11 @@ private:
 	void SetGameL(const TDesC &aPath);
 	void ApplyKeyMap();
 	void SyncSideKeyCaptures(TBool aAll = EFalse);
+	void SyncSlideKeys(TBool aAll);
+	void SlideKeysStart(TBool aReport);
+	void SlideKeysStop();
+	void SlideKeysPoll();
+	void ResetControls();
 	void ApplyPreset(TInt aPreset);
 	void ApplyBase(TInt aBase);
 	void FreeTiltKey();
@@ -801,6 +930,10 @@ private:
 	TInt iPresetSel;          // preset highlighted on the CONTROLS list (not persisted)
 	TInt iBaseSel;            // keyboard base highlighted on the CONTROLS list (not persisted)
 	TInt iCapture;            // button awaiting a key press (-1 = none)
+	TBool iCaptureAlt;        // the capture sets the second key, not the main one
+	TInt iKeyMenu;            // line of the action menu open on iKeySel (-1 = closed)
+	TInt iClashKey;           // key already used by another row, waiting for OK (-1 = none)
+	TInt iClashRow;           // the row that holds iClashKey
 	TInt iConfirm;            // item awaiting confirmation (-1 = none)
 	TInt iStateSlot;          // state slot (1..5)
 	TBuf<80> iStatusMsg;      // message shown in hint bar (e.g. state save/load result)
@@ -827,6 +960,42 @@ private:
 	TInt iKeyProbeSeen;
 	TPs1Cfg iCfg;
 	TInt32 iSideKeyCap[8];
+	CPs1RemCon *iRemCon;      // RemCon target for the media keys; NULL when it did not open
+	// ps1slide anim, held only while a binding uses a media key: NULL both when not.
+	RAnimDll *iSlideDll;
+	RSlideAnim *iSlideAnim;
+	TInt iSlideLast;          // last GetLast value logged, so each new key is logged once
+	TInt iSlideLogged;        // GetLast lines written by this run
+	};
+
+const TInt KRemConLogLines = 64;      // log lines per run, so a held key cannot flood the log
+const TInt KRemConClickUs = 100000;   // a click holds its key this long
+
+// RemCon target for the media keys. The firmware hands them to the music player's service,
+// so the emulator opens a target to receive them. The one active object is both the
+// observer and the owner of the single response in flight.
+class CPs1RemCon : public CActive, public MRemConCoreApiTargetObserver
+	{
+public:
+	static CPs1RemCon *NewL(CPs1Container &aOwner);
+	~CPs1RemCon();
+	void MrccatoCommand(TRemConCoreApiOperationId aOperationId,
+		TRemConCoreApiButtonAction aButtonAct);
+private:
+	CPs1RemCon(CPs1Container &aOwner);
+	void OpenTargetL();
+	void Click(TInt aScan);
+	static TInt ClickEnd(TAny *aSelf);
+	void Respond(TRemConCoreApiOperationId aOperationId);
+	void RunL();
+	void DoCancel();
+private:
+	CPs1Container &iOwner;
+	CRemConInterfaceSelector *iSelector;   // owns iTarget
+	CRemConCoreApiTarget *iTarget;
+	CPeriodic *iClick;
+	TInt iClickScan;                       // key of a click whose up is still due, 0 when none
+	TInt iLogged;                          // log lines written by this run
 	};
 
 CPs1Container *CPs1Container::NewL(const TRect &aRect)
@@ -849,6 +1018,15 @@ void CPs1Container::ConstructL(const TRect &aRect)
 	if (iPadCount > KPadMax - 1) iPadCount = KPadMax - 1;
 	iKeyRows = iPadCount + 1;
 	iCapture = -1;
+	iCaptureAlt = EFalse;
+	iKeyMenu = -1;
+	iClashKey = -1;
+	iClashRow = -1;
+	iRemCon = NULL;
+	iSlideDll = NULL;
+	iSlideAnim = NULL;
+	iSlideLast = 0;
+	iSlideLogged = 0;
 	iConfirm = -1;
 	iPresetSel = EPresetDefault;
 	iBaseSel = EBaseN95;
@@ -915,11 +1093,16 @@ void CPs1Container::ConstructL(const TRect &aRect)
 	HAL::Get(HAL::EMachineUid, mach);
 	ps1LogFmt("menu", "machine=0x%08x", (int)mach);
 	LogGeometry();
+	// Optional: the emulator runs without the media keys when RemCon refuses the target.
+	TRAPD(re, iRemCon = CPs1RemCon::NewL(*this));
+	ps1LogFmt("remcon", "open err=%d", (int)re);
 	ActivateL();
 	}
 
 CPs1Container::~CPs1Container()
 	{
+	SlideKeysStop();
+	delete iRemCon;
 	for (TInt i = 0; i < 8; i++)
 		if (iSideKeyCap[i])
 			{
@@ -1559,6 +1742,7 @@ void CPs1Container::SyncSideKeyCaptures(TBool aAll)
 			iSideKeyCap[i] = 0;
 			}
 		}
+	SyncSlideKeys(aAll);
 	}
 
 // A preset is a one-shot starting point, not a mode: it overwrites every
@@ -1597,6 +1781,18 @@ void CPs1Container::ApplyPreset(TInt aPreset)
 	SaveAll();
 	}
 
+// Unlike the full reset, this leaves the language, video, speed and sound alone. The tilt
+// settings take effect when the menu closes, as after any change to them.
+void CPs1Container::ResetControls()
+	{
+	iCfg.SetControlDefaults();
+	iPresetSel = EPresetDefault;
+	iBaseSel = EBaseN95;
+	ApplyKeyMap();
+	SaveAll();
+	ps1Log("menu", "controls reset");
+	}
+
 // A preset or a base can take the tilt zero key for a PS1 button (RPG and C5 both use
 // C): move it to the first key the new layout leaves free, so one press does not do two
 // things the player did not ask for together.
@@ -1633,6 +1829,16 @@ void CPs1Container::ApplyBase(TInt aBase)
 			{
 			iCfg.iKeyScan[i] = voutSymbianDefaultKey(i, 0);
 			iCfg.iKeyAlt[i]  = voutSymbianDefaultKey(i, 1);
+			}
+		else if (aBase == EBaseE90)
+			{
+			iCfg.iKeyScan[i] = KBaseE90Scan[i];
+			iCfg.iKeyAlt[i]  = KBaseE90Alt[i];
+			}
+		else if (aBase == EBaseSlider)
+			{
+			iCfg.iKeyScan[i] = KBaseSliderScan[i];
+			iCfg.iKeyAlt[i]  = KBaseSliderAlt[i];
 			}
 		else
 			{
@@ -1785,6 +1991,9 @@ void CPs1Container::ItemValue(TInt aItem, TDes &aOut) const
 			break;
 		case ECfgLang:
 			aOut.Copy(I18nLanguageName(c.iLang));
+			break;
+		case ECfgResetKeys:
+			aOut.Copy(Tr(iConfirm == ECfgResetKeys ? EStrValConfirm : EStrValPressOk));
 			break;
 		case ECfgReset:
 			aOut.Copy(Tr(iConfirm == ECfgReset ? EStrValConfirm : EStrValPressOk));
@@ -1989,7 +2198,7 @@ void CPs1Container::DrawKeys(CWindowGc &gc, const TRect &aBody) const
 		TBuf<40> name;
 		name.Copy(Tr(i < iPadCount ? KBtnStrId[i] : EStrBtnTiltZero));
 		TBuf<64> value;
-		if (iCapture == i)
+		if (iCapture == i && iClashKey < 0)
 			value.Copy(Tr(EStrPressKey));
 		else
 			{
@@ -2010,6 +2219,29 @@ void CPs1Container::DrawKeys(CWindowGc &gc, const TRect &aBody) const
 		DrawRow(gc, aBody, y, lh, name, value, i == iKeySel);
 		y += lh;
 		}
+	if (iKeyMenu >= 0)
+		DrawKeyMenu(gc, aBody, first);
+	}
+
+// Three lines in a box under the row they act on, or above it when the list runs out below.
+// The box is drawn last, so it covers the rows it lands on.
+void CPs1Container::DrawKeyMenu(CWindowGc &gc, const TRect &aBody, TInt aFirst) const
+	{
+	const CFont *font = iCoeEnv->NormalFont();
+	const TInt lh = font->HeightInPixels() + KRowGap;
+	const TInt asc = font->AscentInPixels();
+	const TInt cell = aBody.iTl.iY + (iKeySel - aFirst) * lh - 1;    // top of the row's highlight
+	TInt top = cell + lh;
+	if (top + 3 * lh + 2 > aBody.iBr.iY)
+		top = cell - 3 * lh - 2;
+	const TRect box(aBody.iTl.iX + 6, top, aBody.iBr.iX - 6, top + 3 * lh + 2);
+	gc.SetBrushStyle(CGraphicsContext::ESolidBrush);
+	gc.SetBrushColor(TRgb(0x08, 0x0c, 0x14));
+	gc.SetPenStyle(CGraphicsContext::ESolidPen);
+	gc.SetPenColor(TRgb(0x58, 0x9c, 0xe0));
+	gc.DrawRect(box);
+	for (TInt i = 0; i < EKeyActCount; i++)
+		DrawRow(gc, box, top + 2 + asc + i * lh, lh, Tr(KKeyActStrId[i]), KNullDesC, i == iKeyMenu);
 	}
 
 void CPs1Container::DrawFiles(CWindowGc &gc, const TRect &aBody) const
@@ -2347,8 +2579,13 @@ void CPs1Container::Draw(const TRect & /*aRect*/) const
 		}
 	else if (iPage == EPageKeys)
 		{
-		const TRect body = DrawChrome(gc, Tr(EStrTitleControls),
-			Tr(iCapture >= 0 ? EStrHintCapture : EStrHintKeys));
+		// While a key taken from another row waits for OK, the hint line names that row.
+		TBuf<80> hint;
+		if (iClashKey >= 0)
+			hint.Format(Tr(EStrKeyTakenFmt), &Tr(iClashRow < iPadCount ? KBtnStrId[iClashRow] : EStrBtnTiltZero));
+		else
+			hint.Copy(Tr(iKeyMenu >= 0 ? EStrHintKeyMenu : iCapture >= 0 ? EStrHintCapture : EStrHintKeys));
+		const TRect body = DrawChrome(gc, Tr(EStrTitleControls), hint);
 		DrawKeys(gc, body);
 		}
 	else if (iPage == EPageHelp)
@@ -2785,6 +3022,8 @@ void CPs1Container::MenuTick()
 		}
 	if (iPage == EPageMain)
 		HintTick();
+	if (iPage == EPageKeys)
+		SlideKeysPoll();
 	if (iPage != EPageProgress)
 		return;
 	TConvStat st;
@@ -3047,6 +3286,8 @@ TKeyResponse CPs1Container::MainKeyL(TInt aScan)
 			case ECfgKeys:
 				iKeySel = 0;
 				iCapture = -1;
+				iKeyMenu = -1;
+				iClashKey = -1;
 				// A key the application never receives cannot be assigned, so all the
 				// side keys are held while this page is open; leaving it calls
 				// ApplyKeyMap, which trims them back to the ones actually bound.
@@ -3058,6 +3299,16 @@ TKeyResponse CPs1Container::MainKeyL(TInt aScan)
 				break;
 			case ECfgPreset:
 				ApplyPreset(iPresetSel);
+				break;
+			case ECfgResetKeys:
+				// Two presses, as for the full reset below.
+				if (iConfirm == ECfgResetKeys)
+					{
+					ResetControls();
+					iConfirm = -1;
+					}
+				else
+					iConfirm = ECfgResetKeys;
 				break;
 			case ECfgReset:
 				// Two presses required: the key bindings and tuned speed hacks are too
@@ -3399,18 +3650,109 @@ TKeyResponse CPs1Container::ProgressKeyL(TInt aScan)
 	return EKeyWasConsumed;
 	}
 
+// Setting the main key keeps the second key, unless the new main key is that same key.
+void CPs1Container::StoreKey(TInt aRow, TBool aAlt, TInt aKey)
+	{
+	if (aAlt)
+		iCfg.iKeyAlt[aRow] = aKey;
+	else
+		{
+		iCfg.iKeyScan[aRow] = aKey;
+		if (iCfg.iKeyAlt[aRow] == aKey)
+			iCfg.iKeyAlt[aRow] = -1;
+		}
+	}
+
+// Losing the main key promotes the second key, so the row keeps a key to press.
+void CPs1Container::TakeKey(TInt aRow, TInt aKey)
+	{
+	if (iCfg.iKeyAlt[aRow] == aKey)
+		iCfg.iKeyAlt[aRow] = -1;
+	if (iCfg.iKeyScan[aRow] == aKey)
+		{
+		iCfg.iKeyScan[aRow] = iCfg.iKeyAlt[aRow];
+		iCfg.iKeyAlt[aRow] = -1;
+		}
+	}
+
+// The row other than aExcept that already uses aKey as its main or second key, -1 if none.
+TInt CPs1Container::KeyRowUsing(TInt aKey, TInt aExcept) const
+	{
+	for (TInt i = 0; i < iKeyRows; i++)
+		if (i != aExcept && (iCfg.iKeyScan[i] == aKey || iCfg.iKeyAlt[i] == aKey))
+			return i;
+	return -1;
+	}
+
 TKeyResponse CPs1Container::KeysKeyL(TInt aScan)
 	{
+	// A key taken from another row waits here for OK. Any other key, RSK included, drops it
+	// and changes nothing: the other row loses the key only once the user has agreed.
+	if (iClashKey >= 0)
+		{
+		if (aScan == EStdKeyDevice3 || aScan == EStdKeyEnter || aScan == EStdKeyNkpEnter)
+			{
+			TakeKey(iClashRow, iClashKey);
+			StoreKey(iCapture, iCaptureAlt, iClashKey);
+			}
+		iClashKey = -1;
+		iCapture = -1;
+		DrawNow();
+		return EKeyWasConsumed;
+		}
+
 	// Capture mode: the next key press becomes the binding. RSK is reserved for us -
 	// it cancels, and it is the key that opens the menu in-game, so assigning it is not allowed.
 	if (iCapture >= 0)
 		{
 		if (aScan != EStdKeyDevice1)
 			{
-			iCfg.iKeyScan[iCapture] = aScan;
-			iCfg.iKeyAlt[iCapture] = -1;    // alt code was part of the default layout
+			const TInt k = voutSymbianAliasKey(aScan);
+			// A second key equal to the main one would be no second key: nothing changes.
+			if (!iCaptureAlt || k != iCfg.iKeyScan[iCapture])
+				{
+				const TInt other = KeyRowUsing(k, iCapture);
+				if (other >= 0)
+					{
+					iClashKey = k;
+					iClashRow = other;
+					// The hint line must show this prompt, not an earlier status message.
+					iStatusMsg.Zero();
+					DrawNow();
+					return EKeyWasConsumed;
+					}
+				StoreKey(iCapture, iCaptureAlt, k);
+				}
 			}
 		iCapture = -1;
+		DrawNow();
+		return EKeyWasConsumed;
+		}
+
+	// The action menu of the row: Up/Down pick a line, OK runs it, RSK, C or Escape closes it.
+	if (iKeyMenu >= 0)
+		{
+		if (aScan == EStdKeyDevice1 || aScan == EStdKeyBackspace || aScan == EStdKeyEscape)
+			iKeyMenu = -1;
+		else if (aScan == EStdKeyUpArrow)
+			iKeyMenu = (iKeyMenu + EKeyActCount - 1) % EKeyActCount;
+		else if (aScan == EStdKeyDownArrow)
+			iKeyMenu = (iKeyMenu + 1) % EKeyActCount;
+		else if (aScan == EStdKeyDevice3 || aScan == EStdKeyEnter || aScan == EStdKeyNkpEnter)
+			{
+			const TInt act = iKeyMenu;
+			iKeyMenu = -1;
+			if (act == EKeyActClear)
+				{
+				iCfg.iKeyScan[iKeySel] = -1;
+				iCfg.iKeyAlt[iKeySel] = -1;
+				}
+			else
+				{
+				iCapture = iKeySel;
+				iCaptureAlt = (act == EKeyActSecond);
+				}
+			}
 		DrawNow();
 		return EKeyWasConsumed;
 		}
@@ -3431,7 +3773,11 @@ TKeyResponse CPs1Container::KeysKeyL(TInt aScan)
 	else if ((aScan == EStdKeyLeftArrow || aScan == EStdKeyRightArrow) && iKeySel < iPadCount)
 		iCfg.iKeyHold[iKeySel] = iCfg.iKeyHold[iKeySel] ? 0 : 1;
 	else if (aScan == EStdKeyDevice3 || aScan == EStdKeyEnter || aScan == EStdKeyNkpEnter)
-		iCapture = iKeySel;
+		{
+		// The menu's hint line must not be hidden by an earlier status message.
+		iStatusMsg.Zero();
+		iKeyMenu = EKeyActMain;
+		}
 	DrawNow();
 	return EKeyWasConsumed;
 	}
@@ -3555,6 +3901,13 @@ TKeyResponse CPs1Container::OfferKeyEventL(const TKeyEvent &aKeyEvent, TEventCod
 	// The keyprobe asks whether the side key reaches the application, and in the
 	// GUI branch voutSymbianPollPad cannot answer it: CONE dispatches the events
 	// there, so that loop returns before it ever looks at one.
+	if (ps1KeyProbeCli() && aType == EEventKey && iKeyProbeSeen < 32 &&
+		aKeyEvent.iCode >= EKeyApplication2 && aKeyEvent.iCode <= EKeyApplication5)
+		{
+		++iKeyProbeSeen;
+		ps1LogFmt("keyprobe", "media key scan=0x%02x code=0x%04x", (int)aKeyEvent.iScanCode,
+			(int)aKeyEvent.iCode);
+		}
 	if (ps1KeyProbeCli() && aType == EEventKeyDown && iKeyProbeSeen < 32)
 		{
 		++iKeyProbeSeen;
@@ -3616,7 +3969,7 @@ TKeyResponse CPs1Container::DispatchKeyL(const TKeyEvent &aKeyEvent, TEventCode 
 	// unmodified config the order changes nothing.
 	// Tilt zero key: the way the phone is held at this moment becomes the neutral
 	// position. A key that is also bound to a PS1 button goes on pressing it below.
-	const TInt sc0 = aKeyEvent.iScanCode;
+	const TInt sc0 = voutSymbianAliasKey(aKeyEvent.iScanCode);
 	const TBool tiltKey = iCfg.iTilt && sc0 >= 0 &&
 		(sc0 == iCfg.iKeyScan[iPadCount] || sc0 == iCfg.iKeyAlt[iPadCount]);
 	if (tiltKey && aType == EEventKeyDown)
@@ -3656,6 +4009,254 @@ TKeyResponse CPs1Container::DispatchKeyL(const TKeyEvent &aKeyEvent, TEventCode 
 	return EKeyWasNotConsumed;
 	}
 
+// --- RemCon: media keys -----------------------------------------------------------
+
+// Pseudo key of each RemCon operation, 0 for those that are not keys. Volume is left out
+// because its keys already reach the application as key events.
+static TInt remConScan(TRemConCoreApiOperationId aOperationId)
+	{
+	switch (aOperationId)
+		{
+		case ERemConCoreApiPausePlayFunction: return ERemConKeyPlayPause;
+		case ERemConCoreApiPlay:              return ERemConKeyPlay;
+		case ERemConCoreApiPause:             return ERemConKeyPause;
+		case ERemConCoreApiStop:              return ERemConKeyStop;
+		case ERemConCoreApiRewind:            return ERemConKeyRewind;
+		case ERemConCoreApiFastForward:       return ERemConKeyFastFwd;
+		case ERemConCoreApiForward:           return ERemConKeyNext;
+		case ERemConCoreApiBackward:          return ERemConKeyPrev;
+		default:                              return 0;
+		}
+	}
+
+CPs1RemCon::CPs1RemCon(CPs1Container &aOwner) : CActive(EPriorityStandard), iOwner(aOwner)
+	{
+	iSelector = NULL;
+	iTarget = NULL;
+	iClick = NULL;
+	iClickScan = 0;
+	iLogged = 0;
+	}
+
+CPs1RemCon *CPs1RemCon::NewL(CPs1Container &aOwner)
+	{
+	CPs1RemCon *self = new (ELeave) CPs1RemCon(aOwner);
+	CleanupStack::PushL(self);
+	CActiveScheduler::Add(self);
+	self->OpenTargetL();
+	CleanupStack::Pop(self);
+	return self;
+	}
+
+CPs1RemCon::~CPs1RemCon()
+	{
+	Cancel();
+	// A click still holding its key would otherwise leave that key pressed.
+	if (iClickScan)
+		voutSymbianKeyEvent(iClickScan, 0);
+	delete iClick;
+	delete iSelector;    // the selector owns iTarget
+	}
+
+void CPs1RemCon::OpenTargetL()
+	{
+	iClick = CPeriodic::NewL(EPriorityStandard);
+	iSelector = CRemConInterfaceSelector::NewL();
+	iTarget = CRemConCoreApiTarget::NewL(*iSelector, *this);
+	iSelector->OpenTargetL();
+	}
+
+void CPs1RemCon::MrccatoCommand(TRemConCoreApiOperationId aOperationId,
+	TRemConCoreApiButtonAction aButtonAct)
+	{
+	if (iLogged < KRemConLogLines)
+		{
+		iLogged++;
+		ps1LogFmt("remcon", "op=%d act=%d", (int)aOperationId, (int)aButtonAct);
+		}
+	const TInt scan = remConScan(aOperationId);
+	if (scan)
+		{
+		if (aButtonAct == ERemConCoreApiButtonClick)
+			Click(scan);
+		else
+			iOwner.RemConKey(scan, aButtonAct == ERemConCoreApiButtonPress);
+		}
+	Respond(aOperationId);
+	}
+
+// A click is a press now and a release KRemConClickUs later. A click that comes while
+// the previous one is still held releases that one first.
+void CPs1RemCon::Click(TInt aScan)
+	{
+	if (iClickScan)
+		ClickEnd(this);
+	iClickScan = aScan;
+	iOwner.RemConKey(aScan, ETrue);
+	iClick->Start(KRemConClickUs, KRemConClickUs, TCallBack(ClickEnd, this));
+	}
+
+TInt CPs1RemCon::ClickEnd(TAny *aSelf)
+	{
+	CPs1RemCon *self = static_cast<CPs1RemCon *>(aSelf);
+	self->iClick->Cancel();
+	const TInt scan = self->iClickScan;
+	self->iClickScan = 0;
+	self->iOwner.RemConKey(scan, EFalse);
+	return KErrNone;
+	}
+
+// The request status is single, so a response sent while one is in flight is dropped.
+void CPs1RemCon::Respond(TRemConCoreApiOperationId aOperationId)
+	{
+	if (IsActive())
+		return;
+	iTarget->SendResponse(iStatus, aOperationId, KErrNone);
+	SetActive();
+	}
+
+void CPs1RemCon::RunL()
+	{
+	if (iStatus.Int() != KErrNone && iLogged < KRemConLogLines)
+		{
+		iLogged++;
+		ps1LogFmt("remcon", "response err=%d", iStatus.Int());
+		}
+	}
+
+void CPs1RemCon::DoCancel()
+	{
+	iSelector->SendCancel(ERemConResponse);
+	}
+
+// A media key from RemCon, as the pseudo key it stands for. In game it takes the path of a
+// physical key; on the Controls page a press assigns it; other menu pages ignore it.
+void CPs1Container::RemConKey(TInt aScan, TBool aDown)
+	{
+	if (ps1KeyProbeCli() && aDown && iKeyProbeSeen < 32)
+		{
+		++iKeyProbeSeen;
+		ps1LogFmt("keyprobe", "arrived scan=0x%02x code=0x%04x", (int)aScan, 0);
+		}
+	if (iPage == EPageNone)
+		voutSymbianKeyEvent(aScan, aDown);
+	else if (iPage == EPageKeys && aDown)
+		{
+		TRAPD(e, KeysKeyL(aScan));
+		if (e != KErrNone)
+			ps1LogFmt("remcon", "keys leave=%d", (int)e);
+		}
+	}
+
+// The anim is held while a binding uses a media key, plus the whole time the Controls
+// page is open (aAll) so that a media key can be assigned there: elsewhere the media
+// keys stay with the music player, as they were before the Slider base existed.
+void CPs1Container::SyncSlideKeys(TBool aAll)
+	{
+	TBool bound = EFalse;
+	for (TInt i = 0; i < iKeyRows && !bound; i++)
+		{
+		const TInt sc = iCfg.iKeyScan[i];
+		const TInt alt = iCfg.iKeyAlt[i];
+		bound = (sc >= ERemConKeyPlayPause && sc <= ERemConKeyPrev) ||
+		        (alt >= ERemConKeyPlayPause && alt <= ERemConKeyPrev);
+		}
+	const TBool want = bound || aAll;
+	// Only a binding that cannot work is worth a message: the Controls page loads the
+	// anim on every phone, and on most it has no media keys to rename anyway.
+	if (want && !iSlideAnim)
+		SlideKeysStart(bound);
+	else if (!want && iSlideAnim)
+		SlideKeysStop();
+	}
+
+// Any failure leaves the media keys to RemCon, which does not get them on an N95 but may
+// on another handset; the rest of the controls work either way. The usual failure is a
+// phone that cannot load the DLL: a capability or certificate error on an unhacked phone.
+void CPs1Container::SlideKeysStart(TBool aReport)
+	{
+	RAnimDll *dll = new RAnimDll(iCoeEnv->WsSession());
+	RSlideAnim *anim = dll ? new RSlideAnim(*dll) : NULL;
+	TInt err = anim ? KErrNone : KErrNoMemory;
+	const char *step = "alloc";
+	TBool loaded = EFalse;
+	if (err == KErrNone)
+		{
+		step = "load";
+		err = dll->Load(_L("ps1slide.dll"));
+		loaded = (err == KErrNone);
+		}
+	TBool constructed = EFalse;
+	if (err == KErrNone)
+		{
+		step = "construct";
+		err = anim->Construct(Window());
+		constructed = (err == KErrNone);
+		}
+	if (err == KErrNone)
+		{
+		step = "map";
+		err = anim->SetMap(KSlideMap);
+		}
+	if (err == KErrNone)
+		{
+		step = "attach";
+		err = anim->Attach();
+		}
+	ps1LogFmt("slidekeys", "start %s err=%d", step, (int)err);
+	if (err == KErrNone)
+		{
+		iSlideDll = dll;
+		iSlideAnim = anim;
+		iSlideLast = anim->GetLast();
+		return;
+		}
+	if (constructed)
+		anim->Destroy();
+	else
+		delete anim;
+	// A handle that never loaded is not closed: only a loaded one has anything to free.
+	if (loaded)
+		dll->Close();
+	delete dll;
+	if (aReport && iPage != EPageNone)
+		iStatusMsg.Copy(Tr(EStrSlideKeysErr));
+	}
+
+void CPs1Container::SlideKeysStop()
+	{
+	if (!iSlideAnim)
+		return;
+	SlideKeysPoll();
+	iSlideAnim->Detach();
+	iSlideAnim->Destroy();        // closes and deletes the handle
+	iSlideAnim = NULL;
+	iSlideDll->Close();
+	delete iSlideDll;
+	iSlideDll = NULL;
+	ps1Log("slidekeys", "stop");
+	}
+
+// Logs each new raw key-down the anim saw, before renaming. A media key whose raw code is
+// not in KSlideMap never reaches the application, and this line is the only place its
+// code shows: press it on the Controls page and read the log.
+void CPs1Container::SlideKeysPoll()
+	{
+	if (!iSlideAnim || iSlideLogged >= KRemConLogLines)
+		return;
+	const TInt last = iSlideAnim->GetLast();
+	if (last == iSlideLast)
+		return;
+	iSlideLast = last;
+	const TInt sc = last & 0xffff;
+	// The keys that drive this page itself say nothing about the media keys.
+	if ((sc >= EStdKeyLeftArrow && sc <= EStdKeyDownArrow) || sc == EStdKeyDevice3 ||
+		sc == EStdKeyDevice0 || sc == EStdKeyDevice1 || sc == EStdKeyBackspace)
+		return;
+	iSlideLogged++;
+	ps1LogFmt("slidekeys", "raw scan=0x%02x downs=%d", last & 0xffff, (last >> 16) & 0x7fff);
+	}
+
 // --- AppUi: owns the container and the emulation tick ------------------------
 
 class CPs1AppUi : public CAknAppUi
@@ -3679,6 +4280,8 @@ private:
 	// Capture handles held for the whole run by the keyprobe: released at once
 	// on the way out. 0 = that key was not captured.
 	TInt32 iKeyProbeCap[8];
+	// Media key captures at top priority: scan codes up/down first, then key codes.
+	TInt32 iKeyProbeMedia[8];
 	};
 
 void CPs1AppUi::AttachOutput()
@@ -3728,6 +4331,17 @@ void CPs1AppUi::ConstructL()
 			iKeyProbeCap[i] = (h > 0) ? h : 0;
 			ps1LogFmt("keyprobe", "scan=0x%02x capture=%d", (int)KProbeKey[i], (int)h);
 			}
+		// The N95 media keys open the music player even with a RemCon target open
+		// (2026-10-24), so ask whether a top-priority capture takes them first.
+		for (TInt i = 0; i < 4; i++)
+			{
+			const TInt32 hs = root.CaptureKeyUpAndDowns(EStdKeyApplication2 + i, 0, 0, KMaxTInt);
+			const TInt32 hc = root.CaptureKey(EKeyApplication2 + i, 0, 0, KMaxTInt);
+			iKeyProbeMedia[i] = (hs > 0) ? hs : 0;
+			iKeyProbeMedia[4 + i] = (hc > 0) ? hc : 0;
+			ps1LogFmt("keyprobe", "media scan=0x%02x capture=%d code=0x%04x capture=%d",
+				(int)(EStdKeyApplication2 + i), (int)hs, (int)(EKeyApplication2 + i), (int)hc);
+			}
 		}
 
 	// Lowest priority: CONE events (keys, redraws, exit) are serviced between frames,
@@ -3746,6 +4360,16 @@ CPs1AppUi::~CPs1AppUi()
 			{
 			iCoeEnv->RootWin().CancelCaptureKeyUpAndDowns(iKeyProbeCap[i]);
 			iKeyProbeCap[i] = 0;
+			++released;
+			}
+	for (TInt i = 0; i < 8; i++)
+		if (iKeyProbeMedia[i])
+			{
+			if (i < 4)
+				iCoeEnv->RootWin().CancelCaptureKeyUpAndDowns(iKeyProbeMedia[i]);
+			else
+				iCoeEnv->RootWin().CancelCaptureKey(iKeyProbeMedia[i]);
+			iKeyProbeMedia[i] = 0;
 			++released;
 			}
 	if (released)

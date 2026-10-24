@@ -40,13 +40,14 @@
 
 [hint.sec.input] OK otwiera lub zamyka sekcję: układy klawiszy, przypisanie klawiszy i sterowanie przechyłem.
 [hint.preset] Zastępuje wszystkie przypisania klawiszy gotowym układem. Lewo/Prawo wybiera, OK stosuje. Własne przypisania zostaną utracone.
-[hint.keybase] Układ bazowy: N95 jest domyślny; C5 akceptuje również 2, 4, 6, 8 jako drugi klawisz dla kierunków. OK stosuje go i zastępuje przypisania.
-[hint.keys] Otwiera stronę przypisania klawiszy: OK, a potem naciśnij klawisz. Lewo/Prawo włącza lub wyłącza przytrzym dla przycisku. Ostatni wiersz to klawisz zerowania przechyłu.
+[hint.keybase] Układ bazowy: N95 jest domyślny; C5 akceptuje również 2, 4, 6, 8 jako drugi klawisz dla kierunków; E90 gra na wewnętrznej klawiaturze; Slider przypisuje przyciski akcji do klawiszy multimedialnych telefonu z podwójnym sliderem (N95, N96, N85, N86, N81). OK stosuje go i zastępuje przypisania.
+[hint.keys] Otwiera stronę przypisania klawiszy: OK otwiera wybór klawisza głównego, drugiego lub wyczyść, a potem naciśnij klawisz. Lewo/Prawo włącza lub wyłącza przytrzym dla przycisku. Ostatni wiersz to klawisz zerowania przechyłu.
 [hint.tilt] Steruje przechyłem telefonu (akcelerometr). Sposób trzymania telefonu w chwili powrotu do gry wyznacza pozycję neutralną, a klawisz zerowania przechyłu (domyślnie C) ustawia ją ponownie w dowolnym momencie.
 [hint.tiltside] Oś drążka podążająca za przechyłem na boki (LX, LY, RX, RY; minus odwraca). Domyślnie LX.
 [hint.tiltpitch] Oś drążka podążająca za przechyłem w przód i w tył (LX, LY, RX, RY; minus odwraca). Domyślnie LY.
 [hint.tiltdead] Przechył mniejszy niż ta wartość jest ignorowany. Od 0 do 40, domyślnie 10.
 [hint.tiltsens] Jak mocno drążek reaguje na przechył: od 40% do 300%, domyślnie 100%.
+[hint.resetkeys] Przywraca tylko sterowanie do wartości domyślnych: przypisania klawiszy, przytrzym, klawisz zerowania przechyłu i ustawienia przechyłu. Naciśnij OK dwa razy. Pozostałe ustawienia pozostają nienaruszone.
 
 [hint.sec.system] OK otwiera lub zamyka sekcję: język, BIOS, profile dla gier i resetowanie.
 [hint.lang] Język menu. Zmienia się natychmiast. Teksty pomocy podążają za nim; język angielski jest używany tam, gdzie brak tekstu.

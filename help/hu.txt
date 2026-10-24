@@ -40,13 +40,14 @@
 
 [hint.sec.input] Az OK megnyitja vagy bezárja a szakaszt: billentyűkiosztások, gombtársítás és döntéses irányítás.
 [hint.preset] Az összes gombtársítást felülírja egy kész elrendezéssel. Balra/Jobbra választ, OK érvényesít. A saját társítások elvesznek.
-[hint.keybase] Az alapelrendezés: az N95 az alapértelmezett; a C5 a 2, 4, 6, 8 gombokat is elfogadja második billentyűként az irányokhoz. Az OK érvényesíti és felülírja a társításokat.
-[hint.keys] Megnyitja a billentyűtársítási oldalt: OK, majd nyomja meg a gombot. A Balra/Jobbra be- vagy kikapcsolja a Tartás módot egy gombon. Az utolsó sor a döntés nullázása billentyű.
+[hint.keybase] Az alapelrendezés: az N95 az alapértelmezett; a C5 a 2, 4, 6, 8 gombokat is elfogadja második billentyűként az irányokhoz; az E90 a belső billentyűzeten játszik; a Slider az akciógombokat egy dual-slider telefon (N95, N96, N85, N86, N81). Az OK érvényesíti és felülírja a társításokat.
+[hint.keys] Megnyitja a billentyűtársítási oldalt: OK megnyitja a fő billentyű, második billentyű vagy törlés választását, majd nyomja meg a gombot. A Balra/Jobbra be- vagy kikapcsolja a Tartás módot egy gombon. Az utolsó sor a döntés nullázása billentyű.
 [hint.tilt] A telefon döntésével irányít (gyorsulásmérő). Ahogyan a telefont tartja a játékba való visszatéréskor, az lesz a semleges helyzet, a döntés nullázása billentyű (alapértelmezés szerint C) pedig bármikor újra beállítja azt.
 [hint.tiltside] Az analóg kar tengelye, amely az oldalra döntést követi (LX, LY, RX, RY; a mínuszjel megfordítja). Alapértelmezett: LX.
 [hint.tiltpitch] Az analóg kar tengelye, amely az előre és hátra döntést követi (LX, LY, RX, RY; a mínuszjel megfordítja). Alapértelmezett: LY.
 [hint.tiltdead] Az ennél kisebb döntést figyelmen kívül hagyja. 0-tól 40-ig, alapértelmezett: 10.
 [hint.tiltsens] Milyen erősen kövesse a kar a döntést: 40%-tól 300%-ig, alapértelmezett: 100%.
+[hint.resetkeys] Csak az irányítást állítja vissza az alapértelmezettre: a billentyűtársításokat, a Tartás módot, a döntés nullázása billentyűt és a döntési beállításokat. Nyomja meg kétszer az OK gombot. A többi beállítást nem érinti.
 
 [hint.sec.system] Az OK megnyitja vagy bezárja a szakaszt: nyelv, BIOS, játékonkénti profilok és alapbeállítások.
 [hint.lang] A menü nyelve. Azonnal megváltozik. A súgószövegek követik; ahol hiányzik a szöveg, ott az angol jelenik meg.

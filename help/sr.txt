@@ -40,13 +40,14 @@
 
 [hint.sec.input] OK otvara ili zatvara odeljak: šeme tastera, dodela tastera i upravljanje nagibom.
 [hint.preset] Zamenjuje sve dodele tastera gotovim rasporedom. Levo/Desno biraju, OK primenjuje. Vaše dodele se gube.
-[hint.keybase] Osnovni raspored: N95 je podrazumevani; C5 prihvata i 2, 4, 6, 8 kao drugi taster za pravce. OK ga primenjuje i zamenjuje dodele.
-[hint.keys] Otvara stranu za dodelu tastera: OK, pa pritisnite taster. Levo/Desno uključuju ili isključuju Drži za dugme. Poslednji red je taster za nuliranje nagiba.
+[hint.keybase] Osnovni raspored: N95 je podrazumevani; C5 prihvata i 2, 4, 6, 8 kao drugi taster za pravce; E90 igra na unutrašnjoj tastaturi; Слајдер postavlja akcione tastere na medijske tastere telefona sa dvostrukim slajderom (N95, N96, N85, N86, N81). OK ga primenjuje i zamenjuje dodele.
+[hint.keys] Otvara stranu za dodelu tastera: OK otvara izbor glavnog tastera, drugog tastera ili očisti, pa pritisnite taster. Levo/Desno uključuju ili isključuju Drži za dugme. Poslednji red je taster za nuliranje nagiba.
 [hint.tilt] Upravlja nagibom telefona (akcelerometar). Način na koji držite telefon kada se vratite u igru je neutralni položaj, a taster za nuliranje nagiba (podrazumevano C) ponovo ga postavlja u svakom trenutku.
 [hint.tiltside] Osa džojstika koja prati bočni nagib (LX, LY, RX, RY; minus je obrće). Podrazumevano LX.
 [hint.tiltpitch] Osa džojstika koja prati nagib napred i nazad (LX, LY, RX, RY; minus je obrće). Podrazumevano LY.
 [hint.tiltdead] Nagib manji od ove vrednosti se zanemaruje. Od 0 do 40, podrazumevano 10.
 [hint.tiltsens] Koliko snažno džojstik prati nagib: od 40% do 300%, podrazumevano 100%.
+[hint.resetkeys] Vraća na podrazumevano samo kontrole: dodele tastera, Drži, taster za nuliranje nagiba i podešavanja nagiba. Dvaput pritisnite OK. Ostala podešavanja se ne diraju.
 
 [hint.sec.system] OK otvara ili zatvara odeljak: jezik, BIOS, profili igara i reset.
 [hint.lang] Jezik menija. Menja se odmah. Tekstovi pomoći ga prate; gde teksta nema, koristi se engleski.

@@ -40,13 +40,14 @@
 
 [hint.sec.input] OK otvorí alebo zatvorí sekciu: rozloženia klávesov, priradenie klávesov a ovládanie náklonom.
 [hint.preset] Nahradí všetky priradenia klávesov hotovým rozložením. Vľavo/Vpravo výber, OK použije. Vlastné priradenia sa stratia.
-[hint.keybase] Základné rozloženie: N95 je predvolené; C5 navyše prijíma 2, 4, 6, 8 ako druhý kláves pre smery. OK ho použije a nahradí priradenia.
-[hint.keys] Otvorí stránku priradenia klávesov: OK, potom stlačte kláves. Vľavo/Vpravo zapne alebo vypne Držať pre tlačidlo. Posledný riadok je kláves na vynulovanie náklonu.
+[hint.keybase] Základné rozloženie: N95 je predvolené; C5 navyše prijíma 2, 4, 6, 8 ako druhý kláves pre smery; E90 hrá na vnútornej klávesnici; Slider umiestni akčné tlačidlá na multimediálne klávesy telefónu s dvojitým sliderom (N95, N96, N85, N86, N81). OK ho použije a nahradí priradenia.
+[hint.keys] Otvorí stránku priradenia klávesov: OK otvorí voľbu hlavného klávesu, druhého klávesu alebo vymazať, potom stlačte kláves. Vľavo/Vpravo zapne alebo vypne Držať pre tlačidlo. Posledný riadok je kláves na vynulovanie náklonu.
 [hint.tilt] Riadi náklonom telefónu (akcelerometer). Spôsob, akým držíte telefón pri návrate do hry, je neutrálna poloha, a kláves na vynulovanie náklonu (predvolene C) ju kedykoľvek nastaví znova.
 [hint.tiltside] Os páčky, ktorá sleduje náklon do strán (LX, LY, RX, RY; mínus ju obráti). Predvolená LX.
 [hint.tiltpitch] Os páčky, ktorá sleduje náklon vpred a vzad (LX, LY, RX, RY; mínus ju obráti). Predvolená LY.
 [hint.tiltdead] Náklon menší ako táto hodnota sa ignoruje. Od 0 do 40, predvolená 10.
 [hint.tiltsens] Ako silno páčka sleduje náklon: 40% až 300%, predvolené 100%.
+[hint.resetkeys] Vráti na predvolené hodnoty iba ovládanie: priradenia klávesov, Držať, kláves na vynulovanie náklonu a nastavenia náklonu. Stlačte OK dvakrát. Ostatné nastavenia zostanú nedotknuté.
 
 [hint.sec.system] OK otvorí alebo zatvorí sekciu: jazyk, BIOS, profily pre hru a reset.
 [hint.lang] Jazyk menu. Zmení sa ihneď. Texty nápovedy sa mu prispôsobia; kde text chýba, použije sa angličtina.

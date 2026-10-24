@@ -208,12 +208,29 @@ During a game the right soft key opens the pause menu, the left soft key saves
 a screenshot, and the side volume keys or `#` and `*` change the volume.
 
 Every button can be reassigned in `Controls...`. Select a button and press OK
-to bind a key, or press left or right to switch the button into hold mode,
-marked `hold`: one press latches the button down and the next releases it,
-which is what keeps the accelerator pressed through a race. `Control preset`
-offers ready layouts (`Default`, `Racing`, `Fighting`, `RPG`), and
-`Keyboard: C5` additionally maps `2`, `4`, `6` and `8` to the D-pad for the
-C5-00.2's keypad.
+to choose between its main key, a second key and clearing the row, then press
+the key. A key that already belongs to another button is moved only after a
+second OK. Left or right switches the button into hold mode, marked `hold`: one
+press latches the button down and the next releases it, which is what keeps the
+accelerator pressed through a race. `Reset controls` in the `Controls` section
+returns only the controls to their defaults. `Control preset` offers ready
+layouts (`Default`, `Racing`, `Fighting`, `RPG`).
+
+`Keyboard` picks a base layout for the phone; OK applies it:
+
+- `N95`: the default mapping above.
+- `C5`: additionally maps `2`, `4`, `6` and `8` to the D-pad for the
+  C5-00.2's keypad.
+- `E90`: the internal keyboard. `W` `A` `S` `D` steer; `L`, `;`, `K` and `O`
+  are Cross, Circle, Square and Triangle, with the navigation key as a second
+  set of them; `Q` / `E` are L1 / L2, `P` / `I` are R1 / R2 (second keys: the
+  navigation key's centre and `0`); `G` / `H` are Select / Start.
+- `Slider`: a dual-slider phone held sideways with the media slider open. The
+  navigation key steers; Play, Next, Stop and Previous are Cross, Circle,
+  Square and Triangle; the volume keys are L1 / L2, the camera and gallery
+  keys R1 / R2; the pencil and the green key are Select and Start. The media
+  keys reach the emulator through a small window server plug-in installed with
+  it, `ps1slide.dll`, which renames them only while the emulator is on screen.
 
 ### Tilt control
 

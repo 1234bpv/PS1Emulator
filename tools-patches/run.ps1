@@ -336,6 +336,12 @@ if (-not $NoRun) {
              '-OutFile', "$RunDir\ps1_stage1.jsonl")
 }
 Invoke-Net $push | Select-Object -Last 6
+$slideDll = "$Sdk\Epoc32\release\gcce\urel\ps1slide.dll"
+if (Test-Path $slideDll) {
+  Invoke-Net ($link + @(
+    '-PutFile', $slideDll, '-Remote', 'E:\sys\bin\ps1slide.dll',
+    '-HashRemote', 'C:\sys\hash\ps1slide.dll')) | Select-Object -Last 2
+}
 # apparc finds these on the card, where the daemon puts them (the installer route
 # for the application resource was never confirmed on this phone). The registration
 # only works together with the application resource it names: caption and icon

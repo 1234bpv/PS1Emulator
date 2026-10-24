@@ -40,13 +40,14 @@
 
 [hint.sec.input] OK åpner eller lukker seksjonen: tasteoppsett, tastetilordning og vippestyring.
 [hint.preset] Erstatter alle tastetilordninger med et ferdig oppsett. Venstre/Høyre velger, OK tar i bruk. Egne tilordninger går tapt.
-[hint.keybase] Grunnoppsettet: N95 er standardoppsettet; C5 godtar også 2, 4, 6, 8 som en ekstra tast for retningene. OK tar det i bruk og erstatter tilordningene.
-[hint.keys] Åpner siden for tastetilordning: OK, trykk deretter på tasten. Venstre/Høyre slår Hold på eller av for en knapp. Den siste raden er tasten for å nullstille helling.
+[hint.keybase] Grunnoppsettet: N95 er standardoppsettet; C5 godtar også 2, 4, 6, 8 som en ekstra tast for retningene; E90 spilles på det indre tastaturet; Slider legger handlingsknappene på medietastene til en dual-slider-telefon (N95, N96, N85, N86, N81). OK tar det i bruk og erstatter tilordningene.
+[hint.keys] Åpner siden for tastetilordning: OK åpner valg av hovedtast, sekundærtast eller tøm, trykk deretter på tasten. Venstre/Høyre slår Hold på eller av for en knapp. Den siste raden er tasten for å nullstille helling.
 [hint.tilt] Styrer med telefonens helling (akselerometer). Måten du holder telefonen på når du vender tilbake til spillet er nøytralposisjonen, og tasten for å nullstille helling (C som standard) setter den på nytt når som helst.
 [hint.tiltside] Stikkeaksen som følger sidelengs helling (LX, LY, RX, RY; en minus inverterer). Standard LX.
 [hint.tiltpitch] Stikkeaksen som følger helling frem og tilbake (LX, LY, RX, RY; en minus inverterer). Standard LY.
 [hint.tiltdead] Helling mindre enn dette ignoreres. Fra 0 til 40, standard 10.
 [hint.tiltsens] Hvor sterkt stikken følger hellingen: 40% til 300%, standard 100%.
+[hint.resetkeys] Setter bare kontrollene tilbake til standard: tastetilordningene, Hold, tasten for å nullstille helling og hellingsinnstillingene. Trykk OK to ganger. Andre innstillinger røres ikke.
 
 [hint.sec.system] OK åpner eller lukker seksjonen: språk, BIOS, spillprofiler og tilbakestilling.
 [hint.lang] Språket i menyen. Endres umiddelbart. Hjelpetekstene følger det; engelsk brukes der en tekst mangler.

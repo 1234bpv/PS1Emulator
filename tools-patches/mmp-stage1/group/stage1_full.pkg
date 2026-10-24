@@ -13,6 +13,8 @@
 [0x101F7961],0,0,0,{"Series60ProductID"}
 
 "\VsCodeProjects\SymbianProjects\S60_3rd_FP1\Epoc32\release\gcce\urel\ps1stage1.exe"-"!:\sys\bin\ps1stage1.exe"
+; Window server anim of the Slider base: renames the media keys the firmware would eat.
+"\VsCodeProjects\SymbianProjects\S60_3rd_FP1\Epoc32\release\gcce\urel\ps1slide.dll"-"!:\sys\bin\ps1slide.dll"
 "\VsCodeProjects\SymbianProjects\S60_3rd_FP1\Epoc32\data\z\private\10003a3f\import\apps\ps1stage1_reg.RSC"-"!:\private\10003a3f\import\apps\ps1stage1_reg.rsc"
 "\VsCodeProjects\SymbianProjects\S60_3rd_FP1\Epoc32\data\z\resource\apps\ps1stage1_aif.mbm"-"!:\resource\apps\ps1stage1_aif.mbm"
 "\VsCodeProjects\SymbianProjects\S60_3rd_FP1\Epoc32\data\z\resource\apps\ps1stage1.RSC"-"!:\resource\apps\ps1stage1.rsc"

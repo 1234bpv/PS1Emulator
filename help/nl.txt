@@ -40,13 +40,14 @@
 
 [hint.sec.input] OK opent of sluit de sectie: toetsindelingen, toetstoewijzing en kantelbesturing.
 [hint.preset] Vervangt alle toetstoewijzingen door een kant-en-klaar schema. Links/Rechts kiest, OK past toe. Uw eigen toewijzingen gaan verloren.
-[hint.keybase] De basisindeling: N95 is de standaard; C5 accepteert ook 2, 4, 6, 8 als tweede toets voor de richtingen. OK past dit toe en vervangt de toewijzingen.
-[hint.keys] Opent de pagina voor toetstoewijzing: OK, druk daarna op de toets. Links/Rechts schakelt Vasthouden voor een knop in of uit. De laatste rij is de toets voor kanteling nul.
+[hint.keybase] De basisindeling: N95 is de standaard; C5 accepteert ook 2, 4, 6, 8 als tweede toets voor de richtingen; E90 speelt op het interne toetsenbord; Slider plaatst de actieknoppen op de mediatoetsen van een dual-slidertelefoon (N95, N96, N85, N86, N81). OK past dit toe en vervangt de toewijzingen.
+[hint.keys] Opent de pagina voor toetstoewijzing: OK opent de keuze voor hoofdtoets, tweede toets of wissen, druk daarna op de toets. Links/Rechts schakelt Vasthouden voor een knop in of uit. De laatste rij is de toets voor kanteling nul.
 [hint.tilt] Stuurt via het kantelen van de telefoon (versnellingsmeter). De houding van de telefoon bij terugkeer naar het spel is de neutrale stand, en de toets voor kanteling nul (standaard C) stelt deze op elk moment opnieuw in.
 [hint.tiltside] De stick-as die zijwaartse kanteling volgt (LX, LY, RX, RY; een minteken keert dit om). Standaard LX.
 [hint.tiltpitch] De stick-as die voor- en achterwaartse kanteling volgt (LX, LY, RX, RY; een minteken keert dit om). Standaard LY.
 [hint.tiltdead] Kanteling kleiner dan dit wordt genegeerd. Van 0 tot 40, standaard 10.
 [hint.tiltsens] Hoe sterk de stick de kanteling volgt: 40% tot 300%, standaard 100%.
+[hint.resetkeys] Zet alleen de besturing terug naar de standaardwaarden: de toetstoewijzingen, Vasthouden, de toets voor kanteling nul en de kantelinstellingen. Druk tweemaal op OK. Andere instellingen blijven onaangeroerd.
 
 [hint.sec.system] OK opent of sluit de sectie: taal, BIOS, profielen per spel en herstel.
 [hint.lang] De taal van het menu. Verandert direct. De helpteksten volgen dit; Engels wordt gebruikt waar een tekst ontbreekt.

@@ -40,13 +40,14 @@
 
 [hint.sec.input] OK odpre ali zapre razdelek: nabori tipk, dodelitev tipk in krmiljenje z nagibom.
 [hint.preset] Zamenja vse dodelitve tipk z že pripravljeno razporeditvijo. Levo/Desno izbira, OK uporabi. Vaše dodelitve so izgubljene.
-[hint.keybase] Osnovna razporeditev: N95 je privzeta; C5 sprejme tudi 2, 4, 6, 8 kot drugo tipko za smeri. OK jo uporabi in zamenja dodelitve.
-[hint.keys] Odpre stran z dodelitvijo tipk: OK, nato pritisnite tipko. Levo/Desno vklopi ali izklopi Drži za gumb. Zadnja vrstica je tipka za ničlo nagiba.
+[hint.keybase] Osnovna razporeditev: N95 je privzeta; C5 sprejme tudi 2, 4, 6, 8 kot drugo tipko za smeri; E90 igra na notranji tipkovnici; Slider postavi akcijske gumbe na predstavnostne tipke telefona z dvojnim sliderjem (N95, N96, N85, N86, N81). OK jo uporabi in zamenja dodelitve.
+[hint.keys] Odpre stran z dodelitvijo tipk: OK odpre izbiro glavne tipke, druge tipke ali počisti, nato pritisnite tipko. Levo/Desno vklopi ali izklopi Drži za gumb. Zadnja vrstica je tipka za ničlo nagiba.
 [hint.tilt] Krmili z nagibom telefona (pospeškomer). Način, kako držite telefon ob vrnitvi v igro, je nevtralni položaj, tipka za ničlo nagiba (privzeto C) pa ga znova nastavi v katerem koli trenutku.
 [hint.tiltside] Os krmilke, ki sledi nagibu vstran (LX, LY, RX, RY; minus jo obrne). Privzeto LX.
 [hint.tiltpitch] Os krmilke, ki sledi nagibu naprej in nazaj (LX, LY, RX, RY; minus jo obrne). Privzeto LY.
 [hint.tiltdead] Nagib, manjši od te vrednosti, se prezre. Od 0 do 40, privzeto 10.
 [hint.tiltsens] Kako močno krmilka sledi nagibu: od 40% do 300%, privzeto 100%.
+[hint.resetkeys] Vrne na privzete le kontrole: dodelitve tipk, Drži, tipko za ničlo nagiba in nastavitve nagiba. Dvakrat pritisnite OK. Drugih nastavitev ne spremeni.
 
 [hint.sec.system] OK odpre ali zapre razdelek: jezik, BIOS, profili iger in ponastavitev.
 [hint.lang] Jezik menija. Spremeni se takoj. Besedila pomoči mu sledijo; kjer besedila ni, se uporabi angleščina.
