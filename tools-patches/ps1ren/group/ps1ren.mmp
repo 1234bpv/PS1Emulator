@@ -1,0 +1,12 @@
+TARGET          ps1ren.exe
+TARGETTYPE      exe
+UID             0x100039CE 0xE00010A5
+SECUREID        0xE00010A5
+CAPABILITY      None
+
+SOURCEPATH      ..
+SOURCE          ps1ren.cpp
+
+SYSTEMINCLUDE   \epoc32\include
+
+LIBRARY         euser.lib efsrv.lib

@@ -1,0 +1,13 @@
+; Rename helper for phones whose \sys\bin the deploy daemon cannot write (E90 without
+; its RomPatcher patches): installed once by hand, then run by the daemon.
+; ASCII only, CRLF only.
+&EN
+
+#{"PS1 rename helper"},(0xE00010A5),1,0,0
+
+%{"PS1Emulator"}
+:"PS1Emulator"
+
+[0x101F7961],0,0,0,{"Series60ProductID"}
+
+"\VsCodeProjects\SymbianProjects\S60_3rd_FP1\Epoc32\release\gcce\urel\ps1ren.exe"-"!:\sys\bin\ps1ren.exe"
