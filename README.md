@@ -29,10 +29,10 @@ themselves.
 The emulator runs real PlayStation games from disc images on the phone's
 memory card, with sound, save states and the full PlayStation controller
 mapped to the phone keys. How fast a game runs depends on the game and on the
-phone. On the Nokia C5-00.2 and on an overclocked Nokia N95 8GB the twelve
-games measured so far run at between 28% and about 100% of the speed of a real
-PlayStation; on an N95 8GB at its factory clock they run at between 22% and
-79%. The full table is in [Game speed](#game-speed).
+phone. On the Nokia C5-00.2 and on an overclocked Nokia N95 8GB the fourteen
+games measured so far run at between 28% of the speed of a real PlayStation and
+full speed; on an N95 8GB at its factory clock they run at between 22% and 89%.
+The full table is in [Game speed](#game-speed).
 
 A lot of the work on this port went into speed. The code is heavily optimised
 for these phones, and every optimisation was kept or rejected by measuring it
@@ -85,8 +85,9 @@ planned for later versions: the Symbian 9.4 phones, such as the Nokia 5800
 and N97, and the Symbian^3 and Belle phones, such as the Nokia N8, E7, 701
 and 808. Most of them have few
 or no game-friendly hardware keys, so the main work there is on-screen
-controls and the screen sizes these phones use. Because this is a hobby
-project, there is no schedule for it.
+controls and the screen sizes these phones use. Those with programmable shader
+processors, such as the N8, E7 and 701, can also get 3D acceleration through
+them. Because this is a hobby project, there is no schedule for it.
 
 The N95 8GB and the E90 are built on the same chip, so what is measured on one
 of them applies to the other, except where the E90's slower factory memory bus
@@ -473,7 +474,9 @@ more than a few percent is therefore repeated, and such runs are not used.
 The full record, with every run, the raw logs, the register readings and the
 gameplay screenshots, is in
 [`docs/measurements/f11-game-speed-2026-10-05.md`](docs/measurements/f11-game-speed-2026-10-05.md)
-and its `evidence` folder.
+and its `evidence` folder. The saved states themselves are not published,
+because a state holds a copy of the BIOS and of the game's memory; the record
+gives their SHA-256 hashes.
 
 ## Known limitations
 
@@ -481,8 +484,9 @@ and its `evidence` folder.
   all NEON code is excluded and the emulator is built for ARMv6.
 - **Full speed is not guaranteed.** Emulating the 33.8 MHz PlayStation
   processor together with its geometry and sound chips is heavy work for a
-  330 MHz phone. Of the twelve games measured, only Wing Commander III reaches
-  full speed, and only on the C5-00.2 and an overclocked N95.
+  330 MHz phone. Of the fourteen games measured, only Final Fantasy VII and Wing
+  Commander III reach full speed, and only on the C5-00.2 and an overclocked
+  N95.
 - **Touch-screen phones are not supported yet.** The current version needs
   hardware keys. Support for phones with Symbian 9.4, Symbian^3 and Belle,
   such as the Nokia 5800, N8 and 701, is planned for later versions.
@@ -564,6 +568,6 @@ the phone, the game image and the settings, says whether
 
 ## License
 
-GPL-2.0, the licence of upstream
+GPL-2.0 (see [`LICENSE`](LICENSE)), the licence of upstream
 [PCSX-ReARMed](https://github.com/notaz/pcsx_rearmed). The changes to the core
 in the fork remain under the same licence.

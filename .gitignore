@@ -15,6 +15,8 @@ pcsx_rearmed/
 *.cbin
 *.pbp
 *.7z
+# A PCSX save state holds a whole copy of the BIOS and the memory of the game: it stays off the public repository.
+*.sav
 
 # Логи EKA2L1, якщо його випадково запустили з кореня проєкту
 EKA2L1*.log
@@ -37,3 +39,4 @@ tools-patches/.daemon_ip
 # Тимчасовий файл deploy.cmd (шлях останнього каталогу прогону)
 .rundir.tmp
 src/symbian/slidekeys/group/ABLD.BAT
+tools-patches/ps1ren/group/ABLD.BAT

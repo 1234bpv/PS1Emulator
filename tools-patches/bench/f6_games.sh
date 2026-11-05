@@ -7,7 +7,7 @@
 set -u
 # The default is this session's scratchpad and dies with the session; set S in
 # the environment to point it somewhere that outlives it.
-S="${S:-C:/Users/7931~1/AppData/Local/Temp/claude/D--VsCodeProjects-SymbianProjects-PS1Emulator/f4f7c4be-10eb-42f7-826f-af82b9a69b11/scratchpad}"
+S="${S:?set S to a scratch folder}"
 D=/d/VsCodeProjects/SymbianProjects/SymbianDeployDaemon/tools/deploy_net.ps1
 # Transport: "-Ip 192.168.3.22" for the N95 over WiFi, "-Com COM12" for the C5
 # over Bluetooth. The games live on the C5 card, so that is the default here.
