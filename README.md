@@ -88,6 +88,8 @@ or no game-friendly hardware keys, so the main work there is on-screen
 controls and the screen sizes these phones use. Those with programmable shader
 processors, such as the N8, E7 and 701, can also get 3D acceleration through
 them. Because this is a hobby project, there is no schedule for it.
+Touch-screen phones with a QWERTY keyboard, such as the E7 and N97, should
+already work with the keyboard, but touch controls are not added yet.
 
 The N95 8GB and the E90 are built on the same chip, so what is measured on one
 of them applies to the other, except where the E90's slower factory memory bus
