@@ -436,8 +436,8 @@ processor clock, 19% follows the memory bus clock and 19% follows neither. A
 wall time. In a real race, the software rasteriser takes about half of the
 run; semi-transparent blending costs almost nothing.
 
-The C5-00.2 is about 1.8 times faster than the N95 at emulation and
-rasterisation, which matches the ratio of the processor clocks, but its screen
+The C5-00.2 is about 1.6 times faster than the N95 at emulation and 1.9 times
+at rasterisation, around the 1.8 ratio of the processor clocks, but its screen
 output costs 3.6 times as much as on the N95 and takes 18% of the run instead
 of 3%. On that phone the output path is therefore where further work pays off.
 
