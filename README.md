@@ -88,8 +88,11 @@ or no game-friendly hardware keys, so the main work there is on-screen
 controls and the screen sizes these phones use. Those with programmable shader
 processors, such as the N8, E7 and 701, can also get 3D acceleration through
 them. Because this is a hobby project, there is no schedule for it.
-Touch-screen phones with a QWERTY keyboard, such as the E7 and N97, should
-already work with the keyboard, but touch controls are not added yet.
+Touch-screen phones with a QWERTY keyboard, such as the E7 and N97, already
+work with the keyboard: the emulator was tried on the E7 and is mostly
+functional there. Touch controls are not added yet, and `GL output` and
+`Tilt control` do not work properly on these phones yet, because both are
+made for Symbian 9.2 on the N95.
 
 The N95 8GB and the E90 are built on the same chip, so what is measured on one
 of them applies to the other, except where the E90's slower factory memory bus
@@ -489,9 +492,11 @@ gives their SHA-256 hashes.
   330 MHz phone. Of the fourteen games measured, only Final Fantasy VII and Wing
   Commander III reach full speed, and only on the C5-00.2 and an overclocked
   N95.
-- **Touch-screen phones are not supported yet.** The current version needs
-  hardware keys. Support for phones with Symbian 9.4, Symbian^3 and Belle,
-  such as the Nokia 5800, N8 and 701, is planned for later versions.
+- **Touch controls are not added yet.** The current version needs hardware
+  keys, so touch-screen phones without a keyboard, such as the Nokia 5800, N8
+  and 701, cannot be played yet. Phones with a QWERTY keyboard, such as the
+  E7 and N97, work with the keyboard, but `GL output` and `Tilt control` do
+  not work properly on them yet.
 
 ## Translations
 
