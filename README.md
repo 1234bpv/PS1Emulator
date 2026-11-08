@@ -4,7 +4,7 @@
 
 # PS1Emulator
 
-<!-- Video demonstration: to be added here. -->
+**Video:** [PlayStation emulator on Nokia Symbian phones: Gran Turismo on an N95 and a C5](https://youtu.be/vnc-RP4fNF0)
 
 PS1Emulator is a PlayStation emulator for Nokia keypad smartphones running
 Symbian 9.1 to 9.3 (S60 3rd Edition). Support for touch-screen phones with
