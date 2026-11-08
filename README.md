@@ -88,9 +88,9 @@ or no game-friendly hardware keys, so the main work there is on-screen
 controls and the screen sizes these phones use. Those with programmable shader
 processors, such as the N8, E7 and 701, can also get 3D acceleration through
 them. Because this is a hobby project, there is no schedule for it.
-Touch-screen phones with a QWERTY keyboard, such as the E7 and N97, already
-work with the keyboard: the emulator was tried on the E7 and is mostly
-functional there. Touch controls are not added yet, and `GL output` and
+Touch-screen phones with a QWERTY keyboard already work with the keyboard:
+the emulator was tested on the E7 and is mostly functional there, and it
+should work on the N97 too. Touch controls are not added yet, and `GL output` and
 `Tilt control` do not work properly on these phones yet, because both are
 made for Symbian 9.2 on the N95.
 
@@ -494,9 +494,9 @@ gives their SHA-256 hashes.
   N95.
 - **Touch controls are not added yet.** The current version needs hardware
   keys, so touch-screen phones without a keyboard, such as the Nokia 5800, N8
-  and 701, cannot be played yet. Phones with a QWERTY keyboard, such as the
-  E7 and N97, work with the keyboard, but `GL output` and `Tilt control` do
-  not work properly on them yet.
+  and 701, cannot be played yet. Phones with a QWERTY keyboard work with the
+  keyboard (tested on the E7, should work on the N97), but `GL output` and
+  `Tilt control` do not work properly on them yet.
 
 ## Translations
 
