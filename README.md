@@ -500,12 +500,12 @@ gives their SHA-256 hashes.
 
 ## Translations
 
-The interface and the help are available in 33 languages, the same set as
-[SymbianOverclock](https://github.com/1234bpv/SymbianOverclock): English,
+The interface and the help are available in 34 languages (the 33 of
+[SymbianOverclock](https://github.com/1234bpv/SymbianOverclock) plus Vietnamese): English,
 Ukrainian, Chinese, German, French, Spanish, Russian, Portuguese, Italian,
 Polish, Turkish, Japanese, Hindi, Arabic, Korean, Czech, Dutch, Swedish,
 Romanian, Hungarian, Greek, Finnish, Danish, Norwegian, Slovak, Bulgarian,
-Croatian, Slovenian, Serbian, Estonian, Latvian, Lithuanian and Catalan.
+Croatian, Slovenian, Serbian, Estonian, Latvian, Lithuanian, Catalan and Vietnamese.
 The menu texts live in `src/symbian/strings.json`, from which
 `node tools-patches/gen_strings.js` generates `src/symbian/i18n.cpp`; the help
 texts and menu hints are UTF-8 files in `help/<lang>.txt`, installed to

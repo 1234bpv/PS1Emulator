@@ -33,7 +33,8 @@
   "et",
   "lv",
   "lt",
-  "ca"
+  "ca",
+  "vi"
  ],
  "strings": {
   "EStrSecGame": {
@@ -69,7 +70,8 @@
    "sl": "IGRA",
    "sr": "IGRA",
    "lv": "SPĒLE",
-   "lt": "ŽAIDIMAS"
+   "lt": "ŽAIDIMAS",
+   "vi": "TRÒ CHƠI"
   },
   "EStrSecVideo": {
    "en": "VIDEO",
@@ -104,7 +106,8 @@
    "sl": "VIDEO",
    "sr": "VIDEO",
    "lv": "VIDEO",
-   "lt": "VAIZDAS"
+   "lt": "VAIZDAS",
+   "vi": "HÌNH ẢNH"
   },
   "EStrSecSpeed": {
    "en": "SPEED",
@@ -139,7 +142,8 @@
    "sl": "HITROST",
    "sr": "BRZINA",
    "lv": "ĀTRUMS",
-   "lt": "GREITIS"
+   "lt": "GREITIS",
+   "vi": "TỐC ĐỘ"
   },
   "EStrSecSound": {
    "en": "SOUND",
@@ -174,7 +178,8 @@
    "sl": "ZVOK",
    "sr": "ZVUK",
    "lv": "SKAŅA",
-   "lt": "GARSAS"
+   "lt": "GARSAS",
+   "vi": "ÂM THANH"
   },
   "EStrSecControls": {
    "en": "CONTROLS",
@@ -209,7 +214,8 @@
    "sl": "KRMILJENJE",
    "sr": "UPRAVLJANJE",
    "lv": "VADĪBA",
-   "lt": "VALDYMAS"
+   "lt": "VALDYMAS",
+   "vi": "ĐIỀU KHIỂN"
   },
   "EStrSecSystem": {
    "en": "SYSTEM",
@@ -244,7 +250,8 @@
    "sl": "SISTEM",
    "sr": "SISTEM",
    "lv": "SISTĒMA",
-   "lt": "SISTEMA"
+   "lt": "SISTEMA",
+   "vi": "HỆ THỐNG"
   },
   "EStrItemStart": {
    "en": "Start",
@@ -279,7 +286,8 @@
    "sl": "Zaženi",
    "sr": "Pokreni",
    "lv": "Sākt",
-   "lt": "Pradėti"
+   "lt": "Pradėti",
+   "vi": "Bắt đầu"
   },
   "EStrItemGame": {
    "en": "Game",
@@ -314,7 +322,8 @@
    "sl": "Igra",
    "sr": "Igra",
    "lv": "Spēle",
-   "lt": "Žaidimas"
+   "lt": "Žaidimas",
+   "vi": "Game"
   },
   "EStrItemAdd": {
    "en": "Add games...",
@@ -349,7 +358,8 @@
    "sl": "Dodaj igre...",
    "sr": "Dodaj igre...",
    "lv": "Pievienot spēles...",
-   "lt": "Pridėti žaidimų..."
+   "lt": "Pridėti žaidimų...",
+   "vi": "Thêm game..."
   },
   "EStrItemBios": {
    "en": "BIOS",
@@ -383,7 +393,8 @@
    "sl": "BIOS",
    "sr": "BIOS",
    "lv": "BIOS",
-   "lt": "BIOS"
+   "lt": "BIOS",
+   "vi": "BIOS"
   },
   "EStrItemProfile": {
    "en": "Per-game profile",
@@ -418,7 +429,8 @@
    "sl": "Profil igre",
    "sr": "Profil igre",
    "lv": "Spēles profils",
-   "lt": "Žaidimo profilis"
+   "lt": "Žaidimo profilis",
+   "vi": "Cấu hình từng game"
   },
   "EStrItemLight": {
    "en": "3D lighting",
@@ -453,7 +465,8 @@
    "sl": "3D osvetlitev",
    "sr": "3D osvetljenje",
    "lv": "3D apgaismojums",
-   "lt": "3D apšvietimas"
+   "lt": "3D apšvietimas",
+   "vi": "Ánh sáng 3D"
   },
   "EStrItemBlend": {
    "en": "Transparency",
@@ -488,7 +501,8 @@
    "sl": "Prosojnost",
    "sr": "Providnost",
    "lv": "Caurspīdīgums",
-   "lt": "Skaidrumas"
+   "lt": "Skaidrumas",
+   "vi": "Trong suốt"
   },
   "EStrItemIlace": {
    "en": "Interlace hack",
@@ -523,7 +537,8 @@
    "sl": "Trik s prepletanjem",
    "sr": "Trik sa preplitanjem",
    "lv": "Rindpārlēces triks",
-   "lt": "Eilučių triukas"
+   "lt": "Eilučių triukas",
+   "vi": "Hack xen kẽ dòng"
   },
   "EStrItemPixSkip": {
    "en": "Pixel skip",
@@ -558,7 +573,8 @@
    "sl": "Preskok pikslov",
    "sr": "Preskok piksela",
    "lv": "Pikseļu izlaišana",
-   "lt": "Pikselių praleidimas"
+   "lt": "Pikselių praleidimas",
+   "vi": "Bỏ qua điểm ảnh"
   },
   "EStrItemSmooth": {
    "en": "Smooth scale",
@@ -593,7 +609,8 @@
    "sl": "Glajenje slike",
    "sr": "Glatko skaliranje",
    "lv": "Gluda mērogošana",
-   "lt": "Glodus mastelis"
+   "lt": "Glodus mastelis",
+   "vi": "Thu nhỏ mượt"
   },
   "EStrItemFxaa": {
    "en": "Edge smooth",
@@ -628,7 +645,8 @@
    "sl": "Glajenje robov",
    "sr": "Glačanje ivica",
    "lv": "Malu izlīdzināšana",
-   "lt": "Kraštų glodinimas"
+   "lt": "Kraštų glodinimas",
+   "vi": "Làm mịn viền"
   },
   "EStrItemDirty": {
    "en": "Skip same frames",
@@ -663,7 +681,8 @@
    "sl": "Preskoči enake sličice",
    "sr": "Preskoči iste kadrove",
    "lv": "Izlaist vienādos",
-   "lt": "Praleisti tuos pačius"
+   "lt": "Praleisti tuos pačius",
+   "vi": "Bỏ khung giống nhau"
   },
   "EStrItemDsa": {
    "en": "Direct draw",
@@ -698,7 +717,8 @@
    "sl": "Neposredno risanje",
    "sr": "Direktno crtanje",
    "lv": "Tiešā zīmēšana",
-   "lt": "Tiesioginis piešimas"
+   "lt": "Tiesioginis piešimas",
+   "vi": "Vẽ trực tiếp"
   },
   "EStrItemGl": {
    "en": "GL output",
@@ -733,7 +753,8 @@
    "sl": "Izhod GL",
    "sr": "GL izlaz",
    "lv": "GL izvade",
-   "lt": "GL išvestis"
+   "lt": "GL išvestis",
+   "vi": "Xuất qua GL"
   },
   "EStrItemSwDraw": {
    "en": "Software draw",
@@ -768,7 +789,8 @@
    "sl": "Programsko risanje",
    "sr": "Softversko crtanje",
    "lv": "Programm. zīmēšana",
-   "lt": "Progr. piešimas"
+   "lt": "Progr. piešimas",
+   "vi": "Vẽ bằng phần mềm"
   },
   "EStrItemCpu": {
    "en": "CPU",
@@ -803,7 +825,8 @@
    "sl": "CPU",
    "sr": "CPU",
    "lv": "CPU",
-   "lt": "CPU"
+   "lt": "CPU",
+   "vi": "CPU"
   },
   "EStrItemGteNf": {
    "en": "GTE fast mode",
@@ -838,7 +861,8 @@
    "sl": "Hitri način GTE",
    "sr": "Brzi režim GTE",
    "lv": "GTE ātrais režīms",
-   "lt": "GTE greitasis režimas"
+   "lt": "GTE greitasis režimas",
+   "vi": "Chế độ nhanh GTE"
   },
   "EStrItemGpuSkip": {
    "en": "Frameskip",
@@ -873,7 +897,8 @@
    "sl": "Preskok sličic",
    "sr": "Preskok kadrova",
    "lv": "Kadru izlaišana",
-   "lt": "Kadrų praleidimas"
+   "lt": "Kadrų praleidimas",
+   "vi": "Bỏ khung hình"
   },
   "EStrItemCycle": {
    "en": "PS1 CPU speed",
@@ -908,7 +933,8 @@
    "sl": "Hitrost PS1 CPU",
    "sr": "Brzina PS1 CPU",
    "lv": "PS1 CPU ātrums",
-   "lt": "PS1 CPU greitis"
+   "lt": "PS1 CPU greitis",
+   "vi": "Tốc độ CPU PS1"
   },
   "EStrItemFps": {
    "en": "FPS meter",
@@ -943,7 +969,8 @@
    "sl": "Števec FPS",
    "sr": "FPS brojač",
    "lv": "FPS skaitītājs",
-   "lt": "FPS skaitiklis"
+   "lt": "FPS skaitiklis",
+   "vi": "Đo FPS"
   },
   "EStrItemSound": {
    "en": "Sound",
@@ -978,7 +1005,8 @@
    "sl": "Zvok",
    "sr": "Zvuk",
    "lv": "Skaņa",
-   "lt": "Garsas"
+   "lt": "Garsas",
+   "vi": "Âm thanh"
   },
   "EStrItemTilt": {
    "en": "Tilt control",
@@ -1013,7 +1041,8 @@
    "sl": "Krmiljenje z nagibom",
    "sr": "Upravljanje nagibom",
    "lv": "Sasvēršanas vadība",
-   "lt": "Pakreipimo valdymas"
+   "lt": "Pakreipimo valdymas",
+   "vi": "Điều khiển nghiêng"
   },
   "EStrItemTiltSide": {
    "en": "Tilt: sideways",
@@ -1048,7 +1077,8 @@
    "sl": "Nagib: vstran",
    "sr": "Nagib: bočno",
    "lv": "Sasvēršana: uz sāniem",
-   "lt": "Pakreipimas: į šoną"
+   "lt": "Pakreipimas: į šoną",
+   "vi": "Nghiêng: ngang"
   },
   "EStrItemTiltPitch": {
    "en": "Tilt: forward-back",
@@ -1083,7 +1113,8 @@
    "sl": "Nagib: naprej-nazaj",
    "sr": "Nagib: napred-nazad",
    "lv": "Sasvēršana: uz priekšu-atpakaļ",
-   "lt": "Pakreipimas: pirmyn-atgal"
+   "lt": "Pakreipimas: pirmyn-atgal",
+   "vi": "Nghiêng: trước-sau"
   },
   "EStrItemTiltDead": {
    "en": "Tilt dead zone",
@@ -1118,7 +1149,8 @@
    "sl": "Mrtvo območje nagiba",
    "sr": "Mrtva zona nagiba",
    "lv": "Sasvēršanas nejutības zona",
-   "lt": "Pakreipimo nejautros zona"
+   "lt": "Pakreipimo nejautros zona",
+   "vi": "Vùng chết nghiêng"
   },
   "EStrItemTiltSens": {
    "en": "Tilt sensitivity",
@@ -1153,7 +1185,8 @@
    "sl": "Občutljivost nagiba",
    "sr": "Osetljivost nagiba",
    "lv": "Sasvēršanas jutība",
-   "lt": "Pakreipimo jautrumas"
+   "lt": "Pakreipimo jautrumas",
+   "vi": "Độ nhạy nghiêng"
   },
   "EStrItemKeys": {
    "en": "Controls...",
@@ -1188,7 +1221,8 @@
    "sl": "Tipke...",
    "sr": "Tasteri...",
    "lv": "Vadība...",
-   "lt": "Valdymas..."
+   "lt": "Valdymas...",
+   "vi": "Phím điều khiển..."
   },
   "EStrItemLang": {
    "en": "Language",
@@ -1223,7 +1257,8 @@
    "sl": "Jezik",
    "sr": "Jezik",
    "lv": "Valoda",
-   "lt": "Kalba"
+   "lt": "Kalba",
+   "vi": "Ngôn ngữ"
   },
   "EStrItemReset": {
    "en": "Reset settings",
@@ -1258,7 +1293,8 @@
    "sl": "Ponastavi nastavitve",
    "sr": "Resetuj podešavanja",
    "lv": "Atiestatīt iestatījumus",
-   "lt": "Atstatyti nustatymus"
+   "lt": "Atstatyti nustatymus",
+   "vi": "Đặt lại cài đặt"
   },
   "EStrItemExit": {
    "en": "Exit",
@@ -1293,7 +1329,8 @@
    "sl": "Izhod",
    "sr": "Izlaz",
    "lv": "Iziet",
-   "lt": "Išeiti"
+   "lt": "Išeiti",
+   "vi": "Thoát"
   },
   "EStrItemResume": {
    "en": "Resume",
@@ -1328,7 +1365,8 @@
    "sl": "Nadaljuj",
    "sr": "Nastavi",
    "lv": "Turpināt",
-   "lt": "Tęsti"
+   "lt": "Tęsti",
+   "vi": "Tiếp tục"
   },
   "EStrItemRestart": {
    "en": "Restart game",
@@ -1363,7 +1401,8 @@
    "sl": "Ponovni zagon igre",
    "sr": "Restart igre",
    "lv": "Sākt spēli no jauna",
-   "lt": "Paleisti iš naujo"
+   "lt": "Paleisti iš naujo",
+   "vi": "Khởi động lại game"
   },
   "EStrValOff": {
    "en": "off",
@@ -1398,7 +1437,8 @@
    "sl": "izklj.",
    "sr": "isklj.",
    "lv": "izsl.",
-   "lt": "išj."
+   "lt": "išj.",
+   "vi": "tắt"
   },
   "EStrValOn": {
    "en": "on",
@@ -1433,7 +1473,8 @@
    "sl": "vklj.",
    "sr": "uklj.",
    "lv": "iesl.",
-   "lt": "įj."
+   "lt": "įj.",
+   "vi": "bật"
   },
   "EStrValNone": {
    "en": "<none>",
@@ -1468,7 +1509,8 @@
    "sl": "<brez>",
    "sr": "<nema>",
    "lv": "<nav>",
-   "lt": "<nėra>"
+   "lt": "<nėra>",
+   "vi": "<không có>"
   },
   "EStrValPressOk": {
    "en": "press OK",
@@ -1503,7 +1545,8 @@
    "sl": "pritisnite OK",
    "sr": "pritisnite OK",
    "lv": "spiediet OK",
-   "lt": "spauskite OK"
+   "lt": "spauskite OK",
+   "vi": "bấm OK"
   },
   "EStrValDefault": {
    "en": "default",
@@ -1538,7 +1581,8 @@
    "sl": "privzeto",
    "sr": "podrazumevano",
    "lv": "noklusējums",
-   "lt": "numatytasis"
+   "lt": "numatytasis",
+   "vi": "mặc định"
   },
   "EStrValInterp": {
    "en": "interpreter",
@@ -1573,7 +1617,8 @@
    "sl": "interpreter",
    "sr": "interpreter",
    "lv": "interpretators",
-   "lt": "interpretatorius"
+   "lt": "interpretatorius",
+   "vi": "thông dịch"
   },
   "EStrValDynarec": {
    "en": "dynarec",
@@ -1608,7 +1653,8 @@
    "sl": "dynarec",
    "sr": "dynarec",
    "lv": "dynarec",
-   "lt": "dynarec"
+   "lt": "dynarec",
+   "vi": "dynarec"
   },
   "EStrValAuto": {
    "en": "auto",
@@ -1643,7 +1689,8 @@
    "sl": "samodejno",
    "sr": "automatski",
    "lv": "auto",
-   "lt": "auto"
+   "lt": "auto",
+   "vi": "tự động"
   },
   "EStrValCycleDefFmt": {
    "en": "%d%% (default)",
@@ -1678,7 +1725,8 @@
    "sl": "%d%% (privzeto)",
    "sr": "%d%% (podrazumevano)",
    "lv": "%d%% (noklus.)",
-   "lt": "%d%% (numatyt.)"
+   "lt": "%d%% (numatyt.)",
+   "vi": "%d%% (mặc định)"
   },
   "EStrValConfirm": {
    "en": "OK to confirm",
@@ -1713,7 +1761,8 @@
    "sl": "OK za potrditev",
    "sr": "OK za potvrdu",
    "lv": "OK apstiprināt",
-   "lt": "OK patvirtinti"
+   "lt": "OK patvirtinti",
+   "vi": "bấm OK để xác nhận"
   },
   "EStrBtnUp": {
    "en": "Up",
@@ -1748,7 +1797,8 @@
    "sl": "Gor",
    "sr": "Gore",
    "lv": "Augšup",
-   "lt": "Aukštyn"
+   "lt": "Aukštyn",
+   "vi": "Lên"
   },
   "EStrBtnDown": {
    "en": "Down",
@@ -1783,7 +1833,8 @@
    "sl": "Dol",
    "sr": "Dole",
    "lv": "Lejup",
-   "lt": "Žemyn"
+   "lt": "Žemyn",
+   "vi": "Xuống"
   },
   "EStrBtnLeft": {
    "en": "Left",
@@ -1818,7 +1869,8 @@
    "sl": "Levo",
    "sr": "Levo",
    "lv": "Kreisā",
-   "lt": "Kairė"
+   "lt": "Kairė",
+   "vi": "Trái"
   },
   "EStrBtnRight": {
    "en": "Right",
@@ -1853,7 +1905,8 @@
    "sl": "Desno",
    "sr": "Desno",
    "lv": "Labā",
-   "lt": "Dešinė"
+   "lt": "Dešinė",
+   "vi": "Phải"
   },
   "EStrBtnCross": {
    "en": "Cross",
@@ -1888,7 +1941,8 @@
    "sl": "Križec",
    "sr": "Iks",
    "lv": "Krusts",
-   "lt": "Kryžius"
+   "lt": "Kryžius",
+   "vi": "Chéo"
   },
   "EStrBtnCircle": {
    "en": "Circle",
@@ -1923,7 +1977,8 @@
    "sl": "Krog",
    "sr": "Krug",
    "lv": "Aplis",
-   "lt": "Apskritimas"
+   "lt": "Apskritimas",
+   "vi": "Tròn"
   },
   "EStrBtnSquare": {
    "en": "Square",
@@ -1958,7 +2013,8 @@
    "sl": "Kvadrat",
    "sr": "Kvadrat",
    "lv": "Kvadrāts",
-   "lt": "Kvadratas"
+   "lt": "Kvadratas",
+   "vi": "Vuông"
   },
   "EStrBtnTriangle": {
    "en": "Triangle",
@@ -1993,7 +2049,8 @@
    "sl": "Trikotnik",
    "sr": "Trougao",
    "lv": "Trijstūris",
-   "lt": "Trikampis"
+   "lt": "Trikampis",
+   "vi": "Tam giác"
   },
   "EStrBtnL1": {
    "en": "L1",
@@ -2027,7 +2084,8 @@
    "sl": "L1",
    "sr": "L1",
    "lv": "L1",
-   "lt": "L1"
+   "lt": "L1",
+   "vi": "L1"
   },
   "EStrBtnR1": {
    "en": "R1",
@@ -2061,7 +2119,8 @@
    "sl": "R1",
    "sr": "R1",
    "lv": "R1",
-   "lt": "R1"
+   "lt": "R1",
+   "vi": "R1"
   },
   "EStrBtnL2": {
    "en": "L2",
@@ -2095,7 +2154,8 @@
    "sl": "L2",
    "sr": "L2",
    "lv": "L2",
-   "lt": "L2"
+   "lt": "L2",
+   "vi": "L2"
   },
   "EStrBtnR2": {
    "en": "R2",
@@ -2129,7 +2189,8 @@
    "sl": "R2",
    "sr": "R2",
    "lv": "R2",
-   "lt": "R2"
+   "lt": "R2",
+   "vi": "R2"
   },
   "EStrBtnSelect": {
    "en": "Select",
@@ -2163,7 +2224,8 @@
    "sl": "Select",
    "sr": "Select",
    "lv": "Select",
-   "lt": "Select"
+   "lt": "Select",
+   "vi": "Select"
   },
   "EStrBtnStart": {
    "en": "Start",
@@ -2197,7 +2259,8 @@
    "sl": "Start",
    "sr": "Start",
    "lv": "Start",
-   "lt": "Start"
+   "lt": "Start",
+   "vi": "Start"
   },
   "EStrPressKey": {
    "en": "press a key",
@@ -2232,7 +2295,8 @@
    "sl": "pritisnite tipko",
    "sr": "pritisnite taster",
    "lv": "nospiediet taustiņu",
-   "lt": "spauskite klavišą"
+   "lt": "spauskite klavišą",
+   "vi": "bấm một phím"
   },
   "EStrHold": {
    "en": "hold",
@@ -2267,7 +2331,8 @@
    "sl": "drži",
    "sr": "drži",
    "lv": "turēt",
-   "lt": "laikyti"
+   "lt": "laikyti",
+   "vi": "giữ"
   },
   "EStrKeyUp": {
    "en": "Up",
@@ -2302,7 +2367,8 @@
    "sl": "Gor",
    "sr": "Gore",
    "lv": "Augšup",
-   "lt": "Aukštyn"
+   "lt": "Aukštyn",
+   "vi": "Lên"
   },
   "EStrKeyDown": {
    "en": "Down",
@@ -2337,7 +2403,8 @@
    "sl": "Dol",
    "sr": "Dole",
    "lv": "Lejup",
-   "lt": "Žemyn"
+   "lt": "Žemyn",
+   "vi": "Xuống"
   },
   "EStrKeyLeft": {
    "en": "Left",
@@ -2372,7 +2439,8 @@
    "sl": "Levo",
    "sr": "Levo",
    "lv": "Kreisā",
-   "lt": "Kairė"
+   "lt": "Kairė",
+   "vi": "Trái"
   },
   "EStrKeyRight": {
    "en": "Right",
@@ -2407,7 +2475,8 @@
    "sl": "Desno",
    "sr": "Desno",
    "lv": "Labā",
-   "lt": "Dešinė"
+   "lt": "Dešinė",
+   "vi": "Phải"
   },
   "EStrKeyOk": {
    "en": "OK",
@@ -2441,7 +2510,8 @@
    "sl": "OK",
    "sr": "OK",
    "lv": "OK",
-   "lt": "OK"
+   "lt": "OK",
+   "vi": "OK"
   },
   "EStrKeyLsk": {
    "en": "LSK",
@@ -2476,7 +2546,8 @@
    "sl": "LFT",
    "sr": "LFT",
    "lv": "KPT",
-   "lt": "KFK"
+   "lt": "KFK",
+   "vi": "PM trái"
   },
   "EStrKeyRsk": {
    "en": "RSK",
@@ -2511,7 +2582,8 @@
    "sl": "DFT",
    "sr": "DFT",
    "lv": "LPT",
-   "lt": "DFK"
+   "lt": "DFK",
+   "vi": "PM phải"
   },
   "EStrKeyClear": {
    "en": "Clear",
@@ -2546,7 +2618,8 @@
    "sl": "Počisti",
    "sr": "Obriši",
    "lv": "Clear",
-   "lt": "Valyti"
+   "lt": "Valyti",
+   "vi": "Xoá"
   },
   "EStrKeyVolPlus": {
    "en": "Vol+",
@@ -2581,7 +2654,8 @@
    "sl": "Glas+",
    "sr": "Glas+",
    "lv": "Skaļ.+",
-   "lt": "Gars.+"
+   "lt": "Gars.+",
+   "vi": "Vol+"
   },
   "EStrKeyVolMinus": {
    "en": "Vol-",
@@ -2616,7 +2690,8 @@
    "sl": "Glas-",
    "sr": "Glas-",
    "lv": "Skaļ.-",
-   "lt": "Gars.-"
+   "lt": "Gars.-",
+   "vi": "Vol-"
   },
   "EStrKeyMenu": {
    "en": "Menu",
@@ -2651,7 +2726,8 @@
    "sl": "Meni",
    "sr": "Meni",
    "lv": "Izvēlne",
-   "lt": "Meniu"
+   "lt": "Meniu",
+   "vi": "Menu"
   },
   "EStrEmpty": {
    "en": "(empty)",
@@ -2686,7 +2762,8 @@
    "sl": "(prazno)",
    "sr": "(prazno)",
    "lv": "(tukšs)",
-   "lt": "(tuščia)"
+   "lt": "(tuščia)",
+   "vi": "(trống)"
   },
   "EStrDir": {
    "en": "dir",
@@ -2721,7 +2798,8 @@
    "sl": "mapa",
    "sr": "fascikla",
    "lv": "mape",
-   "lt": "aplankas"
+   "lt": "aplankas",
+   "vi": "thư mục"
   },
   "EStrProgFileFmt": {
    "en": "File %d of %d",
@@ -2756,7 +2834,8 @@
    "sl": "Datoteka %d od %d",
    "sr": "Datoteka %d od %d",
    "lv": "Fails %d no %d",
-   "lt": "Failas %d iš %d"
+   "lt": "Failas %d iš %d",
+   "vi": "Tệp %d / %d"
   },
   "EStrAskCompress": {
    "en": "Compress to PBP (saves ~40%)",
@@ -2791,7 +2870,8 @@
    "sl": "Stisni v PBP (prihrani ~40%)",
    "sr": "Kompresuj u PBP (štedi ~40%)",
    "lv": "Saspiest uz PBP (ietaupa ~40%)",
-   "lt": "Suspausti į PBP (sutaupo ~40%)"
+   "lt": "Suspausti į PBP (sutaupo ~40%)",
+   "vi": "Nén sang PBP (giảm ~40%)"
   },
   "EStrAskStore": {
    "en": "Store as is",
@@ -2826,7 +2906,8 @@
    "sl": "Shrani brez stiskanja",
    "sr": "Sačuvaj kakvo jeste",
    "lv": "Saglabāt kā ir",
-   "lt": "Išsaugoti kaip yra"
+   "lt": "Išsaugoti kaip yra",
+   "vi": "Giữ nguyên"
   },
   "EStrAskDeleteYes": {
    "en": "Yes, delete originals",
@@ -2861,7 +2942,8 @@
    "sl": "Da, izbriši izvirnike",
    "sr": "Da, obriši originale",
    "lv": "Jā, dzēst oriģinālus",
-   "lt": "Taip, ištrinti originalus"
+   "lt": "Taip, ištrinti originalus",
+   "vi": "Có, xoá bản gốc"
   },
   "EStrAskDeleteNo": {
    "en": "No, keep them",
@@ -2896,7 +2978,8 @@
    "sl": "Ne, obdrži jih",
    "sr": "Ne, zadrži ih",
    "lv": "Nē, atstāt tos",
-   "lt": "Ne, palikti juos"
+   "lt": "Ne, palikti juos",
+   "vi": "Không, giữ lại"
   },
   "EStrAskEccWarn1": {
    "en": "Compression drops ECC and cannot",
@@ -2931,7 +3014,8 @@
    "sl": "Stiskanje odstrani ECC in ga ni",
    "sr": "Kompresija odbacuje ECC i ne može",
    "lv": "Saspiešana noņem ECC un to nevar",
-   "lt": "Suspaudimas pašalina ECC ir negali"
+   "lt": "Suspaudimas pašalina ECC ir negali",
+   "vi": "Nén sẽ bỏ dữ liệu ECC và không"
   },
   "EStrAskEccWarn2": {
    "en": "be undone. The game still works.",
@@ -2966,7 +3050,8 @@
    "sl": "mogoče razveljaviti. Igra deluje.",
    "sr": "se poništiti. Igra i dalje radi.",
    "lv": "atsaukt. Spēle tāpat darbojas.",
-   "lt": "būti atšauktas. Žaidimas vis tiek veikia."
+   "lt": "būti atšauktas. Žaidimas vis tiek veikia.",
+   "vi": "thể hoàn tác. Game vẫn chạy."
   },
   "EStrAskFilesFmt": {
    "en": "%d file(s) selected",
@@ -3001,7 +3086,8 @@
    "sl": "Izbranih datotek: %d",
    "sr": "Izabrano datoteka: %d",
    "lv": "Atlasīti faili: %d",
-   "lt": "Pasirinkta failų: %d"
+   "lt": "Pasirinkta failų: %d",
+   "vi": "Đã chọn %d tệp"
   },
   "EStrAskRunWarn1": {
    "en": "This is the running game. It will",
@@ -3036,7 +3122,8 @@
    "sl": "To je igra, ki teče. Zaprla se bo,",
    "sr": "Ovo je igra koja je pokrenuta. Zatvoriće",
    "lv": "Šī ir darbojošā spēle. Tā tiks",
-   "lt": "Tai veikiantis žaidimas. Jis bus"
+   "lt": "Tai veikiantis žaidimas. Jis bus",
+   "vi": "Đây là game đang chạy. Game sẽ"
   },
   "EStrAskRunWarn2": {
    "en": "close, and the emulator must be",
@@ -3071,7 +3158,8 @@
    "sl": "emulator pa je treba znova",
    "sr": "se, a emulator treba ponovo",
    "lv": "aizvērta, un emulators jāpalaiž",
-   "lt": "uždarytas, o emuliatorių reikės"
+   "lt": "uždarytas, o emuliatorių reikės",
+   "vi": "đóng, và phải khởi động lại trình"
   },
   "EStrAskRunWarn3": {
    "en": "restarted to play again.",
@@ -3106,7 +3194,8 @@
    "sl": "zagnati, če želite spet igrati.",
    "sr": "pokrenuti da biste igrali.",
    "lv": "no jauna, lai spēlētu vēlreiz.",
-   "lt": "paleisti iš naujo."
+   "lt": "paleisti iš naujo.",
+   "vi": "giả lập để chơi tiếp."
   },
   "EStrTitleAddGames": {
    "en": "Add games: ",
@@ -3141,7 +3230,8 @@
    "sl": "Dodaj igre: ",
    "sr": "Dodaj igre: ",
    "lv": "Pievienot spēles: ",
-   "lt": "Pridėti žaidimų: "
+   "lt": "Pridėti žaidimų: ",
+   "vi": "Thêm game: "
   },
   "EStrTitleSelectBios": {
    "en": "Select BIOS: ",
@@ -3176,7 +3266,8 @@
    "sl": "Izberi BIOS: ",
    "sr": "Izaberi BIOS: ",
    "lv": "Izvēlēties BIOS: ",
-   "lt": "Pasirinkti BIOS: "
+   "lt": "Pasirinkti BIOS: ",
+   "vi": "Chọn BIOS: "
   },
   "EStrTitleSelectGame": {
    "en": "Select game: ",
@@ -3211,7 +3302,8 @@
    "sl": "Izberi igro: ",
    "sr": "Izaberi igru: ",
    "lv": "Izvēlēties spēli: ",
-   "lt": "Pasirinkti žaidimą: "
+   "lt": "Pasirinkti žaidimą: ",
+   "vi": "Chọn game: "
   },
   "EStrDrives": {
    "en": "drives",
@@ -3246,7 +3338,8 @@
    "sl": "pogoni",
    "sr": "diskovi",
    "lv": "diski",
-   "lt": "diskai"
+   "lt": "diskai",
+   "vi": "ổ đĩa"
   },
   "EStrHintImport": {
    "en": "OK mark, LSK start, Left up, C back",
@@ -3281,7 +3374,8 @@
    "sl": "OK označi, LFT začni, Levo gor, C nazaj",
    "sr": "OK označi, LFT start, Levo gore, C nazad",
    "lv": "OK atzīmēt, KPT sākt, Kreisā - augšup, C atpakaļ",
-   "lt": "OK pažymėti, KFK pradėti, Kairė aukštyn, C atgal"
+   "lt": "OK pažymėti, KFK pradėti, Kairė aukštyn, C atgal",
+   "vi": "OK đánh dấu, PM trái bắt đầu, Trái lên, C lùi"
   },
   "EStrHintBrowse": {
    "en": "OK open, Left up, C cancel",
@@ -3316,7 +3410,8 @@
    "sl": "OK odpri, Levo gor, C prekliči",
    "sr": "OK otvori, Levo gore, C otkaži",
    "lv": "OK atvērt, Kreisā - augšup, C atcelt",
-   "lt": "OK atidaryti, Kairė aukštyn, C atsisakyti"
+   "lt": "OK atidaryti, Kairė aukštyn, C atsisakyti",
+   "vi": "OK mở, Trái lên, C huỷ"
   },
   "EStrTitleStore": {
    "en": "How to store?",
@@ -3351,7 +3446,8 @@
    "sl": "Kako shraniti?",
    "sr": "Kako sačuvati?",
    "lv": "Kā saglabāt?",
-   "lt": "Kaip išsaugoti?"
+   "lt": "Kaip išsaugoti?",
+   "vi": "Lưu trữ thế nào?"
   },
   "EStrTitleDelete": {
    "en": "Delete originals?",
@@ -3386,7 +3482,8 @@
    "sl": "Izbrišem izvirnike?",
    "sr": "Obrisati originale?",
    "lv": "Dzēst oriģinālus?",
-   "lt": "Ištrinti originalus?"
+   "lt": "Ištrinti originalus?",
+   "vi": "Xoá bản gốc?"
   },
   "EStrHintAsk": {
    "en": "Up/Down choose, OK confirm, C back",
@@ -3421,7 +3518,8 @@
    "sl": "Gor/Dol izbira, OK potrdi, C nazaj",
    "sr": "Gore/Dole biraj, OK potvrdi, C nazad",
    "lv": "Augšup/Lejup izvēlēties, OK apstiprināt, C atpakaļ",
-   "lt": "Aukštyn/Žemyn rinktis, OK patvirtinti, C atgal"
+   "lt": "Aukštyn/Žemyn rinktis, OK patvirtinti, C atgal",
+   "vi": "Lên/Xuống chọn, OK xác nhận, C lùi"
   },
   "EStrTitleImporting": {
    "en": "Importing",
@@ -3456,7 +3554,8 @@
    "sl": "Uvoz",
    "sr": "Uvoz",
    "lv": "Importēšana",
-   "lt": "Importavimas"
+   "lt": "Importavimas",
+   "vi": "Đang nhập"
   },
   "EStrHintCancels": {
    "en": "C cancels",
@@ -3491,7 +3590,8 @@
    "sl": "C prekliče",
    "sr": "C otkazuje",
    "lv": "C atceļ",
-   "lt": "C nutraukia"
+   "lt": "C nutraukia",
+   "vi": "C để huỷ"
   },
   "EStrHintCloses": {
    "en": "C closes",
@@ -3526,7 +3626,8 @@
    "sl": "C zapre",
    "sr": "C zatvara",
    "lv": "C aizver",
-   "lt": "C uždaro"
+   "lt": "C uždaro",
+   "vi": "C để đóng"
   },
   "EStrTitleControls": {
    "en": "Controls",
@@ -3561,7 +3662,8 @@
    "sl": "Tipke",
    "sr": "Tasteri",
    "lv": "Vadība",
-   "lt": "Valdymas"
+   "lt": "Valdymas",
+   "vi": "Điều khiển"
   },
   "EStrHintCapture": {
    "en": "press a key, RSK cancels",
@@ -3596,7 +3698,8 @@
    "sl": "pritisnite tipko, DFT prekliče",
    "sr": "pritisnite taster, DFT otkazuje",
    "lv": "nospiediet taustiņu, LPT atceļ",
-   "lt": "spauskite klavišą, DFK nutraukia"
+   "lt": "spauskite klavišą, DFK nutraukia",
+   "vi": "bấm phím, PM phải để huỷ"
   },
   "EStrHintKeys": {
    "en": "OK bind, L/R hold, C back",
@@ -3631,7 +3734,8 @@
    "sl": "OK dodeli, L/D drži, C nazaj",
    "sr": "OK dodeli, L/D drži, C nazad",
    "lv": "OK piešķirt, K/L turēt, C atpakaļ",
-   "lt": "OK priskirti, K/D laikyti, C atgal"
+   "lt": "OK priskirti, K/D laikyti, C atgal",
+   "vi": "OK gán, Trái/Phải giữ, C lùi"
   },
   "EStrHintGameClosed": {
    "en": "game closed after import, OK exits",
@@ -3666,7 +3770,8 @@
    "sl": "igra zaprta po uvozu, OK izhod",
    "sr": "igra zatvorena posle uvoza, OK izlaz",
    "lv": "spēle aizvērta pēc importa, OK iziet",
-   "lt": "žaidimas uždarytas po importo, OK išeiti"
+   "lt": "žaidimas uždarytas po importo, OK išeiti",
+   "vi": "game đã đóng sau khi nhập, OK để thoát"
   },
   "EStrHintMainResume": {
    "en": "L/R change, OK games, C back",
@@ -3701,7 +3806,8 @@
    "sl": "L/D spremeni, OK igre, C nazaj",
    "sr": "L/D menja, OK igre, C nazad",
    "lv": "K/L mainīt, OK spēles, C atpakaļ",
-   "lt": "K/D keisti, OK žaidimai, C atgal"
+   "lt": "K/D keisti, OK žaidimai, C atgal",
+   "vi": "Trái/Phải đổi, OK game, C lùi"
   },
   "EStrHintMainStart": {
    "en": "L/R change, OK games, C exit  * = needs restart",
@@ -3736,7 +3842,8 @@
    "sl": "L/D spremeni, OK igre, C izhod  * = potreben ponovni zagon",
    "sr": "L/D menja, OK igre, C izlaz  * = treba restart",
    "lv": "K/L mainīt, OK spēles, C iziet  * = vajag restartēt",
-   "lt": "K/D keisti, OK žaidimai, C išeiti  * = reikia paleisti iš naujo"
+   "lt": "K/D keisti, OK žaidimai, C išeiti  * = reikia paleisti iš naujo",
+   "vi": "Trái/Phải đổi, OK game, C thoát  * = cần khởi động lại"
   },
   "EStrItemSaveState": {
    "en": "Save state",
@@ -3771,7 +3878,8 @@
    "sl": "Shrani stanje",
    "sr": "Sačuvaj stanje",
    "lv": "Saglabāt stāvokli",
-   "lt": "Išsaugoti būseną"
+   "lt": "Išsaugoti būseną",
+   "vi": "Lưu trạng thái"
   },
   "EStrItemLoadState": {
    "en": "Load state",
@@ -3806,7 +3914,8 @@
    "sl": "Naloži stanje",
    "sr": "Učitaj stanje",
    "lv": "Ielādēt stāvokli",
-   "lt": "Įkelti būseną"
+   "lt": "Įkelti būseną",
+   "vi": "Nạp trạng thái"
   },
   "EStrValSlotFmt": {
    "en": "Slot %d",
@@ -3841,7 +3950,8 @@
    "sl": "Mesto %d",
    "sr": "Slot %d",
    "lv": "Vieta %d",
-   "lt": "Vieta %d"
+   "lt": "Vieta %d",
+   "vi": "Slot %d"
   },
   "EStrStateSaveOk": {
    "en": "State saved (slot %d)",
@@ -3876,7 +3986,8 @@
    "sl": "Stanje shranjeno (mesto %d)",
    "sr": "Stanje sačuvano (slot %d)",
    "lv": "Stāvoklis saglabāts (vieta %d)",
-   "lt": "Būsena išsaugota (vieta %d)"
+   "lt": "Būsena išsaugota (vieta %d)",
+   "vi": "Đã lưu trạng thái (slot %d)"
   },
   "EStrStateSaveErr": {
    "en": "Failed to save state",
@@ -3911,7 +4022,8 @@
    "sl": "Stanja ni bilo mogoče shraniti",
    "sr": "Čuvanje stanja nije uspelo",
    "lv": "Neizdevās saglabāt stāvokli",
-   "lt": "Nepavyko išsaugoti būsenos"
+   "lt": "Nepavyko išsaugoti būsenos",
+   "vi": "Lưu trạng thái thất bại"
   },
   "EStrStateLoadOk": {
    "en": "State loaded (slot %d)",
@@ -3946,7 +4058,8 @@
    "sl": "Stanje naloženo (mesto %d)",
    "sr": "Stanje učitano (slot %d)",
    "lv": "Stāvoklis ielādēts (vieta %d)",
-   "lt": "Būsena įkelta (vieta %d)"
+   "lt": "Būsena įkelta (vieta %d)",
+   "vi": "Đã nạp trạng thái (slot %d)"
   },
   "EStrStateLoadErr": {
    "en": "Failed to load state",
@@ -3981,7 +4094,8 @@
    "sl": "Stanja ni bilo mogoče naložiti",
    "sr": "Učitavanje stanja nije uspelo",
    "lv": "Neizdevās ielādēt stāvokli",
-   "lt": "Nepavyko įkelti būsenos"
+   "lt": "Nepavyko įkelti būsenos",
+   "vi": "Nạp trạng thái thất bại"
   },
   "EStrTitleError": {
    "en": "Error",
@@ -4016,7 +4130,8 @@
    "sl": "Napaka",
    "sr": "Greška",
    "lv": "Kļūda",
-   "lt": "Klaida"
+   "lt": "Klaida",
+   "vi": "Lỗi"
   },
   "EStrHintErrorBack": {
    "en": "OK / C to return",
@@ -4051,7 +4166,8 @@
    "sl": "OK / C za vrnitev",
    "sr": "OK / C za povratak",
    "lv": "OK / C atgriezties",
-   "lt": "OK / C grįžti"
+   "lt": "OK / C grįžti",
+   "vi": "OK / C để quay lại"
   },
   "EStrErrDiscOrBios1": {
    "en": "Disc image or BIOS not found.",
@@ -4086,7 +4202,8 @@
    "sl": "Slike diska ali BIOS-a ni.",
    "sr": "Slika diska ili BIOS nisu nađeni.",
    "lv": "Diska attēls vai BIOS nav atrasts.",
-   "lt": "Disko atvaizdas arba BIOS nerastas."
+   "lt": "Disko atvaizdas arba BIOS nerastas.",
+   "vi": "Không tìm thấy ảnh đĩa hoặc BIOS."
   },
   "EStrErrDiscOrBios2": {
    "en": "BIOS dumps go to E:\\PS1\\bios\\",
@@ -4121,7 +4238,8 @@
    "sl": "Izpisi BIOS-a dajte v E:\\PS1\\bios\\",
    "sr": "BIOS dampove stavite u E:\\PS1\\bios\\",
    "lv": "BIOS dampi liek mapē E:\\PS1\\bios\\",
-   "lt": "BIOS failai dedami į E:\\PS1\\bios\\"
+   "lt": "BIOS failai dedami į E:\\PS1\\bios\\",
+   "vi": "Bản dump BIOS để ở E:\\PS1\\bios\\"
   },
   "EStrErrDiscOrBios3": {
    "en": "Disc images go to E:\\PS1\\games\\",
@@ -4156,7 +4274,8 @@
    "sl": "Slike diskov dajte v E:\\PS1\\games\\",
    "sr": "Slike diskova stavite u E:\\PS1\\games\\",
    "lv": "Diska attēlus liek mapē E:\\PS1\\games\\",
-   "lt": "Disko atvaizdai dedami į E:\\PS1\\games\\"
+   "lt": "Disko atvaizdai dedami į E:\\PS1\\games\\",
+   "vi": "Ảnh đĩa game để ở E:\\PS1\\games\\"
   },
   "EStrTitleRestart": {
    "en": "Restart game?",
@@ -4191,7 +4310,8 @@
    "sl": "Znova zagnati igro?",
    "sr": "Restartovati igru?",
    "lv": "Sākt spēli no jauna?",
-   "lt": "Paleisti iš naujo?"
+   "lt": "Paleisti iš naujo?",
+   "vi": "Khởi động lại game?"
   },
   "EStrAskRestartYes": {
    "en": "Restart now",
@@ -4226,7 +4346,8 @@
    "sl": "Znova zaženi zdaj",
    "sr": "Restartuj sada",
    "lv": "Sākt tagad",
-   "lt": "Paleisti dabar"
+   "lt": "Paleisti dabar",
+   "vi": "Khởi động lại ngay"
   },
   "EStrAskRestartNo": {
    "en": "Discard changes",
@@ -4261,7 +4382,8 @@
    "sl": "Zavrži spremembe",
    "sr": "Odbaci izmene",
    "lv": "Atmest izmaiņas",
-   "lt": "Atmesti pakeitimus"
+   "lt": "Atmesti pakeitimus",
+   "vi": "Bỏ thay đổi"
   },
   "EStrAskRestartWarn1": {
    "en": "Items with * need a restart.",
@@ -4296,7 +4418,8 @@
    "sl": "Vrstice z * zahtevajo ponovni zagon.",
    "sr": "Stavke sa * traže restart.",
    "lv": "Rindām ar * vajag restartēšanu.",
-   "lt": "Eilutėms su * reikia paleidimo iš naujo."
+   "lt": "Eilutėms su * reikia paleidimo iš naujo.",
+   "vi": "Mục có dấu * cần khởi động lại."
   },
   "EStrAskRestartWarn2": {
    "en": "Unsaved game progress will be lost.",
@@ -4331,7 +4454,8 @@
    "sl": "Neshranjen napredek v igri bo izgubljen.",
    "sr": "Nesačuvani napredak u igri biće izgubljen.",
    "lv": "Nesaglabātais spēles progress tiks zaudēts.",
-   "lt": "Neišsaugota pažanga bus prarasta."
+   "lt": "Neišsaugota pažanga bus prarasta.",
+   "vi": "Tiến trình chưa lưu sẽ mất."
   },
   "EStrBiosErr": {
    "en": "Failed to unpack BIOS",
@@ -4366,7 +4490,8 @@
    "sl": "BIOS-a ni bilo mogoče razpakirati",
    "sr": "Raspakivanje BIOS-a nije uspelo",
    "lv": "Neizdevās izpakot BIOS",
-   "lt": "Nepavyko išpakuoti BIOS"
+   "lt": "Nepavyko išpakuoti BIOS",
+   "vi": "Giải nén BIOS thất bại"
   },
   "EStrItemPreset": {
    "en": "Control preset",
@@ -4401,7 +4526,8 @@
    "sl": "Nabor tipk",
    "sr": "Šema tastera",
    "lv": "Vadības sagatave",
-   "lt": "Valdymo šablonas"
+   "lt": "Valdymo šablonas",
+   "vi": "Mẫu phím"
   },
   "EStrValPresetDefault": {
    "en": "Default",
@@ -4436,7 +4562,8 @@
    "sl": "Privzeto",
    "sr": "Podrazumevano",
    "lv": "Noklusējums",
-   "lt": "Numatytasis"
+   "lt": "Numatytasis",
+   "vi": "Mặc định"
   },
   "EStrValPresetRacing": {
    "en": "Racing",
@@ -4471,7 +4598,8 @@
    "sl": "Dirke",
    "sr": "Trke",
    "lv": "Sacīkstes",
-   "lt": "Lenktynės"
+   "lt": "Lenktynės",
+   "vi": "Đua xe"
   },
   "EStrValPresetFighting": {
    "en": "Fighting",
@@ -4506,7 +4634,8 @@
    "sl": "Borbe",
    "sr": "Borbe",
    "lv": "Cīņas",
-   "lt": "Kovos"
+   "lt": "Kovos",
+   "vi": "Đối kháng"
   },
   "EStrValPresetRpg": {
    "en": "RPG",
@@ -4541,7 +4670,8 @@
    "sl": "RPG",
    "sr": "RPG",
    "lv": "RPG",
-   "lt": "RPG"
+   "lt": "RPG",
+   "vi": "RPG"
   },
   "EStrItemKeyBase": {
    "en": "Keyboard",
@@ -4576,7 +4706,8 @@
    "sl": "Tipkovnica",
    "sr": "Tastatura",
    "lv": "Tastatūra",
-   "lt": "Klaviatūra"
+   "lt": "Klaviatūra",
+   "vi": "Bàn phím"
   },
   "EStrValBaseN95": {
    "en": "N95",
@@ -4610,7 +4741,8 @@
    "sl": "N95",
    "sr": "N95",
    "lv": "N95",
-   "lt": "N95"
+   "lt": "N95",
+   "vi": "N95"
   },
   "EStrValBaseC5": {
    "en": "C5",
@@ -4644,7 +4776,8 @@
    "sl": "C5",
    "sr": "C5",
    "lv": "C5",
-   "lt": "C5"
+   "lt": "C5",
+   "vi": "C5"
   },
   "EStrValBaseE90": {
    "en": "E90",
@@ -4678,7 +4811,8 @@
    "sl": "E90",
    "sr": "E90",
    "lv": "E90",
-   "lt": "E90"
+   "lt": "E90",
+   "vi": "E90"
   },
   "EStrValBaseSlider": {
    "en": "Slider",
@@ -4713,7 +4847,8 @@
    "sl": "Slider",
    "sr": "Слајдер",
    "lv": "Slider",
-   "lt": "Slider"
+   "lt": "Slider",
+   "vi": "Trượt"
   },
   "EStrItemWsola": {
    "en": "Preserve pitch",
@@ -4748,7 +4883,8 @@
    "sl": "Ohrani višino tona",
    "sr": "Očuvaj visinu tona",
    "lv": "Saglabāt toni",
-   "lt": "Išlaikyti toną"
+   "lt": "Išlaikyti toną",
+   "vi": "Giữ cao độ"
   },
   "EStrItemHelp": {
    "en": "Help",
@@ -4783,7 +4919,8 @@
    "sl": "Pomoč",
    "sr": "Pomoć",
    "lv": "Palīdzība",
-   "lt": "Pagalba"
+   "lt": "Pagalba",
+   "vi": "Trợ giúp"
   },
   "EStrItemGames": {
    "en": "Games",
@@ -4818,7 +4955,8 @@
    "sl": "Igre",
    "sr": "Igre",
    "lv": "Spēles",
-   "lt": "Žaidimai"
+   "lt": "Žaidimai",
+   "vi": "Game"
   },
   "EStrTitleSetup": {
    "en": "First setup",
@@ -4853,7 +4991,8 @@
    "sl": "Prva nastavitev",
    "sr": "Prvo podešavanje",
    "lv": "Pirmā iestatīšana",
-   "lt": "Pirmasis nustatymas"
+   "lt": "Pirmasis nustatymas",
+   "vi": "Thiết lập ban đầu"
   },
   "EStrValFound": {
    "en": "found",
@@ -4888,7 +5027,8 @@
    "sl": "najdeno",
    "sr": "nađeno",
    "lv": "atrasts",
-   "lt": "rastas"
+   "lt": "rastas",
+   "vi": "đã thấy"
   },
   "EStrValMissing": {
    "en": "not found",
@@ -4923,7 +5063,8 @@
    "sl": "ni najdeno",
    "sr": "nije nađeno",
    "lv": "nav atrasts",
-   "lt": "nerastas"
+   "lt": "nerastas",
+   "vi": "không thấy"
   },
   "EStrHintSetup": {
    "en": "L/R change, OK select, C skip",
@@ -4958,7 +5099,8 @@
    "sl": "L/D spremeni, OK izberi, C preskoči",
    "sr": "L/D menja, OK izaberi, C preskoči",
    "lv": "K/L mainīt, OK izvēlēties, C izlaist",
-   "lt": "K/D keisti, OK pasirinkti, C praleisti"
+   "lt": "K/D keisti, OK pasirinkti, C praleisti",
+   "vi": "Trái/Phải đổi, OK chọn, C bỏ qua"
   },
   "EStrHintHelpList": {
    "en": "OK open, C back",
@@ -4993,7 +5135,8 @@
    "sl": "OK odpri, C nazaj",
    "sr": "OK otvori, C nazad",
    "lv": "OK atvērt, C atpakaļ",
-   "lt": "OK atidaryti, C atgal"
+   "lt": "OK atidaryti, C atgal",
+   "vi": "OK mở, C quay lại"
   },
   "EStrHintHelpText": {
    "en": "Up/Down scroll, C back",
@@ -5028,7 +5171,8 @@
    "sl": "Gor/Dol drsenje, C nazaj",
    "sr": "Gore/Dole pomeranje, C nazad",
    "lv": "Augšup/Lejup ritināt, C atpakaļ",
-   "lt": "Aukštyn/Žemyn slinkti, C atgal"
+   "lt": "Aukštyn/Žemyn slinkti, C atgal",
+   "vi": "Lên/Xuống cuộn, C quay lại"
   },
   "EStrTitleNoGame": {
    "en": "No game",
@@ -5063,7 +5207,8 @@
    "sl": "Ni igre",
    "sr": "Nema igre",
    "lv": "Nav spēles",
-   "lt": "Nėra žaidimo"
+   "lt": "Nėra žaidimo",
+   "vi": "Chưa có game"
   },
   "EStrAskNoGameWarn": {
    "en": "No disc image is selected, or its file is missing.",
@@ -5098,7 +5243,8 @@
    "sl": "Slika diska ni izbrana ali njena datoteka manjka.",
    "sr": "Slika diska nije izabrana ili njena datoteka nedostaje.",
    "lv": "Diska attēls nav izvēlēts, vai tā fails nav atrasts.",
-   "lt": "Disko atvaizdas nepasirinktas arba jo failas nerastas."
+   "lt": "Disko atvaizdas nepasirinktas arba jo failas nerastas.",
+   "vi": "Chưa chọn ảnh đĩa, hoặc không thấy tệp của nó."
   },
   "EStrAskPickGame": {
    "en": "Select game",
@@ -5133,7 +5279,8 @@
    "sl": "Izberi igro",
    "sr": "Izaberi igru",
    "lv": "Izvēlēties spēli",
-   "lt": "Pasirinkti žaidimą"
+   "lt": "Pasirinkti žaidimą",
+   "vi": "Chọn game"
   },
   "EStrTitleNoBios": {
    "en": "BIOS not found",
@@ -5168,7 +5315,8 @@
    "sl": "BIOS ni najden",
    "sr": "BIOS nije nađen",
    "lv": "BIOS nav atrasts",
-   "lt": "BIOS nerastas"
+   "lt": "BIOS nerastas",
+   "vi": "Không thấy BIOS"
   },
   "EStrAskNoBiosWarn": {
    "en": "The game will run on the built-in BIOS replacement (HLE); compatibility is worse.",
@@ -5203,7 +5351,8 @@
    "sl": "Igra bo tekla na vgrajeni zamenjavi BIOS-a (HLE); združljivost je slabša.",
    "sr": "Igra će raditi na ugrađenoj zameni za BIOS (HLE); kompatibilnost je lošija.",
    "lv": "Spēle darbosies ar iebūvēto BIOS aizstājēju (HLE); saderība ir sliktāka.",
-   "lt": "Žaidimas naudos įmontuotą BIOS pakaitalą (HLE); suderinamumas blogesnis."
+   "lt": "Žaidimas naudos įmontuotą BIOS pakaitalą (HLE); suderinamumas blogesnis.",
+   "vi": "Game sẽ chạy bằng BIOS thay thế tích hợp (HLE); độ tương thích kém hơn."
   },
   "EStrAskContinue": {
    "en": "Continue",
@@ -5238,7 +5387,8 @@
    "sl": "Nadaljuj",
    "sr": "Nastavi",
    "lv": "Turpināt",
-   "lt": "Tęsti"
+   "lt": "Tęsti",
+   "vi": "Tiếp tục"
   },
   "EStrAskPickBios": {
    "en": "Select BIOS",
@@ -5273,7 +5423,8 @@
    "sl": "Izberi BIOS",
    "sr": "Izaberi BIOS",
    "lv": "Izvēlēties BIOS",
-   "lt": "Pasirinkti BIOS"
+   "lt": "Pasirinkti BIOS",
+   "vi": "Chọn BIOS"
   },
   "EStrItemDebug": {
    "en": "Debug log",
@@ -5308,7 +5459,8 @@
    "et": "Silumislogi",
    "lv": "Atkļūdošanas žurnāls",
    "lt": "Derinimo žurnalas",
-   "ca": "Registre de depuració"
+   "ca": "Registre de depuració",
+   "vi": "Nhật ký gỡ lỗi"
   },
   "EStrBtnTiltZero": {
    "en": "Tilt zero",
@@ -5343,31 +5495,40 @@
    "et": "Kallutuse nullimine",
    "lv": "Sasvēršanas nulle",
    "lt": "Pakreipimo nulis",
-   "ca": "Zero d'inclinació"
+   "ca": "Zero d'inclinació",
+   "vi": "Căn lại nghiêng"
   },
   "EStrKeyPlayPause": {
-   "en": "Play/Pause"
+   "en": "Play/Pause",
+   "vi": "Phát/Tạm dừng"
   },
   "EStrKeyPlay": {
-   "en": "Play"
+   "en": "Play",
+   "vi": "Phát"
   },
   "EStrKeyPause": {
-   "en": "Pause"
+   "en": "Pause",
+   "vi": "Tạm dừng"
   },
   "EStrKeyStop": {
-   "en": "Stop"
+   "en": "Stop",
+   "vi": "Dừng"
   },
   "EStrKeyRewind": {
-   "en": "Rewind"
+   "en": "Rewind",
+   "vi": "Tua lùi"
   },
   "EStrKeyFastFwd": {
-   "en": "Fast fwd"
+   "en": "Fast fwd",
+   "vi": "Tua tới"
   },
   "EStrKeyNext": {
-   "en": "Next"
+   "en": "Next",
+   "vi": "Tiếp"
   },
   "EStrKeyPrev": {
-   "en": "Prev"
+   "en": "Prev",
+   "vi": "Trước"
   },
   "EStrItemResetKeys": {
    "en": "Reset controls",
@@ -5402,7 +5563,8 @@
    "et": "Lähtesta juhtimine",
    "lv": "Atiestatīt vadību",
    "lt": "Atstatyti valdymą",
-   "ca": "Reiniciar controls"
+   "ca": "Reiniciar controls",
+   "vi": "Đặt lại phím"
   },
   "EStrSlideKeysErr": {
    "en": "Media keys unavailable",
@@ -5437,7 +5599,8 @@
    "et": "Meediaklahvid pole saadaval",
    "lv": "Multivides taustiņi nav pieejami",
    "lt": "Medijos klavišai neprieinami",
-   "ca": "Tecles multimèdia no disponibles"
+   "ca": "Tecles multimèdia no disponibles",
+   "vi": "Không có phím media"
   },
   "EStrKeyActMain": {
    "en": "Main key",
@@ -5472,7 +5635,8 @@
    "et": "Põhinupp",
    "lv": "Galvenais taustiņš",
    "lt": "Pagrindinis klavišas",
-   "ca": "Tecla principal"
+   "ca": "Tecla principal",
+   "vi": "Phím chính"
   },
   "EStrKeyActSecond": {
    "en": "Second key",
@@ -5507,7 +5671,8 @@
    "et": "Teine nupp",
    "lv": "Otrs taustiņš",
    "lt": "Antras klavišas",
-   "ca": "Tecla secundària"
+   "ca": "Tecla secundària",
+   "vi": "Phím phụ"
   },
   "EStrKeyActClear": {
    "en": "Clear",
@@ -5542,7 +5707,8 @@
    "et": "Tühjenda",
    "lv": "Notīrīt",
    "lt": "Išvalyti",
-   "ca": "Esborrar"
+   "ca": "Esborrar",
+   "vi": "Xoá"
   },
   "EStrHintKeyMenu": {
    "en": "OK choose, RSK cancels",
@@ -5577,7 +5743,8 @@
    "et": "OK vali, PTN katkestab",
    "lv": "OK izvēlēties, LPT atceļ",
    "lt": "OK pasirinkti, DFK nutraukia",
-   "ca": "OK tria, TSD cancel·la"
+   "ca": "OK tria, TSD cancel·la",
+   "vi": "OK chọn, PM phải để huỷ"
   },
   "EStrKeyTakenFmt": {
    "en": "Already on %S. OK: move it here",
@@ -5612,7 +5779,8 @@
    "et": "Juba nupul %S. OK: liiguta siia",
    "lv": "Jau uz %S. OK: pārvietot šeit",
    "lt": "Jau priskirtas %S. OK: perkelti čia",
-   "ca": "Ja a %S. OK: mou-ho aquí"
+   "ca": "Ja a %S. OK: mou-ho aquí",
+   "vi": "Đã gán cho %S. OK: chuyển về đây"
   }
  }
 }

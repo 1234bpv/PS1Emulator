@@ -60,6 +60,9 @@ const LANG = {
     lv: ['Latvian', 'Latviešu', ['ELangLatvian']],
     lt: ['Lithuanian', 'Lietuvių', ['ELangLithuanian']],
     ca: ['Catalan', 'Català', ['ELangCatalan']],
+    // No TLanguage value is mapped: the S60 3rd Edition SDK may not define ELangVietnamese,
+    // so Vietnamese is chosen by hand in System > Language and never picked automatically.
+    vi: ['Vietnamese', 'Tiếng Việt', []],
 };
 
 const data = JSON.parse(fs.readFileSync(JSON_PATH, 'utf8'));
