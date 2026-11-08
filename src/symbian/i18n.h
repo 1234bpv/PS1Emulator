@@ -210,6 +210,7 @@ enum TLangId
 	ELangIdLatvian,
 	ELangIdLithuanian,
 	ELangIdCatalan,
+	ELangIdVietnamese,
 	ELangIdCount
 	};
 

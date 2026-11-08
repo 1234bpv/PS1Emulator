@@ -1,0 +1,171 @@
+# Văn bản trợ giúp của PS1Emulator, tiếng Việt. UTF-8.
+# Các mục bắt đầu bằng [khoá] ở đầu dòng.
+#   [hint.<id>] một câu hiện ở dòng trạng thái cho hàng menu đang chọn.
+#   [topic.<id>] Tiêu đề, rồi đến nội dung: mỗi đoạn một dòng, dòng trống là khoảng cách.
+# Các con số là số đo trên Nokia N95 8GB, không phải cam kết: chúng phụ thuộc vào từng game.
+
+[hint.start] Bắt đầu game đang chọn với các cài đặt bên dưới. Ảnh đĩa và BIOS được kiểm tra trước.
+[hint.resume] Quay lại game đúng chỗ bạn đã dừng.
+[hint.restart] Các hàng có dấu * đã đổi: game sẽ chạy lại từ đầu và tiến trình chưa lưu sẽ mất. Hãy lưu trạng thái trước.
+[hint.exit] Lưu cài đặt và đóng trình giả lập. Game đang chạy sẽ mất nếu bạn chưa lưu trạng thái.
+
+[hint.sec.game] OK mở hoặc đóng mục: game, trạng thái đã lưu và nhập game.
+[hint.game] Ảnh đĩa để chơi. OK mở trình duyệt tệp. Đổi ảnh đĩa cần khởi động lại game.
+[hint.savestate] Lưu game đang chạy vào slot đang hiện (Trái/Phải: 1-5). [*] sau slot nghĩa là slot đã dùng và sẽ bị ghi đè, [ ] nghĩa là còn trống.
+[hint.loadstate] Nạp slot đang hiện. Tiến trình sau lần lưu đó sẽ mất.
+[hint.add] Nhập game từ thẻ nhớ: ảnh đĩa và các tệp nén zip, rar hoặc 7z, có thể đóng gói sang PBP.
+
+[hint.sec.video] OK mở hoặc đóng mục: thu phóng, làm mịn viền, bộ đếm khung hình và các công tắc hình ảnh.
+[hint.smooth] Lấy trung bình điểm ảnh khi thu nhỏ ảnh rộng 640. Tắt tiết kiệm 4,6% thời gian chạy trong một lần đo.
+[hint.fxaa] Làm mịn các cạnh răng cưa của vật thể 3D; mức càng cao càng mạnh. Tốn tốc độ: ít hơn khoảng 17% khung hình trong một lần đo thử.
+[hint.fps] Hiện tốc độ khung hình trên ảnh. Hữu ích để đánh giá tác dụng của các công tắc khác.
+[hint.light] Ánh sáng 3D. Tắt thì nhanh hơn nhưng mất đổ bóng: ít hơn 5,6% chu kỳ CPU trong một cảnh Gran Turismo đã đo.
+[hint.blend] Bán trong suốt (kính, ánh sáng loá, bóng đổ). Tắt thì nhanh hơn, nhưng các vật đó trông sai.
+[hint.dirty] Không vẽ lại ảnh mà game không thay đổi. Đã đo: tiết kiệm 6,7 ms mỗi khung hình, không giảm chất lượng.
+[hint.dsa] Ghi khung hình thẳng vào bộ đệm màn hình. Đã đo: tiết kiệm 0,93 ms mỗi khung hình. Cần khởi động lại game.
+[hint.gl] Hiện ảnh qua OpenGL ES của điện thoại. Trong một cảnh 320x240 đã đo thì chậm hơn khi không dùng. Cần khởi động lại.
+[hint.swdraw] Chỉ dùng với Xuất qua GL. Bật: phần mềm vẽ ảnh và GL chỉ hiển thị khung hình. Tắt: chip đồ hoạ vẽ.
+[hint.ilace] Chỉ vẽ cách một dòng. Nhanh hơn, nhưng chi tiết theo chiều dọc giảm một nửa.
+[hint.pixskip] Bỏ qua các điểm ảnh không nhìn thấy ở chế độ độ phân giải ngang cao. Nhanh hơn một chút.
+
+[hint.sec.speed] OK mở hoặc đóng mục: bỏ khung hình và các cài đặt bộ xử lý. Phần lớn cần khởi động lại.
+[hint.gpuskip] Không vẽ một số khung hình. Tự động để lõi tự quyết định. Trong một đoạn đua xe, mức 1 tăng 27% tốc độ giả lập nhưng số khung hình hiển thị ít hơn 37%.
+[hint.cpu] Dynarec biên dịch lại mã PS1 sang ARM và là chế độ nhanh. Thông dịch là chế độ chậm. Cần khởi động lại.
+[hint.gtenf] Bỏ qua một phần tính cờ của bộ đồng xử lý hình học. Trong Gran Turismo nó chậm hơn 6%, vì hình học thay đổi. Cần khởi động lại.
+[hint.cycle] Tốc độ của bộ xử lý PS1 giả lập, tính theo phần trăm. Thấp hơn thì nhẹ cho điện thoại nhưng có thể làm lệch nhịp của game. Có hiệu lực ngay.
+
+[hint.sec.sound] OK mở hoặc đóng mục: đầu ra âm thanh và cao độ.
+[hint.sound] Đầu ra âm thanh. Tắt thì không có tiếng và tiết kiệm thời gian xử lý của đường âm thanh. Cần khởi động lại game.
+[hint.wsola] Khi game chạy dưới tốc độ đầy đủ, kéo giãn âm thanh mà không đổi cao độ. Tốn khoảng 6% thời gian một khung hình trên N95 trong một lần đo. Cần khởi động lại.
+
+[hint.sec.input] OK mở hoặc đóng mục: bố cục phím, gán phím và điều khiển nghiêng.
+[hint.preset] Thay toàn bộ phím đã gán bằng một bố cục có sẵn. Trái/Phải để chọn, OK để áp dụng. Các phím bạn tự gán sẽ mất.
+[hint.keybase] Bố cục cơ sở: N95 là mặc định; C5 còn nhận 2, 4, 6, 8 làm phím thứ hai cho các hướng; E90 chơi bằng bàn phím trong; Trượt đặt các nút hình lên phím media của điện thoại hai nắp trượt (N95, N96, N85, N86, N81). OK để áp dụng và thay các phím đã gán.
+[hint.keys] Mở trang gán phím: OK mở lựa chọn phím chính, phím phụ hoặc xoá, rồi bấm phím. Trái/Phải bật hoặc tắt Giữ cho một nút. Hàng cuối là phím căn lại nghiêng.
+[hint.tilt] Lái bằng độ nghiêng của điện thoại (cảm biến gia tốc). Tư thế bạn cầm máy khi quay lại game là vị trí trung tính, và phím căn lại nghiêng (mặc định là C) đặt lại nó bất cứ lúc nào.
+[hint.tiltside] Trục cần analog đi theo độ nghiêng ngang (LX, LY, RX, RY; dấu trừ đảo chiều). Mặc định LX.
+[hint.tiltpitch] Trục cần analog đi theo độ nghiêng trước và sau (LX, LY, RX, RY; dấu trừ đảo chiều). Mặc định LY.
+[hint.tiltdead] Độ nghiêng nhỏ hơn mức này sẽ bị bỏ qua. Từ 0 đến 40, mặc định 10.
+[hint.tiltsens] Cần analog bám theo độ nghiêng mạnh đến mức nào: 40% đến 300%, mặc định 100%.
+[hint.resetkeys] Chỉ đặt phần điều khiển về mặc định: phím đã gán, Giữ, phím căn lại nghiêng và các cài đặt nghiêng. Bấm OK hai lần. Các cài đặt khác không bị đụng tới.
+
+[hint.sec.system] OK mở hoặc đóng mục: ngôn ngữ, BIOS, cấu hình từng game và đặt lại.
+[hint.lang] Ngôn ngữ của menu. Đổi ngay lập tức. Văn bản trợ giúp đi theo; nếu thiếu thì dùng tiếng Anh.
+[hint.bios] Bản dump BIOS trong E:\PS1\bios. Không có thì chạy bằng bản thay thế tích hợp (HLE) và độ tương thích kém hơn. Cần khởi động lại.
+[hint.profile] Bật: mỗi game giữ cài đặt riêng trong E:\PS1\cfg, như phím và các công tắc tốc độ. Tắt: dùng chung một bộ cho mọi game.
+[hint.debug] Ghi thời gian khung hình mỗi giây một lần, và mọi lần hình đứng, vào E:\PS1\logs\ps1_stage1.jsonl. Dùng để báo lỗi; tốn một chút tốc độ.
+[hint.reset] Đặt mọi cài đặt về mặc định, kể cả phím và ngôn ngữ. Bấm OK hai lần. Dữ liệu đã lưu không bị đụng tới.
+
+[hint.help] Mở trợ giúp: thiết lập ban đầu, điều khiển, lưu game, xử lý sự cố và mô tả từng hàng menu.
+
+[topic.setup] Thiết lập ban đầu
+Mục này mở trang thiết lập ban đầu, giống trang mà trình giả lập hiện ra ở lần chạy đầu tiên.
+
+[topic.play] Điều khiển trong game
+Các phím trong menu: Lên và Xuống để di chuyển, Trái và Phải để đổi giá trị, OK để mở một hàng hoặc bật tắt nó, C và phím mềm phải để quay lại.
+
+Điều hướng trong menu chính: Lên và Xuống chạy vòng từ hàng cuối về hàng đầu. Phải trên tiêu đề mục thì mở mục đó và Trái thì đóng; mở một mục sẽ đóng mục kia. C trong một mục thì đóng mục và để con trỏ ở tiêu đề của nó. OK trên một hàng giá trị thì đổi giá trị đúng như Phải.
+
+Trong game, phím mềm phải mở menu và tạm dừng game. Phím mềm trái chụp ảnh màn hình. Khi có cuộc gọi đến hoặc bạn chuyển sang ứng dụng khác, game tự tạm dừng và menu tự mở ra.
+
+Phím mặc định: D-pad để di chuyển; OK hoặc 5 là Chéo; 0 là Tròn; 7 là Vuông; 9 là Tam giác; 1 là L1; 3 là R1; 4 là L2; 6 là R2; 2 là Select; 8 là Start.
+
+Cả hai bố cục cơ sở đều lái bằng D-pad. Hàng Bàn phím trong mục Điều khiển chọn bố cục cơ sở: N95 là mặc định; C5 còn nhận 2, 4, 6 và 8 trên bàn phím số làm phím thứ hai cho bốn hướng, dành cho ai thấy tiện hơn.
+
+Âm lượng đổi bằng phím âm lượng bên hông, hoặc bằng # (to hơn) và * (nhỏ hơn), trừ khi các phím đó đã được gán cho một nút.
+
+Mọi nút đều gán được trong Phím điều khiển...: OK trên một nút, rồi bấm phím. Trái và Phải bật Giữ: nút được giữ sẽ ở trạng thái bấm cho đến khi bạn bấm lại, phù hợp với chân ga khi đua xe.
+
+Điều khiển nghiêng (trong Điều khiển) lái bằng độ nghiêng của điện thoại. Cần điện thoại có cảm biến gia tốc, như N95; E90 và C5-00.2 không có.
+
+Vị trí trung tính được lấy mỗi lần bạn quay lại game từ menu, và mỗi lần bạn bấm phím căn lại nghiêng. Phím đó mặc định là C và có thể gán lại ở hàng cuối của Phím điều khiển... . Để căn lại, hãy cầm điện thoại theo tư thế bạn muốn chơi rồi bấm phím đó.
+
+[topic.saves] Lưu game
+Trạng thái đã lưu giữ toàn bộ game tại một thời điểm. Mở Game, chọn Lưu trạng thái, chọn slot bằng Trái và Phải (1 đến 5) rồi bấm OK. [*] sau số slot nghĩa là slot đã có trạng thái, [ ] nghĩa là còn trống. Nạp trạng thái sẽ khôi phục nó.
+
+Lưu trạng thái và Nạp trạng thái chỉ xuất hiện khi có game đang chạy và đó là game đang được chọn.
+
+Các tệp trạng thái nằm trong E:\PS1\saves, đặt tên theo game và slot. Thẻ nhớ của game, card1.mcd và card2.mcd, ở cùng thư mục: chúng giữ các dữ liệu lưu mà chính game ghi. Trạng thái và thẻ nhớ độc lập với nhau.
+
+Các hàng có dấu * cần khởi động lại game. Tiến trình chưa lưu sẽ mất, nên hãy lưu trạng thái trước khi đổi chúng.
+
+[topic.slow] Nếu game chạy chậm
+Mỗi lần chỉ đổi một thứ và theo dõi bộ đo FPS (mục Hình ảnh).
+
+Trước hết là các thứ không tốn gì. Vẽ trực tiếp và Bỏ khung giống nhau nên để bật: chúng không làm giảm chất lượng. Tắt Thu nhỏ mượt tiết kiệm 4,6% thời gian chạy trong một lần đo và chỉ làm các nét mảnh bớt mềm.
+
+Tiếp theo là Bỏ khung hình. Tự động là nhẹ nhàng nhất. Giá trị cố định 1 tăng 27% tốc độ giả lập trong một đoạn đua đã đo, nhưng số khung hình hiển thị ít hơn 37%.
+
+Sau đó là những thứ làm giảm chất lượng hình: tắt Làm mịn viền, tắt Ánh sáng 3D (ít hơn 5,6% chu kỳ CPU trong một cảnh đã đo), tắt Trong suốt, Hack xen kẽ dòng, Bỏ qua điểm ảnh. Giảm Tốc độ CPU PS1 làm nhẹ tải nhưng có thể làm lệch nhịp của game.
+
+Đừng trông chờ vào những thứ sau: Chế độ nhanh GTE chậm hơn 6% trong Gran Turismo; Xuất qua GL chậm hơn đường phần mềm trong một cảnh 320x240 đã đo. Giữ CPU ở dynarec: thông dịch là chế độ chậm.
+
+[topic.nosound] Không có tiếng hoặc không có hình
+Không có tiếng: kiểm tra Âm thanh (trong mục Âm thanh) đã bật và game đã được khởi động lại sau khi đổi. Tăng âm lượng bằng phím bên hông, # hoặc *. Nếu Giữ cao độ đang bật, thử tắt nó.
+
+Không có hình hoặc màn hình đen: bấm phím mềm phải và xem trang lỗi. Không tìm thấy ảnh đĩa hoặc BIOS nghĩa là thiếu tệp: xem mục Tệp trên thẻ nhớ. Nếu hình sai sau khi đổi gì đó, hãy tắt Vẽ trực tiếp hoặc Xuất qua GL rồi khởi động lại game.
+
+Không có BIOS: game sẽ chạy bằng bản thay thế tích hợp (HLE). Nhiều game vẫn chạy, nhưng độ tương thích kém hơn. Hãy chép bản dump BIOS vào E:\PS1\bios hoặc chọn một bản trong Hệ thống, BIOS.
+
+Ảnh đĩa được liệt kê ở các định dạng bin, img, iso, pbp, cbn và cbin. Tệp cue không hiện trong trình duyệt game: lõi tự suy ra nó từ tệp bin theo tên, nên hãy để cả hai cùng nhau. Phần nhập game thì có liệt kê tệp cue.
+
+[topic.files] Tệp trên thẻ nhớ
+E:\PS1\games chứa các ảnh đĩa. Thêm game cho phép nhập chúng từ bất kỳ đâu trên thẻ nhớ.
+
+E:\PS1\bios chứa bản dump BIOS. Tên mặc định là scph7502.bin. Có thể chọn một bản dump, hoặc một tệp nén zip, rar hay 7z có chứa nó, trong Hệ thống, BIOS.
+
+E:\PS1\saves chứa các trạng thái đã lưu và thẻ nhớ của game.
+
+E:\PS1\cfg chứa ps1_settings.txt, tức cài đặt chung, và một tệp nhỏ cho mỗi game với cài đặt riêng của nó.
+
+E:\PS1\help chứa các văn bản này: mỗi ngôn ngữ một tệp, đặt tên theo mã ngôn ngữ (en.txt, uk.txt), dạng UTF-8. Thiếu tệp hoặc thiếu khoá thì dùng tiếng Anh.
+
+E:\PS1\logs chứa các nhật ký chạy.
+
+[topic.game] Game
+Game: ảnh đĩa để chơi. OK mở trình duyệt tệp tại thư mục của game hiện tại. Chọn đĩa khác khi đang chạy game cần khởi động lại.
+
+Lưu trạng thái và Nạp trạng thái: xem mục Lưu game.
+
+Thêm game...: nhập game từ thẻ nhớ. Đánh dấu tệp hoặc tệp nén bằng OK, bắt đầu bằng phím mềm trái. Bạn có thể đóng gói sang PBP, tiết kiệm khoảng 40% nhưng bỏ dữ liệu sửa lỗi và không thể hoàn tác, và bạn có thể xoá bản gốc. Nhập đĩa của game đang chạy sẽ đóng game đó.
+
+[topic.video] Hình ảnh
+Thu nhỏ mượt: lấy trung bình điểm ảnh khi thu nhỏ ảnh rộng 640.
+
+Làm mịn viền: làm mịn các cạnh răng cưa của vật thể 3D, mức 1 đến 5.
+
+Đo FPS: hiện tốc độ khung hình trên ảnh.
+
+Phần còn lại của mục: Ánh sáng 3D (đổ bóng cho kết cấu), Trong suốt (vật bán trong suốt), Bỏ khung giống nhau (không vẽ lại ảnh không đổi), Vẽ trực tiếp (ghi thẳng vào bộ đệm màn hình, cần khởi động lại), Xuất qua GL (hiện ảnh qua OpenGL ES, cần khởi động lại), Vẽ bằng phần mềm (chỉ với GL: bộ vẽ nào vẽ ảnh), Hack xen kẽ dòng (chỉ vẽ cách một dòng) và Bỏ qua điểm ảnh (bỏ các điểm ảnh không nhìn thấy ở chế độ độ phân giải ngang cao).
+
+[topic.speed] Tốc độ
+Bỏ khung hình: không vẽ một số khung hình. Tự động để lõi quyết định ở mỗi khung hình; 1 đến 3 là bỏ chừng đó khung hình giữa các khung được vẽ.
+
+Phần còn lại của mục: CPU (dynarec hoặc thông dịch, cần khởi động lại), Chế độ nhanh GTE (cần khởi động lại) và Tốc độ CPU PS1.
+
+Tốc độ CPU PS1 hiện theo phần trăm của tốc độ bình thường. Giá trị thấp cho game ít việc hơn trên mỗi khung hình và có thể làm hỏng nhịp của game. Có hiệu lực ngay.
+
+[topic.sound] Âm thanh
+Âm thanh: bật hoặc tắt đầu ra âm thanh, cần khởi động lại.
+
+Giữ cao độ: khi game chạy dưới tốc độ đầy đủ, âm thanh được kéo giãn mà không đổi cao độ. Tốn thời gian xử lý và cần khởi động lại.
+
+[topic.input] Điều khiển
+Mẫu phím: Mặc định, Đua xe, Đối kháng hoặc RPG. OK thay toàn bộ phím đã gán.
+
+Bàn phím: N95 (bố cục mặc định) hoặc C5 (giống vậy, thêm 2, 4, 6, 8 làm phím thứ hai cho các hướng). OK thay toàn bộ phím đã gán.
+
+Phím điều khiển...: gán từng nút PS1 cho một phím; Trái và Phải bật hoặc tắt Giữ. Hàng cuối, Căn lại nghiêng, là phím đặt tư thế hiện tại của điện thoại làm vị trí trung tính.
+
+Điều khiển nghiêng và bốn cài đặt của nó: trục cho độ nghiêng ngang, trục cho độ nghiêng trước và sau, vùng chết (0 đến 40) và độ nhạy (40% đến 300%).
+
+[topic.system] Hệ thống
+Ngôn ngữ: ngôn ngữ của menu và của các văn bản này, đổi ngay lập tức.
+
+BIOS: bản dump BIOS sẽ dùng, cần khởi động lại. Mặc định là scph7502.bin.
+
+Cấu hình từng game: bật thì mỗi game có một tệp cài đặt riêng.
+
+Nhật ký gỡ lỗi: bật thì ghi thời gian khung hình mỗi giây một lần, và mọi lần hình đứng, vào E:\PS1\logs\ps1_stage1.jsonl. Để báo lỗi, hãy bật nó, chơi đến khi lỗi xuất hiện, thoát trình giả lập bằng Thoát rồi gửi tệp đó. Lần chạy trước đó được giữ thành ps1_stage1_prev.jsonl.
+
+Đặt lại cài đặt: đưa mọi thứ về mặc định; bấm OK hai lần.
