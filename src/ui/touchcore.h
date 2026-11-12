@@ -28,7 +28,7 @@ enum TVpadKind
 	{
 	EVpadKindDpad = 0,     // 8-way direction pad, circle
 	EVpadKindButton = 1,   // presses iBits while touched
-	EVpadKindStick = 2,    // analogue stick, circle
+	EVpadKindStick = 2,    // analogue stick, circle; iId 0 is the left one, 1 the right
 	EVpadKindAction = 3    // not a pad button: reports iId when released inside
 	};
 
@@ -37,11 +37,15 @@ enum TVpadShape { EVpadShapeCircle = 0, EVpadShapeRect = 1 };
 // Fixed indices of the controls VpadDefaultLayout produces.
 enum TVpadIndex
 	{
-	EVpadIxDir = 0,        // d-pad, or the stick when EVpadOptStick is given
+	EVpadIxDir = 0,        // d-pad; the stick when EVpadOptStick is given and
+	                       // EVpadOptSticks is not in effect
 	EVpadIxTriangle = 1, EVpadIxCircle = 2, EVpadIxCross = 3, EVpadIxSquare = 4,
 	EVpadIxL1 = 5, EVpadIxL2 = 6, EVpadIxR1 = 7, EVpadIxR2 = 8,
 	EVpadIxSelect = 9, EVpadIxStart = 10, EVpadIxMenu = 11,
-	EVpadDefaultCount = 12
+	EVpadDefaultCount = 12,
+	// Present only with EVpadOptSticks:
+	EVpadIxLStick = 12, EVpadIxRStick = 13,
+	EVpadSticksCount = 14
 	};
 
 enum
@@ -49,13 +53,18 @@ enum
 	KVpadMaxControls = 16,
 	KVpadMaxPointers = 4,
 	KVpadStickCentre = 127,   // stick output is 127 + d, d in [-127, 127]
-	KVpadDualMaxMs = 60       // a jump slower than this is a slide, not a second finger
+	KVpadDualMaxMs = 60,      // a jump slower than this is a slide, not a second finger
+	KVpadTapMs = 250,         // a stick touch no longer than this can be a tap...
+	KVpadTapSlopPct = 30,     // ...if it ends this near where it began, percent of iRx
+	KVpadMinSizePx = 8        // VpadResizeControl makes nothing smaller than this
 	};
 
 enum TVpadOption
 	{
-	EVpadOptStick = 1,          // the left control is an analogue stick instead of a d-pad
-	EVpadOptResistiveDual = 2   // single-touch panel: infer a second finger (see VpadPointerMove)
+	EVpadOptStick = 1,          // the left control is an analogue stick instead of a d-pad;
+	                            // no effect where EVpadOptSticks is in effect
+	EVpadOptResistiveDual = 2,  // single-touch panel: infer a second finger (see VpadPointerMove)
+	EVpadOptSticks = 4          // landscape only: the d-pad stays and two sticks are added
 	};
 
 struct TVpadControl
@@ -65,7 +74,8 @@ struct TVpadControl
 	unsigned char iGroup;    // 0: stands alone. Same non-zero value: one finger may glide
 	                         // between these controls and press several where they overlap
 	unsigned char iId;       // EVpadKindAction: action number 0..31; above that the
-	                         // action is never reported
+	                         // action is never reported. EVpadKindStick: 1 is the right
+	                         // stick, any other value the left one
 	unsigned short iBits;    // EVpadKindButton: mask of pad bits (1 << EVpad*)
 	short iCx, iCy;          // centre
 	short iRx, iRy;          // circle: iRx is the radius, iRy is ignored;
@@ -88,6 +98,9 @@ struct TVpadLayout
 	int iStickDigitalPct; // stick: also press d-pad bits at this deflection or more,
 	                    // percent of the radius; 0 turns the digital fallback off
 	int iStickFloat;    // non-zero: the stick is centred where the finger lands
+	int iStickClickMs;  // a stick touched again this soon after a tap on it presses
+	                    // L3 or R3 (see "Stick click"); 0 turns that off; taken
+	                    // within 0..2000
 	int iDualJumpPx;    // > 0 turns on second-finger inference, see VpadPointerMove
 	};
 
@@ -96,10 +109,13 @@ struct TVpadPointer
 	unsigned char iDown;
 	signed char iCtl;        // index of the control hit on the way down, -1: none
 	unsigned char iDiag;     // d-pad: last classification, 0 none, 1 one bit, 2 two bits
-	unsigned char iPad;
+	unsigned char iClick;    // stick: this touch also presses L3 or R3
 	short iX, iY;            // last position
 	short iOx, iOy;          // stick: the point deflection is measured from
 	unsigned iMs;            // time of the last event
+	unsigned iDownMs;        // time the pointer went down
+	short iDownX, iDownY;    // where it went down
+	short iPad[2];
 	unsigned short iBits;    // pad bits this pointer presses now
 	unsigned short iHeld;    // buttons: bit i set if control i is in the remembered set
 	};
@@ -110,10 +126,15 @@ struct TVpadState
 	unsigned short iBits;    // OR over all pointers; maintained by every call
 	unsigned short iEdges;   // bits that went from 0 to 1 since VpadTakeEdges
 	unsigned iActions;       // bit iId set by a completed action, until VpadTakeActions
-	unsigned char iLx, iLy;  // stick, KVpadStickCentre when untouched
+	unsigned char iLx, iLy;  // left stick, KVpadStickCentre when untouched
 	unsigned char iDual;     // second-finger inference is active
-	unsigned char iPad;
+	unsigned char iByDown;   // bit p set: pointer p holds a stick that VpadPointerDown
+	                         // captured for it (not inference); see "Stick click"
 	short iDualX, iDualY;    // where the first finger is assumed to rest
+	unsigned char iRightX, iRightY; // right stick, KVpadStickCentre when untouched
+	unsigned char iArmed[2]; // per stick side (0 left, 1 right): a tap that no capture
+	                         // by VpadPointerDown has followed yet
+	unsigned iArmMs[2];      // when that tap was lifted
 	};
 
 // --- Geometry rules shared by everything below --------------------------------
@@ -138,7 +159,8 @@ struct TVpadState
 // calls are clamped to -8192..8191 on entry, and control geometry must lie within
 // 0..8191, which keeps every product in the rules below inside 32 bits.
 
-// Fills aOut with the twelve default controls for a screen of aScreenW x aScreenH
+// Fills aOut with the default controls (twelve, or fourteen with EVpadOptSticks on
+// a landscape screen) for a screen of aScreenW x aScreenH
 // pixels whose pixel pitch is aUmPerPx micrometres, at aScalePct percent of the
 // nominal physical size. Returns the scale actually used (never above the clamped aScalePct),
 // or 0 if no scale tried fits (aOut then holds the smallest try).
@@ -146,8 +168,9 @@ struct TVpadState
 // must be no larger than 8191 pixels a side, here and in VpadLayoutFits.
 //
 // Tunables are set to: iHitPct 125, iLeashPct 175, iDeadPct 18, iDiagPct 100,
-// iFourWayPct 40, iStickDigitalPct 80, iStickFloat 0, iDualJumpPx 0, or px(120)
-// (at the scale finally used) when EVpadOptResistiveDual.
+// iFourWayPct 40, iStickDigitalPct 80, iStickFloat 0, iStickClickMs 300 (so the
+// stick of EVpadOptStick clicks L3 as well),
+// iDualJumpPx 0, or px(120) (at the scale finally used) when EVpadOptResistiveDual.
 //
 // Sizes. With s the scale being tried, px(t) = (t * s + aUmPerPx / 2) / aUmPerPx
 // converts tenths of a millimetre to pixels (t*100 micrometres, scaled by s/100,
@@ -167,7 +190,17 @@ struct TVpadState
 //   Select rect at (W/2 - (g + 1)/2 - tw, H - m - th), group 0
 //   Start  rect at (W/2 + (g + 1)/2 + tw, H - m - th), group 0
 //   Menu   circle rm at (W/2, m + rm), EVpadKindAction, iId 0, group 0
-// Portrait (aScreenH > aScreenW): the game picture takes the top yP = W*3/4 rows.
+// Landscape with EVpadOptSticks: as above, except that Select and Start move up
+// beside Menu and get the smaller half sizes (tw2, th2) = (px(43), px(27)):
+//   Select rect at (W/2 - rm - g - tw2, m + rm), Start at (W/2 + rm + g + tw2, m + rm)
+// and two sticks of radius Rs = px(70) take their place at the bottom:
+//   EVpadIxLStick circle at (W/2 - g - Rs, H - m - Rs), EVpadKindStick, iId 0
+//   EVpadIxRStick circle at (W/2 + g + Rs, H - m - Rs), EVpadKindStick, iId 1
+//   both group 0, iBits 0. iCount is EVpadSticksCount; EVpadIxDir is the d-pad
+//   whether or not EVpadOptStick is also given.
+// Without EVpadOptSticks, or in portrait, iCount is EVpadDefaultCount.
+// Portrait (aScreenH > aScreenW): EVpadOptSticks is ignored. The game picture
+// takes the top yP = W*3/4 rows.
 //   L1 at (m + sw, y1), L2 at (m + 3*sw + g, y1), R1 at (W - m - sw, y1),
 //   R2 at (W - m - 3*sw - g, y1), with y1 = yP + m + sh
 //   Select at (W/2 - rm - g - tw, H - m - th), Start at (W/2 + rm + g + tw, H - m - th)
@@ -180,7 +213,7 @@ struct TVpadState
 //
 // Fit. Scales s = aScalePct * (32 - i) / 32 are tried for i = 0, 1, ... 19 and the
 // first one for which VpadLayoutFits is true is used. A scale that leaves any of
-// the twelve controls without a size (iRx <= 0, or iRy <= 0 for a rect) does not
+// the iCount controls without a size (iRx <= 0, or iRy <= 0 for a rect) does not
 // fit, although VpadLayoutFits on its own ignores such controls.
 int VpadDefaultLayout(TVpadLayout &aOut, int aScreenW, int aScreenH, int aUmPerPx,
 	int aScalePct, unsigned aOptions);
@@ -194,16 +227,49 @@ int VpadDefaultLayout(TVpadLayout &aOut, int aScreenW, int aScreenH, int aUmPerP
 // yP = aScreenW*3/4.
 int VpadLayoutFits(const TVpadLayout &aLayout, int aScreenW, int aScreenH);
 
-// All pointers up, no bits, stick centred, nothing pending. A state belongs to the
-// layout its pointers went down on: reset it whenever the layout changes.
+// All pointers up, no bits, both sticks centred, no stick armed, nothing pending. A
+// state belongs to the layout its pointers went down on: reset it whenever the
+// layout changes.
 void VpadReset(TVpadState &aState);
+
+// --- Layouts the user arranges ------------------------------------------------
+//
+// A layout is plain data: an editor changes iCx, iCy, iRx, iRy of its controls with
+// the two calls below and keeps the result. Either call changes the layout, so
+// VpadReset the state afterwards. Overlap is the user's business: these
+// calls do not prevent it, the capture rule resolves it, and VpadLayoutFits still
+// tells whether a layout is free of it. Both calls do nothing when aIx is outside
+// 0..count-1 (count as iCount is taken everywhere) or the control has no size.
+
+// Index of the control a finger at (aX, aY) would capture with no other pointer
+// down, by the capture rule of VpadPointerDown; -1 when there is none. The point is
+// clamped like a pointer coordinate.
+int VpadControlAt(const TVpadLayout &aLayout, int aX, int aY);
+
+// Moves the centre of control aIx to (aCx, aCy) and pulls it back into the screen,
+// each axis on its own: with r the half size on that axis (iRx on both axes for a
+// circle, d-pad or stick) and n the screen size on it (taken as 1 when below 1),
+// the centre is clamped to r .. n - 1 - r, and is n/2 when r > n - 1 - r: a
+// control larger than the screen stays partly outside it, which VpadLayoutFits
+// reports. The requested centre is clamped to -8192..8191 first. The screen must
+// be no larger than 8191 pixels a side, here and in VpadResizeControl.
+void VpadMoveControl(TVpadLayout &aLayout, int aIx, int aCx, int aCy,
+	int aScreenW, int aScreenH);
+
+// Sets the drawn size of control aIx: iRx = aRx for a circle, d-pad or stick (aRy
+// is ignored and iRy left alone), half sizes (aRx, aRy) for a rect. Each value is
+// first taken within KVpadMinSizePx..4095. The centre is then pulled back into the
+// screen as in VpadMoveControl.
+void VpadResizeControl(TVpadLayout &aLayout, int aIx, int aRx, int aRy,
+	int aScreenW, int aScreenH);
 
 // A finger went down. aId outside 0..KVpadMaxPointers-1 is ignored; a pointer that
 // is already down is handled as VpadPointerMove.
 //
 // Capture: among all controls whose PRESS zone contains the point, the one with the
 // smallest normalised distance is captured for the life of the touch. A d-pad or
-// stick already captured by another pointer is skipped in this search. With nothing
+// stick already captured by another pointer is skipped in this search, and so is a
+// stick while another pointer holds a stick of the same side. With nothing
 // to capture the touch stays inert until it is lifted: sliding onto a control later
 // presses nothing.
 //
@@ -234,16 +300,41 @@ void VpadReset(TVpadState &aState);
 //     (no 3/4 hysteresis).
 //     Otherwise the deflection grows from 0 at the dead rim to 127 at the drawn rim
 //     and stays there beyond it: mag = min(dist, iRx) - dead, span = iRx - dead,
-//     m = mag*127/span, iLx = 127 + dx*m/dist, iLy = 127 + dy*m/dist, every
-//     division truncating towards zero. When the stick is not centred,
-//     iStickDigitalPct > 0 and dist*100 >= iRx*iStickDigitalPct, d-pad bits are
-//     pressed as well, by the Dpad rule above without its dead-zone and four-way
-//     tests; otherwise the stick presses no bits and its classification is
-//     "nothing".
+//     m = mag*127/span, x = 127 + dx*m/dist, y = 127 + dy*m/dist, every
+//     division truncating towards zero; (x, y) goes to (iLx, iLy) for the left
+//     stick and to (iRightX, iRightY) for the right one. When a LEFT stick is not
+//     centred, iStickDigitalPct > 0 and dist*100 >= iRx*iStickDigitalPct, d-pad
+//     bits are pressed as well, by the Dpad rule above without its dead-zone and
+//     four-way tests; otherwise the stick presses no d-pad bits and its
+//     classification is "nothing". The right stick never presses d-pad bits.
 //   Action: presses nothing. See VpadPointerUp.
 //
+// Stick click. Each side (0 left, 1 right) is armed or not. When a pointer that
+// captured a stick by VpadPointerDown is lifted, its side becomes armed, with the
+// time of the lift, if the touch did not click, lasted no longer than
+// KVpadTapMs (lift time - iDownMs, by the time rule at the top of this file) and
+// its last position is no further than iRx*KVpadTapSlopPct/100 from the point it
+// went down at ("dist <= r" as defined above; a quick flick is not a tap, a tap
+// anywhere on the stick is);
+// otherwise that side is disarmed. When VpadPointerDown captures a stick whose
+// side is armed, iStickClickMs is above 0 and no more than iStickClickMs passed
+// since the arming lift, the touch clicks: until it is lifted the pointer presses
+// EVpadL3 (left) or EVpadR3 (right) on top of whatever the Stick rule gives, from
+// this very call on. Every capture of a stick by VpadPointerDown disarms its side,
+// click or not; nothing else does, so a tap stays armed across touches of other
+// controls. A stick captured by second-finger inference never clicks, never
+// arms and leaves the arming alone, also after pointer 0 takes it over: pointer 0
+// then presses neither EVpadL3 nor EVpadR3, whatever it pressed before. The capture
+// pointer 0 drops in that takeover is not a lift: it neither arms nor disarms.
+// iDownMs of a pointer holding an inferred capture has no meaning. A consequence
+// on a single-touch panel: a tap whose finger leaves while a second one is
+// inferred ends as a takeover and does not arm.
+//
 // After every call iBits is the OR over all pointers, bits that turned on are added
-// to iEdges, and iLx/iLy are KVpadStickCentre unless a pointer holds the stick.
+// to iEdges, and the axes of a stick side are KVpadStickCentre unless a pointer
+// holds a stick of that side. Two pointers can hold sticks of one side only through
+// second-finger inference, whose search does not look at sides; the axes are then
+// those of the higher-numbered pointer.
 void VpadPointerDown(TVpadState &aState, const TVpadLayout &aLayout, int aId,
 	int aX, int aY, unsigned aMs);
 

@@ -81,6 +81,12 @@ static int vpadCtlOk(const TVpadLayout &aL, int aIdx)
 	return aIdx >= 0 && aIdx < vpadCount(aL) && vpadValid(aL.iC[aIdx]);
 	}
 
+// Stick side: iId 1 is the right stick, any other value the left one.
+static int vpadSide(const TVpadControl &aC)
+	{
+	return aC.iId == 1 ? 1 : 0;
+	}
+
 // Zone and threshold percentages are taken within 0..400: that keeps iRx * pct and the
 // square of a zone radius within 32 bits whatever the caller put in the layout.
 static int vpadPct(int aPct)
@@ -141,6 +147,32 @@ static int vpadTakenByOther(const TVpadState &aS, int aId, int aCtl)
 		if (p != aId && aS.iP[p].iDown && aS.iP[p].iCtl == aCtl)
 			return 1;
 	return 0;
+	}
+
+// Another pointer holds a stick on the given side.
+static int vpadSideTaken(const TVpadState &aS, const TVpadLayout &aL, int aId, int aSide)
+	{
+	for (int p = 0; p < KVpadMaxPointers; p++)
+		{
+		if (p == aId || !aS.iP[p].iDown || !vpadCtlOk(aL, aS.iP[p].iCtl))
+			continue;
+		const TVpadControl &c = aL.iC[aS.iP[p].iCtl];
+		if (c.iKind == EVpadKindStick && vpadSide(c) == aSide)
+			return 1;
+		}
+	return 0;
+	}
+
+// Bit p of iByDown: pointer p holds a stick captured by VpadPointerDown. A stick captured
+// by second-finger inference has its bit clear: it never clicks and never arms.
+static int vpadDownCapture(const TVpadState &aS, int aId)
+	{
+	return (aS.iByDown >> aId) & 1;
+	}
+
+static void vpadSetDownCapture(TVpadState &aS, int aId, int aOn)
+	{
+	aS.iByDown = (unsigned char)(aOn ? aS.iByDown | (1 << aId) : aS.iByDown & ~(1 << aId));
 	}
 
 // Index is iDiagPct / 10 (touchcore.h, d-pad diagonal table).
@@ -241,9 +273,9 @@ static void vpadEvalDpad(const TVpadLayout &aL, const TVpadControl &aC, TVpadPoi
 	vpadDirBits(aL, aC, aC.iCx, aC.iCy, vpadPct(aL.iFourWayPct), aP);
 	}
 
-// Stick digital fallback: the d-pad rule without its dead zone and four-way test, and only
-// from iStickDigitalPct of the radius. Below that, and while the stick itself reads as
-// centred, it presses nothing.
+// Stick digital fallback, left stick only: the d-pad rule without its dead zone and four-way
+// test, and only from iStickDigitalPct of the radius. Below that, and while the stick itself
+// reads as centred, it presses nothing. The right stick never presses d-pad bits.
 static void vpadEvalStick(const TVpadLayout &aL, const TVpadControl &aC, TVpadPointer &aP)
 	{
 	const int dx = aP.iX - aP.iOx;
@@ -251,7 +283,7 @@ static void vpadEvalStick(const TVpadLayout &aL, const TVpadControl &aC, TVpadPo
 	const int dist = VpadIsqrt(dx * dx + dy * dy);
 	const int dead = vpadDead(aL, aC);
 	const int digital = vpadPct(aL.iStickDigitalPct);
-	if (digital > 0 && dist >= dead && dist * 100 >= aC.iRx * digital)
+	if (!vpadSide(aC) && digital > 0 && dist >= dead && dist * 100 >= aC.iRx * digital)
 		{
 		vpadDirBits(aL, aC, aP.iOx, aP.iOy, 0, aP);
 		return;
@@ -280,7 +312,11 @@ static void vpadEvaluate(const TVpadLayout &aL, TVpadPointer &aP)
 	if (c.iKind == EVpadKindDpad)
 		vpadEvalDpad(aL, c, aP);
 	else if (c.iKind == EVpadKindStick)
+		{
 		vpadEvalStick(aL, c, aP);
+		if (aP.iClick)
+			aP.iBits = (unsigned short)(aP.iBits | (1 << (vpadSide(c) ? EVpadR3 : EVpadL3)));
+		}
 	else
 		{
 		aP.iBits = 0;
@@ -314,19 +350,27 @@ static void vpadAggregate(TVpadState &aS, const TVpadLayout &aL)
 	unsigned short bits = 0;
 	int lx = KVpadStickCentre;
 	int ly = KVpadStickCentre;
+	int rx = KVpadStickCentre;
+	int ry = KVpadStickCentre;
 	for (int p = 0; p < KVpadMaxPointers; p++)
 		{
 		const TVpadPointer &ptr = aS.iP[p];
 		if (!ptr.iDown)
 			continue;
 		bits = (unsigned short)(bits | ptr.iBits);
-		if (vpadCtlOk(aL, ptr.iCtl) && aL.iC[ptr.iCtl].iKind == EVpadKindStick)
+		if (!vpadCtlOk(aL, ptr.iCtl) || aL.iC[ptr.iCtl].iKind != EVpadKindStick)
+			continue;
+		if (vpadSide(aL.iC[ptr.iCtl]))
+			vpadStickOut(aL, aL.iC[ptr.iCtl], ptr, rx, ry);
+		else
 			vpadStickOut(aL, aL.iC[ptr.iCtl], ptr, lx, ly);
 		}
 	aS.iEdges = (unsigned short)(aS.iEdges | (bits & ~aS.iBits));
 	aS.iBits = bits;
 	aS.iLx = (unsigned char)lx;
 	aS.iLy = (unsigned char)ly;
+	aS.iRightX = (unsigned char)rx;
+	aS.iRightY = (unsigned char)ry;
 	}
 
 // Ordinary move of a pointer that is down: take the position and re-evaluate.
@@ -347,18 +391,38 @@ static void vpadRelease(TVpadState &aS, const TVpadLayout &aL, int aId, unsigned
 		const TVpadControl &c = aL.iC[p.iCtl];
 		if (c.iKind == EVpadKindAction && c.iId < 32 && vpadInside(c, aL.iLeashPct, p.iX, p.iY))
 			aS.iActions |= 1u << c.iId;
+		// A stick taken by inference is not a tap and leaves the arming alone.
+		if (c.iKind == EVpadKindStick && vpadDownCapture(aS, aId))
+			{
+			const int side = vpadSide(c);
+			const int dx = p.iX - p.iDownX;
+			const int dy = p.iY - p.iDownY;
+			const int slop = c.iRx * KVpadTapSlopPct / 100;
+			const int still = dx * dx + dy * dy <= slop * slop;
+			if (!p.iClick && still && tcElapsed(aMs, p.iDownMs) <= (unsigned)KVpadTapMs)
+				{
+				aS.iArmed[side] = 1;
+				aS.iArmMs[side] = aMs;
+				}
+			else
+				aS.iArmed[side] = 0;
+			}
 		}
+	vpadSetDownCapture(aS, aId, 0);
 	p.iDown = 0;
 	p.iCtl = -1;
 	p.iDiag = 0;
 	p.iBits = 0;
 	p.iHeld = 0;
+	p.iClick = 0;
 	p.iMs = aMs;
 	}
 
-// Captures the control under a pointer that went down. Smallest normalised press distance
-// wins; a d-pad or stick held by another pointer is skipped.
-static void vpadCapture(TVpadState &aS, const TVpadLayout &aL, int aId, int aX, int aY, unsigned aMs)
+// Capture search of VpadPointerDown: the control whose press zone holds the point with the
+// smallest normalised distance, the lower index on a tie; -1 when there is none. A d-pad or
+// stick held by another pointer is skipped, and so is a stick while another pointer holds a
+// stick on its side.
+static int vpadBest(const TVpadState &aS, const TVpadLayout &aL, int aId, int aX, int aY)
 	{
 	const int n = vpadCount(aL);
 	int best = -1;
@@ -370,6 +434,8 @@ static void vpadCapture(TVpadState &aS, const TVpadLayout &aL, int aId, int aX, 
 			continue;
 		if ((c.iKind == EVpadKindDpad || c.iKind == EVpadKindStick) && vpadTakenByOther(aS, aId, i))
 			continue;
+		if (c.iKind == EVpadKindStick && vpadSideTaken(aS, aL, aId, vpadSide(c)))
+			continue;
 		const int d = vpadNorm(c, aL.iHitPct, aX, aY);
 		if (best < 0 || d < bestD)
 			{
@@ -377,19 +443,40 @@ static void vpadCapture(TVpadState &aS, const TVpadLayout &aL, int aId, int aX, 
 			bestD = d;
 			}
 		}
+	return best;
+	}
+
+// Captures the control under a pointer that went down. A stick whose side is armed clicks
+// when this touch comes soon enough after the tap; every capture of a stick disarms its side.
+static void vpadCapture(TVpadState &aS, const TVpadLayout &aL, int aId, int aX, int aY, unsigned aMs)
+	{
+	const int best = vpadBest(aS, aL, aId, aX, aY);
 	TVpadPointer &p = aS.iP[aId];
 	p.iDown = 1;
 	p.iCtl = (signed char)best;
 	p.iDiag = 0;
 	p.iBits = 0;
 	p.iHeld = 0;
+	p.iClick = 0;
 	p.iX = (short)aX;
 	p.iY = (short)aY;
 	p.iMs = aMs;
+	p.iDownMs = aMs;
+	p.iDownX = (short)aX;
+	p.iDownY = (short)aY;
+	vpadSetDownCapture(aS, aId, 0);
 	if (best >= 0)
 		{
 		p.iOx = (short)(aL.iStickFloat != 0 ? aX : aL.iC[best].iCx);
 		p.iOy = (short)(aL.iStickFloat != 0 ? aY : aL.iC[best].iCy);
+		if (aL.iC[best].iKind == EVpadKindStick)
+			{
+			const int side = vpadSide(aL.iC[best]);
+			const int clickMs = vpadClamp(aL.iStickClickMs, 0, 2000);
+			p.iClick = (unsigned char)(aS.iArmed[side] && clickMs > 0 && tcElapsed(aMs, aS.iArmMs[side]) <= (unsigned)clickMs);
+			aS.iArmed[side] = 0;
+			vpadSetDownCapture(aS, aId, 1);
+			}
 		}
 	vpadEvaluate(aL, p);
 	}
@@ -446,6 +533,11 @@ static int vpadDualStart(TVpadState &aS, const TVpadLayout &aL, int aX, int aY, 
 	p1.iX = (short)px2;
 	p1.iY = (short)py2;
 	p1.iMs = aMs;
+	p1.iDownMs = aMs;
+	p1.iDownX = (short)px2;
+	p1.iDownY = (short)py2;
+	p1.iClick = 0;
+	vpadSetDownCapture(aS, 1, 0);
 	p1.iOx = (short)(aL.iStickFloat != 0 ? px2 : c.iCx);
 	p1.iOy = (short)(aL.iStickFloat != 0 ? py2 : c.iCy);
 	if (c.iKind == EVpadKindButton)
@@ -481,11 +573,15 @@ static void vpadDualMove(TVpadState &aS, const TVpadLayout &aL, int aX, int aY, 
 		p0.iHeld = p1.iHeld;
 		p0.iOx = p1.iOx;
 		p0.iOy = p1.iOy;
+		p0.iClick = p1.iClick;
+		vpadSetDownCapture(aS, 0, vpadDownCapture(aS, 1));
 		p1.iDown = 0;
 		p1.iCtl = -1;
 		p1.iDiag = 0;
 		p1.iBits = 0;
 		p1.iHeld = 0;
+		p1.iClick = 0;
+		vpadSetDownCapture(aS, 1, 0);
 		aS.iDual = 0;
 		vpadMove(p0, aL, aX, aY, aMs);
 		return;
@@ -516,10 +612,11 @@ static void vpadPut(TVpadControl &aC, int aKind, int aShape, int aGroup, int aBi
 	aC.iRy = (short)aRy;
 	}
 
-// Places the twelve default controls for one scale, following the layout rules.
+// Places the default controls for one scale, following the layout rules.
 static void vpadBuild(TVpadLayout &aOut, int aW, int aH, int aUm, int aScale, unsigned aOptions)
 	{
 	const int land = aW >= aH;
+	const int sticks = land && (aOptions & EVpadOptSticks) != 0;
 	const int m = vpadPx(20, aScale, aUm);
 	const int g = vpadPx(10, aScale, aUm);
 	const int rd = vpadPx(110, aScale, aUm);
@@ -533,11 +630,15 @@ static void vpadBuild(TVpadLayout &aOut, int aW, int aH, int aUm, int aScale, un
 	const int half = land ? (g + 1) / 2 : rm + g;
 	const int cx = aW / 2;
 	const int faceX = aW - m - rr - rb;
-	const int dirKind = (aOptions & EVpadOptStick) ? EVpadKindStick : EVpadKindDpad;
+	// EVpadOptSticks keeps the d-pad whatever EVpadOptStick says (touchcore.h).
+	const int dirKind = (aOptions & EVpadOptStick) != 0 && !sticks ? EVpadKindStick : EVpadKindDpad;
 	int dirY = aH - m - rd;
 	int faceY = aH - m - rr - rb;
 	int shY = m + sh;
 	int selY = aH - m - th;
+	int selDx = half + tw;
+	int selHw = tw;
+	int selHh = th;
 	int menuY = m + rm;
 	if (!land)
 		{
@@ -549,7 +650,15 @@ static void vpadBuild(TVpadLayout &aOut, int aW, int aH, int aUm, int aScale, un
 		dirY = yMain;
 		faceY = yMain;
 		}
-	aOut.iCount = EVpadDefaultCount;
+	if (sticks)
+		{
+		const int tw2 = vpadPx(43, aScale, aUm);
+		selY = m + rm;
+		selDx = rm + g + tw2;
+		selHw = tw2;
+		selHh = vpadPx(27, aScale, aUm);
+		}
+	aOut.iCount = sticks ? EVpadSticksCount : EVpadDefaultCount;
 	aOut.iHitPct = 125;
 	aOut.iLeashPct = 175;
 	aOut.iDeadPct = 18;
@@ -557,6 +666,7 @@ static void vpadBuild(TVpadLayout &aOut, int aW, int aH, int aUm, int aScale, un
 	aOut.iFourWayPct = 40;
 	aOut.iStickDigitalPct = 80;
 	aOut.iStickFloat = 0;
+	aOut.iStickClickMs = 300;
 	aOut.iDualJumpPx = (aOptions & EVpadOptResistiveDual) ? vpadPx(120, aScale, aUm) : 0;
 
 	vpadPut(aOut.iC[EVpadIxDir], dirKind, EVpadShapeCircle, 1, 0, m + rd, dirY, rd, rd);
@@ -568,16 +678,23 @@ static void vpadBuild(TVpadLayout &aOut, int aW, int aH, int aUm, int aScale, un
 	vpadPut(aOut.iC[EVpadIxL2], EVpadKindButton, EVpadShapeRect, 3, 1 << EVpadL2, m + 3 * sw + g, shY, sw, sh);
 	vpadPut(aOut.iC[EVpadIxR1], EVpadKindButton, EVpadShapeRect, 4, 1 << EVpadR1, aW - m - sw, shY, sw, sh);
 	vpadPut(aOut.iC[EVpadIxR2], EVpadKindButton, EVpadShapeRect, 4, 1 << EVpadR2, aW - m - 3 * sw - g, shY, sw, sh);
-	vpadPut(aOut.iC[EVpadIxSelect], EVpadKindButton, EVpadShapeRect, 0, 1 << EVpadSelect, cx - half - tw, selY, tw, th);
-	vpadPut(aOut.iC[EVpadIxStart], EVpadKindButton, EVpadShapeRect, 0, 1 << EVpadStart, cx + half + tw, selY, tw, th);
+	vpadPut(aOut.iC[EVpadIxSelect], EVpadKindButton, EVpadShapeRect, 0, 1 << EVpadSelect, cx - selDx, selY, selHw, selHh);
+	vpadPut(aOut.iC[EVpadIxStart], EVpadKindButton, EVpadShapeRect, 0, 1 << EVpadStart, cx + selDx, selY, selHw, selHh);
 	vpadPut(aOut.iC[EVpadIxMenu], EVpadKindAction, EVpadShapeCircle, 0, 0, cx, menuY, rm, rm);
+	if (sticks)
+		{
+		const int rs = vpadPx(70, aScale, aUm);
+		vpadPut(aOut.iC[EVpadIxLStick], EVpadKindStick, EVpadShapeCircle, 0, 0, cx - g - rs, aH - m - rs, rs, rs);
+		vpadPut(aOut.iC[EVpadIxRStick], EVpadKindStick, EVpadShapeCircle, 0, 0, cx + g + rs, aH - m - rs, rs, rs);
+		aOut.iC[EVpadIxRStick].iId = 1;
+		}
 	}
 
 // VpadLayoutFits ignores a control without a size, so a scale that rounds the whole pad
 // away would pass it.
 static int vpadAllSized(const TVpadLayout &aL)
 	{
-	for (int i = 0; i < EVpadDefaultCount; i++)
+	for (int i = 0; i < vpadCount(aL); i++)
 		if (!vpadValid(aL.iC[i]))
 			return 0;
 	return 1;
@@ -654,12 +771,17 @@ void VpadReset(TVpadState &aState)
 		q.iDown = 0;
 		q.iCtl = -1;
 		q.iDiag = 0;
-		q.iPad = 0;
+		q.iClick = 0;
 		q.iOx = 0;
 		q.iOy = 0;
 		q.iX = 0;
 		q.iY = 0;
 		q.iMs = 0;
+		q.iDownMs = 0;
+		q.iDownX = 0;
+		q.iDownY = 0;
+		q.iPad[0] = 0;
+		q.iPad[1] = 0;
 		q.iBits = 0;
 		q.iHeld = 0;
 		}
@@ -669,9 +791,54 @@ void VpadReset(TVpadState &aState)
 	aState.iLx = KVpadStickCentre;
 	aState.iLy = KVpadStickCentre;
 	aState.iDual = 0;
-	aState.iPad = 0;
+	aState.iByDown = 0;
 	aState.iDualX = 0;
 	aState.iDualY = 0;
+	aState.iRightX = KVpadStickCentre;
+	aState.iRightY = KVpadStickCentre;
+	aState.iArmed[0] = 0;
+	aState.iArmed[1] = 0;
+	aState.iArmMs[0] = 0;
+	aState.iArmMs[1] = 0;
+	}
+
+// Centre of a control on one axis, given its half size r on that axis and the screen size n:
+// clamped to r .. n-1-r, and n/2 when the control is wider than the screen.
+static int vpadInScreen(int aC, int aR, int aN)
+	{
+	const int n = aN < 1 ? 1 : aN;
+	const int hi = n - 1 - aR;
+	if (aR > hi)
+		return n / 2;
+	return vpadClamp(aC, aR, hi);
+	}
+
+int VpadControlAt(const TVpadLayout &aLayout, int aX, int aY)
+	{
+	TVpadState s;
+	VpadReset(s);
+	return vpadBest(s, aLayout, 0, vpadClampCoord(aX), vpadClampCoord(aY));
+	}
+
+void VpadMoveControl(TVpadLayout &aLayout, int aIx, int aCx, int aCy, int aScreenW, int aScreenH)
+	{
+	if (!vpadCtlOk(aLayout, aIx))
+		return;
+	TVpadControl &c = aLayout.iC[aIx];
+	c.iCx = (short)vpadInScreen(vpadClampCoord(aCx), c.iRx, aScreenW);
+	c.iCy = (short)vpadInScreen(vpadClampCoord(aCy), vpadIsRect(c) ? c.iRy : c.iRx, aScreenH);
+	}
+
+void VpadResizeControl(TVpadLayout &aLayout, int aIx, int aRx, int aRy, int aScreenW, int aScreenH)
+	{
+	if (!vpadCtlOk(aLayout, aIx))
+		return;
+	TVpadControl &c = aLayout.iC[aIx];
+	c.iRx = (short)vpadClamp(aRx, KVpadMinSizePx, 4095);
+	if (vpadIsRect(c))
+		c.iRy = (short)vpadClamp(aRy, KVpadMinSizePx, 4095);
+	c.iCx = (short)vpadInScreen(c.iCx, c.iRx, aScreenW);
+	c.iCy = (short)vpadInScreen(c.iCy, vpadIsRect(c) ? c.iRy : c.iRx, aScreenH);
 	}
 
 void VpadPointerDown(TVpadState &aState, const TVpadLayout &aLayout, int aId, int aX, int aY, unsigned aMs)

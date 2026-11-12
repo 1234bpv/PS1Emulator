@@ -183,6 +183,7 @@ static void TestDefaultLandscape640x360Scale100()
 	CHECK_EQ(L.iFourWayPct, 40);
 	CHECK_EQ(L.iStickDigitalPct, 80);
 	CHECK_EQ(L.iStickFloat, 0);
+	CHECK_EQ(L.iStickClickMs, 300);
 	CHECK_EQ(L.iDualJumpPx, 0);
 	CheckCtl(L, EVpadIxDir, EVpadKindDpad, EVpadShapeCircle, 1, 0, 94, 266, 80, 0);
 	CheckCtl(L, EVpadIxTriangle, EVpadKindButton, EVpadShapeCircle, 2, 1 << EVpadTriangle, 539, 205, 33, 0);
@@ -237,6 +238,7 @@ static void TestDefaultOptionStickReplacesDpad()
 	CHECK_EQ(VpadDefaultLayout(L, 640, 360, 138, 100, EVpadOptStick), 100);
 	CheckCtl(L, EVpadIxDir, EVpadKindStick, EVpadShapeCircle, 1, 0, 94, 266, 80, 0);
 	CHECK_EQ(L.iStickFloat, 0);
+	CHECK_EQ(L.iStickClickMs, 300);
 	CHECK_EQ(L.iDualJumpPx, 0);
 }
 
@@ -1256,21 +1258,50 @@ static void CheckPadInvariants(const TVpadState &aS, const TVpadLayout &aL, unsi
 	int k;
 	unsigned orBits = 0;
 	int anyDown = 0;
-	int holds = 0;
+	int holdL = 0;
+	int holdR = 0;
 	for (k = 0; k < KVpadMaxPointers; ++k) {
 		orBits |= aS.iP[k].iBits;
 		if (aS.iP[k].iDown) anyDown = 1;
 		else CHECK_EQ(aS.iP[k].iBits, 0);
+		// Сторона стіка визначається за iId: 1 — правий, будь-яке інше значення — лівий.
 		if (aS.iP[k].iDown && aS.iP[k].iCtl >= 0 && aS.iP[k].iCtl < TakenCount(aL)
-			&& aL.iC[aS.iP[k].iCtl].iKind == EVpadKindStick) holds = 1;
+			&& aL.iC[aS.iP[k].iCtl].iKind == EVpadKindStick) {
+			if (aL.iC[aS.iP[k].iCtl].iId == 1) holdR = 1;
+			else holdL = 1;
+		}
+		// Заголовок: доки палець тримає клацання, він натискає L3 або R3.
+		if (aS.iP[k].iDown && aS.iP[k].iClick) CHECK(aS.iP[k].iBits & ((1u << EVpadL3) | (1u << EVpadR3)));
 	}
 	CHECK_EQ(aS.iBits, orBits);
 	CHECK_EQ(aS.iBits & ~aAllBits, 0);
 	CHECK(aS.iLx <= 254);
 	CHECK(aS.iLy <= 254);
-	if (!holds) {
+	if (!holdL) {
 		CHECK_EQ(aS.iLx, KVpadStickCentre);
 		CHECK_EQ(aS.iLy, KVpadStickCentre);
+	}
+	if (!holdR) {
+		CHECK_EQ(aS.iRightX, KVpadStickCentre);
+		CHECK_EQ(aS.iRightY, KVpadStickCentre);
+	}
+	// iByDown: біт p стоїть лише для опущеного пальця, що тримає стік. Без опущених пальців поле нульове
+	// (це випливає з першої перевірки). Чи стік захоплено натисканням, а не виведенням, зі стану не видно:
+	// це перевіряють TestByDownIgnoresInferenceAndTakeover і TestByDownSetByStickDownClearedByLiftAndReset.
+	{
+		unsigned downMask = 0;
+		for (k = 0; k < KVpadMaxPointers; ++k) {
+			if (aS.iP[k].iDown) downMask |= 1u << k;
+		}
+		CHECK_EQ(aS.iByDown & ~downMask, 0);
+		for (k = 0; k < KVpadMaxPointers; ++k) {
+			if (aS.iByDown & (1u << k)) {
+				CHECK(aS.iP[k].iDown);
+				CHECK(aS.iP[k].iCtl >= 0 && aS.iP[k].iCtl < TakenCount(aL));
+				if (aS.iP[k].iCtl >= 0 && aS.iP[k].iCtl < TakenCount(aL))
+					CHECK_EQ(aL.iC[aS.iP[k].iCtl].iKind, EVpadKindStick);
+			}
+		}
 	}
 	if (!anyDown) CHECK_EQ(aS.iBits, 0);
 }
@@ -1286,6 +1317,7 @@ static void RunRandomSequence(const TVpadLayout &aL, unsigned aSeed, int aSteps)
 	for (c = 0; c < TakenCount(aL); ++c) {
 		if (aL.iC[c].iKind == EVpadKindButton) allBits |= aL.iC[c].iBits;
 		if (aL.iC[c].iKind == EVpadKindStick) allBits |= 0xF0;
+		if (aL.iC[c].iKind == EVpadKindStick && aL.iStickClickMs > 0) allBits |= (1u << EVpadL3) | (1u << EVpadR3);
 	}
 	R.iS = aSeed;
 	VpadReset(S);
@@ -2009,7 +2041,7 @@ static int LockstepMismatches(const TVpadLayout &aA, const TVpadLayout &aB, unsi
 			(void)VpadTakeEdges(SA);
 			(void)VpadTakeEdges(SB);
 		}
-		if (SA.iBits != SB.iBits || SA.iLx != SB.iLx || SA.iLy != SB.iLy || SA.iEdges != SB.iEdges) ++bad;
+		if (SA.iBits != SB.iBits || SA.iLx != SB.iLx || SA.iLy != SB.iLy || SA.iRightX != SB.iRightX || SA.iRightY != SB.iRightY || SA.iEdges != SB.iEdges) ++bad;
 	}
 	return bad;
 }
@@ -3535,6 +3567,2047 @@ static void TestActionIdThirtyOneReportsBitThirtyTwoReportsNothing()
 	CHECK_EQ(S.iBits, 0);
 }
 
+// ---------------------------------------------------------------- друга редакція: стіки, клацання, розкладка
+//
+// Нові правила заголовка: лівий і правий стік (iId), клацання L3/R3 (Stick click), розкладка з
+// EVpadOptSticks, редагування розкладки (VpadControlAt, VpadMoveControl, VpadResizeControl).
+// Очікування — за формулами заголовка, розрахунок у коментарях. Розділ «Еталонна модель» рахує
+// розкладку і вміщення окремо від реалізації, за текстом правил; з ним звіряються значення на
+// кількох екранах і кроках пікселя.
+
+static void SetStickCtl(TVpadControl &aC, int aCx, int aCy, int aR, int aGroup, int aId)
+{
+	memset(&aC, 0, sizeof aC);
+	aC.iKind = (unsigned char)EVpadKindStick;
+	aC.iShape = (unsigned char)EVpadShapeCircle;
+	aC.iGroup = (unsigned char)aGroup;
+	aC.iId = (unsigned char)aId;
+	aC.iCx = (short)aCx;
+	aC.iCy = (short)aCy;
+	aC.iRx = (short)aR;
+}
+
+// Лівий стік (150,100) і правий (450,100), обидва R=80. Зони натиску R*125/100 = 100 не
+// перетинаються: x 50..250 і 350..550.
+static void LayoutTwoSticks(TVpadLayout &aL, int aClickMs)
+{
+	LayoutInit(aL, 2);
+	SetStickCtl(aL.iC[0], 150, 100, 80, 0, 0);
+	SetStickCtl(aL.iC[1], 450, 100, 80, 0, 1);
+	aL.iStickClickMs = aClickMs;
+}
+
+// Лівий стік (100,100) R=80 з LayoutStick: мертва зона 14, span 66, цифровий поріг 64.
+static void LayoutClick(TVpadLayout &aL, int aClickMs)
+{
+	LayoutStick(aL, 0);
+	aL.iStickClickMs = aClickMs;
+}
+
+// Кнопка Triangle (300,100) R40 (ctl 0, зона 50) і лівий стік (100,100) R50 (ctl 1, зона 62,
+// повідець 50*175/100 = 87). Другий палець: r = 40/3 = 13.
+static void LayoutInferStick(TVpadLayout &aL)
+{
+	LayoutInit(aL, 2);
+	SetCircCtl(aL.iC[0], 300, 100, 40, 0, 1 << EVpadTriangle);
+	SetCircCtl(aL.iC[1], 100, 100, 50, 0, 0);
+	aL.iC[1].iKind = (unsigned char)EVpadKindStick;
+	aL.iDualJumpPx = 40;
+	aL.iStickClickMs = 300;
+}
+
+// Два стіки R50: лівий (100,100) ctl 0, правий (300,100) ctl 1. Повідець правого 87.
+static void LayoutInferTwoSticks(TVpadLayout &aL)
+{
+	LayoutInit(aL, 2);
+	SetStickCtl(aL.iC[0], 100, 100, 50, 0, 0);
+	SetStickCtl(aL.iC[1], 300, 100, 50, 0, 1);
+	aL.iDualJumpPx = 40;
+	aL.iStickClickMs = 300;
+}
+
+// Один палець: натискання в aDown, підняття в aUp.
+static void TapStick(TVpadState &aS, const TVpadLayout &aL, int aId, int aX, int aY, unsigned aDown, unsigned aUp)
+{
+	VpadPointerDown(aS, aL, aId, aX, aY, aDown);
+	VpadPointerUp(aS, aL, aId, aUp);
+}
+
+static int SameCtl(const TVpadControl &aA, const TVpadControl &aB)
+{
+	return aA.iKind == aB.iKind && aA.iShape == aB.iShape && aA.iGroup == aB.iGroup && aA.iId == aB.iId
+		&& aA.iBits == aB.iBits && aA.iCx == aB.iCx && aA.iCy == aB.iCy && aA.iRx == aB.iRx && aA.iRy == aB.iRy;
+}
+
+// Порівняння елементів поле за полем (без байтів вирівнювання, які копія не гарантує).
+static int SameAllCtl(const TVpadLayout &aA, const TVpadLayout &aB)
+{
+	int i;
+	if (aA.iCount != aB.iCount) return 0;
+	for (i = 0; i < TakenCount(aA); ++i) {
+		if (!SameCtl(aA.iC[i], aB.iC[i])) return 0;
+	}
+	return 1;
+}
+
+static void Default14(TVpadLayout &aL)
+{
+	memset(&aL, 0, sizeof aL);
+	VpadDefaultLayout(aL, 640, 360, 138, 100, EVpadOptSticks);
+}
+
+// ---------------------------------------------------------------- еталонна модель розкладки
+
+// Написано за текстом правил заголовка, окремо від реалізації. Не викликає жодної функції Vpad*.
+
+static int RefPx(int aT, int aS, int aU)
+{
+	return (aT * aS + aU / 2) / aU;
+}
+
+static void RefCirc(TVpadControl &aC, int aKind, int aCx, int aCy, int aR, int aGroup, unsigned aBits, int aId)
+{
+	memset(&aC, 0, sizeof aC);
+	aC.iKind = (unsigned char)aKind;
+	aC.iShape = (unsigned char)EVpadShapeCircle;
+	aC.iGroup = (unsigned char)aGroup;
+	aC.iBits = (unsigned short)aBits;
+	aC.iId = (unsigned char)aId;
+	aC.iCx = (short)aCx;
+	aC.iCy = (short)aCy;
+	aC.iRx = (short)aR;
+}
+
+static void RefRect(TVpadControl &aC, int aCx, int aCy, int aHw, int aHh, int aGroup, unsigned aBits)
+{
+	RefCirc(aC, EVpadKindButton, aCx, aCy, aHw, aGroup, aBits, 0);
+	aC.iShape = (unsigned char)EVpadShapeRect;
+	aC.iRy = (short)aHh;
+}
+
+// Чотири кнопки лиця навколо F (aFx, aFy) з відступом aRr, радіус aRb, група 2.
+static void RefFace(TVpadLayout &aL, int aFx, int aFy, int aRr, int aRb)
+{
+	RefCirc(aL.iC[EVpadIxTriangle], EVpadKindButton, aFx, aFy - aRr, aRb, 2, 1u << EVpadTriangle, 0);
+	RefCirc(aL.iC[EVpadIxCircle], EVpadKindButton, aFx + aRr, aFy, aRb, 2, 1u << EVpadCircle, 0);
+	RefCirc(aL.iC[EVpadIxCross], EVpadKindButton, aFx, aFy + aRr, aRb, 2, 1u << EVpadCross, 0);
+	RefCirc(aL.iC[EVpadIxSquare], EVpadKindButton, aFx - aRr, aFy, aRb, 2, 1u << EVpadSquare, 0);
+}
+
+// Розкладка за розділами «Sizes», «Landscape» і «Portrait». Ландшафт: aW >= aH. Розкладка з
+// EVpadOptSticks тільки на ландшафті; елемент 0 при цьому — d-pad (обрано конкретніше правило).
+static void RefBuild(TVpadLayout &aL, int aW, int aH, int aU, int aS, unsigned aOpt)
+{
+	const int land = aW >= aH;
+	const int sticks = land && (aOpt & EVpadOptSticks) != 0;
+	const int m = RefPx(20, aS, aU);
+	const int g = RefPx(10, aS, aU);
+	const int rd = RefPx(110, aS, aU);
+	const int rb = RefPx(45, aS, aU);
+	const int rr = RefPx(75, aS, aU);
+	const int tw = RefPx(50, aS, aU);
+	const int th = RefPx(35, aS, aU);
+	const int rm = RefPx(35, aS, aU);
+	const int sw = land ? RefPx(70, aS, aU) : RefPx(45, aS, aU);
+	const int sh = RefPx(40, aS, aU);
+	const int dirKind = (!sticks && (aOpt & EVpadOptStick)) ? EVpadKindStick : EVpadKindDpad;
+	int fx = 0;
+	int fy = 0;
+	memset(&aL, 0, sizeof aL);
+	aL.iCount = sticks ? EVpadSticksCount : EVpadDefaultCount;
+	aL.iHitPct = 125;
+	aL.iLeashPct = 175;
+	aL.iDeadPct = 18;
+	aL.iDiagPct = 100;
+	aL.iFourWayPct = 40;
+	aL.iStickDigitalPct = 80;
+	aL.iStickFloat = 0;
+	aL.iStickClickMs = 300;
+	if (land) {
+		fx = aW - m - rr - rb;
+		fy = aH - m - rr - rb;
+		RefCirc(aL.iC[EVpadIxDir], dirKind, m + rd, aH - m - rd, rd, 1, 0, 0);
+		RefRect(aL.iC[EVpadIxL1], m + sw, m + sh, sw, sh, 3, 1u << EVpadL1);
+		RefRect(aL.iC[EVpadIxL2], m + 3 * sw + g, m + sh, sw, sh, 3, 1u << EVpadL2);
+		RefRect(aL.iC[EVpadIxR1], aW - m - sw, m + sh, sw, sh, 4, 1u << EVpadR1);
+		RefRect(aL.iC[EVpadIxR2], aW - m - 3 * sw - g, m + sh, sw, sh, 4, 1u << EVpadR2);
+		if (sticks) {
+			const int tw2 = RefPx(43, aS, aU);
+			const int th2 = RefPx(27, aS, aU);
+			const int rs = RefPx(70, aS, aU);
+			RefRect(aL.iC[EVpadIxSelect], aW / 2 - rm - g - tw2, m + rm, tw2, th2, 0, 1u << EVpadSelect);
+			RefRect(aL.iC[EVpadIxStart], aW / 2 + rm + g + tw2, m + rm, tw2, th2, 0, 1u << EVpadStart);
+			RefCirc(aL.iC[EVpadIxMenu], EVpadKindAction, aW / 2, m + rm, rm, 0, 0, 0);
+			RefCirc(aL.iC[EVpadIxLStick], EVpadKindStick, aW / 2 - g - rs, aH - m - rs, rs, 0, 0, 0);
+			RefCirc(aL.iC[EVpadIxRStick], EVpadKindStick, aW / 2 + g + rs, aH - m - rs, rs, 0, 0, 1);
+		} else {
+			RefRect(aL.iC[EVpadIxSelect], aW / 2 - (g + 1) / 2 - tw, aH - m - th, tw, th, 0, 1u << EVpadSelect);
+			RefRect(aL.iC[EVpadIxStart], aW / 2 + (g + 1) / 2 + tw, aH - m - th, tw, th, 0, 1u << EVpadStart);
+			RefCirc(aL.iC[EVpadIxMenu], EVpadKindAction, aW / 2, m + rm, rm, 0, 0, 0);
+		}
+	} else {
+		const int yp = aW * 3 / 4;
+		const int y1 = yp + m + sh;
+		const int ym = ((y1 + sh + g) + (aH - m - 2 * rm - g)) / 2;
+		RefCirc(aL.iC[EVpadIxDir], dirKind, m + rd, ym, rd, 1, 0, 0);
+		RefRect(aL.iC[EVpadIxL1], m + sw, y1, sw, sh, 3, 1u << EVpadL1);
+		RefRect(aL.iC[EVpadIxL2], m + 3 * sw + g, y1, sw, sh, 3, 1u << EVpadL2);
+		RefRect(aL.iC[EVpadIxR1], aW - m - sw, y1, sw, sh, 4, 1u << EVpadR1);
+		RefRect(aL.iC[EVpadIxR2], aW - m - 3 * sw - g, y1, sw, sh, 4, 1u << EVpadR2);
+		RefRect(aL.iC[EVpadIxSelect], aW / 2 - rm - g - tw, aH - m - th, tw, th, 0, 1u << EVpadSelect);
+		RefRect(aL.iC[EVpadIxStart], aW / 2 + rm + g + tw, aH - m - th, tw, th, 0, 1u << EVpadStart);
+		RefCirc(aL.iC[EVpadIxMenu], EVpadKindAction, aW / 2, aH - m - rm, rm, 0, 0, 0);
+		fx = aW - m - rr - rb;
+		fy = ym;
+	}
+	RefFace(aL, fx, fy, rr, rb);
+}
+
+// Кожен елемент має розмір: коло iRx > 0, прямокутник iRx > 0 і iRy > 0.
+static int RefSizesOk(const TVpadLayout &aL)
+{
+	int i;
+	for (i = 0; i < aL.iCount; ++i) {
+		const TVpadControl &c = aL.iC[i];
+		if (c.iRx <= 0) return 0;
+		if (c.iShape == EVpadShapeRect && c.iRy <= 0) return 0;
+	}
+	return 1;
+}
+
+// Вміщення за правилами (а), (б), (в) заголовка. Коло, d-pad і стік — коробка центр ± iRx.
+static int RefFits(const TVpadLayout &aL, int aW, int aH)
+{
+	int x0[KVpadMaxControls];
+	int y0[KVpadMaxControls];
+	int x1[KVpadMaxControls];
+	int y1[KVpadMaxControls];
+	int use[KVpadMaxControls];
+	const int n = TakenCount(aL);
+	const int yp = aW * 3 / 4;
+	int ok = 1;
+	int i;
+	int j;
+	memset(x0, 0, sizeof x0);
+	memset(y0, 0, sizeof y0);
+	memset(x1, 0, sizeof x1);
+	memset(y1, 0, sizeof y1);
+	memset(use, 0, sizeof use);
+	for (i = 0; i < n; ++i) {
+		const TVpadControl &c = aL.iC[i];
+		const int circle = c.iKind == EVpadKindDpad || c.iKind == EVpadKindStick || c.iShape == EVpadShapeCircle;
+		const int hy = circle ? c.iRx : c.iRy;
+		if (c.iRx <= 0 || hy <= 0) continue;
+		use[i] = 1;
+		x0[i] = c.iCx - c.iRx;
+		x1[i] = c.iCx + c.iRx;
+		y0[i] = c.iCy - hy;
+		y1[i] = c.iCy + hy;
+		if (x0[i] < 0 || x1[i] >= aW || y0[i] < 0 || y1[i] >= aH) ok = 0;
+		if (aH > aW && y0[i] < yp) ok = 0;
+	}
+	for (i = 0; i < n; ++i) {
+		for (j = i + 1; j < n; ++j) {
+			if (!use[i] || !use[j]) continue;
+			if (x1[i] < x0[j] || x1[j] < x0[i] || y1[i] < y0[j] || y1[j] < y0[i]) continue;
+			if (aL.iC[i].iGroup != 0 && aL.iC[i].iGroup == aL.iC[j].iGroup) continue;
+			ok = 0;
+		}
+	}
+	return ok;
+}
+
+// Масштаби s = P*(32-i)/32, i = 0..19, перший, що вміщується, береться; інакше 0 і найменша спроба.
+// iDualJumpPx = px(120) лише тоді, коли масштаб знайдено; при нулі заголовок не каже, який масштаб
+// «остаточний», тож поле не звіряється (*aKnown = 0).
+static int RefDefault(TVpadLayout &aL, int aW, int aH, int aU, int aP, unsigned aOpt, int *aKnown)
+{
+	TVpadLayout tmp;
+	int i;
+	int s = 0;
+	if (aU < 20) aU = 20;
+	if (aP < 25) aP = 25;
+	if (aP > 400) aP = 400;
+	for (i = 0; i < 20; ++i) {
+		s = aP * (32 - i) / 32;
+		RefBuild(tmp, aW, aH, aU, s, aOpt);
+		if (RefSizesOk(tmp) && RefFits(tmp, aW, aH)) {
+			if (aOpt & EVpadOptResistiveDual) tmp.iDualJumpPx = RefPx(120, s, aU);
+			aL = tmp;
+			*aKnown = 1;
+			return s;
+		}
+	}
+	aL = tmp;
+	*aKnown = 0;
+	return 0;
+}
+
+static int gReportLeft = 20;
+
+static void Report(const char *aWhat, int aWant, int aGot)
+{
+	if (gReportLeft <= 0) return;
+	--gReportLeft;
+	printf("FAIL [%s] %s: expected %d, got %d\n", gWhere, aWhat, aWant, aGot);
+}
+
+static int Eq(const char *aWhat, int aGot, int aWant)
+{
+	if (aGot == aWant) return 0;
+	Report(aWhat, aWant, aGot);
+	return 1;
+}
+
+static int EqCtl(const char *aField, int aIx, int aGot, int aWant)
+{
+	char what[96];
+	sprintf(what, "ctl %d %s", aIx, aField);
+	return Eq(what, aGot, aWant);
+}
+
+// Число розбіжностей між реалізацією і еталоном; поля, які заголовок не фіксує, не звіряються.
+static int CompareDefault(const TVpadLayout &aGot, const TVpadLayout &aRef, int aKnown)
+{
+	int bad = 0;
+	int i;
+	bad += Eq("iCount", aGot.iCount, aRef.iCount);
+	bad += Eq("iHitPct", aGot.iHitPct, aRef.iHitPct);
+	bad += Eq("iLeashPct", aGot.iLeashPct, aRef.iLeashPct);
+	bad += Eq("iDeadPct", aGot.iDeadPct, aRef.iDeadPct);
+	bad += Eq("iDiagPct", aGot.iDiagPct, aRef.iDiagPct);
+	bad += Eq("iFourWayPct", aGot.iFourWayPct, aRef.iFourWayPct);
+	bad += Eq("iStickDigitalPct", aGot.iStickDigitalPct, aRef.iStickDigitalPct);
+	bad += Eq("iStickFloat", aGot.iStickFloat, aRef.iStickFloat);
+	bad += Eq("iStickClickMs", aGot.iStickClickMs, aRef.iStickClickMs);
+	if (aKnown) bad += Eq("iDualJumpPx", aGot.iDualJumpPx, aRef.iDualJumpPx);
+	for (i = 0; i < TakenCount(aRef); ++i) {
+		const TVpadControl &gc = aGot.iC[i];
+		const TVpadControl &rc = aRef.iC[i];
+		bad += EqCtl("iKind", i, gc.iKind, rc.iKind);
+		bad += EqCtl("iShape", i, gc.iShape, rc.iShape);
+		bad += EqCtl("iGroup", i, gc.iGroup, rc.iGroup);
+		bad += EqCtl("iBits", i, gc.iBits, rc.iBits);
+		bad += EqCtl("iCx", i, gc.iCx, rc.iCx);
+		bad += EqCtl("iCy", i, gc.iCy, rc.iCy);
+		bad += EqCtl("iRx", i, gc.iRx, rc.iRx);
+		if (rc.iShape == EVpadShapeRect) bad += EqCtl("iRy", i, gc.iRy, rc.iRy);
+		if (rc.iKind == EVpadKindAction || i == EVpadIxLStick || i == EVpadIxRStick) bad += EqCtl("iId", i, gc.iId, rc.iId);
+	}
+	return bad;
+}
+
+// ---------------------------------------------------------------- розкладка з EVpadOptSticks
+
+static void TestSpecConstantsOfSticksAndLayout()
+{
+	// Числа зі специфікації: поріг тапу, мінімальний розмір, центр стіка, біти L3/R3, розміри розкладки.
+	CHECK_EQ(KVpadTapMs, 250);
+	CHECK_EQ(KVpadMinSizePx, 8);
+	CHECK_EQ(KVpadStickCentre, 127);
+	CHECK_EQ(EVpadL3, 1);
+	CHECK_EQ(EVpadR3, 2);
+	CHECK_EQ(EVpadOptSticks, 4);
+	CHECK_EQ(EVpadDefaultCount, 12);
+	CHECK_EQ(EVpadIxLStick, 12);
+	CHECK_EQ(EVpadIxRStick, 13);
+	CHECK_EQ(EVpadSticksCount, 14);
+	CHECK_EQ(KVpadMaxControls, 16);
+}
+
+static void TestDefaultSticksLandscape640x360Scale100()
+{
+	// Як у TestDefaultLandscape640x360Scale100 для елементів 0..11, крім стиків і Select/Start/Menu.
+	// Select і Start стають половинними: tw2 = px(43) = (4300+69)/138 = 31, th2 = px(27) = (2700+69)/138 = 20.
+	// Вони стоять біля Menu на y = m + rm = 14+25 = 39: Select x = 320-25-7-31 = 257, Start x = 320+25+7+31 = 383.
+	// Стіки: Rs = px(70) = 51, центри y = 360-14-51 = 295, лівий x = 320-7-51 = 262, правий x = 320+7+51 = 378.
+	TVpadLayout L;
+	Default14(L);
+	CHECK_EQ(VpadDefaultLayout(L, 640, 360, 138, 100, EVpadOptSticks), 100);
+	CHECK_EQ(L.iCount, EVpadSticksCount);
+	CHECK_EQ(L.iStickClickMs, 300);
+	CHECK_EQ(L.iDualJumpPx, 0);
+	CheckCtl(L, EVpadIxDir, EVpadKindDpad, EVpadShapeCircle, 1, 0, 94, 266, 80, 0);
+	CheckCtl(L, EVpadIxTriangle, EVpadKindButton, EVpadShapeCircle, 2, 1 << EVpadTriangle, 539, 205, 33, 0);
+	CheckCtl(L, EVpadIxCircle, EVpadKindButton, EVpadShapeCircle, 2, 1 << EVpadCircle, 593, 259, 33, 0);
+	CheckCtl(L, EVpadIxCross, EVpadKindButton, EVpadShapeCircle, 2, 1 << EVpadCross, 539, 313, 33, 0);
+	CheckCtl(L, EVpadIxSquare, EVpadKindButton, EVpadShapeCircle, 2, 1 << EVpadSquare, 485, 259, 33, 0);
+	CheckCtl(L, EVpadIxL1, EVpadKindButton, EVpadShapeRect, 3, 1 << EVpadL1, 65, 43, 51, 29);
+	CheckCtl(L, EVpadIxL2, EVpadKindButton, EVpadShapeRect, 3, 1 << EVpadL2, 174, 43, 51, 29);
+	CheckCtl(L, EVpadIxR1, EVpadKindButton, EVpadShapeRect, 4, 1 << EVpadR1, 575, 43, 51, 29);
+	CheckCtl(L, EVpadIxR2, EVpadKindButton, EVpadShapeRect, 4, 1 << EVpadR2, 466, 43, 51, 29);
+	CheckCtl(L, EVpadIxSelect, EVpadKindButton, EVpadShapeRect, 0, 1 << EVpadSelect, 257, 39, 31, 20);
+	CheckCtl(L, EVpadIxStart, EVpadKindButton, EVpadShapeRect, 0, 1 << EVpadStart, 383, 39, 31, 20);
+	CheckCtl(L, EVpadIxMenu, EVpadKindAction, EVpadShapeCircle, 0, 0, 320, 39, 25, 0);
+	CheckCtl(L, EVpadIxLStick, EVpadKindStick, EVpadShapeCircle, 0, 0, 262, 295, 51, 0);
+	CheckCtl(L, EVpadIxRStick, EVpadKindStick, EVpadShapeCircle, 0, 0, 378, 295, 51, 0);
+	CHECK_EQ(L.iC[EVpadIxMenu].iId, 0);
+	CHECK_EQ(L.iC[EVpadIxLStick].iId, 0);
+	CHECK_EQ(L.iC[EVpadIxRStick].iId, 1);
+	CHECK(VpadLayoutFits(L, 640, 360));
+}
+
+static void TestDefaultSticksPortraitIgnoredMatchesNoOption()
+{
+	// Портрет: EVpadOptSticks ігнорується. 360x640, U=111, s=100 дає 78 (як у TestDefaultPortrait...).
+	TVpadLayout A;
+	TVpadLayout B;
+	int ra;
+	int rb;
+	memset(&A, 0, sizeof A);
+	memset(&B, 0, sizeof B);
+	ra = VpadDefaultLayout(A, 360, 640, 111, 100, 0);
+	rb = VpadDefaultLayout(B, 360, 640, 111, 100, EVpadOptSticks);
+	CHECK_EQ(ra, 78);
+	CHECK_EQ(rb, 78);
+	CHECK_EQ(B.iCount, EVpadDefaultCount);
+	CHECK(SameAllCtl(A, B));
+	CHECK_EQ(B.iStickClickMs, 300);
+	CHECK_EQ(A.iStickClickMs, 300);
+}
+
+static void TestDefaultSticksSquareCountsAsLandscape()
+{
+	// W = H: за правилом aScreenW >= aScreenH це ландшафт, тож чотирнадцять елементів.
+	// 640x640, U=138, s=100: F = (640-14-54-33, 640-14-54-33) = (539, 539); Dir (94, 640-14-80 = 546);
+	// Tri (539, 485), Circle (593, 539), Cross (539, 593), Square (485, 539).
+	// Стіки на y = 640-14-51 = 575, x = 262 і 378.
+	TVpadLayout L;
+	Default14(L);
+	CHECK_EQ(VpadDefaultLayout(L, 640, 640, 138, 100, EVpadOptSticks), 100);
+	CHECK_EQ(L.iCount, EVpadSticksCount);
+	CheckCtl(L, EVpadIxDir, EVpadKindDpad, EVpadShapeCircle, 1, 0, 94, 546, 80, 0);
+	CheckCtl(L, EVpadIxTriangle, EVpadKindButton, EVpadShapeCircle, 2, 1 << EVpadTriangle, 539, 485, 33, 0);
+	CheckCtl(L, EVpadIxCircle, EVpadKindButton, EVpadShapeCircle, 2, 1 << EVpadCircle, 593, 539, 33, 0);
+	CheckCtl(L, EVpadIxCross, EVpadKindButton, EVpadShapeCircle, 2, 1 << EVpadCross, 539, 593, 33, 0);
+	CheckCtl(L, EVpadIxSquare, EVpadKindButton, EVpadShapeCircle, 2, 1 << EVpadSquare, 485, 539, 33, 0);
+	CheckCtl(L, EVpadIxLStick, EVpadKindStick, EVpadShapeCircle, 0, 0, 262, 575, 51, 0);
+	CheckCtl(L, EVpadIxRStick, EVpadKindStick, EVpadShapeCircle, 0, 0, 378, 575, 51, 0);
+	CHECK(VpadLayoutFits(L, 640, 640));
+}
+
+static void TestDefaultSticksOptionStickChoosesDpadPerIndexRule()
+{
+	// Заголовок (коментарі EVpadIxDir і EVpadOptStick): з EVpadOptSticks у ландшафті елемент 0 — d-pad,
+	// навіть разом з EVpadOptStick; EVpadOptStick не діє там, де діє EVpadOptSticks.
+	// Окремий тест звіряє цю розкладку з розкладкою лише з EVpadOptSticks.
+	TVpadLayout L;
+	memset(&L, 0, sizeof L);
+	CHECK_EQ(VpadDefaultLayout(L, 640, 360, 138, 100, EVpadOptStick | EVpadOptSticks), 100);
+	CHECK_EQ(L.iCount, EVpadSticksCount);
+	CHECK_EQ(L.iC[EVpadIxDir].iKind, EVpadKindDpad);
+	CHECK_EQ(L.iC[EVpadIxLStick].iKind, EVpadKindStick);
+	CHECK_EQ(L.iC[EVpadIxRStick].iKind, EVpadKindStick);
+	CHECK_EQ(L.iC[EVpadIxLStick].iId, 0);
+	CHECK_EQ(L.iC[EVpadIxRStick].iId, 1);
+}
+
+static void TestDefaultSticksDoNotFitShrinksScale()
+{
+	// 560x360, U=138, s=100. Дванадцять елементів вміщуються (перевірено за коробками).
+	// З чотирнадцятьма лівий стік (центр x 280-7-51 = 222,
+	// коробка 171..273 x 244..346) перетинає d-pad (коробка 14..174 x 186..346) у групах 0 і 1: при s=100
+	// не вміщується, тож масштаб менший за 100.
+	TVpadLayout A;
+	TVpadLayout B;
+	int r;
+	memset(&A, 0, sizeof A);
+	memset(&B, 0, sizeof B);
+	CHECK_EQ(VpadDefaultLayout(A, 560, 360, 138, 100, 0), 100);
+	CHECK(VpadLayoutFits(A, 560, 360));
+	r = VpadDefaultLayout(B, 560, 360, 138, 100, EVpadOptSticks);
+	CHECK(r > 0 && r < 100);
+	CHECK_EQ(B.iCount, EVpadSticksCount);
+	CHECK(VpadLayoutFits(B, 560, 360));
+	// Стік при масштабі r: Rs = px(70), g = px(10), m = px(20); центр x = 280 - g - Rs, y = 360 - m - Rs.
+	CHECK_EQ(B.iC[EVpadIxLStick].iRx, RefPx(70, r, 138));
+	CHECK_EQ(B.iC[EVpadIxLStick].iCx, 280 - RefPx(10, r, 138) - RefPx(70, r, 138));
+	CHECK_EQ(B.iC[EVpadIxLStick].iCy, 360 - RefPx(20, r, 138) - RefPx(70, r, 138));
+}
+
+static void TestDefaultLayoutMatchesReferenceAcrossScreensAndPitches()
+{
+	// Сітка: 11 екранів (ландшафт, портрет, квадрат, 40x40, яке нічого не вміщує), 6 кроків пікселя
+	// (включно з нижньою межею 20), 5 масштабів (межі 25 і 400), 6 наборів параметрів. Усі поля, що
+	// заголовок фіксує, звіряються з еталонною моделю. Здогадок про незафіксовані поля тут немає.
+	static const int W[11] = { 640, 360, 640, 560, 480, 320, 240, 800, 400, 300, 40 };
+	static const int H[11] = { 360, 640, 640, 360, 320, 240, 320, 352, 300, 400, 40 };
+	static const int U[6] = { 20, 77, 111, 138, 200, 300 };
+	static const int P[5] = { 25, 50, 100, 150, 400 };
+	static const unsigned O[6] = { 0, EVpadOptStick, EVpadOptSticks, EVpadOptStick | EVpadOptSticks,
+		EVpadOptResistiveDual, EVpadOptSticks | EVpadOptResistiveDual };
+	int a;
+	int b;
+	int c;
+	int d;
+	int bad = 0;
+	int zeros = 0;
+	int sticks = 0;
+	for (a = 0; a < 11; ++a) {
+		for (b = 0; b < 6; ++b) {
+			for (c = 0; c < 5; ++c) {
+				for (d = 0; d < 6; ++d) {
+					TVpadLayout got;
+					TVpadLayout ref;
+					int r;
+					int rr;
+					int known = 0;
+					memset(&got, 0, sizeof got);
+					sprintf(gWhere, "%s W=%d H=%d U=%d P=%d opt=%u", gTest, W[a], H[a], U[b], P[c], O[d]);
+					r = VpadDefaultLayout(got, W[a], H[a], U[b], P[c], O[d]);
+					rr = RefDefault(ref, W[a], H[a], U[b], P[c], O[d], &known);
+					bad += Eq("return", r, rr);
+					bad += CompareDefault(got, ref, known);
+					if (rr == 0) ++zeros;
+					else if (ref.iCount == EVpadSticksCount) ++sticks;
+					strcpy(gWhere, gTest);
+				}
+			}
+		}
+	}
+	CHECK_EQ(bad, 0);
+	CHECK(zeros > 0);
+	CHECK(sticks > 0);
+}
+
+static void TestFitsMatchesReferenceOnRandomLayouts()
+{
+	// Випадкові розкладки: нульові й від'ємні розміри, усі види і форми, групи, портрети. Вердикт
+	// VpadLayoutFits має збігатися з еталонним за правилами (а), (б), (в).
+	static const int W[4] = { 300, 200, 300, 120 };
+	static const int H[4] = { 300, 300, 200, 160 };
+	TRng R;
+	int it;
+	int bad = 0;
+	int yes = 0;
+	int no = 0;
+	R.iS = 4242u;
+	for (it = 0; it < 4000; ++it) {
+		TVpadLayout L;
+		const int s = it % 4;
+		const int n = RndRange(R, 0, 16);
+		int c;
+		int got;
+		int want;
+		LayoutInit(L, n);
+		for (c = 0; c < n; ++c) {
+			TVpadControl &k = L.iC[c];
+			memset(&k, 0, sizeof k);
+			k.iKind = (unsigned char)RndRange(R, 0, 3);
+			k.iShape = (unsigned char)RndRange(R, 0, 1);
+			k.iGroup = (unsigned char)RndRange(R, 0, 2);
+			k.iCx = (short)RndRange(R, -10, 330);
+			k.iCy = (short)RndRange(R, -10, 330);
+			k.iRx = (short)RndRange(R, -1, 120);
+			k.iRy = (short)RndRange(R, -1, 120);
+		}
+		got = VpadLayoutFits(L, W[s], H[s]) != 0;
+		want = RefFits(L, W[s], H[s]);
+		if (got != want) {
+			++bad;
+			if (bad <= 5) printf("FAIL [%s] it %d (%dx%d, count %d): fits expected %d, got %d\n", gTest, it, W[s], H[s], n, want, got);
+		}
+		if (got) ++yes;
+		else ++no;
+	}
+	CHECK_EQ(bad, 0);
+	CHECK(yes > 0);
+	CHECK(no > 0);
+}
+
+// ---------------------------------------------------------------- два стіки
+
+static void TestTwoSticksSideFollowsIdAnyOtherIsLeft()
+{
+	// iId 1 — правий стік, будь-яке інше значення — лівий. Відхилення (140,100) від центра (100,100),
+	// R=80: dx=40, mag=26, m=50, x=127+40*50/40=177.
+	static const int kIds[4] = { 0, 1, 2, 255 };
+	int k;
+	for (k = 0; k < 4; ++k) {
+		TVpadLayout L;
+		TVpadState S;
+		LayoutInit(L, 1);
+		SetStickCtl(L.iC[0], 100, 100, 80, 0, kIds[k]);
+		VpadReset(S);
+		VpadPointerDown(S, L, 0, 100, 100, 1000);
+		VpadPointerMove(S, L, 0, 140, 100, 1010);
+		sprintf(gWhere, "%s iId %d", gTest, kIds[k]);
+		if (kIds[k] == 1) {
+			CHECK_EQ(S.iRightX, 177);
+			CHECK_EQ(S.iLx, 127);
+		} else {
+			CHECK_EQ(S.iLx, 177);
+			CHECK_EQ(S.iRightX, 127);
+		}
+		CHECK_EQ(S.iLy, 127);
+		CHECK_EQ(S.iRightY, 127);
+		strcpy(gWhere, gTest);
+	}
+}
+
+static void TestRightStickDeflectsOnItsOwnAxesWithoutDpadBits()
+{
+	// Правий стік (450,100) R=80. Точка (514,100), dist 64: mag=50, m=96, x=127+64*96/64=223, біта немає
+	// (правий стік d-pad-бітів не натискає, хоча 64*100 = 6400 >= 80*80). Рубіж (530,100), dist 80:
+	// mag=66, m=127, x=254. Той самий відхил лівого (164,100) дає Right: контраст.
+	TVpadLayout L;
+	TVpadState S;
+	LayoutTwoSticks(L, 0);
+	VpadReset(S);
+	VpadPointerDown(S, L, 0, 450, 100, 1000);
+	CHECK_EQ(S.iRightX, 127);
+	VpadPointerMove(S, L, 0, 514, 100, 1010);
+	CHECK_EQ(S.iRightX, 223);
+	CHECK_EQ(S.iRightY, 127);
+	CHECK_EQ(S.iBits, 0);
+	CHECK_EQ(S.iLx, 127);
+	VpadPointerMove(S, L, 0, 530, 100, 1020);
+	CHECK_EQ(S.iRightX, 254);
+	CHECK_EQ(S.iBits, 0);
+	VpadPointerUp(S, L, 0, 1030);
+	CHECK_EQ(S.iRightX, 127);
+	VpadPointerDown(S, L, 1, 150, 100, 1040);
+	VpadPointerMove(S, L, 1, 214, 100, 1050);
+	CHECK_EQ(S.iBits, 1 << EVpadRight);
+	CHECK_EQ(S.iLx, 223);
+}
+
+static void TestSecondPointerOnHeldLeftStickStaysInert()
+{
+	// Палець 0 тримає лівий стік (відхил 40, iLx=177). Палець 1 на тій самій стороні (150,100) — стік
+	// пропускається, покажчик інертний. Рух до правого стіка (450,100) його не захоплює.
+	TVpadLayout L;
+	TVpadState S;
+	LayoutTwoSticks(L, 0);
+	VpadReset(S);
+	VpadPointerDown(S, L, 0, 190, 100, 1000);
+	CHECK_EQ(S.iLx, 177);
+	VpadPointerDown(S, L, 1, 150, 100, 1005);
+	CHECK_EQ(S.iP[1].iCtl, -1);
+	CHECK_EQ(S.iLx, 177);
+	VpadPointerMove(S, L, 1, 450, 100, 1010);
+	CHECK_EQ(S.iP[1].iCtl, -1);
+	CHECK_EQ(S.iRightX, 127);
+	CHECK_EQ(S.iBits, 0);
+}
+
+static void TestSecondPointerCapturesRightWhenLeftHeldAndZonesOverlap()
+{
+	// Зони стіків перетинаються: лівий (200,100), правий (260,100), обидва R=80, зона 100. Точка (230,100):
+	// нормована відстань до обох 30*1000/100 = 300, перемагає нижчий індекс (лівий, ctl 0). Палець 1 у тій
+	// самій точці: лівий тримається, тож пропускається, і захоплюється правий (ctl 1).
+	// Лівий: dx=30, mag=16, m=30, x=127+30*30/30=157. Правий: dx=-30, x=127-30=97.
+	TVpadLayout L;
+	TVpadState S;
+	LayoutInit(L, 2);
+	SetStickCtl(L.iC[0], 200, 100, 80, 0, 0);
+	SetStickCtl(L.iC[1], 260, 100, 80, 0, 1);
+	VpadReset(S);
+	VpadPointerDown(S, L, 0, 230, 100, 1000);
+	CHECK_EQ(S.iP[0].iCtl, 0);
+	CHECK_EQ(S.iLx, 157);
+	VpadPointerDown(S, L, 1, 230, 100, 1005);
+	CHECK_EQ(S.iP[1].iCtl, 1);
+	CHECK_EQ(S.iRightX, 97);
+	CHECK_EQ(S.iRightY, 127);
+	CHECK_EQ(S.iBits, 0);
+}
+
+static void TestDpadAndBothSticksWorkTogether()
+{
+	// Хрестовина (320,250) R50 — ctl 0; лівий стік (150,100) R80 — ctl 1; правий (450,100) R80 — ctl 2.
+	// Палець 0 на (320,290): dist 40, хрестовина дає лише Down (q=0, тож не діагональ).
+	// Палець 1 на (150,140): dist 40, лівий стік: y = 127+40*50/40 = 177, цифрового біта немає (40 < 64).
+	// Палець 2 на (450,60): правий стік: y = 127-40*50/40 = 77.
+	TVpadLayout L;
+	TVpadState S;
+	LayoutInit(L, 3);
+	SetCircCtl(L.iC[0], 320, 250, 50, 0, 0);
+	L.iC[0].iKind = (unsigned char)EVpadKindDpad;
+	SetStickCtl(L.iC[1], 150, 100, 80, 0, 0);
+	SetStickCtl(L.iC[2], 450, 100, 80, 0, 1);
+	VpadReset(S);
+	VpadPointerDown(S, L, 0, 320, 290, 1000);
+	VpadPointerDown(S, L, 1, 150, 140, 1001);
+	VpadPointerDown(S, L, 2, 450, 60, 1002);
+	CHECK_EQ(S.iP[0].iCtl, 0);
+	CHECK_EQ(S.iP[1].iCtl, 1);
+	CHECK_EQ(S.iP[2].iCtl, 2);
+	CHECK_EQ(S.iBits, 1 << EVpadDown);
+	CHECK_EQ(S.iLx, 127);
+	CHECK_EQ(S.iLy, 177);
+	CHECK_EQ(S.iRightX, 127);
+	CHECK_EQ(S.iRightY, 77);
+	VpadPointerUp(S, L, 0, 1010);
+	CHECK_EQ(S.iBits, 0);
+	CHECK_EQ(S.iLy, 177);
+	CHECK_EQ(S.iRightY, 77);
+}
+
+static void TestBothSticksDeflectIndependentlyAndCentreOnRelease()
+{
+	// Два пальці на двох стіках одночасно: лівий 177, правий 77. Підняття лівого центрує лише лівий.
+	TVpadLayout L;
+	TVpadState S;
+	LayoutTwoSticks(L, 0);
+	VpadReset(S);
+	VpadPointerDown(S, L, 0, 190, 100, 1000);
+	VpadPointerDown(S, L, 1, 410, 100, 1005);
+	CHECK_EQ(S.iLx, 177);
+	CHECK_EQ(S.iLy, 127);
+	CHECK_EQ(S.iRightX, 77);
+	CHECK_EQ(S.iRightY, 127);
+	VpadPointerUp(S, L, 0, 1010);
+	CHECK_EQ(S.iLx, 127);
+	CHECK_EQ(S.iRightX, 77);
+	VpadPointerUp(S, L, 1, 1020);
+	CHECK_EQ(S.iRightX, 127);
+	CHECK_EQ(S.iBits, 0);
+}
+
+static void TestVpadResetCentresBothSticksAndClearsPending()
+{
+	// Після відхилення обох стіків і цифрового біта VpadReset повертає все на початок, включно з
+	// незабраними фронтами й діями («nothing pending»: це моє прочитання, див. звіт).
+	TVpadLayout L;
+	TVpadState S;
+	LayoutTwoSticks(L, 300);
+	VpadReset(S);
+	VpadPointerDown(S, L, 0, 190, 100, 1000);
+	VpadPointerMove(S, L, 0, 214, 100, 1002);
+	VpadPointerDown(S, L, 1, 410, 100, 1005);
+	CHECK_EQ(S.iBits, 1 << EVpadRight);
+	VpadReset(S);
+	CHECK_EQ(S.iBits, 0);
+	CHECK_EQ(S.iEdges, 0);
+	CHECK_EQ(S.iActions, 0);
+	CHECK_EQ(S.iLx, 127);
+	CHECK_EQ(S.iLy, 127);
+	CHECK_EQ(S.iRightX, 127);
+	CHECK_EQ(S.iRightY, 127);
+	CHECK_EQ(S.iDual, 0);
+	CHECK_EQ(S.iP[0].iDown, 0);
+	CHECK_EQ(S.iP[1].iDown, 0);
+	CHECK_EQ(S.iArmed[0], 0);
+	CHECK_EQ(S.iArmed[1], 0);
+}
+
+// ---------------------------------------------------------------- клацання L3/R3
+
+static void TestStickTapLimitIsInclusiveAt250Ms()
+{
+	// Дотик, відпущений через 250 мс після натискання (= KVpadTapMs), — тап, сторона зведена.
+	// Через 251 мс — ні.
+	TVpadLayout L;
+	TVpadState S;
+	LayoutClick(L, 300);
+	VpadReset(S);
+	TapStick(S, L, 0, 100, 100, 1000, 1250);
+	CHECK_EQ(S.iArmed[0], 1);
+	CHECK_EQ(S.iArmMs[0], 1250);
+	VpadReset(S);
+	TapStick(S, L, 0, 100, 100, 1000, 1251);
+	CHECK_EQ(S.iArmed[0], 0);
+}
+
+static void TestStickClickWindowIsInclusiveAtIStickClickMs()
+{
+	// Зведення підняттям о 1000. Повторний дотик о 1300 (= iStickClickMs) клацає, о 1301 — ні.
+	TVpadLayout L;
+	TVpadState S;
+	LayoutClick(L, 300);
+	VpadReset(S);
+	TapStick(S, L, 0, 100, 100, 900, 1000);
+	VpadPointerDown(S, L, 0, 100, 100, 1300);
+	CHECK_EQ(S.iBits, 1 << EVpadL3);
+	VpadReset(S);
+	TapStick(S, L, 0, 100, 100, 900, 1000);
+	VpadPointerDown(S, L, 0, 100, 100, 1301);
+	CHECK_EQ(S.iBits, 0);
+}
+
+static void TestStickClickPressesL3AtDownAndEdgeOnce()
+{
+	// Клацання: L3 уже в iBits цього ж виклику Down; фронт L3 один раз у iEdges; рух не дає нового
+	// фронту; підняття знімає L3 і фронтів не додає.
+	TVpadLayout L;
+	TVpadState S;
+	LayoutClick(L, 300);
+	VpadReset(S);
+	TapStick(S, L, 0, 100, 100, 900, 1000);
+	(void)VpadTakeEdges(S);
+	VpadPointerDown(S, L, 0, 100, 100, 1100);
+	CHECK_EQ(S.iBits, 1 << EVpadL3);
+	CHECK_EQ(VpadTakeEdges(S), 1 << EVpadL3);
+	VpadPointerMove(S, L, 0, 110, 100, 1110);
+	CHECK_EQ(S.iBits, 1 << EVpadL3);
+	CHECK_EQ(S.iEdges, 0);
+	VpadPointerUp(S, L, 0, 1120);
+	CHECK_EQ(S.iBits, 0);
+	CHECK_EQ(S.iEdges, 0);
+}
+
+static void TestStickClickAddsDigitalBitsOfTheStick()
+{
+	// Клацання не замінює цифрових бітів: точка (164,100) при dist 64 дає Right; x = 223.
+	TVpadLayout L;
+	TVpadState S;
+	LayoutClick(L, 300);
+	VpadReset(S);
+	TapStick(S, L, 0, 100, 100, 900, 1000);
+	VpadPointerDown(S, L, 0, 100, 100, 1100);
+	VpadPointerMove(S, L, 0, 164, 100, 1110);
+	CHECK_EQ(S.iBits, (1 << EVpadL3) | (1 << EVpadRight));
+	CHECK_EQ(S.iLx, 223);
+}
+
+static void TestStickClickWindowZeroDisablesAndIsTakenWithinRange()
+{
+	// iStickClickMs 0 вимикає клацання; від'ємне береться як 0; 2500 береться як 2000: дотик через
+	// 2000 мс клацає, через 2001 — ні.
+	TVpadLayout L;
+	TVpadState S;
+	LayoutClick(L, 0);
+	VpadReset(S);
+	TapStick(S, L, 0, 100, 100, 900, 1000);
+	VpadPointerDown(S, L, 0, 100, 100, 1001);
+	CHECK_EQ(S.iBits, 0);
+	LayoutClick(L, -5);
+	VpadReset(S);
+	TapStick(S, L, 0, 100, 100, 900, 1000);
+	VpadPointerDown(S, L, 0, 100, 100, 1001);
+	CHECK_EQ(S.iBits, 0);
+	LayoutClick(L, 2500);
+	VpadReset(S);
+	TapStick(S, L, 0, 100, 100, 900, 1000);
+	VpadPointerDown(S, L, 0, 100, 100, 3000);
+	CHECK_EQ(S.iBits, 1 << EVpadL3);
+	VpadReset(S);
+	TapStick(S, L, 0, 100, 100, 900, 1000);
+	VpadPointerDown(S, L, 0, 100, 100, 3001);
+	CHECK_EQ(S.iBits, 0);
+}
+
+static void TestStickClickOnRightStickPressesR3()
+{
+	// Правий стік (iId 1) зведений дотиком, клацає R3 (біт 2) і тільки його.
+	TVpadLayout L;
+	TVpadState S;
+	LayoutTwoSticks(L, 300);
+	VpadReset(S);
+	TapStick(S, L, 0, 450, 100, 900, 1000);
+	CHECK_EQ(S.iArmed[1], 1);
+	CHECK_EQ(S.iArmed[0], 0);
+	VpadPointerDown(S, L, 0, 450, 100, 1200);
+	CHECK_EQ(S.iBits, 1 << EVpadR3);
+	VpadPointerUp(S, L, 0, 1210);
+	CHECK_EQ(S.iBits, 0);
+}
+
+static void TestStickIdOtherThanOneClicksAsLeft()
+{
+	// iId 5 — лівий стік: зведення і клацання йдуть у ліву сторону (L3, iArmed[0]).
+	TVpadLayout L;
+	TVpadState S;
+	LayoutClick(L, 300);
+	L.iC[0].iId = 5;
+	VpadReset(S);
+	TapStick(S, L, 0, 100, 100, 900, 1000);
+	CHECK_EQ(S.iArmed[0], 1);
+	CHECK_EQ(S.iArmed[1], 0);
+	VpadPointerDown(S, L, 0, 100, 100, 1100);
+	CHECK_EQ(S.iBits, 1 << EVpadL3);
+}
+
+static void TestClickTouchDisarmsItsSideAtLift()
+{
+	// Дотик, що клацнув, при підйомі (1160) роззброює свою сторону, тож дотик о 1200,
+	// що був би в межах 300 мс, не клацає.
+	TVpadLayout L;
+	TVpadState S;
+	LayoutClick(L, 300);
+	VpadReset(S);
+	TapStick(S, L, 0, 100, 100, 900, 1000);
+	VpadPointerDown(S, L, 0, 100, 100, 1100);
+	CHECK_EQ(S.iBits, 1 << EVpadL3);
+	VpadPointerUp(S, L, 0, 1160);
+	CHECK_EQ(S.iArmed[0], 0);
+	CHECK_EQ(S.iBits, 0);
+	VpadPointerDown(S, L, 0, 100, 100, 1200);
+	CHECK_EQ(S.iBits, 0);
+}
+
+static void TestLongTouchDisarmsItsSide()
+{
+	// Дотик о 1400 не клацає (400 мс від зведення о 1000 > 300). Тривалість 1400..1700 = 300 > 250,
+	// тож сторона не зводиться. Дотик о 1750 (50 мс від підняття) не клацає.
+	TVpadLayout L;
+	TVpadState S;
+	LayoutClick(L, 300);
+	VpadReset(S);
+	TapStick(S, L, 0, 100, 100, 900, 1000);
+	VpadPointerDown(S, L, 0, 100, 100, 1400);
+	CHECK_EQ(S.iBits, 0);
+	VpadPointerUp(S, L, 0, 1700);
+	CHECK_EQ(S.iArmed[0], 0);
+	VpadPointerDown(S, L, 0, 100, 100, 1750);
+	CHECK_EQ(S.iBits, 0);
+}
+
+static void TestTapArmsOnlyItsOwnSideAndWindowIsPerSide()
+{
+	// Лівий зведено о 1000. Правий дотик 1100..1150 (без клацання) зводить праву сторону о 1150.
+	// Лівий дотик о 1200 клацає L3 і тільки L3: 1200-1000 = 200 <= 300.
+	TVpadLayout L;
+	TVpadState S;
+	LayoutTwoSticks(L, 300);
+	VpadReset(S);
+	TapStick(S, L, 0, 150, 100, 900, 1000);
+	CHECK_EQ(S.iArmed[0], 1);
+	VpadPointerDown(S, L, 0, 450, 100, 1100);
+	CHECK_EQ(S.iBits, 0);
+	VpadPointerUp(S, L, 0, 1150);
+	CHECK_EQ(S.iArmed[1], 1);
+	VpadPointerDown(S, L, 0, 150, 100, 1200);
+	CHECK_EQ(S.iBits, 1 << EVpadL3);
+}
+
+static void TestCaptureOfOneSideLeavesOtherSideArmed()
+{
+	// Правий зведено о 1000. Лівий дотик 1100..1150 (не клацає, зводить ліву) не чіпає праву:
+	// правий дотик о 1200 (200 мс від зведення) клацає R3.
+	TVpadLayout L;
+	TVpadState S;
+	LayoutTwoSticks(L, 300);
+	VpadReset(S);
+	TapStick(S, L, 0, 450, 100, 900, 1000);
+	TapStick(S, L, 0, 150, 100, 1100, 1150);
+	VpadPointerDown(S, L, 0, 450, 100, 1200);
+	CHECK_EQ(S.iBits, 1 << EVpadR3);
+}
+
+static void TestVpadResetClearsStickArming()
+{
+	// VpadReset знімає зведення обох сторін і центрує стіки: дотик у вікні після скидання не клацає.
+	TVpadLayout L;
+	TVpadState S;
+	LayoutClick(L, 300);
+	VpadReset(S);
+	TapStick(S, L, 0, 100, 100, 900, 1000);
+	CHECK_EQ(S.iArmed[0], 1);
+	VpadReset(S);
+	CHECK_EQ(S.iArmed[0], 0);
+	CHECK_EQ(S.iArmed[1], 0);
+	CHECK_EQ(S.iLx, 127);
+	CHECK_EQ(S.iRightX, 127);
+	CHECK_EQ(S.iRightY, 127);
+	VpadPointerDown(S, L, 0, 100, 100, 1100);
+	CHECK_EQ(S.iBits, 0);
+}
+
+static void TestStickClockGoingBackCountsAsNoElapsedTime()
+{
+	// Час, що йде назад (різниця 2^31 і більше), — «часу не минуло».
+	// (а) Підняття о 900 раніше натискання о 1000: тривалість 0, тап, сторона зведена на момент 900.
+	// (б) Зведено о 1000; дотик о 900 (раніше зведення) — 0 мс пройшло, клацає.
+	TVpadLayout L;
+	TVpadState S;
+	LayoutClick(L, 300);
+	VpadReset(S);
+	TapStick(S, L, 0, 100, 100, 1000, 900);
+	CHECK_EQ(S.iArmed[0], 1);
+	CHECK_EQ(S.iArmMs[0], 900);
+	VpadReset(S);
+	TapStick(S, L, 0, 100, 100, 900, 1000);
+	VpadPointerDown(S, L, 0, 100, 100, 900);
+	CHECK_EQ(S.iBits, 1 << EVpadL3);
+}
+
+static void TestStickClickAndTapAcrossClockWrap()
+{
+	// Лічильник переходить через 0xFFFFFFFF. Тап 0xFFFFFF00..0xFFFFFFF0 — 240 мс, зведення; клацання о
+	// 0x00000004 — 0x14 = 20 мс від зведення. Тап через нуль 0xFFFFFF06..0x00000000 — рівно 250 (тап),
+	// 0xFFFFFF05..0x00000000 — 251 (ні).
+	TVpadLayout L;
+	TVpadState S;
+	LayoutClick(L, 300);
+	VpadReset(S);
+	TapStick(S, L, 0, 100, 100, 0xFFFFFF00u, 0xFFFFFFF0u);
+	CHECK_EQ(S.iArmed[0], 1);
+	VpadPointerDown(S, L, 0, 100, 100, 0x00000004u);
+	CHECK_EQ(S.iBits, 1 << EVpadL3);
+	VpadReset(S);
+	TapStick(S, L, 0, 100, 100, 0xFFFFFF06u, 0x00000000u);
+	CHECK_EQ(S.iArmed[0], 1);
+	VpadReset(S);
+	TapStick(S, L, 0, 100, 100, 0xFFFFFF05u, 0x00000000u);
+	CHECK_EQ(S.iArmed[0], 0);
+}
+
+// ---------------------------------------------------------------- інференція і стіки
+
+static void TestInferredStickNeverClicksAndLeavesArmingAlone()
+{
+	// Лівий стік зведено о 1000..1100. Палець 0 на кнопці (300,100) о 1150, рух на (220,100) о 1210:
+	// 1210-1150 = 60 <= 60, відстань 80 >= 40, P2 = (140,100) — у зоні натиску стіка (40 <= 62) і в його
+	// повіднці (40 <= 87): інференція вмикає стік. Стік другого пальця не клацає, хоча 1210-1100 = 110
+	// <= 300, і зведення не чіпає. Підняття пальця 0 о 1260 знімає і другий палець. Дотик стіка о 1300
+	// (200 мс від зведення) клацає, тож зведення живе.
+	TVpadLayout L;
+	TVpadState S;
+	LayoutInferStick(L);
+	VpadReset(S);
+	TapStick(S, L, 0, 100, 100, 1000, 1100);
+	CHECK_EQ(S.iArmed[0], 1);
+	VpadPointerDown(S, L, 0, 300, 100, 1150);
+	CHECK_EQ(S.iP[0].iCtl, 0);
+	VpadPointerMove(S, L, 0, 220, 100, 1210);
+	CHECK_EQ(S.iDual, 1);
+	CHECK_EQ(S.iP[1].iCtl, 1);
+	CHECK_EQ(S.iP[1].iClick, 0);
+	CHECK_EQ(S.iBits & (1 << EVpadL3), 0);
+	CHECK_EQ(S.iArmed[0], 1);
+	CHECK_EQ(S.iArmMs[0], 1100);
+	VpadPointerUp(S, L, 0, 1260);
+	CHECK_EQ(S.iDual, 0);
+	CHECK_EQ(S.iP[1].iDown, 0);
+	CHECK_EQ(S.iArmed[0], 1);
+	CHECK_EQ(S.iArmMs[0], 1100);
+	VpadPointerDown(S, L, 0, 100, 100, 1300);
+	CHECK_EQ(S.iBits & (1 << EVpadL3), 1 << EVpadL3);
+}
+
+static void TestInferredStickTakenOverByFirstFingerNeverArms()
+{
+	// Зведення раніше не було. Палець 0 на кнопці о 1000; (220,100) о 1060 вмикає інференцію, P2 = (140,100).
+	// (143,100) о 1070: до першого пальця (300,100) далеко (157 > r = 13), до P2 близько (3 <= 13), тож
+	// перший палець пішов: палець 0 перейняв стік. Після перейняття рух до M = (143,100) — звичайний:
+	// dx=43, dead=9, mag=34, span=41, m=34*127/41=105, iLx=127+43*105/43=232. Підняття о 1100 стік не зводить.
+	TVpadLayout L;
+	TVpadState S;
+	LayoutInferStick(L);
+	VpadReset(S);
+	VpadPointerDown(S, L, 0, 300, 100, 1000);
+	VpadPointerMove(S, L, 0, 220, 100, 1060);
+	CHECK_EQ(S.iDual, 1);
+	CHECK_EQ(S.iP[1].iCtl, 1);
+	VpadPointerMove(S, L, 0, 143, 100, 1070);
+	CHECK_EQ(S.iDual, 0);
+	CHECK_EQ(S.iP[0].iCtl, 1);
+	CHECK_EQ(S.iP[1].iDown, 0);
+	CHECK_EQ(S.iLx, 232);
+	VpadPointerUp(S, L, 0, 1100);
+	CHECK_EQ(S.iArmed[0], 0);
+	CHECK_EQ(S.iArmed[1], 0);
+	CHECK_EQ(S.iLx, 127);
+}
+
+static void TestTakeoverDropsFirstFingerSideAndNeverArms()
+{
+	// Лівий стік (100,100) — ctl 0 — зведено о 900..1000; клацання о 1100 (L3 на пальці 0, тобто
+	// проба 1100-1000 = 100 <= 300). Інференція: M = (190,100) о 1150 (50 мс від 1100, відстань 90),
+	// P2 = (280,100) у зоні правого стіка (300,100). Перший палець (100,100) пішов: M = (283,100) о 1160,
+	// палець 0 перейняв правий стік; лівий захоплення втратив.
+	// Правий: dx=-17, dead=9, mag=8, m=24, iRightX=127-17*24/17=103. Правий не зводиться і ніколи не клацає.
+	// Заголовок (абзац «Stick click»): після перехоплення пойнтер 0 не тисне L3 і R3, хоч би що тиснув раніше;
+	// очікування: iBits 0 і iClick 0. Попереднє буквальне прочитання «until it is lifted» вимагало L3, і заголовок це вже уточнив.
+	TVpadLayout L;
+	TVpadState S;
+	LayoutInferTwoSticks(L);
+	VpadReset(S);
+	TapStick(S, L, 0, 100, 100, 900, 1000);
+	VpadPointerDown(S, L, 0, 100, 100, 1100);
+	CHECK_EQ(S.iBits & (1 << EVpadL3), 1 << EVpadL3);
+	VpadPointerMove(S, L, 0, 190, 100, 1150);
+	CHECK_EQ(S.iDual, 1);
+	CHECK_EQ(S.iP[1].iCtl, 1);
+	VpadPointerMove(S, L, 0, 283, 100, 1160);
+	CHECK_EQ(S.iDual, 0);
+	CHECK_EQ(S.iP[0].iCtl, 1);
+	CHECK_EQ(S.iLx, 127);
+	CHECK_EQ(S.iRightX, 103);
+	CHECK_EQ(S.iBits, 0);
+	CHECK_EQ(S.iP[0].iClick, 0);
+	VpadPointerUp(S, L, 0, 1170);
+	CHECK_EQ(S.iBits, 0);
+	CHECK_EQ(S.iArmed[0], 0);
+	CHECK_EQ(S.iArmed[1], 0);
+}
+
+static void TestRandomSequenceTwoSticksLandscape()
+{
+	// 30000 подій на розкладці з двома стіками; інваріанти після кожного виклику, у тому числі правий стік
+	// і клацання.
+	TVpadLayout L;
+	memset(&L, 0, sizeof L);
+	VpadDefaultLayout(L, 640, 360, 138, 100, EVpadOptSticks);
+	RunRandomSequence(L, 1020304050u, 30000);
+}
+
+static void TestRandomSequenceTwoSticksDualPanel()
+{
+	// Те саме з резистивною панеллю: інференція другого пальця і стіки разом.
+	TVpadLayout L;
+	memset(&L, 0, sizeof L);
+	VpadDefaultLayout(L, 640, 360, 138, 100, EVpadOptSticks | EVpadOptResistiveDual);
+	RunRandomSequence(L, 556677889u, 30000);
+}
+
+// ---------------------------------------------------------------- редагування розкладки
+
+static void TestControlAtCentreOfEachControlOfSticksLayout()
+{
+	// Центр кожного з чотирнадцяти елементів: нормована відстань 0, тож захоплює сам елемент.
+	TVpadLayout L;
+	int k;
+	Default14(L);
+	for (k = 0; k < EVpadSticksCount; ++k) {
+		sprintf(gWhere, "%s ctl %d", gTest, k);
+		CHECK_EQ(VpadControlAt(L, L.iC[k].iCx, L.iC[k].iCy), k);
+		strcpy(gWhere, gTest);
+	}
+}
+
+static void TestControlAtOutsideAllZonesIsMinusOne()
+{
+	// Порожнє місце посередині (320,200) і точка далеко за екраном: жодна зона натиску не містить її.
+	TVpadLayout L;
+	Default14(L);
+	CHECK_EQ(VpadControlAt(L, 320, 200), -1);
+	CHECK_EQ(VpadControlAt(L, -300, -300), -1);
+}
+
+static void TestControlAtNearestByNormalisedDistanceAcrossShapes()
+{
+	// Коло (0,0) R40 (зона 50) і прямокутник (100,0) з півосями (100,20) (зона 125 x 25). Точка (30,0):
+	// коло 30*1000/50 = 600, прямокутник 70*1000/125 = 560. Сира відстань дала б коло; перемагає (1).
+	TVpadLayout L;
+	LayoutInit(L, 2);
+	SetCircCtl(L.iC[0], 0, 0, 40, 0, 0);
+	SetRectCtl(L.iC[1], 100, 0, 100, 20, 0);
+	CHECK_EQ(VpadControlAt(L, 30, 0), 1);
+}
+
+static void TestControlAtTieGoesToLowerIndex()
+{
+	// Обидва кола R40 (зона 50): точка (50,0) має нормовану відстань 1000 до кожного. Нижчий індекс.
+	// Друга частина: нижчий індекс стоїть правіше, рішення все одно за індексом.
+	TVpadLayout L;
+	LayoutInit(L, 2);
+	SetCircCtl(L.iC[0], 0, 0, 40, 0, 0);
+	SetCircCtl(L.iC[1], 100, 0, 40, 0, 0);
+	CHECK_EQ(VpadControlAt(L, 50, 0), 0);
+	SetCircCtl(L.iC[0], 100, 0, 40, 0, 0);
+	SetCircCtl(L.iC[1], 0, 0, 40, 0, 0);
+	CHECK_EQ(VpadControlAt(L, 50, 0), 0);
+}
+
+static void TestControlAtCountAndSizeRules()
+{
+	// Від'ємне iCount — 0, більше 16 — 16. Елемент без розміру ігнорується; прямокутник з iRy=0 теж;
+	// d-pad з прямокутною формою і iRy=0 діє як коло.
+	TVpadLayout L;
+	LayoutInit(L, 1);
+	SetCircCtl(L.iC[0], 50, 50, 20, 0, 0);
+	CHECK_EQ(VpadControlAt(L, 50, 50), 0);
+	L.iCount = 0;
+	CHECK_EQ(VpadControlAt(L, 50, 50), -1);
+	L.iCount = -3;
+	CHECK_EQ(VpadControlAt(L, 50, 50), -1);
+	L.iCount = 17;
+	CHECK_EQ(VpadControlAt(L, 50, 50), 0);
+	L.iCount = 1;
+	L.iC[0].iRx = 0;
+	CHECK_EQ(VpadControlAt(L, 50, 50), -1);
+	SetRectCtl(L.iC[0], 50, 50, 20, 0, 0);
+	CHECK_EQ(VpadControlAt(L, 50, 50), -1);
+	SetRectCtl(L.iC[0], 50, 50, 20, 20, 0);
+	L.iC[0].iKind = (unsigned char)EVpadKindDpad;
+	L.iC[0].iRy = 0;
+	CHECK_EQ(VpadControlAt(L, 50, 50), 0);
+}
+
+static void TestControlAtClampsPointLikePointer()
+{
+	// Координата точки обрізається до -8192..8191: (10000,100) стає (8191,100), а прямокутник на (8190,100)
+	// з півосями (1,1) містить її: зона дорівнює 1 (125% від 1), dx = 1. Без обрізання точка далеко.
+	TVpadLayout L;
+	LayoutInit(L, 1);
+	SetRectCtl(L.iC[0], 8190, 100, 1, 1, 0);
+	CHECK_EQ(VpadControlAt(L, 10000, 100), 0);
+	SetRectCtl(L.iC[0], 0, 100, 1, 1, 0);
+	CHECK_EQ(VpadControlAt(L, -10000, 100), -1);
+}
+
+static void TestMoveControlFreeAndAxisClamps()
+{
+	// Вільний рух (200,150) у межах: r=80 на 640x360 дає x 80..559 і y 80..279. Потім (-50,500) → (80,279).
+	// Прямокутник L1 (r 51 x 29): (700,0) → x 51..588 → 588, y 29..330 → 29. Інші елементи не змінюються.
+	TVpadLayout L;
+	TVpadLayout before;
+	Default14(L);
+	before = L;
+	VpadMoveControl(L, 0, 200, 150, 640, 360);
+	CHECK_EQ(L.iC[0].iCx, 200);
+	CHECK_EQ(L.iC[0].iCy, 150);
+	CHECK_EQ(L.iC[0].iRx, 80);
+	VpadMoveControl(L, 0, -50, 500, 640, 360);
+	CHECK_EQ(L.iC[0].iCx, 80);
+	CHECK_EQ(L.iC[0].iCy, 279);
+	VpadMoveControl(L, EVpadIxL1, 700, 0, 640, 360);
+	CHECK_EQ(L.iC[EVpadIxL1].iCx, 588);
+	CHECK_EQ(L.iC[EVpadIxL1].iCy, 29);
+	CHECK_EQ(L.iC[EVpadIxL1].iRx, 51);
+	CHECK_EQ(L.iC[EVpadIxL1].iRy, 29);
+	CHECK_EQ(L.iC[1].iCx, before.iC[1].iCx);
+	CHECK_EQ(L.iC[1].iCy, before.iC[1].iCy);
+}
+
+static void TestMoveControlRadiusLargerThanRangeGivesHalfScreen()
+{
+	// Коло R=200 на 300x100: по x 300-1-200 = 99 < 200, центр 300/2 = 150; по y 100-1-200 < 200, центр 100/2 = 50.
+	// Прямокутник (200,10) на тому самому екрані: по x центр 150, по y діапазон 10..89, запит 5 → 10.
+	TVpadLayout L;
+	LayoutInit(L, 1);
+	SetCircCtl(L.iC[0], 0, 0, 200, 0, 0);
+	VpadMoveControl(L, 0, 0, 0, 300, 100);
+	CHECK_EQ(L.iC[0].iCx, 150);
+	CHECK_EQ(L.iC[0].iCy, 50);
+	CHECK_EQ(L.iC[0].iRx, 200);
+	SetRectCtl(L.iC[0], 0, 0, 200, 10, 0);
+	VpadMoveControl(L, 0, 0, 5, 300, 100);
+	CHECK_EQ(L.iC[0].iCx, 150);
+	CHECK_EQ(L.iC[0].iCy, 10);
+	CHECK_EQ(L.iC[0].iRx, 200);
+	CHECK_EQ(L.iC[0].iRy, 10);
+}
+
+static void TestMoveControlScreenBelowOneTakenAsOne()
+{
+	// Розміри екрана менше 1 беруться як 1: n=1, r=5 > 1-1-5, центр n/2 = 0 на обох осях.
+	TVpadLayout L;
+	LayoutInit(L, 1);
+	SetCircCtl(L.iC[0], 50, 50, 5, 0, 0);
+	VpadMoveControl(L, 0, 100, 100, 0, -4);
+	CHECK_EQ(L.iC[0].iCx, 0);
+	CHECK_EQ(L.iC[0].iCy, 0);
+}
+
+static void TestMoveControlIgnoredForBadIndexAndNoSize()
+{
+	// Індекс поза 0..iCount-1 (-1, 14 і 15 при iCount 14) і елемент без розміру до виклику: без змін.
+	TVpadLayout L;
+	TVpadLayout before;
+	Default14(L);
+	before = L;
+	VpadMoveControl(L, -1, 100, 100, 640, 360);
+	VpadMoveControl(L, EVpadSticksCount, 100, 100, 640, 360);
+	VpadMoveControl(L, 15, 100, 100, 640, 360);
+	CHECK(SameAllCtl(before, L));
+	LayoutInit(L, 1);
+	SetCircCtl(L.iC[0], 50, 50, 0, 0, 0);
+	VpadMoveControl(L, 0, 100, 100, 640, 360);
+	CHECK_EQ(L.iC[0].iCx, 50);
+	CHECK_EQ(L.iC[0].iCy, 50);
+	SetRectCtl(L.iC[0], 50, 50, 20, 0, 0);
+	VpadMoveControl(L, 0, 100, 100, 640, 360);
+	CHECK_EQ(L.iC[0].iCx, 50);
+	CHECK_EQ(L.iC[0].iCy, 50);
+}
+
+static void TestResizeControlCircleKeepsRyAndCentreInside()
+{
+	// Коло d-pad (94,266) на 640x360: R=60, центр у межах 60..579 і 60..299 — лишається.
+	// Для кола aRy ігнорується, iRy лишається як був (7).
+	TVpadLayout L;
+	Default14(L);
+	L.iC[0].iRy = 7;
+	VpadResizeControl(L, 0, 60, 99, 640, 360);
+	CHECK_EQ(L.iC[0].iRx, 60);
+	CHECK_EQ(L.iC[0].iRy, 7);
+	CHECK_EQ(L.iC[0].iCx, 94);
+	CHECK_EQ(L.iC[0].iCy, 266);
+}
+
+static void TestResizeControlRectSizesAndCentre()
+{
+	// Прямокутник L1 (65,43), півосі (51,29) → (40,20): центр у межах 40..599 і 20..339, лишається.
+	TVpadLayout L;
+	Default14(L);
+	VpadResizeControl(L, EVpadIxL1, 40, 20, 640, 360);
+	CHECK_EQ(L.iC[EVpadIxL1].iRx, 40);
+	CHECK_EQ(L.iC[EVpadIxL1].iRy, 20);
+	CHECK_EQ(L.iC[EVpadIxL1].iCx, 65);
+	CHECK_EQ(L.iC[EVpadIxL1].iCy, 43);
+}
+
+static void TestResizeControlClampsToMinAndMax()
+{
+	// Значення беруться в KVpadMinSizePx..4095: 3 → 8 для кола; (4,5) → (8,8) і (-3,0) → (8,8) для
+	// прямокутника. 5000 → 4095; на екрані 8191x8191 центр притиснутий до 4095 (= 8191-1-4095).
+	TVpadLayout L;
+	Default14(L);
+	VpadResizeControl(L, 0, 3, 0, 640, 360);
+	CHECK_EQ(L.iC[0].iRx, KVpadMinSizePx);
+	VpadResizeControl(L, EVpadIxL1, 4, 5, 640, 360);
+	CHECK_EQ(L.iC[EVpadIxL1].iRx, 8);
+	CHECK_EQ(L.iC[EVpadIxL1].iRy, 8);
+	VpadResizeControl(L, EVpadIxL1, -3, 0, 640, 360);
+	CHECK_EQ(L.iC[EVpadIxL1].iRx, 8);
+	CHECK_EQ(L.iC[EVpadIxL1].iRy, 8);
+	LayoutInit(L, 1);
+	SetCircCtl(L.iC[0], 100, 100, 50, 0, 0);
+	VpadResizeControl(L, 0, 5000, 0, 8191, 8191);
+	CHECK_EQ(L.iC[0].iRx, 4095);
+	CHECK_EQ(L.iC[0].iCx, 4095);
+	CHECK_EQ(L.iC[0].iCy, 4095);
+}
+
+static void TestResizeControlPullsCentreIntoScreen()
+{
+	// Коло (10,10) R50 на 640x360, новий R=100: центр тягнеться до 100..539 і 100..259 → (100,100).
+	// На 100x100 з R=60: 100-1-60 = 39 < 60, центр n/2 = 50 на обох осях.
+	TVpadLayout L;
+	LayoutInit(L, 1);
+	SetCircCtl(L.iC[0], 10, 10, 50, 0, 0);
+	VpadResizeControl(L, 0, 100, 0, 640, 360);
+	CHECK_EQ(L.iC[0].iRx, 100);
+	CHECK_EQ(L.iC[0].iCx, 100);
+	CHECK_EQ(L.iC[0].iCy, 100);
+	SetCircCtl(L.iC[0], 10, 10, 10, 0, 0);
+	VpadResizeControl(L, 0, 60, 0, 100, 100);
+	CHECK_EQ(L.iC[0].iRx, 60);
+	CHECK_EQ(L.iC[0].iCx, 50);
+	CHECK_EQ(L.iC[0].iCy, 50);
+}
+
+static void TestResizeControlIgnoredForBadIndexAndNoSize()
+{
+	// Індекс поза межами — без змін. Елемент, що вже без розміру до виклику, теж не змінюється: так
+	// прочитано буквально («the control has no size»); це одне з місць, де заголовок може мати інше
+	// прочитання (див. звіт).
+	TVpadLayout L;
+	TVpadLayout before;
+	Default14(L);
+	before = L;
+	VpadResizeControl(L, -1, 30, 30, 640, 360);
+	VpadResizeControl(L, EVpadSticksCount, 30, 30, 640, 360);
+	CHECK(SameAllCtl(before, L));
+	LayoutInit(L, 1);
+	SetCircCtl(L.iC[0], 50, 50, 0, 0, 0);
+	VpadResizeControl(L, 0, 30, 0, 100, 100);
+	CHECK_EQ(L.iC[0].iRx, 0);
+	CHECK_EQ(L.iC[0].iCx, 50);
+}
+
+static void TestResizeStickKeepsRy()
+{
+	// Лівий стік (262,295), R=51: Resize задає iRx=60, iRy стіка (коло) лишається як був. Центр у межах
+	// 60..579 і 60..299: 295 лишається.
+	TVpadLayout L;
+	int ry0;
+	Default14(L);
+	ry0 = L.iC[EVpadIxLStick].iRy;
+	VpadResizeControl(L, EVpadIxLStick, 60, 30, 640, 360);
+	CHECK_EQ(L.iC[EVpadIxLStick].iKind, EVpadKindStick);
+	CHECK_EQ(L.iC[EVpadIxLStick].iRx, 60);
+	CHECK_EQ(L.iC[EVpadIxLStick].iRy, ry0);
+	CHECK_EQ(L.iC[EVpadIxLStick].iCx, 262);
+	CHECK_EQ(L.iC[EVpadIxLStick].iCy, 295);
+}
+
+// ---------------------------------------------------------------- друга хвиля: один бік, виведення, iByDown
+
+// Вісь бока: 0 — лівий (iLx), 1 — правий (iRightX).
+static int Axis(const TVpadState &aS, int aSide)
+{
+	return aSide == 0 ? aS.iLx : aS.iRightX;
+}
+
+// Два різні стіки одного боку (обидва з iId aId), зони не перекриваються: зона натиску першого 0..200,
+// другого 220..420 по x (R=80, зона 100).
+static void LayoutSameSide(TVpadLayout &aL, int aId)
+{
+	LayoutInit(aL, 2);
+	SetStickCtl(aL.iC[0], 100, 100, 80, 0, aId);
+	SetStickCtl(aL.iC[1], 320, 100, 80, 0, aId);
+}
+
+static void TestSameSideSecondStickStaysInertWhileFirstHeld()
+{
+	// Стік не захоплюється, якщо інший вказівник тримає стік того самого боку: дотик інертний до підняття.
+	// Після підняття першого новий дотик захоплює другий стік. Точка (340,100) від центра (320,100):
+	// dx=20, dead=14, mag=6, m=6*127/66=11, відхил 127+11 = 138.
+	static const int kSide[2] = { 0, 1 };
+	int k;
+	for (k = 0; k < 2; ++k) {
+		TVpadLayout L;
+		TVpadState S;
+		LayoutSameSide(L, kSide[k]);
+		VpadReset(S);
+		sprintf(gWhere, "%s side %d", gTest, kSide[k]);
+		VpadPointerDown(S, L, 0, 100, 100, 1000);
+		CHECK_EQ(S.iP[0].iCtl, 0);
+		VpadPointerDown(S, L, 1, 320, 100, 1005);
+		CHECK_EQ(S.iP[1].iDown, 1);
+		CHECK_EQ(S.iP[1].iCtl, -1);
+		VpadPointerMove(S, L, 1, 340, 100, 1010);
+		CHECK_EQ(S.iP[1].iCtl, -1);
+		CHECK_EQ(Axis(S, kSide[k]), 127);
+		CHECK_EQ(S.iBits, 0);
+		VpadPointerUp(S, L, 0, 1020);
+		CHECK_EQ(Axis(S, kSide[k]), 127);
+		VpadPointerDown(S, L, 2, 320, 100, 1030);
+		CHECK_EQ(S.iP[2].iCtl, 1);
+		VpadPointerMove(S, L, 2, 340, 100, 1040);
+		CHECK_EQ(Axis(S, kSide[k]), 138);
+		CHECK_EQ(S.iP[1].iCtl, -1);
+		strcpy(gWhere, gTest);
+	}
+}
+
+static void TestSameSideStickSkippedSoButtonUnderPointIsCaptured()
+{
+	// Стік одного боку пропускається, тож під точкою захоплюється кнопка. Точка (300,100): стік (320,100) R80
+	// дає нормовану відстань 20*1000/100 = 200, кнопка Triangle (330,100) R40 — 30*1000/50 = 600. Без пропуску
+	// ближчий стік захопив би другий вказівник. Після підняття кнопка не тисне.
+	static const int kSide[2] = { 0, 1 };
+	int k;
+	for (k = 0; k < 2; ++k) {
+		TVpadLayout L;
+		TVpadState S;
+		LayoutInit(L, 3);
+		SetStickCtl(L.iC[0], 100, 100, 80, 0, kSide[k]);
+		SetStickCtl(L.iC[1], 320, 100, 80, 0, kSide[k]);
+		SetCircCtl(L.iC[2], 330, 100, 40, 0, 1u << EVpadTriangle);
+		VpadReset(S);
+		sprintf(gWhere, "%s side %d", gTest, kSide[k]);
+		VpadPointerDown(S, L, 0, 100, 100, 1000);
+		VpadPointerDown(S, L, 1, 300, 100, 1005);
+		CHECK_EQ(S.iP[1].iCtl, 2);
+		CHECK_EQ(S.iBits, 1 << EVpadTriangle);
+		VpadPointerUp(S, L, 1, 1010);
+		CHECK_EQ(S.iBits, 0);
+		strcpy(gWhere, gTest);
+	}
+}
+
+static void TestOppositeSideStickCapturedWhileOtherSideHeld()
+{
+	// Стік протилежного боку за тих самих умов захоплюється: перший вказівник тримає стік одного боку,
+	// другий опускається на стік іншого. Точка (340,100) від (320,100): відхил 138, як у попередньому тесті.
+	static const int kFirst[2] = { 0, 1 };
+	int k;
+	for (k = 0; k < 2; ++k) {
+		TVpadLayout L;
+		TVpadState S;
+		const int f = kFirst[k];
+		const int s = 1 - f;
+		LayoutInit(L, 2);
+		SetStickCtl(L.iC[0], 100, 100, 80, 0, f);
+		SetStickCtl(L.iC[1], 320, 100, 80, 0, s);
+		VpadReset(S);
+		sprintf(gWhere, "%s first side %d", gTest, f);
+		VpadPointerDown(S, L, 0, 100, 100, 1000);
+		VpadPointerDown(S, L, 1, 320, 100, 1005);
+		CHECK_EQ(S.iP[1].iCtl, 1);
+		VpadPointerMove(S, L, 1, 340, 100, 1010);
+		CHECK_EQ(Axis(S, s), 138);
+		CHECK_EQ(Axis(S, f), 127);
+		CHECK_EQ(S.iBits, 0);
+		strcpy(gWhere, gTest);
+	}
+}
+
+static void TestTakeoverKeepsArmedOtherSideAndDoesNotArmDroppedOne()
+{
+	// Правий стік зведено дотиком 900..1000 (пальцем 0). Пальцем 0 береться лівий стік у 1100 (без клацання,
+	// його сторона не зводиться).Виведення захоплює правий стік у P2 = (280,100): стік виведення
+	// не клацає і не чіпає зведення. Перехоплення пальцем 0 кидає лівий захват: це не підняття, тож лівий
+	// не зводиться (його перший дотик тривав 60 мс і міг би звестися, якби кидання трактувалось як підняття),
+	// а правий зведення зберігає. Тоді дотик правого о 1180 (180 мс від підняття о 1000) клацає R3.
+	// Перевірено: iRightX у P2: dx=-20, dead=9, mag=11, m=34, 127-34=93; після перехоплення dx=-17,
+	// mag=8, m=24, 103.
+	TVpadLayout L;
+	TVpadState S;
+	LayoutInferTwoSticks(L);
+	VpadReset(S);
+	VpadPointerDown(S, L, 0, 300, 100, 900);
+	VpadPointerUp(S, L, 0, 1000);
+	CHECK_EQ(S.iArmed[1], 1);
+	CHECK_EQ(S.iArmMs[1], 1000);
+	VpadPointerDown(S, L, 0, 100, 100, 1100);
+	CHECK_EQ(S.iBits, 0);
+	CHECK_EQ(S.iByDown, 1);
+	CHECK_EQ(S.iArmed[0], 0);
+	VpadPointerMove(S, L, 0, 190, 100, 1150);
+	CHECK_EQ(S.iDual, 1);
+	CHECK_EQ(S.iP[1].iCtl, 1);
+	CHECK_EQ(S.iP[1].iClick, 0);
+	CHECK_EQ(S.iArmed[1], 1);
+	CHECK_EQ(S.iArmMs[1], 1000);
+	CHECK_EQ(S.iByDown, 1);
+	CHECK_EQ(S.iRightX, 93);
+	CHECK_EQ(S.iLx, 127);
+	CHECK_EQ(S.iBits, 0);
+	VpadPointerMove(S, L, 0, 283, 100, 1160);
+	CHECK_EQ(S.iDual, 0);
+	CHECK_EQ(S.iP[0].iCtl, 1);
+	CHECK_EQ(S.iP[1].iDown, 0);
+	CHECK_EQ(S.iRightX, 103);
+	CHECK_EQ(S.iLx, 127);
+	CHECK_EQ(S.iBits, 0);
+	CHECK_EQ(S.iByDown, 0);
+	CHECK_EQ(S.iArmed[0], 0);
+	CHECK_EQ(S.iArmed[1], 1);
+	CHECK_EQ(S.iArmMs[1], 1000);
+	VpadPointerUp(S, L, 0, 1170);
+	CHECK_EQ(S.iArmed[0], 0);
+	CHECK_EQ(S.iArmed[1], 1);
+	CHECK_EQ(S.iRightX, 127);
+	CHECK_EQ(S.iBits, 0);
+	VpadPointerDown(S, L, 0, 300, 100, 1180);
+	CHECK_EQ(S.iBits, 1 << EVpadR3);
+	CHECK_EQ(S.iArmed[1], 0);
+	VpadPointerUp(S, L, 0, 1190);
+	CHECK_EQ(S.iBits, 0);
+}
+
+static void TestTakeoverAfterRightClickPressesNoR3()
+{
+	// Пальцем 0 зведено правий стік і клацнуто по ньому (R3 тисне). Виведення захоплює лівий стік у
+	// P2 = (120,100), перехоплення (117,100) передає лівий стік пальцю 0. Тоді пальці не тиснуть ні L3, ні R3,
+	// клацання більше не тисне, а права сторона роззброєна клацанням: захоплення Down її роззброїло, і
+	// зведення не відновлюється ні перехопленням, ні підняттям. Лівий стік: dx=17, mag=8, m=24, відхил 127+24=151.
+	TVpadLayout L;
+	TVpadState S;
+	LayoutInferTwoSticks(L);
+	VpadReset(S);
+	VpadPointerDown(S, L, 0, 300, 100, 900);
+	VpadPointerUp(S, L, 0, 1000);
+	VpadPointerDown(S, L, 0, 300, 100, 1100);
+	CHECK_EQ(S.iBits, 1 << EVpadR3);
+	CHECK_EQ(S.iP[0].iClick, 1);
+	VpadPointerMove(S, L, 0, 210, 100, 1150);
+	CHECK_EQ(S.iDual, 1);
+	CHECK_EQ(S.iP[1].iCtl, 0);
+	CHECK_EQ(S.iP[1].iClick, 0);
+	VpadPointerMove(S, L, 0, 117, 100, 1160);
+	CHECK_EQ(S.iDual, 0);
+	CHECK_EQ(S.iP[0].iCtl, 0);
+	CHECK_EQ(S.iLx, 151);
+	CHECK_EQ(S.iBits, 0);
+	CHECK_EQ(S.iP[0].iClick, 0);
+	CHECK_EQ(S.iByDown, 0);
+	CHECK_EQ(S.iArmed[0], 0);
+	CHECK_EQ(S.iArmed[1], 0);
+	VpadPointerUp(S, L, 0, 1170);
+	CHECK_EQ(S.iBits, 0);
+	VpadPointerDown(S, L, 0, 300, 100, 1180);
+	CHECK_EQ(S.iBits, 0);
+	CHECK_EQ(S.iP[0].iClick, 0);
+}
+
+static void TestTwoSticksOfOneSideThroughInferenceAxesBelongToHigherPointer()
+{
+	// Два вказівники тримають стіки одного боку лише через виведення. Осі — вказівника з більшим номером.
+	// Стіки A (100,100) і B (290,100), R=50, зони 38..162 і 228..352 не перекриваються. Палець 0 на A (1000),
+	// рух до (180,100) о 1050: P2 = (260,100), у повіднці B (30 <= 87). B у P2: dx=-30, dead=9, mag=21,
+	// m=21*127/41=65, відхил 127-65 = 62. Лівий стік пальця 0 стоїть в центрі, тож 127 на осі пальця 0.
+	// Цифрових бітів немає: 30*100 = 3000 < 50*80 = 4000.
+	static const int kSide[2] = { 0, 1 };
+	int k;
+	for (k = 0; k < 2; ++k) {
+		TVpadLayout L;
+		TVpadState S;
+		LayoutInit(L, 2);
+		SetStickCtl(L.iC[0], 100, 100, 50, 0, kSide[k]);
+		SetStickCtl(L.iC[1], 290, 100, 50, 0, kSide[k]);
+		L.iDualJumpPx = 40;
+		VpadReset(S);
+		sprintf(gWhere, "%s side %d", gTest, kSide[k]);
+		VpadPointerDown(S, L, 0, 100, 100, 1000);
+		CHECK_EQ(S.iByDown, 1);
+		VpadPointerMove(S, L, 0, 180, 100, 1050);
+		CHECK_EQ(S.iDual, 1);
+		CHECK_EQ(S.iP[0].iCtl, 0);
+		CHECK_EQ(S.iP[1].iCtl, 1);
+		CHECK_EQ(Axis(S, kSide[k]), 62);
+		CHECK_EQ(Axis(S, 1 - kSide[k]), 127);
+		CHECK_EQ(S.iBits, 0);
+		CHECK_EQ(S.iByDown, 1);
+		VpadPointerUp(S, L, 0, 1100);
+		CHECK_EQ(S.iDual, 0);
+		CHECK_EQ(Axis(S, kSide[k]), 127);
+		CHECK_EQ(S.iByDown, 0);
+		strcpy(gWhere, gTest);
+	}
+}
+
+static void TestByDownSetByStickDownClearedByLiftAndReset()
+{
+	// Біт p: вказівник p тримає стік, захоплений саме VpadPointerDown. Дотик по стіку ставить біт, підняття
+	// знімає, дотик по кнопці чи порожнечі біт не ставить, рух на стік його не ставить, VpadReset обнуляє.
+	// Розкладка: лівий стік (150,100) і правий (450,100), R=80.
+	TVpadLayout L;
+	TVpadState S;
+	LayoutTwoSticks(L, 300);
+	VpadReset(S);
+	VpadPointerDown(S, L, 1, 150, 100, 1000);
+	CHECK_EQ(S.iByDown, 1 << 1);
+	VpadPointerUp(S, L, 1, 1010);
+	CHECK_EQ(S.iByDown, 0);
+	VpadPointerDown(S, L, 0, 450, 100, 1500);
+	CHECK_EQ(S.iByDown, 1 << 0);
+	VpadPointerDown(S, L, 2, 150, 100, 2000);
+	CHECK_EQ(S.iByDown, (1 << 0) | (1 << 2));
+	VpadPointerUp(S, L, 0, 2100);
+	CHECK_EQ(S.iByDown, 1 << 2);
+	VpadPointerDown(S, L, 3, 320, 300, 2200);
+	CHECK_EQ(S.iP[3].iCtl, -1);
+	CHECK_EQ(S.iByDown, 1 << 2);
+	VpadPointerMove(S, L, 3, 450, 100, 2210);
+	CHECK_EQ(S.iP[3].iCtl, -1);
+	CHECK_EQ(S.iByDown, 1 << 2);
+	VpadReset(S);
+	CHECK_EQ(S.iByDown, 0);
+}
+
+static void TestByDownIgnoresInferenceAndTakeover()
+{
+	// Стік, захоплений виведенням другого пальця, біт не ставить; після перехоплення пальцем 0 цей стік
+	// теж без біта. Розкладка LayoutInferStick: кнопка Triangle (300,100) і лівий стік (100,100).
+	TVpadLayout L;
+	TVpadState S;
+	LayoutInferStick(L);
+	VpadReset(S);
+	VpadPointerDown(S, L, 0, 300, 100, 1000);
+	CHECK_EQ(S.iByDown, 0);
+	VpadPointerMove(S, L, 0, 220, 100, 1060);
+	CHECK_EQ(S.iDual, 1);
+	CHECK_EQ(S.iByDown, 0);
+	VpadPointerMove(S, L, 0, 143, 100, 1070);
+	CHECK_EQ(S.iDual, 0);
+	CHECK_EQ(S.iP[0].iCtl, 1);
+	CHECK_EQ(S.iByDown, 0);
+	VpadPointerUp(S, L, 0, 1100);
+	CHECK_EQ(S.iByDown, 0);
+}
+
+static void TestDefaultOptionStickHasNoEffectWhereOptionSticksIsInEffect()
+{
+	// EVpadOptStick не діє там, де діє EVpadOptSticks (ландшафт, включно з квадратом і меншим масштабом):
+	// розкладка з обома опціями повністю збігається з розкладкою лише з EVpadOptSticks. У портреті
+	// EVpadOptSticks ігнорується, тож розкладка з обома опціями збігається з розкладкою з EVpadOptStick.
+	static const int W[3] = { 640, 640, 560 };
+	static const int H[3] = { 360, 640, 360 };
+	int k;
+	for (k = 0; k < 3; ++k) {
+		TVpadLayout A;
+		TVpadLayout B;
+		int ra;
+		int rb;
+		memset(&A, 0, sizeof A);
+		memset(&B, 0, sizeof B);
+		sprintf(gWhere, "%s screen %dx%d", gTest, W[k], H[k]);
+		ra = VpadDefaultLayout(A, W[k], H[k], 138, 100, EVpadOptStick | EVpadOptSticks);
+		rb = VpadDefaultLayout(B, W[k], H[k], 138, 100, EVpadOptSticks);
+		CHECK_EQ(ra, rb);
+		CHECK_EQ(A.iCount, EVpadSticksCount);
+		CHECK(SameAllCtl(A, B));
+		CHECK_EQ(A.iStickClickMs, B.iStickClickMs);
+		CHECK_EQ(A.iStickFloat, B.iStickFloat);
+		CHECK_EQ(A.iDualJumpPx, B.iDualJumpPx);
+		strcpy(gWhere, gTest);
+	}
+	{
+		TVpadLayout C;
+		TVpadLayout D;
+		int rc;
+		int rd;
+		memset(&C, 0, sizeof C);
+		memset(&D, 0, sizeof D);
+		sprintf(gWhere, "%s portrait", gTest);
+		rc = VpadDefaultLayout(C, 360, 640, 111, 100, EVpadOptStick | EVpadOptSticks);
+		rd = VpadDefaultLayout(D, 360, 640, 111, 100, EVpadOptStick);
+		CHECK_EQ(rc, 78);
+		CHECK_EQ(rd, 78);
+		CHECK_EQ(C.iCount, EVpadDefaultCount);
+		CHECK_EQ(C.iC[EVpadIxDir].iKind, EVpadKindStick);
+		CHECK(SameAllCtl(C, D));
+		strcpy(gWhere, gTest);
+	}
+}
+
+
+static void TestOptStickDoubleTapPressesL3InDefaultLayout()
+{
+	// EVpadOptStick без EVpadOptSticks: d-pad заміщено стіком (iId 0). iStickClickMs 300 діє й на нього:
+	// дотик у центрі зводить, повторний у вікні клацає L3, через 301 мс не клацає.
+	TVpadLayout L;
+	TVpadState S;
+	int i;
+	int idx = -1;
+	int cx;
+	int cy;
+	memset(&L, 0, sizeof L);
+	VpadDefaultLayout(L, 640, 360, 138, 100, EVpadOptStick);
+	CHECK_EQ(L.iStickClickMs, 300);
+	for (i = 0; i < TakenCount(L); ++i) {
+		if (L.iC[i].iKind == EVpadKindStick && L.iC[i].iId == 0) idx = i;
+	}
+	CHECK(idx >= 0);
+	if (idx < 0) return;
+	cx = L.iC[idx].iCx;
+	cy = L.iC[idx].iCy;
+	VpadReset(S);
+	TapStick(S, L, 0, cx, cy, 900, 1000);
+	CHECK_EQ(S.iArmed[0], 1);
+	VpadPointerDown(S, L, 0, cx, cy, 1300);
+	CHECK_EQ(S.iBits, 1 << EVpadL3);
+	VpadReset(S);
+	TapStick(S, L, 0, cx, cy, 900, 1000);
+	VpadPointerDown(S, L, 0, cx, cy, 1301);
+	CHECK_EQ(S.iBits, 0);
+}
+
+static void TestResizeLargerThanScreenLeavesPartOutsideAndFitsFails()
+{
+	// Круг R200 на екрані 320x240: VpadResizeControl центрує його (x: 200 > 319-200, тож n/2 = 160;
+	// y: 200 > 239-200, тож n/2 = 120). Бокс -40..360 виходить за екран, VpadLayoutFits дає 0.
+	// Круг R50 у тих самих координатах влазить: 1.
+	TVpadLayout L;
+	LayoutInit(L, 1);
+	SetCircCtl(L.iC[0], 160, 120, 40, 0, 1);
+	VpadResizeControl(L, 0, 200, 0, 320, 240);
+	CHECK_EQ(L.iC[0].iRx, 200);
+	CHECK_EQ(L.iC[0].iCx, 160);
+	CHECK_EQ(L.iC[0].iCy, 120);
+	CHECK_EQ(VpadLayoutFits(L, 320, 240), 0);
+	VpadResizeControl(L, 0, 50, 0, 320, 240);
+	CHECK_EQ(VpadLayoutFits(L, 320, 240), 1);
+}
+
+static void TestMoveLargerThanScreenCentresOnScreenAndFitsFails()
+{
+	// Круг R200 просимо в (0,0) на екрані 320x240: по кожній осі центр затискається в r..n-1-r, а при
+	// r > n-1-r дає n/2, тож (160,120), а не кут. Бокс виходить за екран: VpadLayoutFits дає 0.
+	TVpadLayout L;
+	LayoutInit(L, 1);
+	SetCircCtl(L.iC[0], 160, 120, 200, 0, 1);
+	VpadMoveControl(L, 0, 0, 0, 320, 240);
+	CHECK_EQ(L.iC[0].iCx, 160);
+	CHECK_EQ(L.iC[0].iCy, 120);
+	CHECK_EQ(VpadLayoutFits(L, 320, 240), 0);
+}
+
+// ---------------------------------------------------------------- зведення: тап від точки опускання
+
+// Лівий стік (100,100) з радіусом R (без iStickFloat), клацання увімкнено.
+static void LayoutTapSlop(TVpadLayout &aL, int aR)
+{
+	LayoutInit(aL, 1);
+	SetStickCtl(aL.iC[0], 100, 100, aR, 0, 0);
+	aL.iStickClickMs = 300;
+}
+
+static void TestSideTapOnNonFloatStickArmsAndRepeatClicksLeft()
+{
+	// Лівий стік (100,100) R80, iStickFloat 0. Палець опустився за третину радіуса від центру, в (127,100),
+	// стояв нерухомо і піднявся: тап від точки опускання, зводить. Повторний дотик у вікні клацає L3 і
+	// тільки L3: відхил 27 нижчий за цифровий поріг 64.
+	TVpadLayout L;
+	TVpadState S;
+	LayoutClick(L, 300);
+	VpadReset(S);
+	VpadPointerDown(S, L, 0, 127, 100, 900);
+	CHECK(S.iLx != KVpadStickCentre);
+	VpadPointerUp(S, L, 0, 1000);
+	CHECK_EQ(S.iArmed[0], 1);
+	CHECK_EQ(S.iArmMs[0], 1000);
+	VpadPointerDown(S, L, 0, 127, 100, 1100);
+	CHECK_EQ(S.iBits, 1 << EVpadL3);
+}
+
+static void TestSideTapOnNonFloatStickArmsAndRepeatClicksRight()
+{
+	// Те саме на правому стіку (450,100): палець у (477,100), тап зводить праву сторону, ліва не чіпається,
+	// повторний дотик дає R3 і тільки R3.
+	TVpadLayout L;
+	TVpadState S;
+	LayoutTwoSticks(L, 300);
+	VpadReset(S);
+	VpadPointerDown(S, L, 0, 477, 100, 900);
+	VpadPointerUp(S, L, 0, 1000);
+	CHECK_EQ(S.iArmed[1], 1);
+	CHECK_EQ(S.iArmed[0], 0);
+	VpadPointerDown(S, L, 0, 477, 100, 1100);
+	CHECK_EQ(S.iBits, 1 << EVpadR3);
+}
+
+static void TestSideTapAtPressRimOfStickArms()
+{
+	// Межа зони натиску: 80*125/100 = 100 від центру, точка (200,100) належить стіку (dist 100 включно).
+	// Тап по ній зводить сторону: «тап будь-де на стіку».
+	TVpadLayout L;
+	TVpadState S;
+	LayoutClick(L, 300);
+	VpadReset(S);
+	VpadPointerDown(S, L, 0, 200, 100, 900);
+	CHECK_EQ(S.iP[0].iCtl, 0);
+	VpadPointerUp(S, L, 0, 1000);
+	CHECK_EQ(S.iArmed[0], 1);
+}
+
+static void TestTapSlopBoundaryAxisAndDiagonalR85()
+{
+	// Стік R85: r = 85*30/100 = 25 (25.5 округлено вниз). Палець опускається в (110,100), не в центрі, тож
+	// відлік тапу — точка опускання. Випадки: (0,0), (13,0) і (25,0) зводять; на межі по діагоналі (15,20) і
+	// (24,7) (dx*dx+dy*dy == 625) зводять; за межею (26,0), (16,20) (656) і (25,1) (626) не зводять; (25,4)
+	// дає 641 і не зводить: при r = 25.5 без округлення зводив би (641 <= 650.25), тож округлення перевірене.
+	static const int kCase[9][3] = { {0, 0, 1}, {13, 0, 1}, {25, 0, 1}, {26, 0, 0}, {15, 20, 1}, {16, 20, 0}, {24, 7, 1}, {25, 1, 0}, {25, 4, 0} };
+	int k;
+	TVpadLayout L;
+	TVpadState S;
+	LayoutTapSlop(L, 85);
+	for (k = 0; k < 9; ++k) {
+		sprintf(gWhere, "%s case %d (dx %d, dy %d)", gTest, k, kCase[k][0], kCase[k][1]);
+		VpadReset(S);
+		VpadPointerDown(S, L, 0, 110, 100, 900);
+		VpadPointerMove(S, L, 0, 110 + kCase[k][0], 100 + kCase[k][1], 950);
+		VpadPointerUp(S, L, 0, 1000);
+		CHECK_EQ(S.iArmed[0], kCase[k][2]);
+	}
+	strcpy(gWhere, gTest);
+}
+
+static void TestTapSlopIntegerDivisionWithIRx83()
+{
+	// Стік R83: r = 83*30/100 = 24 (24.9 округлено вниз). Зсув по осі на 24 зводить, на 25 ні.
+	TVpadLayout L;
+	TVpadState S;
+	LayoutTapSlop(L, 83);
+	VpadReset(S);
+	VpadPointerDown(S, L, 0, 100, 100, 900);
+	VpadPointerMove(S, L, 0, 124, 100, 950);
+	VpadPointerUp(S, L, 0, 1000);
+	CHECK_EQ(S.iArmed[0], 1);
+	VpadReset(S);
+	VpadPointerDown(S, L, 0, 100, 100, 900);
+	VpadPointerMove(S, L, 0, 125, 100, 950);
+	VpadPointerUp(S, L, 0, 1000);
+	CHECK_EQ(S.iArmed[0], 0);
+}
+
+static void TestTapSlopBoundaryOnRightStick()
+{
+	// Правий стік (450,100) R80: r = 24. Зсув на 24 по осі зводить праву сторону, на 25 ні.
+	TVpadLayout L;
+	TVpadState S;
+	LayoutTwoSticks(L, 300);
+	VpadReset(S);
+	VpadPointerDown(S, L, 0, 450, 100, 900);
+	VpadPointerMove(S, L, 0, 474, 100, 950);
+	VpadPointerUp(S, L, 0, 1000);
+	CHECK_EQ(S.iArmed[1], 1);
+	VpadReset(S);
+	VpadPointerDown(S, L, 0, 450, 100, 900);
+	VpadPointerMove(S, L, 0, 475, 100, 950);
+	VpadPointerUp(S, L, 0, 1000);
+	CHECK_EQ(S.iArmed[1], 0);
+}
+
+static void TestFlickToRimWithoutReturnDoesNotArmLeft()
+{
+	// Різкий рух до краю без повернення: натискання 900 в (100,100), відхил до (180,100) (dist 80 > r = 24),
+	// підняття 1000. Стік не повернувся до точки опускання, сторона не зводиться. Дотик 1100 (у вікні 300 мс)
+	// не клацає.
+	TVpadLayout L;
+	TVpadState S;
+	LayoutClick(L, 300);
+	VpadReset(S);
+	VpadPointerDown(S, L, 0, 100, 100, 900);
+	VpadPointerMove(S, L, 0, 180, 100, 950);
+	CHECK_EQ(S.iLx, 254);
+	VpadPointerUp(S, L, 0, 1000);
+	CHECK_EQ(S.iArmed[0], 0);
+	VpadPointerDown(S, L, 0, 100, 100, 1100);
+	CHECK_EQ(S.iBits, 0);
+}
+
+static void TestFlickToRimWithoutReturnDoesNotArmRight()
+{
+	// Те саме на правому стіку (450,100): відхил до (530,100), підняття 1000, дотик 1100 не клацає.
+	TVpadLayout L;
+	TVpadState S;
+	LayoutTwoSticks(L, 300);
+	VpadReset(S);
+	VpadPointerDown(S, L, 0, 450, 100, 900);
+	VpadPointerMove(S, L, 0, 530, 100, 950);
+	VpadPointerUp(S, L, 0, 1000);
+	CHECK_EQ(S.iArmed[1], 0);
+	VpadPointerDown(S, L, 0, 450, 100, 1100);
+	CHECK_EQ(S.iBits, 0);
+}
+
+static void TestReturnToDownPointBeforeLiftArmsLeft()
+{
+	// Далекий рух: відхил до (170,100) о 930, повернення до точки опускання (100,100) о 960, підняття 1000.
+	// Важить лише остання позиція: вона в точці опускання, сторона зведена о 1000, дотик 1100 клацає L3.
+	TVpadLayout L;
+	TVpadState S;
+	LayoutClick(L, 300);
+	VpadReset(S);
+	VpadPointerDown(S, L, 0, 100, 100, 900);
+	VpadPointerMove(S, L, 0, 170, 100, 930);
+	CHECK(S.iLx != KVpadStickCentre);
+	VpadPointerMove(S, L, 0, 100, 100, 960);
+	VpadPointerUp(S, L, 0, 1000);
+	CHECK_EQ(S.iArmed[0], 1);
+	CHECK_EQ(S.iArmMs[0], 1000);
+	VpadPointerDown(S, L, 0, 100, 100, 1100);
+	CHECK_EQ(S.iBits, 1 << EVpadL3);
+}
+
+static void TestReturnToDownPointBeforeLiftArmsRight()
+{
+	// Те саме на правому стіку: відхил до (470,100), повернення до (450,100), підняття 1000; дотик 1100 клацає R3.
+	TVpadLayout L;
+	TVpadState S;
+	LayoutTwoSticks(L, 300);
+	VpadReset(S);
+	VpadPointerDown(S, L, 0, 450, 100, 900);
+	VpadPointerMove(S, L, 0, 470, 100, 930);
+	VpadPointerMove(S, L, 0, 450, 100, 960);
+	VpadPointerUp(S, L, 0, 1000);
+	CHECK_EQ(S.iArmed[1], 1);
+	CHECK_EQ(S.iArmed[0], 0);
+	VpadPointerDown(S, L, 0, 450, 100, 1100);
+	CHECK_EQ(S.iBits, 1 << EVpadR3);
+}
+
+static void TestDeadPctAndFloatDoNotChangeTapArming()
+{
+	// Тап міряється від точки опускання: мертва зона, центр стіка й iStickFloat на зведення не впливають.
+	// Для кожної комбінації iDeadPct {0,18,60} і iStickFloat {0,1}: відхід на r = 24 зводить, на 25 ні.
+	static const int kDead[3] = { 0, 18, 60 };
+	int d;
+	int f;
+	TVpadLayout L;
+	TVpadState S;
+	for (d = 0; d < 3; ++d) {
+		for (f = 0; f < 2; ++f) {
+			LayoutClick(L, 300);
+			L.iDeadPct = kDead[d];
+			L.iStickFloat = f;
+			sprintf(gWhere, "%s deadPct %d float %d", gTest, kDead[d], f);
+			VpadReset(S);
+			VpadPointerDown(S, L, 0, 120, 100, 900);
+			VpadPointerMove(S, L, 0, 144, 100, 950);
+			VpadPointerUp(S, L, 0, 1000);
+			CHECK_EQ(S.iArmed[0], 1);
+			VpadReset(S);
+			VpadPointerDown(S, L, 0, 120, 100, 900);
+			VpadPointerMove(S, L, 0, 145, 100, 950);
+			VpadPointerUp(S, L, 0, 1000);
+			CHECK_EQ(S.iArmed[0], 0);
+		}
+	}
+	strcpy(gWhere, gTest);
+}
+
+static void TestSideArmingSurvivesTouchesOfOtherControls()
+{
+	// Зведення скидає лише захоплення стіка тієї самої сторони, а інші дотики не скидають: ні тап по правому
+	// стіку, ні натиск і відпускання кнопки. Лівий стік (100,100), кнопка Circle (300,100) R40, правий стік
+	// (500,100); зони натиску не перетинаються (0..200, 250..350, 400..600).
+	TVpadLayout L;
+	TVpadState S;
+	LayoutInit(L, 3);
+	L.iStickClickMs = 300;
+	SetStickCtl(L.iC[0], 100, 100, 80, 0, 0);
+	SetCircCtl(L.iC[1], 300, 100, 40, 0, 1u << EVpadCircle);
+	SetStickCtl(L.iC[2], 500, 100, 80, 0, 1);
+	VpadReset(S);
+	VpadPointerDown(S, L, 0, 100, 100, 900);
+	VpadPointerUp(S, L, 0, 1000);
+	CHECK_EQ(S.iArmed[0], 1);
+	VpadPointerDown(S, L, 1, 300, 100, 1020);
+	CHECK_EQ(S.iBits, 1 << EVpadCircle);
+	VpadPointerUp(S, L, 1, 1040);
+	CHECK_EQ(S.iBits, 0);
+	CHECK_EQ(S.iArmed[0], 1);
+	CHECK_EQ(S.iArmMs[0], 1000);
+	VpadPointerDown(S, L, 2, 500, 100, 1060);
+	VpadPointerUp(S, L, 2, 1080);
+	CHECK_EQ(S.iArmed[1], 1);
+	CHECK_EQ(S.iArmed[0], 1);
+	VpadPointerDown(S, L, 0, 100, 100, 1200);
+	CHECK_EQ(S.iBits, 1 << EVpadL3);
+	CHECK_EQ(S.iArmed[0], 0);
+	VpadPointerDown(S, L, 3, 500, 100, 1250);
+	CHECK_EQ(S.iBits, (1 << EVpadL3) | (1 << EVpadR3));
+}
+
+static void TestHigherPointerAxesWinWhenFirstPointerIsDeflected()
+{
+	// Два вказівники тримають стіки одного боку лише через виведення; осі боку — вказівника з більшим номером.
+	// Перша частина без виведення: один палець на стіку A (центр (100,100), R50) тягнеться до (180,100), dx 80,
+	// вісь 254. Друга частина: той самий палець 0 на A, виведений палець 1 стоїть у центрі стіка B (260,100),
+	// R50; у TestTwoSticksOfOneSideThroughInferenceAxesBelongToHigherPointer той самий рух дає P2 = (260,100).
+	// Осі боку мають бути 127. Правило «перший нецентрований виграє» дало б 254.
+	static const int kSide[2] = { 0, 1 };
+	int k;
+	for (k = 0; k < 2; ++k) {
+		TVpadLayout L;
+		TVpadState S;
+		sprintf(gWhere, "%s side %d", gTest, kSide[k]);
+		LayoutInit(L, 1);
+		SetStickCtl(L.iC[0], 100, 100, 50, 0, kSide[k]);
+		VpadReset(S);
+		VpadPointerDown(S, L, 0, 100, 100, 1000);
+		VpadPointerMove(S, L, 0, 180, 100, 1050);
+		CHECK_EQ(Axis(S, kSide[k]), 254);
+		LayoutInit(L, 2);
+		SetStickCtl(L.iC[0], 100, 100, 50, 0, kSide[k]);
+		SetStickCtl(L.iC[1], 260, 100, 50, 0, kSide[k]);
+		L.iDualJumpPx = 40;
+		VpadReset(S);
+		VpadPointerDown(S, L, 0, 100, 100, 1000);
+		VpadPointerMove(S, L, 0, 180, 100, 1050);
+		CHECK_EQ(S.iDual, 1);
+		CHECK_EQ(S.iP[0].iCtl, 0);
+		CHECK_EQ(S.iP[1].iCtl, 1);
+		CHECK_EQ(Axis(S, kSide[k]), 127);
+	}
+	strcpy(gWhere, gTest);
+}
+
+static void TestDownPointIsRecordedAndKeptThroughMoves()
+{
+	// iDownX/iDownY — де палець опустився: задано натисканням і не змінюється рухом. Інших гарантій заголовок
+	// не дає (зокрема про нулі після VpadReset), тож їх тут не перевіряють.
+	TVpadLayout L;
+	TVpadState S;
+	LayoutTwoSticks(L, 300);
+	VpadReset(S);
+	VpadPointerDown(S, L, 0, 120, 95, 900);
+	CHECK_EQ(S.iP[0].iDownX, 120);
+	CHECK_EQ(S.iP[0].iDownY, 95);
+	VpadPointerMove(S, L, 0, 150, 140, 950);
+	CHECK_EQ(S.iP[0].iDownX, 120);
+	CHECK_EQ(S.iP[0].iDownY, 95);
+	VpadPointerDown(S, L, 1, 450, 100, 960);
+	CHECK_EQ(S.iP[1].iDownX, 450);
+	CHECK_EQ(S.iP[1].iDownY, 100);
+	VpadPointerUp(S, L, 0, 1000);
+	VpadPointerUp(S, L, 1, 1010);
+	VpadReset(S);
+	VpadPointerDown(S, L, 0, 130, 90, 1100);
+	CHECK_EQ(S.iP[0].iDownX, 130);
+	CHECK_EQ(S.iP[0].iDownY, 90);
+}
+
 int main(int argc, char **argv)
 {
 	if (argc >= 2 && strcmp(argv[1], "--list") == 0) gListOnly = 1;
@@ -3707,6 +5780,82 @@ int main(int argc, char **argv)
 	RUN(TestEnsureVisibleBottomAtViewEndHasNoEffectDuringFling);
 	RUN(TestDefaultNothingFitsEndsWithNineteenthTry);
 	RUN(TestActionIdThirtyOneReportsBitThirtyTwoReportsNothing);
+	RUN(TestSpecConstantsOfSticksAndLayout);
+	RUN(TestDefaultSticksLandscape640x360Scale100);
+	RUN(TestDefaultSticksPortraitIgnoredMatchesNoOption);
+	RUN(TestDefaultSticksSquareCountsAsLandscape);
+	RUN(TestDefaultSticksOptionStickChoosesDpadPerIndexRule);
+	RUN(TestDefaultSticksDoNotFitShrinksScale);
+	RUN(TestDefaultLayoutMatchesReferenceAcrossScreensAndPitches);
+	RUN(TestFitsMatchesReferenceOnRandomLayouts);
+	RUN(TestTwoSticksSideFollowsIdAnyOtherIsLeft);
+	RUN(TestRightStickDeflectsOnItsOwnAxesWithoutDpadBits);
+	RUN(TestSecondPointerOnHeldLeftStickStaysInert);
+	RUN(TestSecondPointerCapturesRightWhenLeftHeldAndZonesOverlap);
+	RUN(TestDpadAndBothSticksWorkTogether);
+	RUN(TestBothSticksDeflectIndependentlyAndCentreOnRelease);
+	RUN(TestVpadResetCentresBothSticksAndClearsPending);
+	RUN(TestStickTapLimitIsInclusiveAt250Ms);
+	RUN(TestStickClickWindowIsInclusiveAtIStickClickMs);
+	RUN(TestStickClickPressesL3AtDownAndEdgeOnce);
+	RUN(TestStickClickAddsDigitalBitsOfTheStick);
+	RUN(TestStickClickWindowZeroDisablesAndIsTakenWithinRange);
+	RUN(TestStickClickOnRightStickPressesR3);
+	RUN(TestStickIdOtherThanOneClicksAsLeft);
+	RUN(TestClickTouchDisarmsItsSideAtLift);
+	RUN(TestLongTouchDisarmsItsSide);
+	RUN(TestTapArmsOnlyItsOwnSideAndWindowIsPerSide);
+	RUN(TestCaptureOfOneSideLeavesOtherSideArmed);
+	RUN(TestVpadResetClearsStickArming);
+	RUN(TestStickClockGoingBackCountsAsNoElapsedTime);
+	RUN(TestStickClickAndTapAcrossClockWrap);
+	RUN(TestInferredStickNeverClicksAndLeavesArmingAlone);
+	RUN(TestInferredStickTakenOverByFirstFingerNeverArms);
+	RUN(TestTakeoverDropsFirstFingerSideAndNeverArms);
+	RUN(TestRandomSequenceTwoSticksLandscape);
+	RUN(TestRandomSequenceTwoSticksDualPanel);
+	RUN(TestControlAtCentreOfEachControlOfSticksLayout);
+	RUN(TestControlAtOutsideAllZonesIsMinusOne);
+	RUN(TestControlAtNearestByNormalisedDistanceAcrossShapes);
+	RUN(TestControlAtTieGoesToLowerIndex);
+	RUN(TestControlAtCountAndSizeRules);
+	RUN(TestControlAtClampsPointLikePointer);
+	RUN(TestMoveControlFreeAndAxisClamps);
+	RUN(TestMoveControlRadiusLargerThanRangeGivesHalfScreen);
+	RUN(TestMoveControlScreenBelowOneTakenAsOne);
+	RUN(TestMoveControlIgnoredForBadIndexAndNoSize);
+	RUN(TestResizeControlCircleKeepsRyAndCentreInside);
+	RUN(TestResizeControlRectSizesAndCentre);
+	RUN(TestResizeControlClampsToMinAndMax);
+	RUN(TestResizeControlPullsCentreIntoScreen);
+	RUN(TestResizeControlIgnoredForBadIndexAndNoSize);
+	RUN(TestResizeStickKeepsRy);
+	RUN(TestSameSideSecondStickStaysInertWhileFirstHeld);
+	RUN(TestSameSideStickSkippedSoButtonUnderPointIsCaptured);
+	RUN(TestOppositeSideStickCapturedWhileOtherSideHeld);
+	RUN(TestTakeoverKeepsArmedOtherSideAndDoesNotArmDroppedOne);
+	RUN(TestTakeoverAfterRightClickPressesNoR3);
+	RUN(TestTwoSticksOfOneSideThroughInferenceAxesBelongToHigherPointer);
+	RUN(TestByDownSetByStickDownClearedByLiftAndReset);
+	RUN(TestByDownIgnoresInferenceAndTakeover);
+	RUN(TestDefaultOptionStickHasNoEffectWhereOptionSticksIsInEffect);
+	RUN(TestOptStickDoubleTapPressesL3InDefaultLayout);
+	RUN(TestResizeLargerThanScreenLeavesPartOutsideAndFitsFails);
+	RUN(TestMoveLargerThanScreenCentresOnScreenAndFitsFails);
+	RUN(TestSideTapOnNonFloatStickArmsAndRepeatClicksLeft);
+	RUN(TestSideTapOnNonFloatStickArmsAndRepeatClicksRight);
+	RUN(TestSideTapAtPressRimOfStickArms);
+	RUN(TestTapSlopBoundaryAxisAndDiagonalR85);
+	RUN(TestTapSlopIntegerDivisionWithIRx83);
+	RUN(TestTapSlopBoundaryOnRightStick);
+	RUN(TestFlickToRimWithoutReturnDoesNotArmLeft);
+	RUN(TestFlickToRimWithoutReturnDoesNotArmRight);
+	RUN(TestReturnToDownPointBeforeLiftArmsLeft);
+	RUN(TestReturnToDownPointBeforeLiftArmsRight);
+	RUN(TestDeadPctAndFloatDoNotChangeTapArming);
+	RUN(TestSideArmingSurvivesTouchesOfOtherControls);
+	RUN(TestHigherPointerAxesWinWhenFirstPointerIsDeflected);
+	RUN(TestDownPointIsRecordedAndKeptThroughMoves);
 	if (gListOnly) return 0;
 	printf("touchcore: %d checks, %d failed\n", gChecks, gFails);
 	return gFails == 0 ? 0 : 1;
