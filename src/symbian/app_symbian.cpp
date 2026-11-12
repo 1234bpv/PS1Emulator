@@ -1082,7 +1082,7 @@ void CPs1Container::ConstructL(const TRect &aRect)
 	iCliMode = (cl.Length() != 0);
 	// Command-line runs replay recorded input and are measured frame by frame; the panel
 	// would add drawing to every frame of them.
-	if (iCliMode)
+	if (iCliMode && cl.FindF(_L("touchon")) == KErrNotFound)
 		voutSymbianTouchOff();
 	// A command line without img would otherwise fall back to the built-in
 	// gt.bin, so a game named in ps1_settings.txt - the only way to name one

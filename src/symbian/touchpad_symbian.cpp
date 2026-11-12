@@ -382,6 +382,8 @@ static TBool touchEnableAdvanced(RWindowBase &aWin)
 	}
 
 // touchcore wants a clock that never steps back; the wall clock does when the user sets it.
+enum { KTouchTraceEvents = 120 };
+
 static TUint touchNowMs(void)
 	{
 	return User::NTickCount();
@@ -441,6 +443,16 @@ TBool voutSymbianTouchEvent(const TPointerEvent &aEvent)
 			break;
 		default:
 			return EFalse;
+		}
+	// The pointer number is read by offset, not through a header: the first events of a
+	// run are logged so that a wrong offset or flag shows on a real touch screen.
+	static TInt traced = 0;
+	if (traced < KTouchTraceEvents)
+		{
+		traced++;
+		ps1LogFmt("touch", "ev type=%d x=%d y=%d mod=%08x b28=%d id=%d bits=%04x", (int)aEvent.iType,
+			(int)x, (int)y, (unsigned)aEvent.iModifiers,
+			(int)((const TUint8 *)&aEvent)[KTouchPointerNumberOffset], (int)id, (unsigned)g_state.iBits);
 		}
 	return (VpadTakeActions(g_state) & 1u) != 0;
 	}
