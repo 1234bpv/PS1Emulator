@@ -326,7 +326,8 @@ void VpadResizeControl(TVpadLayout &aLayout, int aIx, int aRx, int aRy,
 // arms and leaves the arming alone, also after pointer 0 takes it over: pointer 0
 // then presses neither EVpadL3 nor EVpadR3, whatever it pressed before. The capture
 // pointer 0 drops in that takeover is not a lift: it neither arms nor disarms.
-// iDownMs of a pointer holding an inferred capture has no meaning. A consequence
+// iDownMs, iDownX and iDownY of a pointer holding an inferred capture have no
+// meaning. A consequence
 // on a single-touch panel: a tap whose finger leaves while a second one is
 // inferred ends as a takeover and does not arm.
 //

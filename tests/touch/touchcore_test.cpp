@@ -5608,6 +5608,117 @@ static void TestDownPointIsRecordedAndKeptThroughMoves()
 	CHECK_EQ(S.iP[0].iDownY, 90);
 }
 
+// ---------------------------------------------------------------- тап по висоті: відлік від точки опускання
+
+static void TestTapSlopBoundaryAlongYFromOffCentreDownR85()
+{
+	// Стік R85 (100,100), r = 25. Палець опускається в (100,130): dy 30 від центру, усередині зони натиску (106).
+	// Відхід по y на 25 від точки опускання, до (100,155), зводить; на 26, до (100,156), ні. У таблиці
+	// TestTapSlopBoundaryAxisAndDiagonalR85 точки опускання на висоті центру, тож відлік по y від центру там
+	// не відрізняється від відліку від точки опускання; цей випадок відрізняє.
+	TVpadLayout L;
+	TVpadState S;
+	LayoutTapSlop(L, 85);
+	VpadReset(S);
+	VpadPointerDown(S, L, 0, 100, 130, 900);
+	VpadPointerMove(S, L, 0, 100, 155, 950);
+	VpadPointerUp(S, L, 0, 1000);
+	CHECK_EQ(S.iArmed[0], 1);
+	VpadReset(S);
+	VpadPointerDown(S, L, 0, 100, 130, 900);
+	VpadPointerMove(S, L, 0, 100, 156, 950);
+	VpadPointerUp(S, L, 0, 1000);
+	CHECK_EQ(S.iArmed[0], 0);
+}
+
+static void TestTapSlopBoundaryAlongYFromOffCentreDownR83()
+{
+	// Стік R83 (100,100), r = 24. Палець опускається в (100,140): dy 40 від центру, усередині зони натиску (103).
+	// Відхід по y на 24, до (100,164), зводить; на 25, до (100,165), ні.
+	TVpadLayout L;
+	TVpadState S;
+	LayoutTapSlop(L, 83);
+	VpadReset(S);
+	VpadPointerDown(S, L, 0, 100, 140, 900);
+	VpadPointerMove(S, L, 0, 100, 164, 950);
+	VpadPointerUp(S, L, 0, 1000);
+	CHECK_EQ(S.iArmed[0], 1);
+	VpadReset(S);
+	VpadPointerDown(S, L, 0, 100, 140, 900);
+	VpadPointerMove(S, L, 0, 100, 165, 950);
+	VpadPointerUp(S, L, 0, 1000);
+	CHECK_EQ(S.iArmed[0], 0);
+}
+
+static void TestTapSlopBoundaryAlongYFromOffCentreDownOnRightStick()
+{
+	// Правий стік (450,100) R80, r = 24. Палець опускається в (450,160): dy 60 від центру, усередині зони натиску (100).
+	// Відхід по y на -24, до (450,136), зводить; на -25, до (450,135), ні.
+	TVpadLayout L;
+	TVpadState S;
+	LayoutTwoSticks(L, 300);
+	VpadReset(S);
+	VpadPointerDown(S, L, 0, 450, 160, 900);
+	VpadPointerMove(S, L, 0, 450, 136, 950);
+	VpadPointerUp(S, L, 0, 1000);
+	CHECK_EQ(S.iArmed[1], 1);
+	CHECK_EQ(S.iArmed[0], 0);
+	VpadReset(S);
+	VpadPointerDown(S, L, 0, 450, 160, 900);
+	VpadPointerMove(S, L, 0, 450, 135, 950);
+	VpadPointerUp(S, L, 0, 1000);
+	CHECK_EQ(S.iArmed[1], 0);
+}
+
+static void TestStationaryTapOffCentreHeightArmsAndClicksLeft()
+{
+	// Лівий стік (100,100) R80, iStickFloat 0. Нерухомий тап поза допуском від центру, на висоті, відмінній від
+	// центру: вище (100,160), нижче (100,40) і по діагоналі, зсунутій і по x, і по y: (65,140). Кожен такий тап
+	// зводить сторону; повторний дотик у вікні клацає L3 і тільки L3 (відхил 53..60 нижчий за цифровий поріг 64).
+	// Відлік по y від центру, а не від точки опускання, на цих точках не зводить.
+	static const int kPt[3][2] = { {100, 160}, {100, 40}, {65, 140} };
+	int k;
+	TVpadLayout L;
+	TVpadState S;
+	LayoutClick(L, 300);
+	for (k = 0; k < 3; ++k) {
+		sprintf(gWhere, "%s point %d (%d,%d)", gTest, k, kPt[k][0], kPt[k][1]);
+		VpadReset(S);
+		VpadPointerDown(S, L, 0, kPt[k][0], kPt[k][1], 900);
+		CHECK(S.iLx != KVpadStickCentre || S.iLy != KVpadStickCentre);
+		VpadPointerUp(S, L, 0, 1000);
+		CHECK_EQ(S.iArmed[0], 1);
+		VpadPointerDown(S, L, 0, kPt[k][0], kPt[k][1], 1100);
+		CHECK_EQ(S.iBits, 1 << EVpadL3);
+		VpadPointerUp(S, L, 0, 1150);
+	}
+	strcpy(gWhere, gTest);
+}
+
+static void TestStationaryTapOffCentreHeightArmsAndClicksRight()
+{
+	// Те саме на правому стіку (450,100) R80: вище (450,160), нижче (450,40) і діагональ (480,140), зсунута на 30
+	// по x і на 40 по y. Зводить права сторона, повторний дотик дає R3 і тільки R3.
+	static const int kPt[3][2] = { {450, 160}, {450, 40}, {480, 140} };
+	int k;
+	TVpadLayout L;
+	TVpadState S;
+	LayoutTwoSticks(L, 300);
+	for (k = 0; k < 3; ++k) {
+		sprintf(gWhere, "%s point %d (%d,%d)", gTest, k, kPt[k][0], kPt[k][1]);
+		VpadReset(S);
+		VpadPointerDown(S, L, 0, kPt[k][0], kPt[k][1], 900);
+		CHECK(S.iRightX != KVpadStickCentre || S.iRightY != KVpadStickCentre);
+		VpadPointerUp(S, L, 0, 1000);
+		CHECK_EQ(S.iArmed[1], 1);
+		CHECK_EQ(S.iArmed[0], 0);
+		VpadPointerDown(S, L, 0, kPt[k][0], kPt[k][1], 1100);
+		CHECK_EQ(S.iBits, 1 << EVpadR3);
+		VpadPointerUp(S, L, 0, 1150);
+	}
+	strcpy(gWhere, gTest);
+}
+
 int main(int argc, char **argv)
 {
 	if (argc >= 2 && strcmp(argv[1], "--list") == 0) gListOnly = 1;
@@ -5856,6 +5967,11 @@ int main(int argc, char **argv)
 	RUN(TestSideArmingSurvivesTouchesOfOtherControls);
 	RUN(TestHigherPointerAxesWinWhenFirstPointerIsDeflected);
 	RUN(TestDownPointIsRecordedAndKeptThroughMoves);
+	RUN(TestTapSlopBoundaryAlongYFromOffCentreDownR85);
+	RUN(TestTapSlopBoundaryAlongYFromOffCentreDownR83);
+	RUN(TestTapSlopBoundaryAlongYFromOffCentreDownOnRightStick);
+	RUN(TestStationaryTapOffCentreHeightArmsAndClicksLeft);
+	RUN(TestStationaryTapOffCentreHeightArmsAndClicksRight);
 	if (gListOnly) return 0;
 	printf("touchcore: %d checks, %d failed\n", gChecks, gFails);
 	return gFails == 0 ? 0 : 1;
