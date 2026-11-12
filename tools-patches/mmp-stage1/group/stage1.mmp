@@ -69,6 +69,11 @@ SOURCE          imgconv.cpp
 SOURCE          archive.cpp
 SOURCE          arc7z.cpp
 SOURCE          arcrar.cpp
+// On-screen gamepad: the portable core (shared with the host tests) and its Symbian glue.
+SOURCEPATH      ..\..\..\src\ui
+SOURCE          touchcore.cpp
+SOURCEPATH      ..\..\..\src\symbian
+SOURCE          touchpad_symbian.cpp
 
 // LZMA SDK (public domain) - .7z header parsing and streaming decompression.
 SOURCEPATH      ..\..\..\src\lzma
@@ -121,6 +126,7 @@ SOURCE          compat_snprintf.c
 SOURCE          compat_aeabi.c
 
 USERINCLUDE     ..\..\..\src\compat
+USERINCLUDE     ..\..\..\src\ui
 USERINCLUDE     ..\..\..\..\SymbianOverclock\src
 USERINCLUDE     ..\..\..\src\lzma
 // zlib: DEFLATE when building .pbp and INFLATE when reading .zip.

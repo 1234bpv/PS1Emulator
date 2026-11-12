@@ -1872,6 +1872,12 @@ static void drawOverlay(TUint8 *aDst, TInt aStrideB, TInt aPixB, TInt aSW, TInt 
 	ovlText(aDst, aStrideB, aPixB, KOvlPad, KOvlPad + KOvlCellH, l2, white);
 	}
 
+// On-screen gamepad (touchpad_symbian.cpp): the panel is drawn over the frame and keeps
+// its own pixels on the bars tidy, so the bars need no clearing on its account.
+extern "C" void voutSymbianTouchSuspend(TInt aOn);
+extern "C" void voutSymbianTouchDraw(TUint8 *aDst, TInt aStrideB, TInt aPixB, TInt aSW, TInt aSH,
+	TInt aFx, TInt aFy, TInt aFw, TInt aFh);
+
 // Scales current g_vout into g_bmp (nearest-neighbor, aspect ratio preservation,
 // black bars) and blits into window.
 static void blitCurrent()
@@ -2174,6 +2180,8 @@ static void blitCurrent()
 	// After conversion, before present: overlay must sit on top of frame rather than being
 	// overwritten by it. Cost is included in measured blit time intentionally - it is real.
 	drawOverlay(dstB, dstStrideB, pixB, SW, SH);
+	// Panel after the overlay: the overlay box is cleared under it, so the panel must come last.
+	voutSymbianTouchDraw(dstB, dstStrideB, pixB, SW, SH, ox, oy, dstW, dstH);
 	if (!directFb)
 		g_bmp->UnlockHeap();
 #ifdef PS1_BENCH
@@ -2472,6 +2480,7 @@ extern "C" unsigned int voutSymbianPresentsHidden(void)
 // redraws visible area, which on static scene takes long time.
 extern "C" void voutSymbianSuspend(int aOn)
 	{
+	voutSymbianTouchSuspend(aOn);
 	if (!g_wsReady)
 		return;
 	if (aOn)

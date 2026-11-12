@@ -84,6 +84,11 @@ void voutSymbianSuspend(int aOn);
 void voutSymbianAttachWindow(RWsSession &aWs, CWsScreenDevice &aDev, RWindow &aWin,
                              CWindowGc &aGc);
 
+// On-screen gamepad input (touchpad_symbian.cpp). The probe runs in ConstructL, before ActivateL.
+TBool voutSymbianTouchProbe(RWindowBase &aWin);
+void voutSymbianTouchOff(void);
+TBool voutSymbianTouchEvent(const TPointerEvent &aEvent);
+
 // Same UID as in stage1.mmp and stage1_reg.rss.
 static const TUid KUidPs1App = { 0xE0001002 };
 
@@ -777,6 +782,7 @@ public:
 	TKeyResponse OfferKeyEventL(const TKeyEvent &aKeyEvent, TEventCode aType);
 	TKeyResponse DispatchKeyL(const TKeyEvent &aKeyEvent, TEventCode aType);
 	void RemConKey(TInt aScan, TBool aDown);
+	void HandlePointerEventL(const TPointerEvent &aPointerEvent);
 	// CCoeControl::Window() is protected, and the output needs exactly this window.
 	RWindow &FrameWindow() { return Window(); }
 	TBool MenuActive() const { return iPage != EPageNone; }
@@ -1012,6 +1018,9 @@ void CPs1Container::ConstructL(const TRect &aRect)
 	CreateWindowL();
 	SetRect(aRect);
 	Window().SetBackgroundColor(KRgbBlack);
+	// Multi-touch is requested before ActivateL below; the window has its size since SetRect.
+	if (voutSymbianTouchProbe(Window()))
+		EnableDragEvents();
 	iBrowse = new (ELeave) CDesCArrayFlat(16);
 	iPicked = new (ELeave) CDesCArrayFlat(8);
 	iPadCount = voutSymbianPadButtons();
@@ -1071,6 +1080,10 @@ void CPs1Container::ConstructL(const TRect &aRect)
 	User::CommandLine(cl);
 	cl.Trim();
 	iCliMode = (cl.Length() != 0);
+	// Command-line runs replay recorded input and are measured frame by frame; the panel
+	// would add drawing to every frame of them.
+	if (iCliMode)
+		voutSymbianTouchOff();
 	// A command line without img would otherwise fall back to the built-in
 	// gt.bin, so a game named in ps1_settings.txt - the only way to name one
 	// whose file name holds a space - never reached the core.
@@ -2979,6 +2992,15 @@ void CPs1Container::DoCloseMenu(TBool aWithRestart)
 void CPs1Container::FocusLost()
 	{
 	if (iStartedOnce && !iGameClosed && !iCliMode)
+		OpenMenu();
+	}
+
+void CPs1Container::HandlePointerEventL(const TPointerEvent &aPointerEvent)
+	{
+	// The menu pages have no pointer handling yet; only the game takes taps.
+	if (MenuActive())
+		return;
+	if (voutSymbianTouchEvent(aPointerEvent))
 		OpenMenu();
 	}
 
