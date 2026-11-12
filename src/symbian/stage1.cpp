@@ -338,9 +338,10 @@ unsigned short in_keystate[8];
 int voutSymbianTiltAnalog(unsigned char *aLX, unsigned char *aLY,
 	unsigned char *aRX, unsigned char *aRY);
 unsigned short voutSymbianTiltPadBits(void);
-// On-screen gamepad (touchpad_symbian.cpp): touch pad bits and the touch stick.
+// On-screen gamepad (touchpad_symbian.cpp): touch pad bits and the touch sticks.
 unsigned short voutSymbianTouchBits(void);
 int voutSymbianTouchStick(unsigned char *aLX, unsigned char *aLY);
+int voutSymbianTouchRightStick(unsigned char *aRX, unsigned char *aRY);
 
 // in_keystate[0] holds pressed buttons active-high (DKEY_* bits), populated
 // every frame from device keys (voutSymbianPollPad). PS1 expects active-low, hence ~.
@@ -351,9 +352,10 @@ void PAD1_readPort(struct PadDataS *pad, int *is_multitap)
 		unsigned char lx = 127, ly = 127, rx = 127, ry = 127;
 		const int tilt = voutSymbianTiltAnalog(&lx, &ly, &rx, &ry);
 		const int touchStick = voutSymbianTouchStick(&lx, &ly);
+		const int touchRStick = voutSymbianTouchRightStick(&rx, &ry);
 		// The core keeps DualShock state - analog and config mode - inside this
 		// struct between polls, so wiping it here would undo the mode every frame.
-		if (tilt || touchStick)
+		if (tilt || touchStick || touchRStick)
 			{
 			pad->controllerType = PSE_PAD_TYPE_ANALOGPAD;
 			// There is no ANALOG button to press on a phone, so the mode is held on:

@@ -87,6 +87,7 @@ void voutSymbianAttachWindow(RWsSession &aWs, CWsScreenDevice &aDev, RWindow &aW
 // On-screen gamepad input (touchpad_symbian.cpp). The probe runs in ConstructL, before ActivateL.
 TBool voutSymbianTouchProbe(RWindowBase &aWin);
 void voutSymbianTouchOff(void);
+void voutSymbianTouchOptions(TInt aSticks, TInt aAlphaPct);
 TBool voutSymbianTouchEvent(const TPointerEvent &aEvent);
 
 // Same UID as in stage1.mmp and stage1_reg.rss.
@@ -1084,6 +1085,19 @@ void CPs1Container::ConstructL(const TRect &aRect)
 	// would add drawing to every frame of them.
 	if (iCliMode && cl.FindF(_L("touchon")) == KErrNotFound)
 		voutSymbianTouchOff();
+		// Layout options of the on-screen gamepad, read next to touchon: "sticks" selects the
+	// two-stick layout, "padalpha<N>" the opacity of the untouched panel in percent (default 100).
+	TInt padAlpha = 100;
+	const TInt padAt = cl.FindF(_L("padalpha"));
+	if (padAt != KErrNotFound)
+		{
+		const TPtrC digits = cl.Mid(padAt + 8);
+		TLex lex(digits);
+		TInt value = 0;
+		if (lex.Val(value) == KErrNone)
+			padAlpha = value;
+		}
+	voutSymbianTouchOptions(cl.FindF(_L("sticks")) != KErrNotFound, padAlpha);
 	// A command line without img would otherwise fall back to the built-in
 	// gt.bin, so a game named in ps1_settings.txt - the only way to name one
 	// whose file name holds a space - never reached the core.
