@@ -1,6 +1,9 @@
 # Перегляд панелі на ПК: збирає render_panel.cpp разом із touchcore.cpp і touchdraw.cpp хостовим
-# g++, запускає його й пише BMP-файли в теку, задану параметром -OutDir. Кожен запуск має межу часу.
-# Повертає 0 лише тоді, коли збірка пройшла, кожен очікуваний файл створено й він непорожній.
+# g++ (статично, щоб exe не потребував DLL компілятора), запускає його з теки -OutDir і перевіряє,
+# що з'явилися всі очікувані BMP-файли. Кожен запуск має межу часу. Повертає 0 лише тоді, коли
+# збірка пройшла, перевірки проходять і кожен очікуваний файл створено й він непорожній.
+# Працює під pwsh 7 і Windows PowerShell 5.1: процеси запускаються через ProcessStartInfo,
+# бо Start-Process у 5.1 повертав порожній код виходу.
 param(
 	[Parameter(Mandatory = $true)][string]$OutDir,
 	[int]$CompileTimeoutMs = 120000,
@@ -26,66 +29,85 @@ $env:TEMP = $tempRoot
 $work = Join-Path $tempRoot "ps1emu-render-$PID"
 New-Item -ItemType Directory -Force -Path $work | Out-Null
 
-function Invoke-Limited {
-	param([string]$Exe, [string[]]$Arguments, [int]$TimeoutMs, [string]$Label)
-	$out = Join-Path $work "$Label.out.txt"
-	$err = Join-Path $work "$Label.err.txt"
-	if (Test-Path $out) { Remove-Item $out -Force }
-	if (Test-Path $err) { Remove-Item $err -Force }
-	$p = Start-Process -FilePath $Exe -ArgumentList $Arguments -NoNewWindow -PassThru `
-		-RedirectStandardOutput $out -RedirectStandardError $err
-	if (-not $p.WaitForExit($TimeoutMs)) {
-		try { $p.Kill() } catch { }
-		return [pscustomobject]@{ Code = -1; TimedOut = $true; Text = (Read-Text $out $err) }
-	}
-	return [pscustomobject]@{ Code = $p.ExitCode; TimedOut = $false; Text = (Read-Text $out $err) }
+# Аргумент із пробілами береться в лапки: командний рядок склеюється з масиву.
+function Join-Args {
+	param([string[]]$Arguments)
+	return (($Arguments | ForEach-Object { if ($_ -match '\s') { '"' + $_ + '"' } else { $_ } }) -join ' ')
 }
 
-function Read-Text {
-	param([string]$Out, [string]$Err)
+# Запуск з межею часу. Вивід читається асинхронно, щоб заповнений канал не зупинив процес.
+# Після вбивства дочірні процеси (cc1plus) можуть тримати канали, тож чекання на них обмежене.
+function Invoke-Limited {
+	param([string]$Exe, [string[]]$Arguments, [int]$TimeoutMs, [string]$WorkDir)
+	$psi = New-Object System.Diagnostics.ProcessStartInfo
+	$psi.FileName = $Exe
+	$psi.Arguments = (Join-Args $Arguments)
+	$psi.WorkingDirectory = $WorkDir
+	$psi.UseShellExecute = $false
+	$psi.CreateNoWindow = $true
+	$psi.RedirectStandardOutput = $true
+	$psi.RedirectStandardError = $true
+	$p = [System.Diagnostics.Process]::Start($psi)
+	$outTask = $p.StandardOutput.ReadToEndAsync()
+	$errTask = $p.StandardError.ReadToEndAsync()
+	$timedOut = -not $p.WaitForExit($TimeoutMs)
+	if ($timedOut) { try { $p.Kill() } catch { } }
+	else { $p.WaitForExit() }
 	$parts = @()
-	if (Test-Path $Out) { $parts += (Get-Content $Out -Raw) }
-	if (Test-Path $Err) { $parts += (Get-Content $Err -Raw) }
-	return (($parts | Where-Object { $_ }) -join "`n")
+	foreach ($t in @($outTask, $errTask)) { if ($t.Wait(5000)) { $parts += $t.Result } }
+	$code = -1
+	if (-not $timedOut) { $code = $p.ExitCode }
+	return [pscustomobject]@{ Code = $code; TimedOut = $timedOut; Text = (($parts | Where-Object { $_ }) -join "`n") }
 }
 
 $failures = @()
 
 # 1. Збирання. cc1plus знаходить свої DLL через PATH: без каталогу g++ він мовчки завершується з кодом 1.
 $exe = Join-Path $work 'render_panel.exe'
-$flags = @('-std=c++98', '-pedantic', '-Wall', '-Wextra', '-Werror', '-O2', "-I$srcDir")
+$flags = @('-std=c++98', '-pedantic', '-Wall', '-Wextra', '-Werror', '-O2', '-static', "-I$srcDir")
 $savedPath = $env:PATH
 $env:PATH = (Split-Path -Parent $gxx) + ';' + $savedPath
-$build = Invoke-Limited $gxx ($flags + @($viewSrc, $coreSrc, $drawSrc, '-o', $exe)) $CompileTimeoutMs 'host-build'
+$build = Invoke-Limited $gxx ($flags + @($viewSrc, $coreSrc, $drawSrc, '-o', $exe)) $CompileTimeoutMs $PSScriptRoot
 $env:PATH = $savedPath
 if ($build.TimedOut) { $failures += 'host-build: time limit exceeded' }
 elseif ($build.Code -ne 0) { $failures += "host-build: exit code $($build.Code)" }
 if ($build.Text.Trim()) { Write-Output "--- host-build ---"; Write-Output $build.Text }
 
-# 2. Запуск: пише файли в OutDir і звіряє 16- та 32-бітні шляхи.
+# 2. Запуск. exe працює з теки виводу й пише файли під ASCII-іменами "./name.bmp": шлях із
+# не-ASCII символами не проходить ні через командний рядок, ні через розбір stdout.
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
 $outAbs = [IO.Path]::GetFullPath($OutDir)
+$expected = @()
+foreach ($s in @('640x360', '320x240')) {
+	foreach ($l in @('twelve', 'sticks')) {
+		foreach ($b in @('white', 'black', 'stripes')) {
+			foreach ($st in @('rest', 'pressed', 'stick')) {
+				foreach ($o in @(100, 40)) { $expected += "${s}_${l}_${b}_${st}_op${o}.bmp" }
+			}
+		}
+	}
+}
 if ($failures.Count -eq 0) {
-	$run = Invoke-Limited $exe @($outAbs) $RunTimeoutMs 'render'
+	$run = Invoke-Limited $exe @('.') $RunTimeoutMs $outAbs
 	Write-Output "--- render ---"
 	Write-Output $run.Text
 	if ($run.TimedOut) { $failures += 'render: time limit exceeded' }
 	elseif ($run.Code -eq 1) { $failures += 'render: a BMP file could not be written' }
 	elseif ($run.Code -eq 2) { $failures += 'render: 16-bit and 32-bit paths disagree beyond the tolerance' }
+	elseif ($run.Code -eq 3) { $failures += 'render: a layout or the art could not be built' }
+	elseif ($run.Code -eq 4) { $failures += 'render: a geometry check failed (see the geometry lines above)' }
 	elseif ($run.Code -ne 0) { $failures += "render: exit code $($run.Code)" }
 	# Очікувано: 2 екрани × 2 розкладки × 3 фони × 3 стани × 2 непрозорості.
-	# Рядки stdout закінчуються на CRLF (текстовий режим C), тож \r відокремлюємо від шляху.
-	$written = @([regex]::Matches($run.Text, '(?m)^wrote ([^\r\n]+)') | ForEach-Object { $_.Groups[1].Value.Trim() })
-	if ($written.Count -ne 72) { $failures += "render: $($written.Count) files reported, 72 expected" }
-	foreach ($f in $written) {
-		if (-not (Test-Path -LiteralPath $f)) { $failures += "render: file missing: $f"; continue }
-		if ((Get-Item -LiteralPath $f).Length -le 0) { $failures += "render: empty file: $f" }
+	foreach ($name in $expected) {
+		$file = Join-Path $outAbs $name
+		if (-not (Test-Path -LiteralPath $file)) { $failures += "render: file missing: $name"; continue }
+		if ((Get-Item -LiteralPath $file).Length -le 0) { $failures += "render: empty file: $name" }
 	}
 }
 
 if ($failures.Count -eq 0) {
 	Remove-Item -Recurse -Force $work -ErrorAction SilentlyContinue
-	Write-Output "render.ps1: PASS ($($written.Count) files in $outAbs)"
+	Write-Output "render.ps1: PASS ($($expected.Count) files in $outAbs)"
 	exit 0
 }
 foreach ($f in $failures) { Write-Output "render.ps1: FAIL: $f" }

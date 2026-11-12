@@ -59,10 +59,23 @@ struct TVpadCanvas
 	int iPicX, iPicY, iPicW, iPicH;  // the game picture; the rest of the frame is bars
 	};
 
+// Pixels around a control's box that its ink can reach. VpadArtClearBars clears this box, so
+// ink outside it would survive a repaint; the render test checks that the ink stays inside.
+enum { KVpadArtMargin = 4 };
+
 // Prepares the spans of aLayout for a pixel pitch of aUmPerPx micrometres. Returns 0 when
-// aArt's buffers are too small, or a control is wider than 511 pixels; aArt is then not
-// to be painted. Uses static scratch memory, so it is not reentrant.
+// aArt's buffers are too small, or when the ink box of a control is wider than 512 pixels
+// (a control of about 250 px in radius or more); aArt is then not to be painted. Uses static
+// scratch memory, so it is not reentrant.
 int VpadArtBuild(TVpadArt &aArt, const TVpadLayout &aLayout, int aUmPerPx);
+
+// Half sizes of the box that VpadArtClearBars clears for a control, margin included. Returns
+// 0 for a control that is not drawn.
+int VpadArtBox(const TVpadControl &aC, int &aHalfW, int &aHalfH);
+
+// The buffer sizes VpadArtBuild needs for the same arguments, in spans and coverage bytes.
+// Writes nothing; returns 0 under the same conditions as VpadArtBuild.
+int VpadArtMeasure(const TVpadLayout &aLayout, int aUmPerPx, int &aSpans, int &aAlpha);
 
 // Blackens the bars inside the boxes of the controls. Called before a VpadArtPaint whose
 // aBarsToo is non-zero, since partly transparent ink must not build up over earlier ink.

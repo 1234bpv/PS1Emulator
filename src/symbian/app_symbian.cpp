@@ -1085,7 +1085,7 @@ void CPs1Container::ConstructL(const TRect &aRect)
 	// would add drawing to every frame of them.
 	if (iCliMode && cl.FindF(_L("touchon")) == KErrNotFound)
 		voutSymbianTouchOff();
-		// Layout options of the on-screen gamepad, read next to touchon: "sticks" selects the
+	// Layout options of the on-screen gamepad, read next to touchon: "sticks" selects the
 	// two-stick layout, "padalpha<N>" the opacity of the untouched panel in percent (default 100).
 	TInt padAlpha = 100;
 	const TInt padAt = cl.FindF(_L("padalpha"));
@@ -1096,6 +1096,8 @@ void CPs1Container::ConstructL(const TRect &aRect)
 		TInt value = 0;
 		if (lex.Val(value) == KErrNone)
 			padAlpha = value;
+		else
+			ps1LogFmt("touch", "padalpha is not a number, the default 100 is kept");
 		}
 	voutSymbianTouchOptions(cl.FindF(_L("sticks")) != KErrNotFound, padAlpha);
 	// A command line without img would otherwise fall back to the built-in

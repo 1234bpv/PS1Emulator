@@ -2,7 +2,8 @@
 // core (src/ui/touchcore.h); its pad word and sticks are merged into PAD1_readPort; the
 // panel is painted by the portable drawing (src/ui/touchdraw.h) into the frame just before
 // the frame is shown. Without a touch screen (AknLayoutUtils::PenEnabled) nothing here runs
-// except the probe, which returns EFalse.
+// except the probe, which returns EFalse. Nothing is allocated before the panel is known to
+// be on: the art is built on the first frame the panel is drawn in.
 #include <e32std.h>
 #include <w32std.h>
 #include <hal.h>
@@ -25,10 +26,11 @@ const TInt KTouchPointerNumberOffset = 28;
 // as ordinal 609 in the EABI build (WS322U.DEF).
 const TInt KTouchEnableAdvancedOrdinal = 609;
 
-// Room for the art of the largest layout: the E7 sticks layout needs 5985 spans and 87048
-// coverage bytes, the rest is headroom for the rounding of the pixel pitch.
-const TInt KTouchArtSpans = 8192;
-const TInt KTouchArtAlpha = 131072;
+// Ceilings of the art buffers. The buffers grow to the size of the layout in use, and a
+// layout over a ceiling is not drawn: the log line names both numbers. The E7 sticks layout
+// needs 5985 spans and 87048 coverage bytes.
+const TInt KTouchArtMaxSpans = 32768;
+const TInt KTouchArtMaxAlpha = 262144;
 
 typedef void (*TTouchEnableAdvanced)(RWindowBase *);
 
@@ -36,8 +38,9 @@ typedef char KTouchPointerEventSize[sizeof(TPointerEvent) == 24 ? 1 : -1];
 
 static TBool g_touchPen;     // the device has a pen
 static TBool g_touchOff;     // command-line run: no panel, no input
-static TBool g_touchOn;      // pen, not off, landscape, and the layout fits and has its art
+static TBool g_touchOn;      // pen, not off, landscape, and the layout fits
 static TBool g_touchHidden;  // menu open or focus lost: no input, no panel
+static TBool g_touchGl;      // the GL ES present path is on: it draws no panel, so no input
 static TInt g_scrW;          // frame size the layout was built for
 static TInt g_scrH;
 static TInt g_umPerPx;
@@ -47,9 +50,11 @@ static TVpadState g_state;
 static TBool g_optSticks;    // command line: the two-stick layout
 static TInt g_alphaPct = 100;  // command line: opacity of the untouched panel, percent
 static TVpadArt g_art;
-static TBool g_artOk;
-static TVpadSpan *g_artSpan; // buffers of g_art, taken from the heap on the first layout
+static TBool g_artOk;        // g_art matches g_layout and its buffers hold it
+static TVpadSpan *g_artSpan; // buffers of g_art: grown to the largest layout, kept until Off
+static TInt g_artSpanCap;
 static TUint8 *g_artAlpha;
+static TInt g_artAlphaCap;
 
 // What the panel last showed. The game picture is rewritten every frame, the bars around
 // it are not: when this changes, the panel clears its own boxes on the bars first.
@@ -57,28 +62,45 @@ static TBool g_keyValid;
 static TUint g_key;
 static TUint g_axes;
 
-// Builds the art of g_layout into the buffers, which are allocated once for the whole run.
+// Builds the art of g_layout. The buffers are sized from a measuring pass and only grow.
 static TBool touchArtBuild(void)
 	{
-	if (!g_artSpan)
+	TInt spans = 0;
+	TInt alpha = 0;
+	if (!VpadArtMeasure(g_layout, g_umPerPx, spans, alpha))
 		{
-		g_artSpan = (TVpadSpan *)User::Alloc((TInt)(KTouchArtSpans * sizeof(TVpadSpan)));
-		g_artAlpha = (TUint8 *)User::Alloc(KTouchArtAlpha);
-		if (!g_artSpan || !g_artAlpha)
-			{
-			if (g_artSpan)
-				User::Free(g_artSpan);
-			if (g_artAlpha)
-				User::Free(g_artAlpha);
-			g_artSpan = NULL;
-			g_artAlpha = NULL;
-			return EFalse;
-			}
+		ps1LogFmt("touch", "art: a control is too wide for the builder, umpx=%d", (int)g_umPerPx);
+		return EFalse;
+		}
+	if (spans > KTouchArtMaxSpans || alpha > KTouchArtMaxAlpha)
+		{
+		ps1LogFmt("touch", "art: over the ceiling spans=%d max=%d alpha=%d max=%d", (int)spans,
+			(int)KTouchArtMaxSpans, (int)alpha, (int)KTouchArtMaxAlpha);
+		return EFalse;
+		}
+	if (spans > g_artSpanCap)
+		{
+		if (g_artSpan)
+			User::Free(g_artSpan);
+		g_artSpan = (TVpadSpan *)User::Alloc((TInt)(spans * sizeof(TVpadSpan)));
+		g_artSpanCap = g_artSpan ? spans : 0;
+		}
+	if (alpha > g_artAlphaCap)
+		{
+		if (g_artAlpha)
+			User::Free(g_artAlpha);
+		g_artAlpha = (TUint8 *)User::Alloc(alpha);
+		g_artAlphaCap = g_artAlpha ? alpha : 0;
+		}
+	if ((spans > 0 && !g_artSpan) || (alpha > 0 && !g_artAlpha))
+		{
+		ps1LogFmt("touch", "art: no memory for spans=%d alpha=%d", (int)spans, (int)alpha);
+		return EFalse;
 		}
 	g_art.iSpan = g_artSpan;
-	g_art.iSpanCap = KTouchArtSpans;
+	g_art.iSpanCap = g_artSpanCap;
 	g_art.iAlpha = g_artAlpha;
-	g_art.iAlphaCap = KTouchArtAlpha;
+	g_art.iAlphaCap = g_artAlphaCap;
 	return VpadArtBuild(g_art, g_layout, g_umPerPx) != 0;
 	}
 
@@ -88,12 +110,12 @@ static void touchLog(void)
 	{
 	ps1LogFmt("touch", "layout size=%dx%d umpx=%d on=%d controls=%d sticks=%d alpha=%d art=%d spans=%d",
 		(int)g_scrW, (int)g_scrH, (int)g_umPerPx, (int)g_touchOn, (int)(g_fits ? g_layout.iCount : 0),
-		(int)g_optSticks, (int)g_alphaPct, (int)g_artOk, (int)g_art.iSpanCount);
+		(int)g_optSticks, (int)g_alphaPct, (int)g_artOk, (int)(g_artOk ? g_art.iSpanCount : 0));
 	}
 
 // Builds the layout for a frame of aW x aH pixels. The frame, not the window at
 // construction, decides: the shell asks for landscape before the window exists, and the
-// screen may turn only afterwards.
+// screen may turn only afterwards. The art itself waits for the first frame that is drawn.
 static void touchLayout(TInt aW, TInt aH)
 	{
 	g_scrW = aW;
@@ -102,8 +124,8 @@ static void touchLayout(TInt aW, TInt aH)
 	g_keyValid = EFalse;
 	g_fits = aW > aH && VpadDefaultLayout(g_layout, aW, aH, g_umPerPx, 100,
 		g_optSticks ? EVpadOptSticks : 0) != 0;
-	g_artOk = g_fits && touchArtBuild();
-	g_touchOn = g_touchPen && !g_touchOff && g_artOk;
+	g_artOk = EFalse;
+	g_touchOn = g_touchPen && !g_touchOff && g_fits;
 	touchLog();
 	}
 
@@ -176,7 +198,7 @@ void voutSymbianTouchOptions(TInt aSticks, TInt aAlphaPct)
 // caller then opens the menu.
 TBool voutSymbianTouchEvent(const TPointerEvent &aEvent)
 	{
-	if (!g_touchOn || g_touchHidden)
+	if (!g_touchOn || g_touchHidden || g_touchGl)
 		return EFalse;
 	TInt id = 0;
 	if (aEvent.iModifiers & KTouchAdvancedFlag)
@@ -214,11 +236,21 @@ TBool voutSymbianTouchEvent(const TPointerEvent &aEvent)
 	return (VpadTakeActions(g_state) & 1u) != 0;
 	}
 
-// Turns the panel and its input off for the rest of the run (command-line runs).
+// Turns the panel and its input off for the rest of the run (command-line runs), and gives
+// back the art buffers if they were taken.
 void voutSymbianTouchOff(void)
 	{
 	g_touchOff = ETrue;
 	g_touchOn = EFalse;
+	g_artOk = EFalse;
+	if (g_artSpan)
+		User::Free(g_artSpan);
+	if (g_artAlpha)
+		User::Free(g_artAlpha);
+	g_artSpan = NULL;
+	g_artSpanCap = 0;
+	g_artAlpha = NULL;
+	g_artAlphaCap = 0;
 	touchLog();
 	}
 
@@ -232,10 +264,31 @@ extern "C" void voutSymbianTouchSuspend(TInt aOn)
 	g_touchHidden = aOn != 0;
 	}
 
+// The present path of a frame: the GL ES path (MBX) presents without the panel, so the panel
+// neither draws nor takes input while that path runs. Both paths report every frame; only a
+// change is logged.
+extern "C" void voutSymbianTouchPath(TInt aGl)
+	{
+	const TBool gl = aGl != 0;
+	if (gl == g_touchGl)
+		return;
+	g_touchGl = gl;
+	VpadReset(g_state);
+	g_keyValid = EFalse;
+	ps1LogFmt("touch", "present path gl=%d: panel and input %s", (int)gl, gl ? "off" : "on");
+	}
+
+// The frame was cleared (new geometry, or the direct framebuffer switched): the bars lost
+// the panel's ink, so the bars are painted again with the next frame.
+extern "C" void voutSymbianTouchFrameCleared(void)
+	{
+	g_keyValid = EFalse;
+	}
+
 // Pad bits of the touch controls, OR-ed into buttonStatus in PAD1_readPort.
 extern "C" TUint16 voutSymbianTouchBits(void)
 	{
-	if (!g_touchOn || g_touchHidden)
+	if (!g_touchOn || g_touchHidden || g_touchGl)
 		return 0;
 	return g_state.iBits;
 	}
@@ -245,7 +298,7 @@ extern "C" TUint16 voutSymbianTouchBits(void)
 // the stick is deflected.
 extern "C" TInt voutSymbianTouchStick(unsigned char *aLX, unsigned char *aLY)
 	{
-	if (!g_touchOn || g_touchHidden)
+	if (!g_touchOn || g_touchHidden || g_touchGl)
 		return 0;
 	if (g_state.iLx == KVpadStickCentre && g_state.iLy == KVpadStickCentre)
 		return 0;
@@ -257,7 +310,7 @@ extern "C" TInt voutSymbianTouchStick(unsigned char *aLX, unsigned char *aLY)
 // The right stick, same contract as voutSymbianTouchStick.
 extern "C" TInt voutSymbianTouchRightStick(unsigned char *aRX, unsigned char *aRY)
 	{
-	if (!g_touchOn || g_touchHidden)
+	if (!g_touchOn || g_touchHidden || g_touchGl)
 		return 0;
 	if (g_state.iRightX == KVpadStickCentre && g_state.iRightY == KVpadStickCentre)
 		return 0;
@@ -311,6 +364,15 @@ extern "C" void voutSymbianTouchDraw(TUint8 *aDst, TInt aStrideB, TInt aPixB, TI
 	g_keyValid = ETrue;
 	if (!g_touchOn)
 		return;
+	if (!g_artOk)
+		{
+		g_artOk = touchArtBuild();
+		if (!g_artOk)
+			g_touchOn = EFalse;
+		touchLog();
+		if (!g_artOk)
+			return;
+		}
 	TVpadCanvas c;
 	c.iDst = aDst;
 	c.iStride = aStrideB;

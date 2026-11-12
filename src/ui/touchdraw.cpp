@@ -4,11 +4,10 @@
 
 enum
 	{
-	KDrawRow = 512,        // widest control the builder accepts, px
+	KDrawRow = 512,        // widest ink box of a control the builder accepts, px
 	KDrawMaxPrims = 96,    // primitives of one control, all passes together
 	KDrawHalo = 16,        // dark halo beyond a light stroke: one pixel, 1/16 px units
-	KDrawMinHalf = 8,      // half thickness of a light stroke: at least half a pixel
-	KDrawMargin = 4        // px around a control's box that its ink can reach
+	KDrawMinHalf = 8       // half thickness of a light stroke: at least half a pixel
 	};
 
 enum { EDrawPassFill = 0, EDrawPassDark = 1, EDrawPassLight = 2 };
@@ -252,7 +251,7 @@ static int dcFontRow(int aChar)
 	return -1;
 	}
 
-static const char *dcLabel(int aIx)
+static const char *dcLabel(int aIx, int aShort)
 	{
 	switch (aIx)
 		{
@@ -260,8 +259,8 @@ static const char *dcLabel(int aIx)
 		case EVpadIxL2: return "L2";
 		case EVpadIxR1: return "R1";
 		case EVpadIxR2: return "R2";
-		case EVpadIxSelect: return "SELECT";
-		case EVpadIxStart: return "START";
+		case EVpadIxSelect: return aShort ? "SEL" : "SELECT";
+		case EVpadIxStart: return aShort ? "ST" : "START";
 		default: return "";
 		}
 	}
@@ -279,27 +278,55 @@ static int dcKnobTravel(const TVpadControl &aC)
 	return aC.iRx - aC.iRx / 3 - 3;
 	}
 
-// Label of a rectangle control as strokes of the stroke font, fitted into the box: the cap
-// height is two thirds of the box height, and the label is at most 0.8 of the box width.
-static int dcLabelPrims(const TVpadControl &aC, const char *aText, int aPass, int aHalf)
+// Scale of the stroke font in 1/16 px per unit for a label: the cap height is three quarters
+// of the box height, and the label is at most nine tenths of the box width.
+static int dcLabelCap(const TVpadControl &aC)
 	{
-	int n = 0;
-	while (aText[n])
-		n++;
-	if (!n)
-		return 1;
-	const int units = n * 6 - 2;
-	int k = (aC.iRy * 2 / 3) * 16 / 6;
-	const int kw = (aC.iRx * 16 * 8) / (5 * units);
+	return (aC.iRy * 3 / 2) * 16 / 6;
+	}
+
+static int dcLabelFit(const TVpadControl &aC, int aN)
+	{
+	const int units = aN * 6 - 2;
+	int k = dcLabelCap(aC);
+	const int kw = (aC.iRx * 16 * 9) / (5 * units);
 	if (kw < k)
 		k = kw;
 	if (k < 1)
 		k = 1;
+	return k;
+	}
+
+static int dcTextLen(const char *aText)
+	{
+	int n = 0;
+	while (aText[n])
+		n++;
+	return n;
+	}
+
+// Label of a rectangle control as strokes of the stroke font, fitted into the box. When the
+// full word would come out under three quarters of the cap size, the short form (SEL, ST)
+// is drawn instead, since a small word read better than a larger one cut short.
+static int dcLabelPrims(const TVpadControl &aC, int aIx, int aPass, int aHalf)
+	{
+	const char *text = dcLabel(aIx, 0);
+	int n = dcTextLen(text);
+	if (!n)
+		return 1;
+	int k = dcLabelFit(aC, n);
+	if (k * 4 < dcLabelCap(aC) * 3)
+		{
+		text = dcLabel(aIx, 1);
+		n = dcTextLen(text);
+		k = dcLabelFit(aC, n);
+		}
+	const int units = n * 6 - 2;
 	const int x0 = aC.iCx * 16 - units * k / 2;
 	const int y0 = aC.iCy * 16 - 3 * k;
 	for (int j = 0; j < n; j++)
 		{
-		const int f = dcFontRow(aText[j]);
+		const int f = dcFontRow(text[j]);
 		if (f < 0)
 			continue;
 		const signed char *g = KDrawFont[f];
@@ -398,7 +425,7 @@ static int dcControl(const TVpadLayout &aL, int aI, int aHl, int aHt)
 		else if (rect)
 			{
 			if (!dcRectRing(pass, EVpadPartBody, cx, cy, r, rh, hl)
-				|| !dcLabelPrims(c, dcLabel(aI), pass, ht))
+				|| !dcLabelPrims(c, aI, pass, ht))
 				return 0;
 			}
 		else
@@ -461,6 +488,13 @@ static int dcEmit(TVpadArt &aArt, int aPass, int aX0, int aY0, int aX1, int aY1)
 			while (x < w && gRowCov[x] && gRowPart[x] == part)
 				x++;
 			const int len = x - start;
+			if (!aArt.iSpan)
+				{
+				// Counting only (VpadArtMeasure): nothing is stored.
+				aArt.iSpanCount++;
+				aArt.iAlphaCount += len;
+				continue;
+				}
 			if (aArt.iSpanCount >= aArt.iSpanCap || aArt.iAlphaCount + len > aArt.iAlphaCap)
 				return 0;
 			TVpadSpan &s = aArt.iSpan[aArt.iSpanCount++];
@@ -544,8 +578,22 @@ int VpadArtBuild(TVpadArt &aArt, const TVpadLayout &aLayout, int aUmPerPx)
 	return 1;
 	}
 
+int VpadArtMeasure(const TVpadLayout &aLayout, int aUmPerPx, int &aSpans, int &aAlpha)
+	{
+	TVpadArt art;
+	art.iSpan = 0;
+	art.iAlpha = 0;
+	art.iSpanCap = 0;
+	art.iAlphaCap = 0;
+	if (!VpadArtBuild(art, aLayout, aUmPerPx))
+		return 0;
+	aSpans = art.iSpanCount;
+	aAlpha = art.iAlphaCount;
+	return 1;
+	}
+
 // Pixel of RGB565 mixed with white (aWhite) or black by coverage aA, 0..255.
-static unsigned dcMix16(unsigned aV, int aWhite, int aA)
+static inline unsigned dcMix16(unsigned aV, int aWhite, int aA)
 	{
 	unsigned r = aV >> 11, g = (aV >> 5) & 63, b = aV & 31;
 	if (aWhite)
@@ -564,7 +612,7 @@ static unsigned dcMix16(unsigned aV, int aWhite, int aA)
 	}
 
 // Pixel of XRGB8888 mixed the same way, channel by channel.
-static unsigned dcMix32(unsigned aV, int aWhite, int aA)
+static inline unsigned dcMix32(unsigned aV, int aWhite, int aA)
 	{
 	unsigned out = 0;
 	for (int sh = 0; sh < 24; sh += 8)
@@ -580,28 +628,35 @@ static unsigned dcMix32(unsigned aV, int aWhite, int aA)
 	}
 
 // Mixes a row run aX0..aX1-1 (already inside the canvas) with the coverage aCov, which
-// starts at aX0. aOp scales the coverage: 255 leaves it as it is.
+// starts at aX0. aOp scales the coverage in 1/256: 256 leaves it as it is. The loop has no
+// division, which the ARM11 does in software, and the pixel format is chosen outside it.
+// Most ink pixels of a stroke are fully covered: they take the ink colour without a mix.
 static void dcRun(const TVpadCanvas &aC, int aY, int aX0, int aX1, const unsigned char *aCov,
 	int aWhite, int aOp)
 	{
 	unsigned char *row = aC.iDst + aY * aC.iStride;
-	// Most ink pixels of a stroke are fully covered: they take the ink colour without a mix.
-	for (int x = aX0; x < aX1; x++, aCov++)
+	if (aC.iPixB == 4)
 		{
-		int a = *aCov;
-		if (aOp != 255)
-			a = (a * aOp + 127) / 255;
-		if (!a)
-			continue;
-		if (aC.iPixB == 4)
+		unsigned *p = (unsigned *)(row + aX0 * 4);
+		for (int x = aX0; x < aX1; x++, aCov++, p++)
 			{
-			unsigned *p = (unsigned *)(row + x * 4);
-			*p = a == 255 ? (aWhite ? 0xFFFFFFu : 0u) : dcMix32(*p, aWhite, a);
+			const int a = (*aCov * aOp) >> 8;
+			if (a == 255)
+				*p = aWhite ? 0xFFFFFFu : 0u;
+			else if (a)
+				*p = dcMix32(*p, aWhite, a);
 			}
-		else
+		}
+	else
+		{
+		unsigned short *p = (unsigned short *)(row + aX0 * 2);
+		for (int x = aX0; x < aX1; x++, aCov++, p++)
 			{
-			unsigned short *p = (unsigned short *)(row + x * 2);
-			*p = a == 255 ? (unsigned short)(aWhite ? 0xFFFF : 0) : (unsigned short)dcMix16(*p, aWhite, a);
+			const int a = (*aCov * aOp) >> 8;
+			if (a == 255)
+				*p = (unsigned short)(aWhite ? 0xFFFF : 0);
+			else if (a)
+				*p = (unsigned short)dcMix16(*p, aWhite, a);
 			}
 		}
 	}
@@ -701,6 +756,15 @@ static void dcKnob(const TVpadControl &aC, const TVpadState &aS, int &aDx, int &
 	aDy = (ay - KVpadStickCentre) * t / KVpadStickCentre;
 	}
 
+int VpadArtBox(const TVpadControl &aC, int &aHalfW, int &aHalfH)
+	{
+	if (aC.iRx <= 0 || (dcIsRect(aC) && aC.iRy <= 0))
+		return 0;
+	aHalfW = aC.iRx + KVpadArtMargin;
+	aHalfH = (dcIsRect(aC) ? aC.iRy : aC.iRx) + KVpadArtMargin;
+	return 1;
+	}
+
 void VpadArtClearBars(const TVpadLayout &aLayout, const TVpadCanvas &aCanvas)
 	{
 	int n = aLayout.iCount;
@@ -709,10 +773,9 @@ void VpadArtClearBars(const TVpadLayout &aLayout, const TVpadCanvas &aCanvas)
 	for (int i = 0; i < n; i++)
 		{
 		const TVpadControl &c = aLayout.iC[i];
-		if (c.iRx <= 0 || (dcIsRect(c) && c.iRy <= 0))
+		int mx = 0, my = 0;
+		if (!VpadArtBox(c, mx, my))
 			continue;
-		const int mx = c.iRx + KDrawMargin;
-		const int my = (dcIsRect(c) ? c.iRy : c.iRx) + KDrawMargin;
 		const int bx0 = c.iCx - mx, bx1 = c.iCx + mx;
 		for (int y = c.iCy - my; y <= c.iCy + my; y++)
 			{
@@ -737,7 +800,7 @@ void VpadArtPaint(const TVpadArt &aArt, const TVpadLayout &aLayout, const TVpadS
 		pct = 10;
 	if (pct > 100)
 		pct = 100;
-	const int op = (255 * pct + 50) / 100;
+	const int op = (256 * pct + 50) / 100;
 	for (int i = 0; i < aArt.iCount; i++)
 		{
 		const TVpadControl &c = aLayout.iC[i];
@@ -758,17 +821,17 @@ void VpadArtPaint(const TVpadArt &aArt, const TVpadLayout &aLayout, const TVpadS
 				if (!act)
 					continue;
 				white = 1;
-				o = 255;
+				o = 256;
 				}
 			else if (s < aArt.iLight[i])
 				{
 				white = 0;
-				o = act ? 255 : op;
+				o = act ? 256 : op;
 				}
 			else
 				{
 				white = act ? 0 : 1;
-				o = act ? 255 : op;
+				o = act ? 256 : op;
 				}
 			const int moved = sp.iPart == EVpadPartKnob;
 			dcSpan(aCanvas, sp, aArt.iAlpha + sp.iOff, moved ? kx : 0, moved ? ky : 0,

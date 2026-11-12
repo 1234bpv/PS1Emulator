@@ -1285,12 +1285,15 @@ static const TUint8 *voutSrcGeom(TInt &aStart, TInt &aW, TInt &aH,
 	return vbytes;
 	}
 
+extern "C" void voutSymbianTouchPath(TInt aGl);
+
 // One frame via GL: convert field to buffer (BGR555->RGB565), upload to
 // texture, draw letterboxed quad, swap. Scaling and present - on GPU.
 static void glPresentFrame(const TUint8 *vbytes, TInt startByte,
                            TInt sw, TInt sh, TBool field, TInt srcRows,
                            TBool aOwnFrame = ETrue)
 	{
+	voutSymbianTouchPath(1);
 	// Set here, not once at context creation: the MBX rasteriser shares this
 	// context and leaves its own projection and texture matrix behind.
 	glMatrixMode(GL_PROJECTION);
@@ -1872,9 +1875,10 @@ static void drawOverlay(TUint8 *aDst, TInt aStrideB, TInt aPixB, TInt aSW, TInt 
 	ovlText(aDst, aStrideB, aPixB, KOvlPad, KOvlPad + KOvlCellH, l2, white);
 	}
 
-// On-screen gamepad (touchpad_symbian.cpp): the panel is drawn over the frame and keeps
-// its own pixels on the bars tidy, so the bars need no clearing on its account.
+// On-screen gamepad (touchpad_symbian.cpp): the panel is drawn over the frame. The frame
+// reports its clears and its present path to the panel, so the bars are repainted after a clear.
 extern "C" void voutSymbianTouchSuspend(TInt aOn);
+extern "C" void voutSymbianTouchFrameCleared(void);
 extern "C" void voutSymbianTouchDraw(TUint8 *aDst, TInt aStrideB, TInt aPixB, TInt aSW, TInt aSH,
 	TInt aFx, TInt aFy, TInt aFw, TInt aFh);
 
@@ -1960,6 +1964,7 @@ static void blitCurrent()
 		return;
 		}
 
+	voutSymbianTouchPath(0);
 	// GL above presents through its own surface; only this path depends on DSA.
 	// A DSA that never started leaves the window path, which the player does see.
 	if (g_useDsa && g_dsa && !dsaCovered)
@@ -2011,6 +2016,7 @@ static void blitCurrent()
 	    directFb != g_blitDirect)
 		{
 		Mem::FillZ(dstB, dstStrideB * SH);
+		voutSymbianTouchFrameCleared();
 		g_blitOx = ox; g_blitOy = oy; g_blitW = dstW; g_blitH = dstH;
 		g_blitDirect = directFb;
 		}
