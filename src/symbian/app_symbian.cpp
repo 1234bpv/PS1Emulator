@@ -4393,7 +4393,7 @@ void CPs1Container::OpenCheats()
 
 	TBool loaded = EFalse;
 	TBool useActive = appCheatExists(KCheatActivePathDefault, NULL);
-	if (iStartedOnce && iGamePath.CompareF(iGameAtStart) != 0)
+	if (!iStartedOnce || iGamePath.CompareF(iGameAtStart) != 0)
 		useActive = EFalse;
 
 	if (useActive)
@@ -4478,7 +4478,7 @@ void CPs1Container::CheatsPointerL(const TPoint &aPos)
 
 	TInt row = (aPos.iY - body.iTl.iY) / lh;
 	TInt idx = first + row;
-	if (idx >= 0 && idx < n)
+	if (row >= 0 && row < rows && idx >= 0 && idx < n)
 		{
 		iCheatSel = idx;
 		int enabled = 0;
