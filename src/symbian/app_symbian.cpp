@@ -30,13 +30,18 @@
 #include <remconinterfaceselector.h>
 #include <remconcoreapitarget.h>
 #include <remconcoreapitargetobserver.h>
+#include <stdio.h>
+#include <string.h>
 
 #include "imgconv.h"
 #include "i18n.h"
+#include "cheatfile.h"
+#include "cheatfind.h"
 
 extern "C" {
 int  SaveState(const char *file);
 int  LoadState(const char *file);
+void LoadCheats(const char *filename);
 int  ps1GuiSetup(void);
 int  ps1GuiStep(void);
 void ps1GuiShutdown(void);
@@ -91,6 +96,49 @@ void voutSymbianTouchOff(void);
 void voutSymbianTouchOptions(TInt aSticks, TInt aAlphaPct);
 TBool voutSymbianTouchEvent(const TPointerEvent &aEvent);
 
+extern char CdromId[10];
+
+static const TInt KCheatBufCap = 262144;
+static char s_appCheatMenuBuf[KCheatBufCap];
+static char s_appCheatSrcBuf[KCheatBufCap];
+
+static int appCheatExists(const char *aPath, void *)
+	{
+	if (!aPath || !aPath[0]) return 0;
+	FILE *f = fopen(aPath, "rb");
+	if (!f) return 0;
+	fclose(f);
+	return 1;
+	}
+
+static int appCheatRead(const char *aPath, char *aBuf, int aCap, void *)
+	{
+	if (!aPath || !aBuf || aCap <= 0) return -1;
+	FILE *f = fopen(aPath, "rb");
+	if (!f) return -1;
+	size_t n = fread(aBuf, 1, (size_t)aCap, f);
+	fclose(f);
+	return (int)n;
+	}
+
+static int appCheatWrite(const char *aPath, const char *aBuf, int aLen, void *)
+	{
+	if (!aPath || (!aBuf && aLen > 0) || aLen < 0) return -1;
+	FILE *f = fopen(aPath, "wb");
+	if (!f) return -1;
+	size_t n = (aLen > 0) ? fwrite(aBuf, 1, (size_t)aLen, f) : 0;
+	fclose(f);
+	return (int)n;
+	}
+
+static const TCheatFileOps KAppCheatFileOps =
+	{
+	appCheatExists,
+	appCheatRead,
+	appCheatWrite,
+	0
+	};
+
 // Same UID as in stage1.mmp and stage1_reg.rss.
 static const TUid KUidPs1App = { 0xE0001002 };
 
@@ -110,12 +158,13 @@ enum TCfgItem
 	// frame and discards it, i.e. pays for the expensive part. Measured -4.3% vs
 	// -22.5% for ECfgGpuSkip. Kept as a command-line probe "showskip".
 	ECfgStart = 0,
-	ECfgHdrGame, ECfgGame, ECfgSaveState, ECfgLoadState, ECfgAdd,
+	ECfgHdrGame, ECfgGame, ECfgSaveState, ECfgLoadState, ECfgCheats, ECfgAdd,
 	ECfgHdrVideo, ECfgSmooth, ECfgFxaa, ECfgFps,
 	ECfgLight, ECfgBlend, ECfgDirty, ECfgDsa, ECfgGl, ECfgSwDraw, ECfgIlace, ECfgPixSkip, ECfgOrient,
 	ECfgHdrSpeed, ECfgGpuSkip, ECfgCpu, ECfgGteNf, ECfgCycle,
 	ECfgHdrSound, ECfgSound, ECfgWsola,
 	ECfgHdrInput, ECfgPreset, ECfgKeyBase, ECfgKeys,
+	ECfgTouchOn, ECfgSticks, ECfgPadAlpha,
 	ECfgTilt, ECfgTiltSide, ECfgTiltPitch, ECfgTiltDead, ECfgTiltSens, ECfgResetKeys,
 	ECfgHdrSystem, ECfgLang, ECfgBios, ECfgProfile, ECfgDebug, ECfgReset,
 	ECfgHelp, ECfgExit,
@@ -138,13 +187,14 @@ static const unsigned char KSecHdr[ESecCount] =
 static const unsigned char KItemSection[ECfgCount] =
 	{
 	ESecCount,
-	ESecGame, ESecGame, ESecGame, ESecGame, ESecGame,
+	ESecGame, ESecGame, ESecGame, ESecGame, ESecGame, ESecGame,
 	ESecVideo, ESecVideo, ESecVideo, ESecVideo, ESecVideo, ESecVideo, ESecVideo,
 	ESecVideo, ESecVideo, ESecVideo, ESecVideo, ESecVideo, ESecVideo,
 	ESecSpeed, ESecSpeed, ESecSpeed, ESecSpeed, ESecSpeed,
 	ESecSound, ESecSound, ESecSound,
-	ESecInput, ESecInput, ESecInput, ESecInput, ESecInput, ESecInput, ESecInput,
+	ESecInput, ESecInput, ESecInput, ESecInput,
 	ESecInput, ESecInput, ESecInput,
+	ESecInput, ESecInput, ESecInput, ESecInput, ESecInput, ESecInput,
 	ESecSystem, ESecSystem, ESecSystem, ESecSystem, ESecSystem, ESecSystem,
 	ESecCount, ESecCount
 	};
@@ -152,13 +202,14 @@ static const unsigned char KItemSection[ECfgCount] =
 static const TStrId KItemLabelStrId[ECfgCount] =
 	{
 	EStrItemStart,
-	EStrSecGame, EStrItemGame, EStrItemSaveState, EStrItemLoadState, EStrItemAdd,
+	EStrSecGame, EStrItemGame, EStrItemSaveState, EStrItemLoadState, EStrSecGame, EStrItemAdd,
 	EStrSecVideo, EStrItemSmooth, EStrItemFxaa, EStrItemFps,
 	EStrItemLight, EStrItemBlend, EStrItemDirty, EStrItemDsa, EStrItemGl,
 	EStrItemSwDraw, EStrItemIlace, EStrItemPixSkip, EStrSecVideo,
 	EStrSecSpeed, EStrItemGpuSkip, EStrItemCpu, EStrItemGteNf, EStrItemCycle,
 	EStrSecSound, EStrItemSound, EStrItemWsola,
 	EStrSecControls, EStrItemPreset, EStrItemKeyBase, EStrItemKeys,
+	EStrSecControls, EStrSecControls, EStrSecControls,
 	EStrItemTilt, EStrItemTiltSide, EStrItemTiltPitch, EStrItemTiltDead,
 	EStrItemTiltSens, EStrItemResetKeys,
 	EStrSecSystem, EStrItemLang, EStrItemBios, EStrItemProfile, EStrItemDebug,
@@ -172,12 +223,14 @@ static const TStrId KItemLabelStrId[ECfgCount] =
 static const char *const KCfgKey[ECfgCount] =
 	{
 	NULL,
-	NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, "smooth", "fxaa", "fps", "light", "blend", "dirty", "dsa", "gl",
 	"swdraw", "ilace", "pixskip", "orient",
 	NULL, "gpuskip", "cpu", "gtenf", "cycle",
 	NULL, "sound", "wsola",
-	NULL, NULL, NULL, NULL, "tilt", "tiltside", "tiltpitch", "tiltdead",
+	NULL, NULL, NULL, NULL,
+	"touchon", "sticks", "padalpha",
+	"tilt", "tiltside", "tiltpitch", "tiltdead",
 	"tiltsens", NULL,
 	NULL, "lang", NULL, "profile", "debug", NULL,
 	NULL, NULL
@@ -188,12 +241,14 @@ static const char *const KCfgKey[ECfgCount] =
 static const char *const KItemHelpId[ECfgCount] =
 	{
 	"start",
-	"sec.game", "game", "savestate", "loadstate", "add",
+	"sec.game", "game", "savestate", "loadstate", "cheats", "add",
 	"sec.video", "smooth", "fxaa", "fps", "light", "blend", "dirty",
 	"dsa", "gl", "swdraw", "ilace", "pixskip", "orient",
 	"sec.speed", "gpuskip", "cpu", "gtenf", "cycle",
 	"sec.sound", "sound", "wsola",
-	"sec.input", "preset", "keybase", "keys", "tilt", "tiltside",
+	"sec.input", "preset", "keybase", "keys",
+	"touchon", "sticks", "padalpha",
+	"tilt", "tiltside",
 	"tiltpitch", "tiltdead", "tiltsens", "resetkeys",
 	"sec.system", "lang", "bios", "profile", "debug", "reset",
 	"help", "exit"
@@ -218,7 +273,7 @@ static TBool isHeader(TInt aItem)
 static TBool isCommand(TInt aItem)
 	{
 	return aItem == ECfgStart || aItem == ECfgGame || aItem == ECfgSaveState ||
-		   aItem == ECfgLoadState || aItem == ECfgAdd || aItem == ECfgBios ||
+		   aItem == ECfgLoadState || aItem == ECfgCheats || aItem == ECfgAdd || aItem == ECfgBios ||
 		   aItem == ECfgKeys || aItem == ECfgResetKeys || aItem == ECfgReset ||
 		   aItem == ECfgHelp ||
 		   aItem == ECfgExit || isHeader(aItem);
@@ -408,6 +463,7 @@ public:
 	TInt iIntro;
 	TInt iTilt, iTiltSide, iTiltPitch, iTiltDead, iTiltSens;
 	TInt iOrient;
+	TInt iTouchOn, iSticks, iPadAlpha;
 	TInt iKeyScan[KPadMax], iKeyAlt[KPadMax], iKeyHold[KPadMax];
 	TInt iKeyScanL[KPadMax], iKeyAltL[KPadMax], iKeyHoldL[KPadMax];
 	TInt iKeyScanP[KPadMax], iKeyAltP[KPadMax], iKeyHoldP[KPadMax];
@@ -455,6 +511,9 @@ void TPs1Cfg::SetDefaults()
 	// Update() without a region (bitgdi did not know about our write, so it pushed nothing);
 	// with an explicit region the image is correct - verified on N95 8GB.
 	iDsa = 1;
+	iTouchOn = AknLayoutUtils::PenEnabled() ? 1 : 0;
+	iSticks = 0;
+	iPadAlpha = 100;
 	}
 
 // The CONTROLS section alone, for its own reset: keys, holds, the tilt zero key and tilt.
@@ -516,6 +575,10 @@ void TPs1Cfg::Clamp()
 	if (iTiltSens < 40 || iTiltSens > 300) iTiltSens = 100;
 	if (iOrient < 0 || iOrient > 1) iOrient = 0;
 	iDebug = iDebug ? 1 : 0;
+	iTouchOn = iTouchOn ? 1 : 0;
+	iSticks = iSticks ? 1 : 0;
+	if (iPadAlpha < 10) iPadAlpha = 10;
+	else if (iPadAlpha > 100) iPadAlpha = 100;
 	}
 
 TInt &TPs1Cfg::Value(TInt aItem)
@@ -548,6 +611,9 @@ TInt &TPs1Cfg::Value(TInt aItem)
 		case ECfgTiltPitch: return iTiltPitch;
 		case ECfgTiltDead:  return iTiltDead;
 		case ECfgTiltSens:  return iTiltSens;
+		case ECfgTouchOn:   return iTouchOn;
+		case ECfgSticks:    return iSticks;
+		case ECfgPadAlpha:  return iPadAlpha;
 		default:          return iDummy;
 		}
 	}
@@ -761,7 +827,8 @@ enum TMenuPage
 	EPageProgress,
 	EPageError,
 	EPageHelp,        // topic list and topic text, from the help files on the card
-	EPageSetup        // first-run checklist
+	EPageSetup,       // first-run checklist
+	EPageCheats       // cheat-codes menu
 	};
 
 // What to show in the browser. The browser is one, but the consumers differ:
@@ -848,6 +915,7 @@ private:
 	void DrawProgress(CWindowGc &gc, const TRect &aBody) const;
 	void DrawHelp(CWindowGc &gc, const TRect &aBody) const;
 	void DrawSetup(CWindowGc &gc, const TRect &aBody) const;
+	void DrawCheats(CWindowGc &gc, const TRect &aBody) const;
 	void DrawRow(CWindowGc &gc, const TRect &aBody, TInt aY, TInt aLh,
 	             const TDesC &aLeft, const TDesC &aRight, TBool aSel,
 	             TInt aIndent = 0, TInt aStyle = ERowNormal) const;
@@ -877,6 +945,10 @@ private:
 	TKeyResponse ErrorKeyL(TInt aScan);
 	TKeyResponse HelpKeyL(TInt aScan);
 	TKeyResponse SetupKeyL(TInt aScan);
+	TKeyResponse CheatsKeyL(TInt aScan);
+	void CheatsPointerL(const TPoint &aPos);
+	void OpenCheats();
+	void LeaveCheats();
 	void OpenMenu();
 	void CloseMenu();
 	void DoCloseMenu(TBool aWithRestart);
@@ -998,6 +1070,10 @@ private:
 	// keyprobe only: how many arriving keys have already been logged, so a held
 	// side key cannot flood the log.
 	TInt iKeyProbeSeen;
+	TInt iCheatCount;
+	TInt iCheatSel;
+	TInt iCheatLen;
+	char *iCheatBuf;
 	TPs1Cfg iCfg;
 	TInt32 iSideKeyCap[8];
 	CPs1RemCon *iRemCon;      // RemCon target for the media keys; NULL when it did not open
@@ -1080,6 +1156,10 @@ void CPs1Container::ConstructL(const TRect &aRect)
 	iHelpTopic = -1;
 	iSetupBack = EPageMain;
 	iStatusMsg.Zero();
+	iCheatCount = 0;
+	iCheatSel = 0;
+	iCheatLen = 0;
+	iCheatBuf = s_appCheatMenuBuf;
 	for (TInt i = 0; i < 8; i++)
 		iSideKeyCap[i] = 0;
 
@@ -1132,23 +1212,32 @@ void CPs1Container::ConstructL(const TRect &aRect)
 	iCliMode = (cl.Length() != 0);
 	// Command-line runs replay recorded input and are measured frame by frame; the panel
 	// would add drawing to every frame of them.
-	if (iCliMode && cl.FindF(_L("touchon")) == KErrNotFound)
-		voutSymbianTouchOff();
-	// Layout options of the on-screen gamepad, read next to touchon: "sticks" selects the
-	// two-stick layout, "padalpha<N>" the opacity of the untouched panel in percent (default 100).
-	TInt padAlpha = 100;
-	const TInt padAt = cl.FindF(_L("padalpha"));
-	if (padAt != KErrNotFound)
+	if (iCliMode)
 		{
-		const TPtrC digits = cl.Mid(padAt + 8);
-		TLex lex(digits);
-		TInt value = 0;
-		if (lex.Val(value) == KErrNone)
-			padAlpha = value;
-		else
-			ps1LogFmt("touch", "padalpha is not a number, the default 100 is kept");
+		if (cl.FindF(_L("touchon")) == KErrNotFound)
+			voutSymbianTouchOff();
+		// Layout options of the on-screen gamepad, read next to touchon: "sticks" selects the
+		// two-stick layout, "padalpha<N>" the opacity of the untouched panel in percent (default 100).
+		TInt padAlpha = 100;
+		const TInt padAt = cl.FindF(_L("padalpha"));
+		if (padAt != KErrNotFound)
+			{
+			const TPtrC digits = cl.Mid(padAt + 8);
+			TLex lex(digits);
+			TInt value = 0;
+			if (lex.Val(value) == KErrNone)
+				padAlpha = value;
+			else
+				ps1LogFmt("touch", "padalpha is not a number, the default 100 is kept");
+			}
+		voutSymbianTouchOptions(cl.FindF(_L("sticks")) != KErrNotFound, padAlpha);
 		}
-	voutSymbianTouchOptions(cl.FindF(_L("sticks")) != KErrNotFound, padAlpha);
+	else
+		{
+		voutSymbianTouchOptions(iCfg.iSticks, iCfg.iPadAlpha);
+		if (!iCfg.iTouchOn)
+			voutSymbianTouchOff();
+		}
 	// A command line without img would otherwise fall back to the built-in
 	// gt.bin, so a game named in ps1_settings.txt - the only way to name one
 	// whose file name holds a space - never reached the core.
@@ -1223,6 +1312,8 @@ TBool CPs1Container::ItemVisible(TInt aItem) const
 	// Portrait mode setting is for non-touch keypad handsets; hidden on touchscreens.
 	if (aItem == ECfgOrient)
 		return !AknLayoutUtils::PenEnabled();
+	if (aItem == ECfgTouchOn || aItem == ECfgSticks || aItem == ECfgPadAlpha)
+		return AknLayoutUtils::PenEnabled();
 	return ETrue;
 	}
 
@@ -2091,6 +2182,34 @@ void CPs1Container::ItemLabel(TInt aItem, TDes &aOut) const
 		          _L("Orientation"));
 		return;
 		}
+	if (aItem == ECfgCheats)
+		{
+		aOut.Copy(iCfg.iLang == ELangIdUkrainian ? _L("Чит-коди...") :
+		          iCfg.iLang == ELangIdRussian ? _L("Чит-коды...") :
+		          _L("Cheats..."));
+		return;
+		}
+	if (aItem == ECfgTouchOn)
+		{
+		aOut.Copy(iCfg.iLang == ELangIdUkrainian ? _L("Сенсорна панель") :
+		          iCfg.iLang == ELangIdRussian ? _L("Сенсорная панель") :
+		          _L("Touch panel"));
+		return;
+		}
+	if (aItem == ECfgSticks)
+		{
+		aOut.Copy(iCfg.iLang == ELangIdUkrainian ? _L("Тип керування") :
+		          iCfg.iLang == ELangIdRussian ? _L("Тип управления") :
+		          _L("Control type"));
+		return;
+		}
+	if (aItem == ECfgPadAlpha)
+		{
+		aOut.Copy(iCfg.iLang == ELangIdUkrainian ? _L("Прозорість кнопок") :
+		          iCfg.iLang == ELangIdRussian ? _L("Прозрачность кнопок") :
+		          _L("Button opacity"));
+		return;
+		}
 	if (isHeader(aItem))
 		{
 		aOut.Copy(iOpenSec == KItemSection[aItem] ? _L("- ") : _L("+ "));
@@ -2212,6 +2331,26 @@ void CPs1Container::ItemValue(TInt aItem, TDes &aOut) const
 			break;
 		case ECfgTiltSens:
 			aOut.Format(_L("%d%%"), c.iTiltSens);
+			break;
+
+		case ECfgCheats:
+			aOut.Copy(Tr(EStrValPressOk));
+			break;
+		case ECfgTouchOn:
+			aOut.Copy(Tr(c.iTouchOn ? EStrValOn : EStrValOff));
+			break;
+		case ECfgSticks:
+			if (c.iSticks)
+				aOut.Copy(iCfg.iLang == ELangIdUkrainian ? _L("Зі стіками") :
+				          iCfg.iLang == ELangIdRussian ? _L("Со стиками") :
+				          _L("With sticks"));
+			else
+				aOut.Copy(iCfg.iLang == ELangIdUkrainian ? _L("Хрестовина") :
+				          iCfg.iLang == ELangIdRussian ? _L("Крестовина") :
+				          _L("D-pad"));
+			break;
+		case ECfgPadAlpha:
+			aOut.Format(_L("%d%%"), c.iPadAlpha);
 			break;
 
 		case ECfgKeys:
@@ -2767,6 +2906,58 @@ void CPs1Container::DrawSetup(CWindowGc &gc, const TRect &aBody) const
 		}
 	}
 
+void CPs1Container::DrawCheats(CWindowGc &gc, const TRect &aBody) const
+	{
+	const CFont *font = iCoeEnv->NormalFont();
+	const TInt lh = font->HeightInPixels() + KRowGap;
+	TInt rows = aBody.Height() / lh;
+	if (rows < 1) rows = 1;
+	const TInt n = iCheatCount;
+	TInt first = iCheatSel - rows / 2;
+	if (first > n - rows) first = n - rows;
+	if (first < 0) first = 0;
+
+	TInt y = aBody.iTl.iY + font->AscentInPixels();
+	if (!n)
+		{
+		gc.SetPenColor(TRgb(0x90, 0x90, 0x98));
+		TPtrC msg = (iCfg.iLang == ELangIdUkrainian ? _L("Читів для цієї гри не знайдено") :
+		             iCfg.iLang == ELangIdRussian ? _L("Читов для этой игры не найдено") :
+		             _L("No cheats found for this game"));
+		gc.DrawText(msg, TPoint(aBody.iTl.iX + 10, y));
+		return;
+		}
+
+	for (TInt i = first; i < first + rows && i < n; i++)
+		{
+		char nameBuf[KCheatNameMax + 1];
+		int enabled = 0;
+		int codes = 0;
+		nameBuf[0] = 0;
+		CheatInfo(iCheatBuf, iCheatLen, i, nameBuf, sizeof(nameBuf), &enabled, &codes);
+		TBuf<128> label;
+		label.Copy(enabled ? _L("[x] ") : _L("[ ] "));
+		TPtrC8 n8((const TUint8 *)nameBuf);
+		TBuf<64> uName;
+		CnvUtfConverter::ConvertToUnicodeFromUtf8(uName, n8);
+		if (!uName.Length())
+			uName.Copy(n8);
+		label.Append(uName);
+
+		const TInt avail = aBody.Width() - 24;
+		if (font->TextWidthInPixels(label) > avail)
+			{
+			const TInt dotsW = font->TextWidthInPixels(_L("..."));
+			TInt fit = font->TextCount(label, avail - dotsW);
+			label.SetLength(fit);
+			label.Append(_L("..."));
+			}
+
+		DrawRow(gc, aBody, y, lh, label, KNullDesC, i == iCheatSel);
+		y += lh;
+		}
+	}
+
 // In menu mode we draw ourselves; in-game it is empty: the frame is blitted by the
 // emulator outside the BeginRedraw/EndRedraw pair, and the framework has no current frame.
 void CPs1Container::Draw(const TRect & /*aRect*/) const
@@ -2839,6 +3030,17 @@ void CPs1Container::Draw(const TRect & /*aRect*/) const
 		{
 		const TRect body = DrawChrome(gc, Tr(EStrTitleSetup), Tr(EStrHintSetup));
 		DrawSetup(gc, body);
+		}
+	else if (iPage == EPageCheats)
+		{
+		TPtrC title = (iCfg.iLang == ELangIdUkrainian ? _L("Чит-коди") :
+		               iCfg.iLang == ELangIdRussian ? _L("Чит-коды") :
+		               _L("Cheats"));
+		TPtrC hint = (iCfg.iLang == ELangIdUkrainian ? _L("OK: перемкнути • Назад: вихід") :
+		              iCfg.iLang == ELangIdRussian ? _L("OK: переключить • Назад: выход") :
+		              _L("OK: toggle • Back: exit"));
+		const TRect body = DrawChrome(gc, title, hint);
+		DrawCheats(gc, body);
 		}
 	else
 		{
@@ -3205,6 +3407,13 @@ void CPs1Container::DoCloseMenu(TBool aWithRestart)
 		iCfg.iSwDraw);
 	ps1SndResetRate();
 	ps1SetDebugLog(iCfg.iDebug);
+	if (AknLayoutUtils::PenEnabled())
+		{
+		if (!iCfg.iTouchOn)
+			voutSymbianTouchOff();
+		else
+			voutSymbianTouchOptions(iCfg.iSticks, iCfg.iPadAlpha);
+		}
 	iPage = EPageNone;
 	voutSymbianSuspend(0);
 	ps1Log("menu", "close");
@@ -3218,6 +3427,11 @@ void CPs1Container::FocusLost()
 
 void CPs1Container::HandlePointerEventL(const TPointerEvent &aPointerEvent)
 	{
+	if (iPage == EPageCheats && aPointerEvent.iType == TPointerEvent::EButton1Up)
+		{
+		CheatsPointerL(aPointerEvent.iPosition);
+		return;
+		}
 	// The menu pages have no pointer handling yet; only the game takes taps.
 	if (MenuActive())
 		return;
@@ -3289,6 +3503,9 @@ void CPs1Container::ApplyAndStart()
 	voutSymbianSetTiltMap(iCfg.iTiltSide, iCfg.iTiltPitch, iCfg.iTiltDead, iCfg.iTiltSens);
 	// No sensor means the switch would sit on "on" and do nothing.
 	if (iCfg.iTilt && !voutSymbianTiltActive()) iCfg.iTilt = 0;
+	voutSymbianTouchOptions(iCfg.iSticks, iCfg.iPadAlpha);
+	if (!iCfg.iTouchOn)
+		voutSymbianTouchOff();
 	TBuf8<KMaxFileName + 1> path8;
 	path8.Copy(iGamePath);
 	TBuf8<KMaxFileName + 1> bios8;
@@ -3389,6 +3606,26 @@ void CPs1Container::StepValue(TInt aItem, TInt d)
 	else if (aItem == ECfgOrient)
 		{
 		SetOrient(!iCfg.iOrient);
+		}
+	else if (aItem == ECfgPadAlpha)
+		{
+		v += d * 10;
+		if (v < 10) v = 100;
+		if (v > 100) v = 10;
+		voutSymbianTouchOptions(iCfg.iSticks, v);
+		}
+	else if (aItem == ECfgSticks)
+		{
+		v = v ? 0 : 1;
+		voutSymbianTouchOptions(v, iCfg.iPadAlpha);
+		}
+	else if (aItem == ECfgTouchOn)
+		{
+		v = v ? 0 : 1;
+		if (!v)
+			voutSymbianTouchOff();
+		else
+			voutSymbianTouchOptions(iCfg.iSticks, iCfg.iPadAlpha);
 		}
 	else
 		v = v ? 0 : 1;
@@ -3529,6 +3766,9 @@ TKeyResponse CPs1Container::MainKeyL(TInt aScan)
 				break;
 			case ECfgBios:
 				OpenBiosBrowse();
+				break;
+			case ECfgCheats:
+				OpenCheats();
 				break;
 			case ECfgKeys:
 				iKeySel = 0;
@@ -4140,6 +4380,160 @@ TKeyResponse CPs1Container::SetupKeyL(TInt aScan)
 	return EKeyWasConsumed;
 	}
 
+void CPs1Container::OpenCheats()
+	{
+	iCheatCount = 0;
+	iCheatSel = 0;
+	iCheatLen = 0;
+	iBackPage = EPageMain;
+	iPage = EPageCheats;
+
+	if (!iCheatBuf)
+		iCheatBuf = s_appCheatMenuBuf;
+
+	TBool loaded = EFalse;
+	TBool useActive = appCheatExists(KCheatActivePathDefault, NULL);
+	if (iStartedOnce && iGamePath.CompareF(iGameAtStart) != 0)
+		useActive = EFalse;
+
+	if (useActive)
+		{
+		int n = appCheatRead(KCheatActivePathDefault, iCheatBuf, KCheatBufCap, NULL);
+		if (n > 0)
+			{
+			int cnt = CheatCount(iCheatBuf, n);
+			if (cnt > 0)
+				{
+				iCheatLen = n;
+				iCheatCount = cnt;
+				loaded = ETrue;
+				}
+			}
+		}
+
+	if (!loaded && iGamePath.Length())
+		{
+		TBuf8<KMaxFileName + 1> path8;
+		path8.Copy(iGamePath);
+		TCheatFindResult res;
+		const char *gamePath = (const char *)path8.PtrZ();
+		const char *serial = CdromId;
+		if (CheatFindFile(gamePath, serial, KCheatDirDefault, &KAppCheatFileOps,
+				s_appCheatSrcBuf, sizeof(s_appCheatSrcBuf), &res) > 0)
+			{
+			int srcLen = appCheatRead(res.iPath, s_appCheatSrcBuf, sizeof(s_appCheatSrcBuf), NULL);
+			if (srcLen > 0)
+				{
+				const char *cwSerial = (res.iFormat == ECheatFmtCw) ? serial : NULL;
+				int cwSerialLen = cwSerial ? strlen(cwSerial) : 0;
+				TCheatStats stats;
+				int outLen = CheatConvert(s_appCheatSrcBuf, srcLen, res.iFormat,
+					cwSerial, cwSerialLen, iCheatBuf, KCheatBufCap, &stats);
+				if (outLen > 0)
+					{
+					iCheatLen = outLen;
+					iCheatCount = CheatCount(iCheatBuf, iCheatLen);
+					}
+				}
+			}
+		}
+
+	DrawNow();
+	}
+
+void CPs1Container::LeaveCheats()
+	{
+	if (iCheatCount > 0 && iCheatLen > 0 && iCheatBuf)
+		{
+		appCheatWrite(KCheatActivePathDefault, iCheatBuf, iCheatLen, NULL);
+		LoadCheats(KCheatActivePathDefault);
+		}
+	iPage = iBackPage;
+	if (iPage == EPageNone)
+		iPage = EPageMain;
+	DrawNow();
+	}
+
+void CPs1Container::CheatsPointerL(const TPoint &aPos)
+	{
+	const TRect body = BodyRect();
+	if (aPos.iY < body.iTl.iY || aPos.iY > body.iBr.iY)
+		{
+		LeaveCheats();
+		return;
+		}
+	if (!iCheatCount)
+		{
+		LeaveCheats();
+		return;
+		}
+	const CFont *font = iCoeEnv->NormalFont();
+	const TInt lh = font->HeightInPixels() + KRowGap;
+	TInt rows = body.Height() / lh;
+	if (rows < 1) rows = 1;
+	const TInt n = iCheatCount;
+	TInt first = iCheatSel - rows / 2;
+	if (first > n - rows) first = n - rows;
+	if (first < 0) first = 0;
+
+	TInt row = (aPos.iY - body.iTl.iY) / lh;
+	TInt idx = first + row;
+	if (idx >= 0 && idx < n)
+		{
+		iCheatSel = idx;
+		int enabled = 0;
+		if (CheatInfo(iCheatBuf, iCheatLen, iCheatSel, NULL, 0, &enabled, NULL) >= 0)
+			{
+			int newLen = CheatSetEnabled(iCheatBuf, iCheatLen, KCheatBufCap, iCheatSel, !enabled);
+			if (newLen > 0)
+				iCheatLen = newLen;
+			}
+		DrawNow();
+		}
+	}
+
+TKeyResponse CPs1Container::CheatsKeyL(TInt aScan)
+	{
+	if (aScan == EStdKeyDevice0 || aScan == EStdKeyDevice1 ||
+	    aScan == EStdKeyBackspace || aScan == EStdKeyEscape)
+		{
+		LeaveCheats();
+		return EKeyWasConsumed;
+		}
+
+	if (aScan == EStdKeyUpArrow && iCheatCount > 0)
+		{
+		iCheatSel = (iCheatSel + iCheatCount - 1) % iCheatCount;
+		}
+	else if (aScan == EStdKeyDownArrow && iCheatCount > 0)
+		{
+		iCheatSel = (iCheatSel + 1) % iCheatCount;
+		}
+	else if (aScan == EStdKeyLeftArrow && iCheatCount > 0)
+		{
+		iCheatSel -= 5;
+		if (iCheatSel < 0) iCheatSel = 0;
+		}
+	else if (aScan == EStdKeyRightArrow && iCheatCount > 0)
+		{
+		iCheatSel += 5;
+		if (iCheatSel >= iCheatCount) iCheatSel = iCheatCount - 1;
+		}
+	else if ((aScan == EStdKeyDevice3 || aScan == EStdKeyEnter || aScan == EStdKeyNkpEnter) && iCheatCount > 0)
+		{
+		int enabled = 0;
+		if (CheatInfo(iCheatBuf, iCheatLen, iCheatSel, NULL, 0, &enabled, NULL) >= 0)
+			{
+			int newLen = CheatSetEnabled(iCheatBuf, iCheatLen, KCheatBufCap, iCheatSel, !enabled);
+			if (newLen > 0)
+				iCheatLen = newLen;
+			}
+		}
+
+	DrawNow();
+	return EKeyWasConsumed;
+	}
+
 // A leave from here costs ALL window events: CONE re-arms the request for the next event
 // at the end of its RunL, and if control bypasses that line, keys and focus never arrive
 // again even though the application keeps counting frames. That is exactly how the game
@@ -4195,6 +4589,7 @@ TKeyResponse CPs1Container::DispatchKeyL(const TKeyEvent &aKeyEvent, TEventCode 
 		if (iPage == EPageError)    return ErrorKeyL(sc);
 		if (iPage == EPageHelp)     return HelpKeyL(sc);
 		if (iPage == EPageSetup)    return SetupKeyL(sc);
+		if (iPage == EPageCheats)   return CheatsKeyL(sc);
 		return MainKeyL(sc);
 		}
 
