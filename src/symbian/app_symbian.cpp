@@ -4498,9 +4498,22 @@ TInt CPs1AppUi::Tick()
 				iContainer->ShowError();
 			}
 		}
-	else if (!ps1GuiStep())
+	else
 		{
-		more = EFalse;
+		// Hypothesis 5.1: execute frames in a loop without returning to active scheduler
+		// while there are no completed asynchronous requests pending on the thread.
+		RThread thisThread;
+		int frameBurst = 0;
+		while (more)
+			{
+			if (!ps1GuiStep())
+				{
+				more = EFalse;
+				break;
+				}
+			if (++frameBurst >= 4 || thisThread.RequestCount() > 0)
+				break;
+			}
 		}
 
 	iInTick = EFalse;
