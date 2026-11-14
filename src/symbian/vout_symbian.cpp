@@ -1879,6 +1879,7 @@ static void drawOverlay(TUint8 *aDst, TInt aStrideB, TInt aPixB, TInt aSW, TInt 
 // reports its clears and its present path to the panel, so the bars are repainted after a clear.
 extern "C" void voutSymbianTouchSuspend(TInt aOn);
 extern "C" void voutSymbianTouchFrameCleared(void);
+extern "C" TInt voutSymbianTouchChanged(void);
 extern "C" void voutSymbianTouchDraw(TUint8 *aDst, TInt aStrideB, TInt aPixB, TInt aSW, TInt aSH,
 	TInt aFx, TInt aFy, TInt aFw, TInt aFh);
 
@@ -2433,12 +2434,16 @@ extern "C" void voutSymbianPresent(void)
 	vout_update(&gpu, gpu.screen.src_x, gpu.screen.src_y);
 	g_voutSelfCall = 0;
 
+	// A tap or a stick move changes the panel even when the game has nothing new: the frame is shown
+	// then, since the panel is painted only with a frame.
+	const TBool touchNow = voutSymbianTouchChanged() != 0;
+
 	// Skip gpulib rasterization: present ONLY frames it actually
 	// rendered. Indicated by latch set by its own vout_update call
 	// (GPUupdateLace exits early for skipped frames, gpu.c:1181-1185). Reasons (2)
 	// and (3) below do not apply here: game flips buffers for unrendered frames too, so
 	// they would display an empty buffer - that was the black screen with frameskip.
-	if (gpu.frameskip.set && !g_voutPending)
+	if (gpu.frameskip.set && !g_voutPending && !touchNow)
 		return;
 
 	if (g_dirtyOnly)
@@ -2455,7 +2460,7 @@ extern "C" void voutSymbianPresent(void)
 		const TBool areaChanged = (g_vout.offset != g_lastShownOffset ||
 		                           g_vout.w != g_lastShownW ||
 		                           g_vout.h != g_lastShownH);
-		if (!g_voutPending && !areaChanged && ++g_voutStale < 10)
+		if (!g_voutPending && !areaChanged && !touchNow && ++g_voutStale < 10)
 			return;
 		}
 	g_lastShownOffset = g_vout.offset;

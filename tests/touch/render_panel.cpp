@@ -200,35 +200,38 @@ static int checkGeometry(const TVpadLayout &aLayout, const TScreen &aSc, const c
 	return bad;
 	}
 
-// Time and work of one frame at rest: the game picture only (bars not painted), opacity 100,
-// stripes behind. Best of three runs of 1000 frames. The work is the number of coverage
-// bytes of the ink passes that land on the game picture: full (255) and partial (1..254).
+// Time and work of one frame at rest: the game picture only (bars not painted), stripes behind.
+// Best of three runs of 1000 frames. The work is counted per pixel of the ink passes that land
+// on the game picture, at each opacity: direct (coverage at full ink, written without a mix) and
+// mix (any other coverage, one weight for each pixel).
 static void benchLayout(const char *aScreen, const char *aLayoutName, const TVpadLayout &aLayout,
 	const TVpadArt &aArt, const TVpadCanvas &aCanvas16, const TVpadCanvas &aCanvas32)
 	{
-	int full = 0, part = 0;
-	for (int i = 0; i < aArt.iCount; i++)
-		for (int s = aArt.iDark[i]; s < aArt.iFirst[i + 1]; s++)
-			{
-			const TVpadSpan &sp = aArt.iSpan[s];
-			if (sp.iY < aCanvas16.iPicY || sp.iY >= aCanvas16.iPicY + aCanvas16.iPicH)
-				continue;
-			for (int k = 0; k < sp.iLen; k++)
-				{
-				const int x = sp.iX + k;
-				if (x < aCanvas16.iPicX || x >= aCanvas16.iPicX + aCanvas16.iPicW)
-					continue;
-				const unsigned char a = aArt.iAlpha[sp.iOff + k];
-				if (a == 255)
-					full++;
-				else if (a)
-					part++;
-				}
-			}
 	TVpadState state;
 	VpadReset(state);
 	// Opacity 40 is the padalpha case, where the coverage is scaled per pixel.
 	for (int pct = 100; pct >= 40; pct -= 60)
+		{
+		const int op = (256 * pct + 50) / 100;
+		int direct = 0, mix = 0;
+		for (int i = 0; i < aArt.iCount; i++)
+			for (int s = aArt.iDark[i]; s < aArt.iFirst[i + 1]; s++)
+				{
+				const TVpadSpan &sp = aArt.iSpan[s];
+				if (sp.iY < aCanvas16.iPicY || sp.iY >= aCanvas16.iPicY + aCanvas16.iPicH)
+					continue;
+				for (int k = 0; k < sp.iLen; k++)
+					{
+					const int x = sp.iX + k;
+					if (x < aCanvas16.iPicX || x >= aCanvas16.iPicX + aCanvas16.iPicW)
+						continue;
+					const int a = (aArt.iAlpha[sp.iOff + k] * op) >> 8;
+					if (a == 255)
+						direct++;
+					else if (a)
+						mix++;
+					}
+				}
 		for (int bpp = 2; bpp <= 4; bpp += 2)
 			{
 			const TVpadCanvas &c = bpp == 4 ? aCanvas32 : aCanvas16;
@@ -242,11 +245,11 @@ static void benchLayout(const char *aScreen, const char *aLayoutName, const TVpa
 				if (us < best)
 					best = us;
 				}
-			printf("bench %s %s bpp%d op%d frame=%.1f us full=%d partial=%d\n", aScreen, aLayoutName, bpp * 8,
-				pct, best, full, part);
+			printf("bench %s %s bpp%d op%d frame=%.1f us direct=%d mix=%d\n", aScreen, aLayoutName, bpp * 8,
+				pct, best, direct, mix);
 			}
+		}
 	}
-
 // Buffer sizes of the art for screens other than the rendered ones: the measure the glue
 // grows its buffers by, for both layouts.
 static void benchSizes(void)

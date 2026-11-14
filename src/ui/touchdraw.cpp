@@ -278,11 +278,11 @@ static int dcKnobTravel(const TVpadControl &aC)
 	return aC.iRx - aC.iRx / 3 - 3;
 	}
 
-// Scale of the stroke font in 1/16 px per unit for a label: the cap height is three quarters
-// of the box height, and the label is at most nine tenths of the box width.
+// Scale of the stroke font in 1/16 px per unit for a label: the cap height is half the box
+// height (iRy is the half height), and the label is at most nine tenths of the box width.
 static int dcLabelCap(const TVpadControl &aC)
 	{
-	return (aC.iRy * 3 / 2) * 16 / 6;
+	return aC.iRy * 16 / 6;
 	}
 
 static int dcLabelFit(const TVpadControl &aC, int aN)
@@ -592,25 +592,42 @@ int VpadArtMeasure(const TVpadLayout &aLayout, int aUmPerPx, int &aSpans, int &a
 	return 1;
 	}
 
-// Pixel of RGB565 mixed with white (aWhite) or black by coverage aA, 0..255.
-static inline unsigned dcMix16(unsigned aV, int aWhite, int aA)
+// Weight of the ink in 1/32, from coverage aA of 0..255. The 8-bit mixes that the 16-bit path
+// replaces weigh the ink by (aA + 1) / 256 for white and by aA / 256 for black; rounding to the
+// nearest 1/32 keeps one 16-bit mix within one step of a 6-bit channel of theirs.
+static unsigned dcWeight32(int aA, int aWhite)
 	{
-	unsigned r = aV >> 11, g = (aV >> 5) & 63, b = aV & 31;
-	if (aWhite)
-		{
-		r += ((31 - r) * (aA + 1)) >> 8;
-		g += ((63 - g) * (aA + 1)) >> 8;
-		b += ((31 - b) * (aA + 1)) >> 8;
-		}
-	else
-		{
-		r = (r * (256 - aA)) >> 8;
-		g = (g * (256 - aA)) >> 8;
-		b = (b * (256 - aA)) >> 8;
-		}
-	return (r << 11) | (g << 5) | b;
+	return (unsigned)((aA + (aWhite ? 5 : 4)) >> 3);
 	}
 
+// Red, green and blue of a 16-bit pixel side by side in one word: blue at bits 0-4, red at
+// 11-15, green at 21-26. The fields are spaced so that one mix, a multiplication by a weight of
+// at most 32 and one shift, cannot carry from one field into the next.
+enum { KDrawPackMask = 0x07E0F81F };
+
+static inline unsigned dcPack16(unsigned aV)
+	{
+	return (aV | (aV << 16)) & KDrawPackMask;
+	}
+
+static inline unsigned short dcUnpack16(unsigned aW)
+	{
+	return (unsigned short)((aW & 0xF81F) | ((aW >> 16) & 0x07E0));
+	}
+
+// Mixes a 16-bit pixel with the ink in one word: aKeep is 32 minus the weight of the ink and
+// aInkW the packed ink times the weight; the shift takes the result back from 1/32 units.
+static inline unsigned short dcMixPacked16(unsigned short aV, unsigned aKeep, unsigned aInkW)
+	{
+	return dcUnpack16(((dcPack16(aV) * aKeep + aInkW) >> 5) & KDrawPackMask);
+	}
+
+// Pixel of RGB565 mixed with white (aWhite) or black by coverage aA, 0..255.
+static inline unsigned short dcMixCov16(unsigned short aV, int aA, int aWhite)
+	{
+	const unsigned k = dcWeight32(aA, aWhite);
+	return dcMixPacked16(aV, 32 - k, (aWhite ? (unsigned)KDrawPackMask : 0u) * k);
+	}
 // Pixel of XRGB8888 mixed the same way, channel by channel.
 static inline unsigned dcMix32(unsigned aV, int aWhite, int aA)
 	{
@@ -656,7 +673,7 @@ static void dcRun(const TVpadCanvas &aC, int aY, int aX0, int aX1, const unsigne
 			if (a == 255)
 				*p = (unsigned short)(aWhite ? 0xFFFF : 0);
 			else if (a)
-				*p = (unsigned short)dcMix16(*p, aWhite, a);
+				*p = dcMixCov16(*p, a, aWhite);
 			}
 		}
 	}

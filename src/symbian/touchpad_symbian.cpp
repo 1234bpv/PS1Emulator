@@ -347,6 +347,16 @@ static TUint tpAxes(void)
 		((TUint)g_state.iRightY << 24);
 	}
 
+// Whether the panel now shows something other than what it last drew: a tap or a stick move.
+// The game may have nothing new to show, so such a change has to show the frame itself, or the
+// panel waits for the stale ceiling of the present. Nothing changes the panel while it is off,
+// hidden by the menu or on the GL ES path, which draws no panel, so those return 0.
+extern "C" TInt voutSymbianTouchChanged(void)
+	{
+	if (!g_touchOn || g_touchHidden || g_touchGl)
+		return 0;
+	return tpKey() != g_key || tpAxes() != g_axes;
+	}
 // Draws the panel into the frame after conversion and overlay, before the frame is shown.
 // aDst is the frame bitmap of aSW x aSH pixels, aPixB its bytes per pixel (2 or 4); the
 // game picture occupies aFw x aFh pixels at (aFx, aFy), the rest is bars. The picture is
