@@ -723,6 +723,46 @@ static inline TUint32 Bgr555ToXrgb8888(TUint32 aPix)
 	                   |  ((b << 3) | (b >> 2));
 	}
 
+// 1D downscale smoothing for portrait mode in 32-bit screen buffer (XRGB8888).
+// Same "a, (b+c)/2, d" sampling pattern as blitRow320to240_565: S0, Avg(S1, S2), S3, S4, Avg(S5, S6), S7.
+static void __attribute__((__noinline__))
+blitRow320to240_8888(TUint32 *aDst, const TUint16 *aSrc)
+	{
+	TUint32 cAvg = 0x7bdeu;
+	__asm__ __volatile__ ("" : "+r"(cAvg));
+	const TUint32 *s = (const TUint32 *)aSrc;
+	TUint32 *d = aDst;
+	TInt blocks = 40;
+	do
+		{
+		const TUint32 w0 = s[0];
+		const TUint32 w1 = s[1];
+		const TUint32 w2 = s[2];
+		const TUint32 w3 = s[3];
+		s += 4;
+
+		const TUint32 s0 = w0 & 0x7fffu;
+		const TUint32 s1 = (w0 >> 16) & 0x7fffu;
+		const TUint32 s2 = w1 & 0x7fffu;
+		const TUint32 s3 = (w1 >> 16) & 0x7fffu;
+		const TUint32 m0 = (s1 & s2) + (((s1 ^ s2) & cAvg) >> 1);
+
+		const TUint32 s4 = w2 & 0x7fffu;
+		const TUint32 s5 = (w2 >> 16) & 0x7fffu;
+		const TUint32 s6 = w3 & 0x7fffu;
+		const TUint32 s7 = (w3 >> 16) & 0x7fffu;
+		const TUint32 m1 = (s5 & s6) + (((s5 ^ s6) & cAvg) >> 1);
+
+		d[0] = Bgr555ToXrgb8888(s0);
+		d[1] = Bgr555ToXrgb8888(m0);
+		d[2] = Bgr555ToXrgb8888(s3);
+		d[3] = Bgr555ToXrgb8888(s4);
+		d[4] = Bgr555ToXrgb8888(m1);
+		d[5] = Bgr555ToXrgb8888(s7);
+		d += 6;
+		} while (--blocks);
+	}
+
 // Probe: take the portable loop instead of the hand-written one, so the two can
 // be compared on the device within one build.
 static TBool g_blitC;
@@ -2202,6 +2242,12 @@ static void blitCurrent()
 				TUint32 *d32 = (TUint32 *)drow;
 				if (sxStep == 0x10000u)
 					{ g_rowPlain++; blitRow8888(d32, srow, dstW); }
+				else if (g_smoothDown && sw == 320 && dstW == 240 &&
+					!(((TUint)srow | (TUint)drow) & 3))
+					{
+					g_rowBox++;
+					blitRow320to240_8888(d32, srow);
+					}
 				else
 					{
 					g_rowScale++;
