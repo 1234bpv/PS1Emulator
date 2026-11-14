@@ -358,6 +358,8 @@ static TBool glInitOnWindow();       // defined below, called from initL
 static void  glShutdown();
 extern "C" void glrLoseContext(void);
 extern "C" int voutSymbianScreenDump(const char *aPath);   // defined below
+extern "C" void voutSymbianScreenLayout(int *aBits, int *aStride, int *aW, int *aH,
+                                        int *aMode, int *aRotation, int *aHalBase);
 
 static void queryFramebuffer()
 	{
@@ -403,6 +405,9 @@ static void queryFramebuffer()
 		}
 	g_fbStride = g_fbStrideB / 2;
 	g_fbOk = ETrue;
+	ps1LogFmt("dsa", "fb ok=%d plat=%d w=%d h=%d halW=%d halH=%d stride=%d bpp=%d base=0x%08x",
+		(int)g_fbOk, (int)g_fbFromPlatform, (int)g_fbW, (int)g_fbH, (int)g_fbXpix, (int)g_fbYpix,
+		(int)g_fbStrideB, (int)g_fbPixBytes, (unsigned)g_fbBase);
 	}
 
 // How many times driver returned different first pixel address and which exact addresses.
@@ -487,6 +492,10 @@ static void dsaStartL()
 	// frame - an independent cause of "offset" that was not separated on 2026-08-01.
 	queryFramebuffer();
 	g_dsaActive = ETrue;
+	int layBits = 0, layStride = 0, layW = 0, layH = 0, layMode = -1, layRot = -1, layHalBase = 0;
+	voutSymbianScreenLayout(&layBits, &layStride, &layW, &layH, &layMode, &layRot, &layHalBase);
+	ps1LogFmt("dsa", "layout bits=0x%08x halBase=0x%08x stride=%d size=%dx%d mode=%d rot=%d plat=%d",
+		layBits, layHalBase, layStride, layW, layH, layMode, layRot, (int)g_fbFromPlatform);
 	g_blitOx = -1;      // WS may have drawn over the bars while DSA was off
 	}
 

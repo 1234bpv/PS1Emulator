@@ -1065,6 +1065,12 @@ void CPs1Container::ConstructL(const TRect &aRect)
 	LoadHelp();
 	if (ps1TiltCli())
 		iCfg.iTilt = 1;
+	if (Rect().Width() < Rect().Height())
+		{
+		if (iCfg.iTilt)
+			ps1Log("tilt", "disabled in portrait orientation");
+		iCfg.iTilt = 0;
+		}
 	ApplyKeyMap();
 	voutSymbianSetTilt(iCfg.iTilt);
 	voutSymbianSetTiltMap(iCfg.iTiltSide, iCfg.iTiltPitch, iCfg.iTiltDead, iCfg.iTiltSens);
@@ -4336,10 +4342,34 @@ void CPs1AppUi::ConstructL()
 	// Full screen: the game gets the entire display, not ClientRect without the status
 	// pane and CBA. Landscape is set explicitly - otherwise the window geometry changes
 	// mid-game following the accelerometer.
+	// Step P1: temporary read of orient=1 / portrait for portrait mode trial on device.
+	TInt orient = 0;
+	TBuf<256> cl;
+	User::CommandLine(cl);
+	if (cl.FindF(_L("portrait")) != KErrNotFound || cl.FindF(_L("orient=1")) != KErrNotFound)
+		orient = 1;
+	else
+		{
+		RFs fs;
+		if (fs.Connect() == KErrNone)
+			{
+			RFile f;
+			if (f.Open(fs, KCfgPath, EFileRead | EFileShareAny) == KErrNone)
+				{
+				TBuf8<1024> buf;
+				if (f.Read(buf) == KErrNone && buf.Find(_L8("orient=1")) != KErrNotFound)
+					orient = 1;
+				f.Close();
+				}
+			fs.Close();
+			}
+		}
+	ps1LogInt("gui", "orient", orient);
+
 	CEikStatusPane *sp = StatusPane();
 	if (sp) sp->MakeVisible(EFalse);
 	if (Cba()) Cba()->MakeVisible(EFalse);
-	TRAP_IGNORE(SetOrientationL(EAppUiOrientationLandscape));
+	TRAP_IGNORE(SetOrientationL(orient ? EAppUiOrientationPortrait : EAppUiOrientationLandscape));
 
 	iContainer = CPs1Container::NewL(ApplicationRect());
 	AddToStackL(iContainer);

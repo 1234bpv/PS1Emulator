@@ -403,7 +403,7 @@ foreach ($f in $Shots) {
   try { Invoke-Net ($link + @('-GetFile', "E:\PS1\logs\ps1_scr$f.bin", '-OutFile', $sc)) | Out-Null } catch { }
   if (Test-Path $sc) {
     $b = [IO.File]::ReadAllBytes($sc)
-    $p = [regex]::Match($log, "pixB=(\d+) strideB=(\d+)")
+    $p = [regex]::Match($log, "pixB=([1-9]\d*) strideB=([1-9]\d*)")
     $pix = if ($p.Success) { [int]$p.Groups[1].Value } else { 4 }
     $str = if ($p.Success) { [int]$p.Groups[2].Value } else { 1280 }
     $w = [int]($str / $pix)
