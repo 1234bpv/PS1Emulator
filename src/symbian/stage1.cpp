@@ -570,10 +570,36 @@ static struct
 	TBool stalled;
 	TInt i;
 	TUint tStart, tPoll, tEmu, tBlit, tSnd;
+	TUint cal0_cpu, cal0_mem, cal1_cpu, cal1_mem;
 	u32 framesAtStart;
 	TUint ticks;
 	u32 produced;
 	} g_pass;
+
+static TUint32 g_calibBuf[16384];
+
+static void passCalib(TUint &aCpuUs, TUint &aMemUs)
+	{
+	const unsigned int freq = ndrc_symbian_fastfreq();
+	const unsigned int div = freq ? freq : 1;
+
+	// CPU arithmetic loop: distinguishes lower core frequency from scheduler stalls
+	const unsigned int t0 = ndrc_symbian_fastcount();
+	volatile TUint32 val = 0x12345678;
+	for (int i = 0; i < 100000; i++)
+		val = (val ^ (val << 5)) + (TUint32)i;
+	const unsigned int dtCpu = ndrc_symbian_fastcount() - t0;
+	aCpuUs = (TUint)(((TUint64)dtCpu * 1000000ULL) / div);
+
+	// Memory sequential read loop: distinguishes bus bandwidth changes
+	const unsigned int t1 = ndrc_symbian_fastcount();
+	volatile TUint32 sum = 0;
+	for (int pass = 0; pass < 4; pass++)
+		for (int i = 0; i < 16384; i++)
+			sum += g_calibBuf[i];
+	const unsigned int dtMem = ndrc_symbian_fastcount() - t1;
+	aMemUs = (TUint)(((TUint64)dtMem * 1000000ULL) / div);
+	}
 
 // Hang protection. Frame loop relies on psxCpu->Execute()
 // returning at frame boundary (pl_frame_limit sets psxRegs.stop on VBlank).
@@ -1984,6 +2010,7 @@ static TInt passSetup(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTes
 	// Before tStart, so the engine start-up (driver load, kernel patch) is not in the pass time.
 	logClocks("start");
 	g_pass.framesAtStart = frame_counter;
+	passCalib(g_pass.cal0_cpu, g_pass.cal0_mem);
 	// Pipeline profiling: cumulative time (ms) for each stage across entire pass.
 	// NTickCount is ~1ms here; per-frame error averages out over hundreds of frames.
 	g_pass.tStart = User::NTickCount();
@@ -2708,6 +2735,7 @@ static void passTeardown()
 	const char *mode = g_pass.mode;
 	const TBool aShowScreen = g_pass.showScreen;
 	g_pass.ticks = User::NTickCount() - g_pass.tStart;
+	passCalib(g_pass.cal1_cpu, g_pass.cal1_mem);
 	g_pass.produced = frame_counter - g_pass.framesAtStart;
 #ifdef PS1_BENCH
 	TUint &tPoll = g_pass.tPoll, &tEmu = g_pass.tEmu, &tBlit = g_pass.tBlit, &tSnd = g_pass.tSnd;
@@ -2737,11 +2765,17 @@ static void passTeardown()
 #endif
 
 	flushCoreRepeat();
+	const TUint tInside = g_pass.tPoll + g_pass.tEmu + g_pass.tBlit + g_pass.tSnd;
+	const TUint tOther = aTicks > tInside ? aTicks - tInside : 0;
 	logEvent("pass", stalled ? "STALLED" : (aProduced ? NULL : "NO_FRAMES"),
-		"%s: frames=%u ms=%u pc=%08x cycle=%u vblanks=%u fsAdvised=%d", mode,
+		"%s: frames=%u ms=%u pc=%08x cycle=%u vblanks=%u fsAdvised=%d "
+		"poll=%u emu=%u blit=%u snd=%u other=%u "
+		"cal0=%u,%u cal1=%u,%u", mode,
 		(unsigned)aProduced, (unsigned)aTicks,
 		(unsigned)psxRegs.pc, (unsigned)psxRegs.cycle,
-		g_vblanks, (int)g_fsAdvised);
+		g_vblanks, (int)g_fsAdvised,
+		(unsigned)g_pass.tPoll, (unsigned)g_pass.tEmu, (unsigned)g_pass.tBlit, (unsigned)g_pass.tSnd, (unsigned)tOther,
+		(unsigned)g_pass.cal0_cpu, (unsigned)g_pass.cal0_mem, (unsigned)g_pass.cal1_cpu, (unsigned)g_pass.cal1_mem);
 
 	// How many GPU commands BIOS actually sent: localizes black screen - command
 	// delivery (all 0) vs rasterization (non-zero, but VRAM is empty).
