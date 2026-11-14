@@ -1591,6 +1591,447 @@ static void TestRoundTripFromEachFormat()
 	CheckRoundTrip(Sample());
 }
 
+// ---------------------------------------------------------------- A1: Name rules
+// * *x, ** x, *, * , [* *x], [**  x], [*], [* ]
+
+static void TestNameA1LeadingStarsAndSpaces()
+{
+	// Перевірка через CheckName (вхідні варіації між дужками)
+	CheckName("* *x", 1, "x");
+	CheckName("** x", 1, "x");
+	CheckName("**  x", 1, "x");
+	CheckName("*", 1, "Cheat");
+	CheckName("* ", 1, "Cheat");
+	CheckName(" *", 1, "Cheat");
+	CheckName(" * ", 1, "Cheat");
+	CheckName("* *", 1, "Cheat");
+	CheckName("*   *   x", 1, "x");
+	CheckName("   * *x   ", 1, "x");
+
+	// Pcsx заголовки з зірочками й пробілами
+	CheckConv("Pcsx [* *x]", "[* *x]\n00000001 0001\n", 1, 0, "[*x]\n00000001 0001\n", 1, 1, 1, 0, 0, 0);
+	CheckConv("Pcsx [**  x]", "[**  x]\n00000001 0001\n", 1, 0, "[*x]\n00000001 0001\n", 1, 1, 1, 0, 0, 0);
+	CheckConv("Pcsx [*]", "[*]\n00000001 0001\n", 1, 0, "[*Cheat]\n00000001 0001\n", 1, 1, 1, 0, 0, 0);
+	CheckConv("Pcsx [* ]", "[* ]\n00000001 0001\n", 1, 0, "[*Cheat]\n00000001 0001\n", 1, 1, 1, 0, 0, 0);
+	CheckConv("Pcsx [ * ]", "[ * ]\n00000001 0001\n", 1, 0, "[*Cheat]\n00000001 0001\n", 1, 1, 1, 0, 0, 0);
+	CheckConv("Pcsx [ * *x ]", "[ * *x ]\n00000001 0001\n", 1, 0, "[*x]\n00000001 0001\n", 1, 1, 1, 0, 0, 0);
+	CheckConv("Pcsx [**  x  ]", "[**  x  ]\n00000001 0001\n", 1, 0, "[*x]\n00000001 0001\n", 1, 1, 1, 0, 0, 0);
+
+	// Dollar і Cw формати з цими іменами
+	CheckConv("Dollar * *x", "#* *x\n$00000001 0001\n", 2, 0, "[*x]\n00000001 0001\n", 1, 1, 1, 0, 0, 0);
+	CheckConv("Dollar **  x", "#**  x\n$00000001 0001\n", 2, 0, "[*x]\n00000001 0001\n", 1, 1, 1, 0, 0, 0);
+	CheckConv("Cw * *x on", "_S A\n_C1 * *x\n_L 00000001 0001\n", 3, 0, "[*x]\n00000001 0001\n", 1, 1, 1, 0, 0, 1);
+	CheckConv("Cw * *x off", "_S A\n_C0 * *x\n_L 00000001 0001\n", 3, 0, "[x]\n00000001 0001\n", 1, 0, 1, 0, 0, 1);
+	CheckConv("Cw **  x on", "_S A\n_C1 **  x\n_L 00000001 0001\n", 3, 0, "[*x]\n00000001 0001\n", 1, 1, 1, 0, 0, 1);
+}
+
+static void TestNameA1SetEnabledRoundtrip()
+{
+	// Перетворення туди й назад через CheatSetEnabled для виходів [*x] та [*Cheat]
+	std::string normX = "[*x]\n00000001 0001\n";
+	std::string name;
+	int en = -1;
+	int co = -1;
+	int rc = InfoOf(normX, 0, &name, &en, &co);
+	SetWhere("roundtrip x start");
+	CHECK_EQ(rc, 1);
+	CHECK_STR(name, std::string("x"));
+	CHECK_EQ(en, 1);
+	CHECK_EQ(co, 1);
+	ResetWhere();
+
+	std::string offX;
+	int ok = 0;
+	rc = SetOn(normX, 0, 0, 64, &offX, &ok);
+	SetWhere("roundtrip x off");
+	CHECK_EQ(rc, 18);
+	CHECK_EQ(ok, 1);
+	CHECK_STR(offX, std::string("[x]\n00000001 0001\n"));
+	ResetWhere();
+
+	rc = InfoOf(offX, 0, &name, &en, &co);
+	SetWhere("roundtrip x off info");
+	CHECK_EQ(rc, 1);
+	CHECK_STR(name, std::string("x"));
+	CHECK_EQ(en, 0);
+	CHECK_EQ(co, 1);
+	ResetWhere();
+
+	std::string backX;
+	rc = SetOn(offX, 0, 1, 64, &backX, &ok);
+	SetWhere("roundtrip x on again");
+	CHECK_EQ(rc, 19);
+	CHECK_EQ(ok, 1);
+	CHECK_STR(backX, normX);
+	ResetWhere();
+
+	rc = InfoOf(backX, 0, &name, &en, &co);
+	SetWhere("roundtrip x on info");
+	CHECK_EQ(rc, 1);
+	CHECK_STR(name, std::string("x"));
+	CHECK_EQ(en, 1);
+	CHECK_EQ(co, 1);
+	ResetWhere();
+
+	// Те саме для [*Cheat]
+	std::string normCh = "[*Cheat]\n00000001 0001\n";
+	std::string offCh;
+	rc = SetOn(normCh, 0, 0, 64, &offCh, &ok);
+	SetWhere("roundtrip Cheat off");
+	CHECK_EQ(rc, 22);
+	CHECK_EQ(ok, 1);
+	CHECK_STR(offCh, std::string("[Cheat]\n00000001 0001\n"));
+	ResetWhere();
+
+	std::string backCh;
+	rc = SetOn(offCh, 0, 1, 64, &backCh, &ok);
+	SetWhere("roundtrip Cheat on again");
+	CHECK_EQ(rc, 23);
+	CHECK_EQ(ok, 1);
+	CHECK_STR(backCh, normCh);
+	ResetWhere();
+
+	// CheckRoundTrip з набором читів з новими іменами
+	std::string combo = "[*x]\n00000001 0001\n[Cheat]\n00000002 0002\n[*x]\n00000003 0003\n";
+	CheckRoundTrip(combo);
+}
+
+// ---------------------------------------------------------------- A2: 9 двозначностей
+
+// 1. _Sxyz у CheatDetect дає ECheatFmtCw, а в CheatConvert рахується як поганий рядок (iBadLines)
+static void TestAmbiguityA2CwDetectVsConvert()
+{
+	SetWhere("detect _Sxyz");
+	CHECK_EQ(DetectS("_Sxyz"), ECheatFmtCw);
+	CHECK_EQ(DetectS("_sxyz"), ECheatFmtCw);
+	CHECK_EQ(DetectS("_S123"), ECheatFmtCw);
+	CHECK_EQ(DetectS("_Gxyz"), ECheatFmtCw);
+	CHECK_EQ(DetectS("_C1xyz"), ECheatFmtCw);
+	CHECK_EQ(DetectS("_Lxyz"), ECheatFmtCw);
+	ResetWhere();
+
+	// У CheatConvert усередині гри _Sxyz не є дійсним тегом (немає пробілу) -> iBadLines
+	CheckConv("Cw _Sxyz inside game",
+		"_S SLUS-01222\n_Sxyz\n_C1 x\n_L 00000001 0001\n",
+		3, 0, "[*x]\n00000001 0001\n", 1, 1, 1, 1, 0, 1);
+	CheckConv("Cw _sxyz inside game",
+		"_S SLUS-01222\n_sxyz\n_C1 x\n_L 00000001 0001\n",
+		3, 0, "[*x]\n00000001 0001\n", 1, 1, 1, 1, 0, 1);
+	// Лише _Sxyz у файлі без валідної гри: CheatDetect дає ECheatFmtCw, вихід 0 байтів
+	CHECK_EQ(DetectS("_Sxyz\n"), ECheatFmtCw);
+	CheckConv("Cw only _Sxyz", "_Sxyz\n", 3, 0, "", 0, 0, 0, 0, 0, 0);
+}
+
+// 2. «літера» в правилі Serial означає тільки літеру ASCII
+static void TestAmbiguityA2SerialAsciiOnly()
+{
+	// Не-ASCII символи (кирилиця, діакритика, спецбайти >= 0x80) не є літерами
+	CHECK_EQ(CheatSerialEqual("\303\251", 2, "\303\251", 2), 0);
+	CHECK_EQ(CheatSerialEqual("\303\244", 2, "\303\244", 2), 0);
+	// Кирилиця "СЛУС" (UTF-8 \xD0\xA1\xD0\x9B\xD1\x83\xD1\x81) не містить ASCII літер
+	CHECK_EQ(CheatSerialEqual("\xD0\xA1\xD0\x9B\xD1\x83\xD1\x81", 8, "\xD0\xA1\xD0\x9B\xD1\x83\xD1\x81", 8), 0);
+	CHECK_EQ(CheatSerialEqual("\xD0\x90", 2, "\xD0\x90", 2), 0);
+	CHECK_EQ(CheatSerialEqual("\200\201", 2, "\200\201", 2), 0);
+	CHECK_EQ(CheatSerialEqual("\377", 1, "\377", 1), 0);
+
+	// Не-ASCII байти упереміж з ASCII: вони відкидаються як не-ASCII-літери
+	CHECK_EQ(CheatSerialEqual("SLUS\303\25101222", 11, "SLUS01222", 9), 1);
+	CHECK_EQ(CheatSerialEqual("slus_01222\xD0\x90", 12, "SLUS-012.22", 11), 1);
+	CHECK_EQ(CheatSerialEqual("A\303\251B", 4, "ab", 2), 1);
+	CHECK_EQ(CheatSerialEqual("A\303\251", 3, "a", 1), 1);
+
+	// У CheatConvert фільтр з не-ASCII: якщо містить лише не-ASCII, то літер немає -> пишуться всі ігри
+	std::string twoGames = "_S SLUS-01222\n_C1 a\n_L 00000001 0001\n_S SCES-00001\n_C1 b\n_L 00000002 0002\n";
+	std::string wantTwo = "[*a]\n00000001 0001\n[*b]\n00000002 0002\n";
+	CheckConv("Cw filter only non-ascii", twoGames, 3, "\303\251", wantTwo, 2, 2, 2, 0, 0, 2);
+	CheckConv("Cw filter Cyrillic", twoGames, 3, "\xD0\x90\xD0\x91", wantTwo, 2, 2, 2, 0, 0, 2);
+
+	// Фільтр з не-ASCII та ASCII зіставляється лише за ASCII:
+	CheckConv("Cw filter mixed non-ascii", twoGames, 3, "SLUS\303\25101222",
+		"[*a]\n00000001 0001\n", 1, 1, 1, 0, 0, 2);
+}
+
+// 3. KCheatTextMax обмежує лише вхідний текст
+static void TestAmbiguityA2TextMaxInputOnly()
+{
+	// CheatCount діє на нормований текст і не обмежується KCheatTextMax:
+	// Текст понад 4194304 байтів рахує всі заголовки
+	std::string t = "[first]\n00000001 0001\n";
+	t.append((size_t)(4194304 - 20), '\n');
+	t += "[second]\n00000002 0002\n";
+	SetWhere("CheatCount beyond 4MB");
+	CHECK_EQ(CountS(t), 2);
+	ResetWhere();
+
+	std::string nm;
+	int en = -1;
+	int co = -1;
+	int rc = InfoOf(t, 1, &nm, &en, &co);
+	SetWhere("CheatInfo beyond 4MB");
+	CHECK_EQ(rc, 6);
+	CHECK_STR(nm, std::string("second"));
+	CHECK_EQ(en, 0);
+	CHECK_EQ(co, 1);
+	ResetWhere();
+
+	// У CheatConvert вхідний текст обмежується KCheatTextMax (перевірено також у TestTextMaxPrefixOnly)
+	// Але aCap може бути будь-якої ємності.
+	CHECK_EQ(DetectS(t), ECheatFmtPcsx);
+}
+
+// 4. CheatSetEnabled за aLen > aCap повертає -1 (і текст не чіпає)
+static void CheckSetEnabledLenGreaterThanCapUntouched(const std::string &aText, int aIndex, int aOn, int aCap)
+{
+	int len = (int)aText.size();
+	std::vector<char> buf(len + 32, 'Z');
+	memcpy(&buf[16], aText.data(), (size_t)len);
+	int rc = CheatSetEnabled(&buf[16], len, aCap, aIndex, aOn);
+	CHECK_EQ(rc, -1);
+	CHECK_EQ(memcmp(&buf[16], aText.data(), (size_t)len), 0);
+	int canOk = 1;
+	int i;
+	for (i = 0; i < 16; ++i) {
+		if (buf[i] != 'Z') canOk = 0;
+	}
+	for (i = 16 + len; i < len + 32; ++i) {
+		if (buf[i] != 'Z') canOk = 0;
+	}
+	CHECK_EQ(canOk, 1);
+}
+
+static void TestAmbiguityA2SetEnabledLenGreaterThanCap()
+{
+	std::string base = "[alpha]\n00000001 0001\n[*beta]\n00000002 0002\n";
+	int len = (int)base.size();
+
+	// aCap менша за aLen (len - 1):
+	// 1) Вмикання вимкненого (index 0, aOn=1)
+	SetWhere("aLen > aCap turn on");
+	CheckSetEnabledLenGreaterThanCapUntouched(base, 0, 1, len - 1);
+	ResetWhere();
+
+	// 2) Вимкнення увімкненого (index 1, aOn=0) - зменшило б довжину, але aLen > aCap має відмовити!
+	SetWhere("aLen > aCap turn off");
+	CheckSetEnabledLenGreaterThanCapUntouched(base, 1, 0, len - 1);
+	ResetWhere();
+
+	// 3) Чит уже вимкнений (index 0, aOn=0) - довжина не змінилась би, але aLen > aCap має відмовити!
+	SetWhere("aLen > aCap already off");
+	CheckSetEnabledLenGreaterThanCapUntouched(base, 0, 0, len - 1);
+	ResetWhere();
+
+	// 4) Чит уже увімкнений (index 1, aOn=1) - довжина не змінилась би, але aLen > aCap має відмовити!
+	SetWhere("aLen > aCap already on");
+	CheckSetEnabledLenGreaterThanCapUntouched(base, 1, 1, len - 1);
+	ResetWhere();
+
+	// aCap <= 0 при aLen > 0 повертає -1 для всіх операцій і текст не чіпає
+	SetWhere("aCap 0 turn on");
+	CheckSetEnabledLenGreaterThanCapUntouched(base, 0, 1, 0);
+	ResetWhere();
+
+	SetWhere("aCap -5 turn off");
+	CheckSetEnabledLenGreaterThanCapUntouched(base, 1, 0, -5);
+	ResetWhere();
+}
+
+// 5. aOut == NULL (і/або aCap <= 0) рівнозначне ємності 0
+static void TestAmbiguityA2NullOutOrNonPositiveCap()
+{
+	const char *textWithCheat = "[a]\n00000001 0001\n";
+	const char *textEmptyCheat = "# comment only\n";
+
+	// aOut == NULL, aCap == 100: трактується як ємність 0
+	// непорожній вихід -> -1, лічильники описують вхід
+	TCheatStats st = Unset();
+	int rc = CheatConvert(textWithCheat, 18, 1, 0, 0, 0, 100, &st);
+	SetWhere("null aOut, aCap 100, non-empty");
+	CHECK_EQ(rc, -1);
+	CheckStats(st, 1, 0, 1, 0, 0, 0);
+	ResetWhere();
+
+	// aOut == NULL, aCap == 100: порожній вихід -> 0
+	st = Unset();
+	rc = CheatConvert(textEmptyCheat, 15, 1, 0, 0, 0, 100, &st);
+	SetWhere("null aOut, aCap 100, empty");
+	CHECK_EQ(rc, 0);
+	CheckStats(st, 0, 0, 0, 0, 0, 0);
+	ResetWhere();
+
+	// aOut == NULL, aCap == 0
+	st = Unset();
+	rc = CheatConvert(textWithCheat, 18, 1, 0, 0, 0, 0, &st);
+	SetWhere("null aOut, aCap 0, non-empty");
+	CHECK_EQ(rc, -1);
+	CheckStats(st, 1, 0, 1, 0, 0, 0);
+	ResetWhere();
+
+	// aOut == NULL, aCap == -1
+	st = Unset();
+	rc = CheatConvert(textWithCheat, 18, 1, 0, 0, 0, -1, &st);
+	SetWhere("null aOut, aCap -1, non-empty");
+	CHECK_EQ(rc, -1);
+	CheckStats(st, 1, 0, 1, 0, 0, 0);
+	ResetWhere();
+
+	// aOut != NULL, aCap == 0
+	st = Unset();
+	std::string bytes;
+	int ok = 0;
+	rc = ConvGuarded(textWithCheat, 1, 0, 0, &st, &bytes, &ok);
+	SetWhere("guarded aOut, aCap 0");
+	CHECK_EQ(rc, -1);
+	CHECK_EQ(ok, 1);
+	CheckStats(st, 1, 0, 1, 0, 0, 0);
+	ResetWhere();
+
+	// aOut != NULL, aCap == -10
+	st = Unset();
+	rc = ConvGuarded(textWithCheat, 1, 0, -10, &st, &bytes, &ok);
+	SetWhere("guarded aOut, aCap -10");
+	CHECK_EQ(rc, -1);
+	CHECK_EQ(ok, 1);
+	CheckStats(st, 1, 0, 1, 0, 0, 0);
+	ResetWhere();
+}
+
+// 6. Поганий рядок не закриває й не змінює відкритого чита
+static void TestAmbiguityA2BadLineDoesNotCloseCheat()
+{
+	// Pcsx: не-код і незакрита дужка не закривають поточний чит; наступні коди йдуть у нього
+	CheckConv("Pcsx bad line keeps cheat open",
+		"[test]\n00000001 0001\ninvalid line\n00000002 0002\n[broken header\n00000003 0003\n",
+		1, 0,
+		"[test]\n00000001 0001\n00000002 0002\n00000003 0003\n",
+		1, 0, 3, 2, 0, 0);
+
+	// Dollar: поганий рядок не закриває відкритий '#' чит
+	CheckConv("Dollar bad line keeps cheat open",
+		"#Named\n$00000001 0001\n$BAD LINE\n$00000002 0002\nnot a code\n$00000003 0003\n",
+		2, 0,
+		"[*Named]\n00000001 0001\n00000002 0002\n00000003 0003\n",
+		1, 1, 3, 2, 0, 0);
+
+	// Cw: невалідний _L або звичайний поганий рядок не закриває відкритий чит
+	CheckConv("Cw bad line keeps cheat open",
+		"_S A\n_C1 CwCheat\n_L 00000001 0001\n_L bad\n_L 00000002 0002\nbad general line\n_L 00000003 0003\n",
+		3, 0,
+		"[*CwCheat]\n00000001 0001\n00000002 0002\n00000003 0003\n",
+		1, 1, 3, 2, 0, 1);
+}
+
+// 7. $ без коду після нього відкидається (iDropped)
+static void TestAmbiguityA2DollarLoneOrNoCodeDropped()
+{
+	// Одинокий $ без пробілів після нього відкидається (iDropped)
+	CheckConv("lone dollar", "#A\n$\n$00000001 0001\n", 2, 0,
+		"[*A]\n00000001 0001\n", 1, 1, 1, 0, 1, 0);
+	CheckConv("dollar spaces only", "#A\n$   \n$00000001 0001\n", 2, 0,
+		"[*A]\n00000001 0001\n", 1, 1, 1, 0, 1, 0);
+	CheckConv("dollar tabs only", "#A\n\t$\t\n$00000001 0001\n", 2, 0,
+		"[*A]\n00000001 0001\n", 1, 1, 1, 0, 1, 0);
+	CheckConv("dollar tag without blank", "#A\n$SAFEMODE\n$00000001 0001\n", 2, 0,
+		"[*A]\n00000001 0001\n", 1, 1, 1, 0, 1, 0);
+	CheckConv("dollar single hex without blank", "#A\n$1234\n$00000001 0001\n", 2, 0,
+		"[*A]\n00000001 0001\n", 1, 1, 1, 0, 1, 0);
+
+	// Кілька відкинутих $ без коду
+	CheckConv("multiple dropped dollar lines", "#A\n$\n$SAFEMODE\n$   \n$00000001 0001\n", 2, 0,
+		"[*A]\n00000001 0001\n", 1, 1, 1, 0, 3, 0);
+
+	// Для порівняння: $ з пробілом, що не є кодом, рахується як iBadLines
+	CheckConv("dollar with blank non-code", "#A\n$SAFE MODE\n$00000001 0001\n", 2, 0,
+		"[*A]\n00000001 0001\n", 1, 1, 1, 1, 0, 0);
+}
+
+// 8. CheatInfo бере ім'я з заголовка як є, без повторної нормалізації
+static void TestAmbiguityA2CheatInfoTakesHeaderNameAsIs()
+{
+	std::string name;
+	int en = -1;
+	int co = -1;
+
+	// Круглі дужки лишаються як є (не замінюються)
+	std::string t1 = "[(name)]\n00000001 0001\n";
+	int rc = InfoOf(t1, 0, &name, &en, &co);
+	SetWhere("name with parens");
+	CHECK_EQ(rc, 6);
+	CHECK_STR(name, std::string("(name)"));
+	CHECK_EQ(en, 0);
+	ResetWhere();
+
+	// Пробіли на початку/кінці імені не обрізаються повторно
+	std::string t2 = "[  padded  ]\n00000001 0001\n";
+	rc = InfoOf(t2, 0, &name, &en, &co);
+	SetWhere("padded name");
+	CHECK_EQ(rc, 10);
+	CHECK_STR(name, std::string("  padded  "));
+	CHECK_EQ(en, 0);
+	ResetWhere();
+
+	// Увімкнений заголовок з пробілами після зірочки: зірочка опускається, пробіли лишаються
+	std::string t3 = "[*  padded  ]\n00000001 0001\n";
+	rc = InfoOf(t3, 0, &name, &en, &co);
+	SetWhere("enabled padded name");
+	CHECK_EQ(rc, 10);
+	CHECK_STR(name, std::string("  padded  "));
+	CHECK_EQ(en, 1);
+	ResetWhere();
+
+	// Дві зірочки: опускається лише перша зірочка-позначка
+	std::string t4 = "[**star]\n00000001 0001\n";
+	rc = InfoOf(t4, 0, &name, &en, &co);
+	SetWhere("two stars");
+	CHECK_EQ(rc, 5);
+	CHECK_STR(name, std::string("*star"));
+	CHECK_EQ(en, 1);
+	ResetWhere();
+
+	// Табуляція не видаляється
+	std::string t5 = "[a\tb]\n00000001 0001\n";
+	rc = InfoOf(t5, 0, &name, &en, &co);
+	SetWhere("tab inside");
+	CHECK_EQ(rc, 3);
+	CHECK_STR(name, std::string("a\tb"));
+	CHECK_EQ(en, 0);
+	ResetWhere();
+
+	// Керівний байт не видаляється
+	std::string t6 = "[\001xyz]\n00000001 0001\n";
+	rc = InfoOf(t6, 0, &name, &en, &co);
+	SetWhere("control byte inside");
+	CHECK_EQ(rc, 4);
+	CHECK_STR(name, std::string("\001xyz"));
+	CHECK_EQ(en, 0);
+	ResetWhere();
+}
+
+// 9. Чит без жодного коду не лічиться в жодному лічильнику
+static void TestAmbiguityA2EmptyCheatNotCountedInAnyCounter()
+{
+	// Pcsx: порожні чити не лічаться в iCheats, iEnabled, iBadLines, iDropped
+	CheckConv("Pcsx empty cheats only",
+		"[empty1]\n[*empty2]\n[empty3]\n",
+		1, 0, "", 0, 0, 0, 0, 0, 0);
+
+	// Dollar: порожні '#' чити без $ коду не лічаться
+	CheckConv("Dollar empty cheats only",
+		"#empty1\n#empty2\n#empty3\n",
+		2, 0, "", 0, 0, 0, 0, 0, 0);
+
+	// Cw: порожні _C чити не лічаться в читах/помилках/відкинутих (але _S рахується в iGames)
+	CheckConv("Cw empty cheats only",
+		"_S A\n_C0 empty1\n_C1 empty2\n",
+		3, 0, "", 0, 0, 0, 0, 0, 1);
+
+	// Порожні чити упереміж з валідними: порожні не впливають на жоден лічильник
+	CheckConv("interspersed empty cheats",
+		"[empty1]\n[valid1]\n00000001 0001\n[*empty2]\n[*valid2]\n00000002 0002\n[empty3]\n",
+		1, 0,
+		"[valid1]\n00000001 0001\n[*valid2]\n00000002 0002\n",
+		2, 1, 2, 0, 0, 0);
+}
+
 // ---------------------------------------------------------------- стійкість (фіксовані зерна)
 
 static unsigned gRng = 1;
@@ -1969,6 +2410,17 @@ int main(int argc, char **argv)
 	RUN(TestSetEnabledEmptyText);
 	RUN(TestSetEnabledAOnNonZeroMeansOn);
 	RUN(TestRoundTripFromEachFormat);
+	RUN(TestNameA1LeadingStarsAndSpaces);
+	RUN(TestNameA1SetEnabledRoundtrip);
+	RUN(TestAmbiguityA2CwDetectVsConvert);
+	RUN(TestAmbiguityA2SerialAsciiOnly);
+	RUN(TestAmbiguityA2TextMaxInputOnly);
+	RUN(TestAmbiguityA2SetEnabledLenGreaterThanCap);
+	RUN(TestAmbiguityA2NullOutOrNonPositiveCap);
+	RUN(TestAmbiguityA2BadLineDoesNotCloseCheat);
+	RUN(TestAmbiguityA2DollarLoneOrNoCodeDropped);
+	RUN(TestAmbiguityA2CheatInfoTakesHeaderNameAsIs);
+	RUN(TestAmbiguityA2EmptyCheatNotCountedInAnyCounter);
 	RUN(TestRandomConvertInvariants);
 	RUN(TestRandomUnknownFormatZero);
 	RUN(TestRandomDetectRange);
