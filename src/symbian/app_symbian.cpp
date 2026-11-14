@@ -16,6 +16,7 @@
 #include <aknapp.h>
 #include <akndoc.h>
 #include <aknappui.h>
+#include <aknutils.h>
 #include <avkon.hrh>
 #include <coecntrl.h>
 #include <akndef.h>
@@ -111,7 +112,7 @@ enum TCfgItem
 	ECfgStart = 0,
 	ECfgHdrGame, ECfgGame, ECfgSaveState, ECfgLoadState, ECfgAdd,
 	ECfgHdrVideo, ECfgSmooth, ECfgFxaa, ECfgFps,
-	ECfgLight, ECfgBlend, ECfgDirty, ECfgDsa, ECfgGl, ECfgSwDraw, ECfgIlace, ECfgPixSkip,
+	ECfgLight, ECfgBlend, ECfgDirty, ECfgDsa, ECfgGl, ECfgSwDraw, ECfgIlace, ECfgPixSkip, ECfgOrient,
 	ECfgHdrSpeed, ECfgGpuSkip, ECfgCpu, ECfgGteNf, ECfgCycle,
 	ECfgHdrSound, ECfgSound, ECfgWsola,
 	ECfgHdrInput, ECfgPreset, ECfgKeyBase, ECfgKeys,
@@ -139,7 +140,7 @@ static const unsigned char KItemSection[ECfgCount] =
 	ESecCount,
 	ESecGame, ESecGame, ESecGame, ESecGame, ESecGame,
 	ESecVideo, ESecVideo, ESecVideo, ESecVideo, ESecVideo, ESecVideo, ESecVideo,
-	ESecVideo, ESecVideo, ESecVideo, ESecVideo, ESecVideo,
+	ESecVideo, ESecVideo, ESecVideo, ESecVideo, ESecVideo, ESecVideo,
 	ESecSpeed, ESecSpeed, ESecSpeed, ESecSpeed, ESecSpeed,
 	ESecSound, ESecSound, ESecSound,
 	ESecInput, ESecInput, ESecInput, ESecInput, ESecInput, ESecInput, ESecInput,
@@ -154,7 +155,7 @@ static const TStrId KItemLabelStrId[ECfgCount] =
 	EStrSecGame, EStrItemGame, EStrItemSaveState, EStrItemLoadState, EStrItemAdd,
 	EStrSecVideo, EStrItemSmooth, EStrItemFxaa, EStrItemFps,
 	EStrItemLight, EStrItemBlend, EStrItemDirty, EStrItemDsa, EStrItemGl,
-	EStrItemSwDraw, EStrItemIlace, EStrItemPixSkip,
+	EStrItemSwDraw, EStrItemIlace, EStrItemPixSkip, EStrSecVideo,
 	EStrSecSpeed, EStrItemGpuSkip, EStrItemCpu, EStrItemGteNf, EStrItemCycle,
 	EStrSecSound, EStrItemSound, EStrItemWsola,
 	EStrSecControls, EStrItemPreset, EStrItemKeyBase, EStrItemKeys,
@@ -173,7 +174,7 @@ static const char *const KCfgKey[ECfgCount] =
 	NULL,
 	NULL, NULL, NULL, NULL, NULL,
 	NULL, "smooth", "fxaa", "fps", "light", "blend", "dirty", "dsa", "gl",
-	"swdraw", "ilace", "pixskip",
+	"swdraw", "ilace", "pixskip", "orient",
 	NULL, "gpuskip", "cpu", "gtenf", "cycle",
 	NULL, "sound", "wsola",
 	NULL, NULL, NULL, NULL, "tilt", "tiltside", "tiltpitch", "tiltdead",
@@ -189,7 +190,7 @@ static const char *const KItemHelpId[ECfgCount] =
 	"start",
 	"sec.game", "game", "savestate", "loadstate", "add",
 	"sec.video", "smooth", "fxaa", "fps", "light", "blend", "dirty",
-	"dsa", "gl", "swdraw", "ilace", "pixskip",
+	"dsa", "gl", "swdraw", "ilace", "pixskip", "orient",
 	"sec.speed", "gpuskip", "cpu", "gtenf", "cycle",
 	"sec.sound", "sound", "wsola",
 	"sec.input", "preset", "keybase", "keys", "tilt", "tiltside",
@@ -406,7 +407,12 @@ public:
 	// at start until it is set. Not part of SetDefaults, so a reset does not clear it.
 	TInt iIntro;
 	TInt iTilt, iTiltSide, iTiltPitch, iTiltDead, iTiltSens;
+	TInt iOrient;
 	TInt iKeyScan[KPadMax], iKeyAlt[KPadMax], iKeyHold[KPadMax];
+	TInt iKeyScanL[KPadMax], iKeyAltL[KPadMax], iKeyHoldL[KPadMax];
+	TInt iKeyScanP[KPadMax], iKeyAltP[KPadMax], iKeyHoldP[KPadMax];
+	TInt iPresetSelL, iBaseSelL;
+	TInt iPresetSelP, iBaseSelP;
 	// BIOS dump name in E:\PS1\bios (without path). Empty means default scph7502.bin.
 	// Stored in the game profile, so games released in only one region get their
 	// own BIOS without manual switching.
@@ -417,6 +423,7 @@ public:
 void TPs1Cfg::SetDefaults()
 	{
 	iInterp = iIlace = iPixSkip = iGteNf = iGl = iFps = iSwDraw = 0;
+	iOrient = 0;
 	iGpuSkip = 0;
 	iDummy = 0;
 	iIntro = 0;
@@ -453,6 +460,10 @@ void TPs1Cfg::SetDefaults()
 // The CONTROLS section alone, for its own reset: keys, holds, the tilt zero key and tilt.
 void TPs1Cfg::SetControlDefaults()
 	{
+	iPresetSelL = EPresetDefault;
+	iBaseSelL   = EBaseN95;
+	iPresetSelP = EPresetDefault;
+	iBaseSelP   = EBaseC5;
 	// Tilt is off until asked for: it costs a sensor session and only one phone has one.
 	iTilt = 0;
 	// Sideways to the left stick X, forward-back to its Y: the binding measured on
@@ -466,12 +477,30 @@ void TPs1Cfg::SetControlDefaults()
 		iKeyScan[i] = voutSymbianDefaultKey(i, 0);
 		iKeyAlt[i]  = voutSymbianDefaultKey(i, 1);
 		iKeyHold[i] = 0;
+		iKeyScanL[i] = iKeyScan[i];
+		iKeyAltL[i]  = iKeyAlt[i];
+		iKeyHoldL[i] = 0;
+		if (i < KPresetBtnCount)
+			{
+			iKeyScanP[i] = KBaseC5Scan[i];
+			iKeyAltP[i]  = KBaseC5Alt[i];
+			}
+		else
+			{
+			iKeyScanP[i] = -1;
+			iKeyAltP[i]  = -1;
+			}
+		iKeyHoldP[i] = 0;
 		}
 	// The row after the PS1 buttons is the tilt zero key. C is free in the default
 	// layout and in Racing and Fighting.
 	const TInt tiltRow = voutSymbianPadButtons();
 	if (tiltRow >= 0 && tiltRow < KPadMax)
+		{
 		iKeyScan[tiltRow] = EStdKeyBackspace;
+		iKeyScanL[tiltRow] = EStdKeyBackspace;
+		iKeyScanP[tiltRow] = EStdKeyBackspace;
+		}
 	}
 
 // A hand-edited or truncated settings file must not reach the core or the menu
@@ -485,6 +514,7 @@ void TPs1Cfg::Clamp()
 	if (iTiltPitch < 0 || iTiltPitch > 8) iTiltPitch = 3;
 	if (iTiltDead < 0 || iTiltDead > 40) iTiltDead = 10;
 	if (iTiltSens < 40 || iTiltSens > 300) iTiltSens = 100;
+	if (iOrient < 0 || iOrient > 1) iOrient = 0;
 	iDebug = iDebug ? 1 : 0;
 	}
 
@@ -492,6 +522,7 @@ TInt &TPs1Cfg::Value(TInt aItem)
 	{
 	switch (aItem)
 		{
+		case ECfgOrient:  return iOrient;
 		case ECfgCpu:     return iInterp;
 		case ECfgIlace:   return iIlace;
 		case ECfgLight:   return iLight;
@@ -906,6 +937,8 @@ private:
 	void ApplyPreset(TInt aPreset);
 	void ApplyBase(TInt aBase);
 	void FreeTiltKey();
+	void SyncKeyMapToStored();
+	void SetOrient(TInt aOrient);
 	void SnapRestart();
 	TBool RestartNeeded() const;
 
@@ -1060,6 +1093,16 @@ void CPs1Container::ConstructL(const TRect &aRect)
 		ProfilePath(p);
 		LoadCfg(p, EFalse);
 		}
+	if (iCfg.iOrient)
+		{
+		iPresetSel = iCfg.iPresetSelP;
+		iBaseSel   = iCfg.iBaseSelP;
+		}
+	else
+		{
+		iPresetSel = iCfg.iPresetSelL;
+		iBaseSel   = iCfg.iBaseSelL;
+		}
 	if (!iGamePath.Length())
 		AutoPickGameL();
 	LoadHelp();
@@ -1177,6 +1220,9 @@ TBool CPs1Container::ItemVisible(TInt aItem) const
 	if (aItem == ECfgTiltSide || aItem == ECfgTiltPitch ||
 		aItem == ECfgTiltDead || aItem == ECfgTiltSens)
 		return iCfg.iTilt;
+	// Portrait mode setting is for non-touch keypad handsets; hidden on touchscreens.
+	if (aItem == ECfgOrient)
+		return !AknLayoutUtils::PenEnabled();
 	return ETrue;
 	}
 
@@ -1621,9 +1667,25 @@ void CPs1Container::ParseCfg(const TDesC8 &aTxt, TBool aWithGame)
 			lv.Val(scan);
 			lv.SkipSpace(); lv.Val(alt);
 			lv.SkipSpace(); lv.Val(hold);
-			iCfg.iKeyScan[b] = scan;
-			iCfg.iKeyAlt[b]  = alt;
-			iCfg.iKeyHold[b] = hold ? 1 : 0;
+			iCfg.iKeyScanL[b] = scan;
+			iCfg.iKeyAltL[b]  = alt;
+			iCfg.iKeyHoldL[b] = hold ? 1 : 0;
+			continue;
+			}
+		if (key.Length() > 4 && key.Left(4) == _L8("pbtn"))
+			{
+			TLex8 lk(key.Mid(4));
+			TInt b = -1;
+			if (lk.Val(b) != KErrNone || b < 0 || b >= KPadMax)
+				continue;
+			TLex8 lv(val);
+			TInt scan = -1, alt = -1, hold = 0;
+			lv.Val(scan);
+			lv.SkipSpace(); lv.Val(alt);
+			lv.SkipSpace(); lv.Val(hold);
+			iCfg.iKeyScanP[b] = scan;
+			iCfg.iKeyAltP[b]  = alt;
+			iCfg.iKeyHoldP[b] = hold ? 1 : 0;
 			continue;
 			}
 		for (TInt i = 0; i < ECfgCount; i++)
@@ -1639,6 +1701,8 @@ void CPs1Container::ParseCfg(const TDesC8 &aTxt, TBool aWithGame)
 						break;
 					if (i == ECfgDebug && !aWithGame)
 						break;
+					if (i == ECfgOrient && !aWithGame)
+						break;
 					iCfg.Value(i) = v;
 					if (i == ECfgLang)
 						I18nSetLanguage(v);
@@ -1647,10 +1711,26 @@ void CPs1Container::ParseCfg(const TDesC8 &aTxt, TBool aWithGame)
 				}
 		}
 	iCfg.Clamp();
+	for (TInt b = 0; b < KPadMax; b++)
+		{
+		if (iCfg.iOrient)
+			{
+			iCfg.iKeyScan[b] = iCfg.iKeyScanP[b];
+			iCfg.iKeyAlt[b]  = iCfg.iKeyAltP[b];
+			iCfg.iKeyHold[b] = iCfg.iKeyHoldP[b];
+			}
+		else
+			{
+			iCfg.iKeyScan[b] = iCfg.iKeyScanL[b];
+			iCfg.iKeyAlt[b]  = iCfg.iKeyAltL[b];
+			iCfg.iKeyHold[b] = iCfg.iKeyHoldL[b];
+			}
+		}
 	}
 
 void CPs1Container::SaveCfg(const TDesC &aPath, TBool aWithGame) const
 	{
+	const_cast<CPs1Container *>(this)->SyncKeyMapToStored();
 	RFs fs;
 	if (fs.Connect() != KErrNone)
 		return;
@@ -1693,15 +1773,21 @@ void CPs1Container::SaveCfg(const TDesC &aPath, TBool aWithGame) const
 		if (werr == KErrNone) werr = f.Write(line);
 		}
 		for (TInt i = 0; i < ECfgCount; i++)
-			if (KCfgKey[i] && (aWithGame || (i != ECfgLang && i != ECfgDebug)))
+			if (KCfgKey[i] && (aWithGame || (i != ECfgLang && i != ECfgDebug && i != ECfgOrient)))
 				{
 				line.Format(_L8("%s=%d\n"), KCfgKey[i], c.Value(i));
 				if (werr == KErrNone) werr = f.Write(line);
 				}
 		for (TInt b = 0; b < iKeyRows; b++)
 			{
-			line.Format(_L8("btn%d=%d %d %d\n"), b, iCfg.iKeyScan[b],
-				iCfg.iKeyAlt[b], iCfg.iKeyHold[b]);
+			line.Format(_L8("btn%d=%d %d %d\n"), b, iCfg.iKeyScanL[b],
+				iCfg.iKeyAltL[b], iCfg.iKeyHoldL[b]);
+			if (werr == KErrNone) werr = f.Write(line);
+			}
+		for (TInt b = 0; b < iKeyRows; b++)
+			{
+			line.Format(_L8("pbtn%d=%d %d %d\n"), b, iCfg.iKeyScanP[b],
+				iCfg.iKeyAltP[b], iCfg.iKeyHoldP[b]);
 			if (werr == KErrNone) werr = f.Write(line);
 			}
 		f.Close();
@@ -1812,6 +1898,7 @@ void CPs1Container::ApplyPreset(TInt aPreset)
 			}
 		}
 	FreeTiltKey();
+	SyncKeyMapToStored();
 	ApplyKeyMap();
 	SaveAll();
 	}
@@ -1821,8 +1908,17 @@ void CPs1Container::ApplyPreset(TInt aPreset)
 void CPs1Container::ResetControls()
 	{
 	iCfg.SetControlDefaults();
-	iPresetSel = EPresetDefault;
-	iBaseSel = EBaseN95;
+	if (iCfg.iOrient)
+		{
+		for (TInt i = 0; i < KPadMax; i++)
+			{
+			iCfg.iKeyScan[i] = iCfg.iKeyScanP[i];
+			iCfg.iKeyAlt[i]  = iCfg.iKeyAltP[i];
+			iCfg.iKeyHold[i] = iCfg.iKeyHoldP[i];
+			}
+		}
+	iPresetSel = iCfg.iOrient ? iCfg.iPresetSelP : iCfg.iPresetSelL;
+	iBaseSel   = iCfg.iOrient ? iCfg.iBaseSelP : iCfg.iBaseSelL;
 	ApplyKeyMap();
 	SaveAll();
 	ps1Log("menu", "controls reset");
@@ -1883,7 +1979,93 @@ void CPs1Container::ApplyBase(TInt aBase)
 		iCfg.iKeyHold[i] = 0;
 		}
 	FreeTiltKey();
+	SyncKeyMapToStored();
 	ApplyKeyMap();
+	SaveAll();
+	}
+
+void CPs1Container::SyncKeyMapToStored()
+	{
+	for (TInt i = 0; i < KPadMax; i++)
+		{
+		if (iCfg.iOrient)
+			{
+			iCfg.iKeyScanP[i] = iCfg.iKeyScan[i];
+			iCfg.iKeyAltP[i]  = iCfg.iKeyAlt[i];
+			iCfg.iKeyHoldP[i] = iCfg.iKeyHold[i];
+			}
+		else
+			{
+			iCfg.iKeyScanL[i] = iCfg.iKeyScan[i];
+			iCfg.iKeyAltL[i]  = iCfg.iKeyAlt[i];
+			iCfg.iKeyHoldL[i] = iCfg.iKeyHold[i];
+			}
+		}
+	}
+
+void CPs1Container::SetOrient(TInt aOrient)
+	{
+	if (iCfg.iOrient == aOrient)
+		return;
+	SyncKeyMapToStored();
+	if (iCfg.iOrient)
+		{
+		iCfg.iPresetSelP = iPresetSel;
+		iCfg.iBaseSelP   = iBaseSel;
+		}
+	else
+		{
+		iCfg.iPresetSelL = iPresetSel;
+		iCfg.iBaseSelL   = iBaseSel;
+		}
+
+	iCfg.iOrient = aOrient ? 1 : 0;
+
+	for (TInt i = 0; i < KPadMax; i++)
+		{
+		if (iCfg.iOrient)
+			{
+			iCfg.iKeyScan[i] = iCfg.iKeyScanP[i];
+			iCfg.iKeyAlt[i]  = iCfg.iKeyAltP[i];
+			iCfg.iKeyHold[i] = iCfg.iKeyHoldP[i];
+			}
+		else
+			{
+			iCfg.iKeyScan[i] = iCfg.iKeyScanL[i];
+			iCfg.iKeyAlt[i]  = iCfg.iKeyAltL[i];
+			iCfg.iKeyHold[i] = iCfg.iKeyHoldL[i];
+			}
+		}
+
+	if (iCfg.iOrient)
+		{
+		iPresetSel = iCfg.iPresetSelP;
+		iBaseSel   = iCfg.iBaseSelP;
+		if (iBaseSel == EBaseSlider || iBaseSel == EBaseE90)
+			{
+			iBaseSel = EBaseC5;
+			ApplyBase(EBaseC5);
+			}
+		if (iCfg.iTilt)
+			{
+			iCfg.iTilt = 0;
+			ps1Log("tilt", "disabled in portrait orientation");
+			}
+		}
+	else
+		{
+		iPresetSel = iCfg.iPresetSelL;
+		iBaseSel   = iCfg.iBaseSelL;
+		}
+
+	ApplyKeyMap();
+	CAknAppUi *aknUi = static_cast<CAknAppUi *>(CEikonEnv::Static()->EikAppUi());
+	if (aknUi)
+		{
+		TRAP_IGNORE(aknUi->SetOrientationL(iCfg.iOrient ?
+			CAknAppUiBase::EAppUiOrientationPortrait :
+			CAknAppUiBase::EAppUiOrientationLandscape));
+		}
 	SaveAll();
 	}
 
@@ -1900,6 +2082,13 @@ void CPs1Container::ItemLabel(TInt aItem, TDes &aOut) const
 		aOut.Copy(Tr(iGameClosed ? EStrItemExit
 			: !iStartedOnce ? EStrItemStart
 			: RestartNeeded() ? EStrItemRestart : EStrItemResume));
+		return;
+		}
+	if (aItem == ECfgOrient)
+		{
+		aOut.Copy(iCfg.iLang == ELangIdUkrainian ? _L("Положення") :
+		          iCfg.iLang == ELangIdRussian ? _L("Ориентация") :
+		          _L("Orientation"));
 		return;
 		}
 	if (isHeader(aItem))
@@ -1958,6 +2147,16 @@ void CPs1Container::ItemValue(TInt aItem, TDes &aOut) const
 			break;
 		case ECfgBios:
 			aOut.Copy((c.iBios.Length() ? TPtrC(c.iBios) : Tr(EStrValDefault)).Left(aOut.MaxLength()));
+			break;
+		case ECfgOrient:
+			if (c.iOrient)
+				aOut.Copy(iCfg.iLang == ELangIdUkrainian ? _L("Книжкове") :
+				          iCfg.iLang == ELangIdRussian ? _L("Книжная") :
+				          _L("Portrait"));
+			else
+				aOut.Copy(iCfg.iLang == ELangIdUkrainian ? _L("Альбомне") :
+				          iCfg.iLang == ELangIdRussian ? _L("Альбомная") :
+				          _L("Landscape"));
 			break;
 		case ECfgCpu:
 			aOut.Copy(Tr(c.iInterp ? EStrValInterp : EStrValDynarec));
@@ -3187,6 +3386,10 @@ void CPs1Container::StepValue(TInt aItem, TInt d)
 		// Same reasoning as ECfgPreset: highlight only, OK applies it.
 		iBaseSel = (iBaseSel + d + EBaseCount) % EBaseCount;
 		}
+	else if (aItem == ECfgOrient)
+		{
+		SetOrient(!iCfg.iOrient);
+		}
 	else
 		v = v ? 0 : 1;
 	}
@@ -3364,6 +3567,7 @@ TKeyResponse CPs1Container::MainKeyL(TInt aScan)
 					iCfg.SetDefaults();
 					iCfg.iIntro = intro;
 					LoadHelp();
+					SetOrient(0);
 					ApplyKeyMap();
 					iConfirm = -1;
 					}

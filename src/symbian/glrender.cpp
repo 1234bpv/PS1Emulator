@@ -24,6 +24,7 @@
 #include <e32std.h>
 #include <f32file.h>
 #include <GLES/gl.h>
+#include <GLES/egl.h>
 
 extern "C" void ps1LogFmt(const char *aType, const char *aFmt, ...);
 extern "C" int  voutSymbianGlSwap(void);
@@ -299,6 +300,41 @@ extern "C" void glrSetEnabled(int aOn)
 	g_on = aOn ? ETrue : EFalse;
 	}
 
+static void logExtChunks(const char *aTag, const char *aExt)
+	{
+	if (!aExt)
+		{
+		ps1LogFmt("glr", "%s: null", aTag);
+		return;
+		}
+	TInt total = 0;
+	while (aExt[total] != '\0')
+		total++;
+	if (total == 0)
+		{
+		if (aTag[0] == 'g')
+			ps1LogFmt("glr", "gl_ext[0..0]: ");
+		else
+			ps1LogFmt("glr", "egl_ext[0..0]: ");
+		return;
+		}
+	const TInt KChunkMax = 180;
+	char chunk[KChunkMax + 1];
+	for (TInt off = 0; off < total; off += KChunkMax)
+		{
+		TInt chunkLen = total - off;
+		if (chunkLen > KChunkMax)
+			chunkLen = KChunkMax;
+		for (TInt i = 0; i < chunkLen; i++)
+			chunk[i] = aExt[off + i];
+		chunk[chunkLen] = '\0';
+		if (aTag[0] == 'g')
+			ps1LogFmt("glr", "gl_ext[%d..%d]: %s", (int)off, (int)(off + chunkLen), chunk);
+		else
+			ps1LogFmt("glr", "egl_ext[%d..%d]: %s", (int)off, (int)(off + chunkLen), chunk);
+		}
+	}
+
 extern "C" int glrInit(void)
 	{
 	if (g_ready)
@@ -355,6 +391,34 @@ extern "C" int glrInit(void)
 		" maxTex=%d units=%d vendor=%s renderer=%s", g_vpW, g_vpH,
 		(int)KMaxPrims, (unsigned)glGetError(), (int)maxTex, (int)maxUnits,
 		(const char *)glGetString(GL_VENDOR), (const char *)glGetString(GL_RENDERER));
+
+	const char *glVer = (const char *)glGetString(GL_VERSION);
+	ps1LogFmt("glr", "gl_ver: %s", glVer ? glVer : "null");
+
+	const char *glExt = (const char *)glGetString(GL_EXTENSIONS);
+	logExtChunks("gl_ext", glExt);
+
+	EGLDisplay dpy = eglGetCurrentDisplay();
+	if (dpy != EGL_NO_DISPLAY)
+		{
+		const char *eglVer = eglQueryString(dpy, EGL_VERSION);
+		ps1LogFmt("glr", "egl_ver: %s", eglVer ? eglVer : "null");
+		const char *eglExt = eglQueryString(dpy, EGL_EXTENSIONS);
+		logExtChunks("egl_ext", eglExt);
+		}
+	else
+		{
+		ps1LogFmt("glr", "egl: no current display");
+		}
+
+	void *progStr = (void *)eglGetProcAddress("glProgramStringARB");
+	void *bindProg = (void *)eglGetProcAddress("glBindProgramARB");
+	void *palMat = (void *)eglGetProcAddress("glCurrentPaletteMatrixOES");
+	void *multiDraw = (void *)eglGetProcAddress("glMultiDrawArraysEXT");
+	void *createImg = (void *)eglGetProcAddress("eglCreateImageKHR");
+	ps1LogFmt("glr", "procs: progStr=%p bindProg=%p palMat=%p multiDraw=%p createImg=%p",
+		progStr, bindProg, palMat, multiDraw, createImg);
+
 	return 0;
 	}
 

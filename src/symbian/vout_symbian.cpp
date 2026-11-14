@@ -1355,7 +1355,7 @@ static void glPresentFrame(const TUint8 *vbytes, TInt startByte,
 	TInt dstW = SW, dstH = SW * 3 / 4;
 	if (dstH > SH) { dstH = SH; dstW = SH * 4 / 3; }
 	if (dstW > SW) dstW = SW;
-	const TInt ox = (SW - dstW) / 2, oy = (SH - dstH) / 2;
+	const TInt ox = (SW - dstW) / 2, oy = (SH > SW) ? 0 : (SH - dstH) / 2;
 	const GLfloat u = (GLfloat)w / potW, v = (GLfloat)hf / potH;
 	const GLfloat x0 = (GLfloat)ox, y0 = (GLfloat)oy, x1 = (GLfloat)(ox + dstW), y1 = (GLfloat)(oy + dstH);
 	const GLfloat verts[8] = { x0, y0,  x1, y0,  x0, y1,  x1, y1 };
@@ -1993,7 +1993,7 @@ static void blitCurrent()
 	if (dstW < 1) dstW = 1;
 	if (dstH < 1) dstH = 1;
 	const TInt ox = (SW - dstW) / 2;
-	const TInt oy = (SH - dstH) / 2;
+	const TInt oy = (SH > SW) ? 0 : (SH - dstH) / 2;
 
 #ifdef PS1_BENCH
 	const TUint _fc0 = User::FastCounter();
