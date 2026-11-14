@@ -182,7 +182,7 @@ static int chfName(const char *aText, int aS, int aE, char *aName)
 	{
 	chfTrim(aText, aS, aE);
 	int n = 0;
-	int stars = 1;
+	int lead = 1;
 	for (int p = aS; p < aE && n < KCheatNameMax; p++)
 		{
 		int c = chfByte(aText, p);
@@ -192,13 +192,12 @@ static int chfName(const char *aText, int aS, int aE, char *aName)
 			c = '(';
 		else if (c == ']')
 			c = ')';
-		// Only a run at the very start is removed. A name may still begin with '*' after a
-		// blank, so a disabled cheat with such a name reads back as enabled.
-		if (stars && c == '*')
-			continue;
-		stars = 0;
-		if (n == 0 && chfIsBlank(c))
-			continue;
+		if (lead)
+			{
+			if (c == '*' || chfIsBlank(c))
+				continue;
+			lead = 0;
+			}
 		aName[n++] = (char)c;
 		}
 	while (n > 0 && chfIsBlank(chfByte(aName, n - 1)))

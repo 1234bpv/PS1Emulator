@@ -21,7 +21,7 @@ enum TCheatFormat
 enum
 	{
 	KCheatNameMax = 63,    // bytes of a cheat name kept; the rest of a longer name is dropped
-	KCheatTextMax = 4194304 // a text longer than this is taken as its first 4194304 bytes
+	KCheatTextMax = 4194304 // limits input text only: a text longer than this is taken as its first 4194304 bytes
 	};
 
 struct TCheatStats
@@ -50,25 +50,27 @@ struct TCheatStats
 // exactly 4 upper-case hex digits, and "\n".
 //
 // Name. Taken from the source after trimming, then: bytes below 0x20 and the byte 0x7F
-// are removed; '[' becomes '(' and ']' becomes ')'; leading '*' bytes are removed;
-// the result is trimmed again and cut to its first KCheatNameMax bytes (and trimmed
-// once more, in case the cut left a blank at the end). An empty result is replaced by
-// "Cheat". Bytes of 0x80 and above pass unchanged (the file's own encoding).
+// are removed; '[' becomes '(' and ']' becomes ')'; leading '*' and blank bytes are
+// removed together for as long as they run; the result is cut to its first
+// KCheatNameMax bytes (and trimmed at the end, in case the cut left a blank). An empty
+// result is replaced by "Cheat". Bytes of 0x80 and above pass unchanged (the file's
+// own encoding).
 //
 // Output. Normalised PCSX text: for every cheat a header line "[name]\n", or
 // "[*name]\n" when it is enabled, followed by its code lines. No blank lines, no
 // comments, "\n" only. A cheat with no code lines is not written at all and is not
-// counted in iCheats.
+// counted in any counter (neither iCheats, iEnabled, iBadLines, nor iDropped).
 //
 // Serial. Two game serials are equal when they match after removing every byte that
-// is not a letter or a digit and ignoring letter case ("SLUS-012.22", "slus_01222"
-// and "SLUS01222" are all equal). A serial with no letter or digit equals nothing,
-// not even itself.
+// is not an ASCII letter or a digit and ignoring letter case ("SLUS-012.22", "slus_01222"
+// and "SLUS01222" are all equal; "letter" means ASCII letter only). A serial with no
+// letter or digit equals nothing, not even itself.
 
 // Format of a text, decided by its first line that starts with one of: "[" (Pcsx),
-// "$" (Dollar), "_S", "_G", "_C" or "_L" (Cw; the letter in either case). Every other
-// line is skipped, so a file may open with comments in any style. No such line:
-// ECheatFmtUnknown.
+// "$" (Dollar), "_S", "_G", "_C" or "_L" (Cw; the letter in either case; no following
+// blank required, so e.g. "_Sxyz" gives ECheatFmtCw, while CheatConvert counts it as a
+// bad line). Every other line is skipped, so a file may open with comments in any
+// style. No such line: ECheatFmtUnknown.
 int CheatDetect(const char *aText, int aLen);
 
 // Non-zero when the two serials are equal by the Serial rule. A null pointer is an
@@ -79,8 +81,9 @@ int CheatSerialEqual(const char *aA, int aLenA, const char *aB, int aLenB);
 // number of bytes written, 0 when no cheat came out, or -1 when the result does not
 // fit in aCap bytes (aOut is then unspecified, aStats still describes the whole
 // input). aFormat ECheatFmtUnknown, or any other value not listed, returns 0 with
-// all counters 0. aStats may be null. aText and aOut must not overlap. Negative aLen
-// or aCap is taken as 0; no terminating zero is written.
+// all counters 0. aStats may be null. aText and aOut must not overlap. A null aOut
+// is equivalent to capacity 0; negative aLen or aCap is taken as 0; no terminating
+// zero is written. A bad line does not close or change the currently open cheat.
 //
 // ECheatFmtPcsx. A line starting with '#', ';', '/' or '"' is a comment. A line
 // starting with '[' is a header if it also holds a ']' later; the name is what lies
@@ -96,10 +99,11 @@ int CheatSerialEqual(const char *aA, int aLenA, const char *aB, int aLenB);
 // not by itself make a cheat. A line starting with '$': if the rest of the line is a
 // code, it joins the current cheat, which is the one opened by the nearest '#' line
 // above, or one named "Cheat" when there is none; all the '$' codes between two '#'
-// lines form one cheat. If the rest is not a code (for example "$SAFEMODE") the line
-// is dropped (iDropped) when it holds no blank after trimming, and is a bad line
-// otherwise. Any other non-blank line: dropped when it is a code (a code without '$'
-// is one the user switched off), bad otherwise. Every cheat written is enabled.
+// lines form one cheat. If the rest is not a code (for example "$SAFEMODE", or a lone
+// '$' without a code) the line is dropped (iDropped) when it holds no blank after
+// trimming, and is a bad line otherwise. Any other non-blank line: dropped when it is
+// a code (a code without '$' is one the user switched off), bad otherwise. Every cheat
+// written is enabled.
 //
 // ECheatFmtCw. Tags are matched in either letter case and must be followed by a
 // blank or the end of the line. "_S" starts a game: the rest of the line is its
@@ -125,9 +129,10 @@ int CheatConvert(const char *aText, int aLen, int aFormat, const char *aSerial,
 // Number of header lines.
 int CheatCount(const char *aText, int aLen);
 
-// Describes cheat aIndex (0-based, in file order). Copies its name without the
-// brackets and the '*' into aName, at most aNameCap - 1 bytes, and ends it with a
-// zero (nothing is written when aNameCap <= 0). *aEnabled becomes 1 or 0 and *aCodes
+// Describes cheat aIndex (0-based, in file order). Copies its name from the header
+// as is (without re-normalising it), omitting the enclosing brackets and any
+// leading '*', into aName, at most aNameCap - 1 bytes, and ends it with a zero
+// (nothing is written when aNameCap <= 0). *aEnabled becomes 1 or 0 and *aCodes
 // the number of code lines; either pointer may be null. Returns the full length of
 // the name, or -1 when there is no such cheat (the outputs are then untouched).
 int CheatInfo(const char *aText, int aLen, int aIndex, char *aName, int aNameCap,
@@ -136,7 +141,8 @@ int CheatInfo(const char *aText, int aLen, int aIndex, char *aName, int aNameCap
 // Switches cheat aIndex on (aOn non-zero) or off by adding or removing the '*' of its
 // header, moving the rest of the text. Returns the new length of the text. Returns
 // aLen unchanged when the cheat already is in that state, and -1, with the text
-// untouched, when there is no such cheat or switching on needs more than aCap bytes.
+// untouched, when aLen > aCap, there is no such cheat or switching on needs more
+// than aCap bytes.
 int CheatSetEnabled(char *aText, int aLen, int aCap, int aIndex, int aOn);
 
 #endif
