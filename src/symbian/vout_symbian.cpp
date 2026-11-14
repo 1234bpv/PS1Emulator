@@ -655,6 +655,51 @@ blitRow565(TUint32 *aDst, const TUint32 *aSrc, TInt aPairs)
 		} while (--aPairs);
 	}
 
+// 1D downscale smoothing for portrait mode (320x240 source -> 240x180 destination).
+// Maps 8 input pixels (16 bytes, 4 words) to 6 output pixels (12 bytes, 3 words)
+// using the "a, (b+c)/2, d" sampling pattern: S0, Avg(S1, S2), S3, S4, Avg(S5, S6), S7.
+// Eliminates aliasing and disappearing vertical 1-pixel strokes on ARMv5 while keeping
+// all memory accesses strictly 32-bit aligned (40 iterations per 240-pixel row).
+static void __attribute__((__noinline__))
+blitRow320to240_565(TUint16 *aDst, const TUint16 *aSrc)
+	{
+	TUint32 cAvg = 0x7bdeu;
+	TUint32 cRB = 0x001f001fu, cG54 = 0x07c007c0u, cG0 = 0x00200020u;
+	__asm__ __volatile__ ("" : "+r"(cAvg), "+r"(cRB), "+r"(cG54), "+r"(cG0));
+	const TUint32 *s = (const TUint32 *)aSrc;
+	TUint32 *d = (TUint32 *)aDst;
+	TInt blocks = 40;
+	do
+		{
+		const TUint32 w0 = s[0];
+		const TUint32 w1 = s[1];
+		const TUint32 w2 = s[2];
+		const TUint32 w3 = s[3];
+		s += 4;
+
+		const TUint32 s0 = w0 & 0x7fffu;
+		const TUint32 s1 = (w0 >> 16) & 0x7fffu;
+		const TUint32 s2 = w1 & 0x7fffu;
+		const TUint32 s3 = (w1 >> 16) & 0x7fffu;
+		const TUint32 m0 = (s1 & s2) + (((s1 ^ s2) & cAvg) >> 1);
+
+		const TUint32 s4 = w2 & 0x7fffu;
+		const TUint32 s5 = (w2 >> 16) & 0x7fffu;
+		const TUint32 s6 = w3 & 0x7fffu;
+		const TUint32 s7 = (w3 >> 16) & 0x7fffu;
+		const TUint32 m1 = (s5 & s6) + (((s5 ^ s6) & cAvg) >> 1);
+
+		const TUint32 p0 = s0 | (m0 << 16);
+		const TUint32 p1 = s3 | (s4 << 16);
+		const TUint32 p2 = m1 | (s7 << 16);
+
+		d[0] = ((p0 & cRB) << 11) | ((p0 << 1) & cG54) | ((p0 >> 4) & cG0) | ((p0 >> 10) & cRB);
+		d[1] = ((p1 & cRB) << 11) | ((p1 << 1) & cG54) | ((p1 >> 4) & cG0) | ((p1 >> 10) & cRB);
+		d[2] = ((p2 & cRB) << 11) | ((p2 << 1) & cG54) | ((p2 >> 4) & cG0) | ((p2 >> 10) & cRB);
+		d += 3;
+		} while (--blocks);
+	}
+
 // PS1 VRAM - BGR555 (bit15 mask, 14-10 B, 9-5 G, 4-0 R); screen EColor64K -
 // RGB565. Expand green from 5 to 6 bits to preserve brightness.
 static inline TUint16 Bgr555ToRgb565(TUint16 aPix)
@@ -2183,8 +2228,15 @@ static void blitCurrent()
 				for (TInt dx = 0; dx < dstW; dx++)
 					drow[dx] = Bgr555ToRgb565(srow[dx]);
 				}
+			else if (g_smoothDown && sw == 320 && dstW == 240 &&
+				!(((TUint)srow | (TUint)drow) & 3))
+				{
+				g_rowBox++;
+				blitRow320to240_565(drow, srow);
+				}
 			else
 				{
+				g_rowScale++;
 				for (TInt dx = 0; dx < dstW; dx++)
 					{
 					drow[dx] = Bgr555ToRgb565(srow[sxf >> 16]);
