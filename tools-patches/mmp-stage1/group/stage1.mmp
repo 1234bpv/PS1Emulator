@@ -73,6 +73,8 @@ SOURCE          arcrar.cpp
 SOURCEPATH      ..\..\..\src\ui
 SOURCE          touchcore.cpp
 SOURCE          touchdraw.cpp
+SOURCE          cheatfile.cpp
+SOURCE          cheatfind.cpp
 SOURCEPATH      ..\..\..\src\symbian
 SOURCE          touchpad_symbian.cpp
 

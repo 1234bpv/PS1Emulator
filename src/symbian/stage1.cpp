@@ -28,7 +28,10 @@ void cdra_close(void);
 int CheckCdrom(void);
 int SaveState(const char *file);
 int LoadState(const char *file);
+extern char CdromId[10];
 }
+
+#include "cheatfind.h"
 
 // Outside extern "C": import interface is C++ (classes, references).
 #include "imgconv.h"
@@ -1767,6 +1770,47 @@ static volatile TInt g_guiExit;
 static void inputTraceOpen();
 static void benchLoadState(const char *aMode);
 
+// Cheat finding and loading glue for Stage 1.
+static char s_cheatSrcBuf[262144];
+static char s_cheatOutBuf[262144];
+
+static int stage1CheatExists(const char *aPath, void *)
+	{
+	if (!aPath || !aPath[0]) return 0;
+	FILE *f = fopen(aPath, "rb");
+	if (!f) return 0;
+	fclose(f);
+	return 1;
+	}
+
+static int stage1CheatRead(const char *aPath, char *aBuf, int aCap, void *)
+	{
+	if (!aPath || !aBuf || aCap <= 0) return -1;
+	FILE *f = fopen(aPath, "rb");
+	if (!f) return -1;
+	size_t n = fread(aBuf, 1, (size_t)aCap, f);
+	fclose(f);
+	return (int)n;
+	}
+
+static int stage1CheatWrite(const char *aPath, const char *aBuf, int aLen, void *)
+	{
+	if (!aPath || (!aBuf && aLen > 0) || aLen < 0) return -1;
+	FILE *f = fopen(aPath, "wb");
+	if (!f) return -1;
+	size_t n = (aLen > 0) ? fwrite(aBuf, 1, (size_t)aLen, f) : 0;
+	fclose(f);
+	return (int)n;
+	}
+
+static const TCheatFileOps KStage1CheatFileOps =
+	{
+	stage1CheatExists,
+	stage1CheatRead,
+	stage1CheatWrite,
+	0
+	};
+
 static TInt passSetup(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTest,
 	TBool aShowScreen, TBool aUseDisc)
 	{
@@ -1936,6 +1980,32 @@ static TInt passSetup(TBool aUseDrc, TInt aFrames, TBool aUseBios, TBool aGpuTes
 	logEvent("reset", (aUseBios && Config.HLE) ? "BIOS_NOT_LOADED" : NULL,
 		"%s: EmuReset ok, hle=%d type=%s", mode,
 		(int)Config.HLE, Config.PsxType ? "PAL" : "NTSC");
+
+	// Load cheats for the game if a disc is active
+	if (aUseDisc)
+		{
+		TCheatStats cheatStats;
+		const char *gamePath = g_discPath[0] ? g_discPath : KDiscImg;
+		const int cheatRc = CheatFindAndLoad(
+			gamePath,
+			CdromId,
+			"E:\\PS1\\cfg\\",
+			"E:\\PS1\\cfg\\active.cht",
+			&KStage1CheatFileOps,
+			s_cheatSrcBuf, (int)sizeof(s_cheatSrcBuf),
+			s_cheatOutBuf, (int)sizeof(s_cheatOutBuf),
+			&cheatStats);
+		if (cheatRc > 0)
+			{
+			logEvent("cheat", NULL, "%s: loaded cheats=%d enabled=%d codes=%d bad=%d dropped=%d games=%d",
+				mode, cheatStats.iCheats, cheatStats.iEnabled, cheatStats.iCodes,
+				cheatStats.iBadLines, cheatStats.iDropped, cheatStats.iGames);
+			}
+		else
+			{
+			logEvent("cheat", NULL, "%s: none (rc=%d)", mode, cheatRc);
+			}
+		}
 
 	// Type is known only after EmuReset, and nominal frame duration
 	// against which adaptive frameskip compares real duration depends on it.

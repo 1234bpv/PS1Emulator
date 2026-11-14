@@ -1,5 +1,5 @@
-# Перевірки cheatfile: збирає src\ui\cheatfile.cpp разом з cheatfile_test.cpp хостовим g++,
-# запускає результат і перевіряє рядок підсумку; окремо збирає cheatfile.cpp компілятором
+# Перевірки чит-кодів: збирає cheatfile_test.cpp та cheatfind_test.cpp хостовим g++,
+# запускає результат і перевіряє рядки підсумку; окремо збирає реалізації компілятором
 # телефона. Кожен запуск має межу часу. Проміжні файли й EXE лежать у тимчасовій теці, поза сховищем.
 # Повертає 0 лише за повного успіху. -SrcDir задає іншу копію реалізації (для мутаційної перевірки).
 param(
@@ -15,8 +15,6 @@ $ErrorActionPreference = 'Stop'
 $gxx = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..\..\toolchain\perl\c\bin\g++.exe'))
 $armGxx = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..\..\toolchain\CSL_Arm_Toolchain\bin\arm-none-symbianelf-g++.exe'))
 $srcDir = if ($SrcDir) { [IO.Path]::GetFullPath($SrcDir) } else { [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..\src\ui')) }
-$testSrc = Join-Path $PSScriptRoot 'cheatfile_test.cpp'
-$implSrc = Join-Path $srcDir 'cheatfile.cpp'
 
 # Тека збірки має бути ASCII-шляхом: mingw g++ мовчки завершується, коли TMP містить кирилицю.
 Add-Type -Namespace Ps1EmuCheat -Name Path -MemberDefinition '[System.Runtime.InteropServices.DllImport("kernel32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode, SetLastError = true)] public static extern uint GetShortPathName(string aLong, System.Text.StringBuilder aShort, uint aSize);'
@@ -29,9 +27,6 @@ $env:TEMP = $tempRoot
 $work = Join-Path $tempRoot "ps1emu-cheat-$PID"
 New-Item -ItemType Directory -Force -Path $work | Out-Null
 
-# Запуск через System.Diagnostics.Process: у Windows PowerShell 5.1 Start-Process з
-# перенаправленням віддає порожній ExitCode. Вивід читається асинхронно, щоб великий вивід
-# не заблокував процес. Після влучення в межу часу процес знищують.
 function Invoke-Limited {
 	param([string]$Exe, [string[]]$Arguments, [int]$TimeoutMs, [string]$Label)
 	$psi = New-Object System.Diagnostics.ProcessStartInfo
@@ -67,42 +62,64 @@ function Invoke-Limited {
 
 $failures = @()
 
-if (-not (Test-Path $implSrc)) {
-	$failures += "implementation not found: $implSrc"
-}
+$suites = @(
+	@{
+		Name = 'cheatfile'
+		TestSrc = Join-Path $PSScriptRoot 'cheatfile_test.cpp'
+		ImplSrcs = @((Join-Path $srcDir 'cheatfile.cpp'))
+		Tag = 'cheatfile'
+	},
+	@{
+		Name = 'cheatfind'
+		TestSrc = Join-Path $PSScriptRoot 'cheatfind_test.cpp'
+		ImplSrcs = @((Join-Path $srcDir 'cheatfile.cpp'), (Join-Path $srcDir 'cheatfind.cpp'))
+		Tag = 'cheatfind'
+	}
+)
 
-if ($failures.Count -eq 0) {
-	# 1. Хостове збирання тесту разом із реалізацією і запуск.
-	$exe = Join-Path $work 'cheatfile_test.exe'
-	# -static: EXE не залежить від DLL компілятора (без нього запуск віддає 0xC0000135, DLL не знайдено).
-	$flags = @('-std=c++98', '-pedantic', '-Wall', '-Wextra', '-Werror', '-O2', '-static', "-I$srcDir")
-	# cc1plus.exe знаходить свої DLL через PATH; без каталогу g++ він мовчки завершується з кодом 1.
-	$savedPath = $env:PATH
-	$env:PATH = (Split-Path -Parent $gxx) + ';' + $savedPath
-	$build = Invoke-Limited $gxx ($flags + @($testSrc, $implSrc, '-o', $exe)) $CompileTimeoutMs 'host-build'
-	$env:PATH = $savedPath
-	if ($build.TimedOut) { $failures += 'host-build: time limit exceeded' }
-	elseif ($build.Code -ne 0) { $failures += "host-build: exit code $($build.Code)" }
-	if ($build.Text.Trim()) { Write-Output '--- host-build ---'; Write-Output $build.Text }
-}
+# 1. Хостове збирання та запуск для кожної тестової програми.
+$flags = @('-std=c++98', '-pedantic', '-Wall', '-Wextra', '-Werror', '-O2', '-static', "-I$srcDir")
+$savedPath = $env:PATH
+$env:PATH = (Split-Path -Parent $gxx) + ';' + $savedPath
 
-if ($failures.Count -eq 0) {
-	$list = Invoke-Limited $exe @('--list') $RunTimeoutMs 'list'
+foreach ($s in $suites) {
+	if ($failures.Count -ne 0) { break }
+
+	foreach ($imp in $s.ImplSrcs) {
+		if (-not (Test-Path $imp)) {
+			$failures += "$($s.Name): implementation not found: $imp"
+			break
+		}
+	}
+	if ($failures.Count -ne 0) { break }
+
+	$exe = Join-Path $work "$($s.Name)_test.exe"
+	$compileArgs = $flags + @($s.TestSrc) + $s.ImplSrcs + @('-o', $exe)
+	$build = Invoke-Limited $gxx $compileArgs $CompileTimeoutMs "host-build-$($s.Name)"
+	if ($build.TimedOut) { $failures += "host-build-$($s.Name): time limit exceeded" }
+	elseif ($build.Code -ne 0) { $failures += "host-build-$($s.Name): exit code $($build.Code)" }
+	if ($build.Text.Trim()) { Write-Output "--- host-build-$($s.Name) ---"; Write-Output $build.Text }
+	if ($failures.Count -ne 0) { break }
+
+	$list = Invoke-Limited $exe @('--list') $RunTimeoutMs "list-$($s.Name)"
 	$names = @()
 	foreach ($line in ($list.Text -split "`n")) {
 		if ($line -match '^TEST (\S+)') { $names += $matches[1] }
 	}
 	if ($list.TimedOut -or $list.Code -ne 0 -or $names.Count -eq 0) {
-		$failures += 'list: no test names (time limit, exit code or empty list)'
+		$failures += "list-$($s.Name): no test names (time limit, exit code or empty list)"
+		break
 	}
-	# Кількість функцій Test* у файлі має збігатися з --list: закоментований RUN інакше пройшов би непоміченим.
-	$defined = ([regex]::Matches([IO.File]::ReadAllText($testSrc), '(?m)^static void (Test\w+)\(\)')).Count
+
+	$defined = ([regex]::Matches([IO.File]::ReadAllText($s.TestSrc), '(?m)^static void (Test\w+)\(\)')).Count
 	if ($names.Count -ne $defined) {
-		$failures += "list: $($names.Count) tests in --list, $defined Test functions in cheatfile_test.cpp (RUN missing or commented out)"
+		$failures += "list-$($s.Name): $($names.Count) tests in --list, $defined Test functions in $(Split-Path -Leaf $s.TestSrc)"
+		break
 	}
+
 	$total = 0
 	$failed = 0
-	Write-Output '--- run ---'
+	Write-Output "--- run $($s.Name) ---"
 	$clock = [Diagnostics.Stopwatch]::StartNew()
 	for ($i = 0; $i -lt $names.Count; $i++) {
 		$name = $names[$i]
@@ -111,8 +128,9 @@ if ($failures.Count -eq 0) {
 			Write-Output ("FAIL [suite] time budget {0} ms exceeded: {1} of {2} tests not run" -f $SuiteTimeoutMs, ($names.Count - $i), $names.Count)
 			break
 		}
-		$one = Invoke-Limited $exe @('--only', $name) $TestTimeoutMs ("run-$name")
-		$m = [regex]::Match($one.Text, '(?m)^cheatfile: (\d+) checks, (\d+) failed\r?$')
+		$one = Invoke-Limited $exe @('--only', $name) $TestTimeoutMs "run-$name"
+		$regexPattern = "(?m)^$([regex]::Escape($s.Tag)): (\d+) checks, (\d+) failed\r?$"
+		$m = [regex]::Match($one.Text, $regexPattern)
 		if ($one.TimedOut) {
 			$failed += 1
 			$total += 1
@@ -137,20 +155,27 @@ if ($failures.Count -eq 0) {
 			}
 		}
 	}
-	Write-Output "cheatfile: $total checks, $failed failed"
-	if ($total -eq 0) { $failures += 'run: no checks executed' }
-	if ($failed -ne 0) { $failures += "run: $failed failed checks or tests" }
+	Write-Output "$($s.Tag): $total checks, $failed failed"
+	if ($total -eq 0) { $failures += "$($s.Name): no checks executed" }
+	if ($failed -ne 0) { $failures += "$($s.Name): $failed failed checks or tests" }
 }
 
-# 2. Збирання cheatfile.cpp компілятором телефона: будь-яке попередження чи помилка — невдача.
-if ($failures.Count -eq 0 -or (Test-Path $implSrc)) {
-	$armObj = Join-Path $work 'cheatfile_arm.o'
-	$arm = Invoke-Limited $armGxx @('-O2', '-Wall', '-Werror', '-fno-exceptions', '-fno-rtti', '-c', $implSrc, '-o', $armObj) $CompileTimeoutMs 'arm-build'
-	Write-Output '--- arm-build ---'
-	Write-Output $arm.Text
-	if ($arm.TimedOut) { $failures += 'arm-build: time limit exceeded' }
-	elseif ($arm.Code -ne 0) { $failures += "arm-build: exit code $($arm.Code)" }
-	elseif ($arm.Text.Trim()) { $failures += 'arm-build: compiler printed diagnostics' }
+$env:PATH = $savedPath
+
+# 2. Збирання реалізацій компілятором телефона.
+$armFiles = @('cheatfile.cpp', 'cheatfind.cpp')
+foreach ($af in $armFiles) {
+	if ($failures.Count -ne 0) { break }
+	$afSrc = Join-Path $srcDir $af
+	if (Test-Path $afSrc) {
+		$armObj = Join-Path $work "$([IO.Path]::GetFileNameWithoutExtension($af))_arm.o"
+		$arm = Invoke-Limited $armGxx @('-O2', '-Wall', '-Werror', '-fno-exceptions', '-fno-rtti', "-I$srcDir", '-c', $afSrc, '-o', $armObj) $CompileTimeoutMs "arm-build-$af"
+		Write-Output "--- arm-build $af ---"
+		if ($arm.Text.Trim()) { Write-Output $arm.Text }
+		if ($arm.TimedOut) { $failures += "arm-build-${af}: time limit exceeded" }
+		elseif ($arm.Code -ne 0) { $failures += "arm-build-${af}: exit code $($arm.Code)" }
+		elseif ($arm.Text.Trim()) { $failures += "arm-build-${af}: compiler printed diagnostics" }
+	}
 }
 
 if ($failures.Count -eq 0) {
