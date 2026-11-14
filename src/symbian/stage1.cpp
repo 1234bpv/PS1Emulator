@@ -4180,6 +4180,19 @@ GLDEF_C TInt E32Main()
 		voutSymbianSetSmooth(cl.FindF(KNoSmoothArg) != KErrNotFound ? 0 : 1);
 		_LIT(KDsaNoResumeArg, "dsanoresume");
 		voutSymbianSetDsaNoResume(cl.FindF(KDsaNoResumeArg) != KErrNotFound ? 1 : 0);
+		_LIT(KPfitArg, "pfit");
+		const TInt pfitPos = cl.FindF(KPfitArg);
+		if (pfitPos != KErrNotFound)
+			{
+			TLex lex(cl.Mid(pfitPos + 4));
+			TInt pval = 0;
+			if (lex.Val(pval) == KErrNone)
+				ps1SetPFit(pval, cl.FindF(_L("portrait")) != KErrNotFound ? 1 : 0);
+			}
+		else if (cl.FindF(_L("crop")) != KErrNotFound)
+			{
+			ps1SetPFit(1, cl.FindF(_L("portrait")) != KErrNotFound ? 1 : 0);
+			}
 		// A command line does not apply the settings file, so the menu switch for
 		// pitch preservation cannot be measured on the bench without its own argument.
 		_LIT(KWsolaArg, "wsola");
