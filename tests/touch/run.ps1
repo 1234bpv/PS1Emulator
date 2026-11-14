@@ -7,7 +7,8 @@ param(
 	[int]$RunTimeoutMs = 120000,
 	[int]$TestTimeoutMs = 30000,
 	[int]$SuiteTimeoutMs = 180000,
-	[string]$SrcDir = ''
+	[string]$SrcDir = '',
+	[switch]$Blend
 )
 
 $ErrorActionPreference = 'Stop'
@@ -135,10 +136,30 @@ if ($arm.TimedOut) { $failures += 'arm-build: time limit exceeded' }
 elseif ($arm.Code -ne 0) { $failures += "arm-build: exit code $($arm.Code)" }
 elseif ($arm.Text.Trim()) { $failures += 'arm-build: compiler printed diagnostics' }
 
+if ($Blend -and $failures.Count -eq 0) {
+	$blendSrc = Join-Path $PSScriptRoot 'blend565_test.cpp'
+	$blendExe = Join-Path $work 'blend565_test.exe'
+	$savedPath = $env:PATH
+	$env:PATH = (Split-Path -Parent $gxx) + ';' + $savedPath
+	$blendBuild = Invoke-Limited $gxx ($flags + @($blendSrc, $implSrc, '-o', $blendExe)) $CompileTimeoutMs 'blend-build'
+	$env:PATH = $savedPath
+	if ($blendBuild.TimedOut) { $failures += 'blend-build: time limit exceeded' }
+	elseif ($blendBuild.Code -ne 0) { $failures += "blend-build: exit code $($blendBuild.Code)" }
+	if ($blendBuild.Text.Trim()) { Write-Output "--- blend-build ---"; Write-Output $blendBuild.Text }
+	if ($failures.Count -eq 0) {
+		$blendRun = Invoke-Limited $blendExe @() $TestTimeoutMs 'blend-run'
+		Write-Output "--- blend565-run ---"
+		Write-Output $blendRun.Text
+		if ($blendRun.TimedOut) { $failures += 'blend-run: time limit exceeded' }
+		elseif ($blendRun.Code -ne 0) { $failures += "blend-run: exit code $($blendRun.Code)" }
+	}
+}
+
 if ($failures.Count -eq 0) {
 	# Після успіху теку знімає сам раннер; після невдачі її лишають для діагностики.
 	Remove-Item -Recurse -Force $work -ErrorAction SilentlyContinue
-	Write-Output "run.ps1: PASS (host-build, run, arm-build)"
+	$passLabel = if ($Blend) { "run.ps1: PASS (host-build, run, arm-build, blend565)" } else { "run.ps1: PASS (host-build, run, arm-build)" }
+	Write-Output $passLabel
 	exit 0
 }
 foreach ($f in $failures) { Write-Output "run.ps1: FAIL: $f" }
