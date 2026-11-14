@@ -78,6 +78,7 @@ extern "C" void ps1SetPFit(int aPFit, int aOrient);
 extern "C" void voutSymbianSetTiltMap(int aSide, int aPitch, int aDead, int aSensPct);
 extern "C" int voutSymbianTiltActive(void);
 extern "C" int ps1TiltCli(void);
+extern "C" int ps1PFitCli(void);
 extern "C" int ps1KeyProbeCli(void);
 TBool ps1StateIoFailed();
 void voutSymbianSetKeyMap(const int *aScan, const int *aAlt, int aCount,
@@ -1188,6 +1189,15 @@ void CPs1Container::ConstructL(const TRect &aRect)
 		TFileName p;
 		ProfilePath(p);
 		LoadCfg(p, EFalse);
+		}
+	if (ps1PFitCli() >= 0)
+		{
+		// A measurement run names its own format and orientation; the settings file must not win.
+		TBuf<256> args;
+		User::CommandLine(args);
+		iCfg.iPFit = ps1PFitCli();
+		if (args.FindF(_L("portrait")) != KErrNotFound)
+			iCfg.iOrient = 1;
 		}
 	ps1SetPFit(iCfg.iPFit, iCfg.iOrient);
 	if (iCfg.iOrient)
@@ -5314,22 +5324,9 @@ TInt CPs1AppUi::Tick()
 				iContainer->ShowError();
 			}
 		}
-	else
+	else if (!ps1GuiStep())
 		{
-		// Hypothesis 5.1: execute frames in a loop without returning to active scheduler
-		// while there are no completed asynchronous requests pending on the thread.
-		RThread thisThread;
-		int frameBurst = 0;
-		while (more)
-			{
-			if (!ps1GuiStep())
-				{
-				more = EFalse;
-				break;
-				}
-			if (++frameBurst >= 4 || thisThread.RequestCount() > 0)
-				break;
-			}
+		more = EFalse;
 		}
 
 	iInTick = EFalse;

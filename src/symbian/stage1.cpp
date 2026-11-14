@@ -425,6 +425,9 @@ int voutSymbianInit(void);
 unsigned short voutSymbianPollPad(void);
 static int g_tiltCli;
 extern "C" int ps1TiltCli(void) { return g_tiltCli; }
+// Frame format named on the command line, -1 when absent: the settings must not override it.
+static int g_pfitCli = -1;
+extern "C" int ps1PFitCli(void) { return g_pfitCli; }
 static int g_keyProbeCli;
 extern "C" int ps1KeyProbeCli(void) { return g_keyProbeCli; }
 extern "C" void voutSymbianSetTilt(int aOn);
@@ -528,8 +531,12 @@ extern "C" void voutSymbianSetPFit(int on);
 extern "C" int g_gte_fx_q12;
 extern "C" int g_gte_fy_q12;
 
+extern "C" void ndrc_clear_full(void);
+static void pfitDrcReset();
+
 extern "C" void ps1SetPFit(int aPFit, int aOrient)
 	{
+	const int oldFx = g_gte_fx_q12, oldFy = g_gte_fy_q12;
 	voutSymbianSetPFit(aPFit);
 	if (aOrient)
 		{
@@ -556,6 +563,9 @@ extern "C" void ps1SetPFit(int aPFit, int aOrient)
 		g_gte_fx_q12 = 4096;
 		g_gte_fy_q12 = 4096;
 		}
+	// Translated blocks carry the projection handler chosen when they were compiled.
+	if (g_gte_fx_q12 != oldFx || g_gte_fy_q12 != oldFy)
+		pfitDrcReset();
 	}
 void voutSymbianSetDsaNoResume(int on);
 void voutSymbianSetFxaa(int threshold, int max);
@@ -3264,6 +3274,13 @@ static TBool g_guiUp;
 // else (gpu_unai rasterization, core, our output).
 static TBool g_guiInterp;
 
+// Before the core is up there is no translation cache to drop.
+static void pfitDrcReset()
+	{
+	if (g_guiUp && !g_guiInterp)
+		ndrc_clear_full();
+	}
+
 // Frames per configuration in GL probe; 0 = probe not requested.
 static TInt g_glBench;
 // MBX rasterizer instead of VRAM presentation ("glrender" argument).
@@ -4186,11 +4203,15 @@ GLDEF_C TInt E32Main()
 			{
 			TLex lex(cl.Mid(pfitPos + 4));
 			TInt pval = 0;
-			if (lex.Val(pval) == KErrNone)
+			if (lex.Val(pval) == KErrNone && pval >= 0 && pval <= 3)
+				{
+				g_pfitCli = pval;
 				ps1SetPFit(pval, cl.FindF(_L("portrait")) != KErrNotFound ? 1 : 0);
+				}
 			}
 		else if (cl.FindF(_L("crop")) != KErrNotFound)
 			{
+			g_pfitCli = 1;
 			ps1SetPFit(1, cl.FindF(_L("portrait")) != KErrNotFound ? 1 : 0);
 			}
 		// A command line does not apply the settings file, so the menu switch for
