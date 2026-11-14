@@ -524,6 +524,39 @@ int voutSymbianVisTest(int raw);
 void voutSymbianSetOverlay(int on);
 void voutSymbianSetNoUpdate(int on);
 void voutSymbianSetSmooth(int on);
+extern "C" void voutSymbianSetPFit(int on);
+extern "C" int g_gte_fx_q12;
+extern "C" int g_gte_fy_q12;
+
+extern "C" void ps1SetPFit(int aPFit, int aOrient)
+	{
+	voutSymbianSetPFit(aPFit);
+	if (aOrient)
+		{
+		if (aPFit == 2)
+			{
+			// GTE 240x240: k = 4/3. fx = 4/3 (5461), fy = 1.0 (4096)
+			g_gte_fx_q12 = 5461;
+			g_gte_fy_q12 = 4096;
+			}
+		else if (aPFit == 3)
+			{
+			// GTE 240x320: k = 16/9. fx = 4/3 (5461), fy = 3/4 (3072)
+			g_gte_fx_q12 = 5461;
+			g_gte_fy_q12 = 3072;
+			}
+		else
+			{
+			g_gte_fx_q12 = 4096;
+			g_gte_fy_q12 = 4096;
+			}
+		}
+	else
+		{
+		g_gte_fx_q12 = 4096;
+		g_gte_fy_q12 = 4096;
+		}
+	}
 void voutSymbianSetDsaNoResume(int on);
 void voutSymbianSetFxaa(int threshold, int max);
 void voutSymbianSetStats(int fpsX10, int msX10);

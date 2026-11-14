@@ -1815,6 +1815,7 @@ static const TInt KOvlPad   = 2;
 
 static TBool g_noUpdate;    // probe: skip screen Update() (see setter below)
 static TBool g_smoothDown = ETrue;   // box filter downscaling (see blitCurrent)
+static TInt  g_pfit = 0;             // 0: Fit 4:3, 1: Crop 1:1 (240x240), 2: 3D GTE 240x240, 3: 3D GTE 240x320
 // Which row loop the frame conversion actually took: counted to keep the fast
 // paths honest, because a guard that never matches looks exactly like a change
 // that does not help.
@@ -2077,8 +2078,38 @@ static void blitCurrent()
 	if (dstW > SW) dstW = SW;
 	if (dstW < 1) dstW = 1;
 	if (dstH < 1) dstH = 1;
-	const TInt ox = (SW - dstW) / 2;
-	const TInt oy = (SH > SW) ? 0 : (SH - dstH) / 2;
+	TInt ox = (SW - dstW) / 2;
+	TInt oy = (SH > SW) ? 0 : (SH - dstH) / 2;
+
+	// In portrait orientation (SH > SW), handle pfit modes (0: Fit 4:3, 1: Crop 1:1, 2: GTE 240x240, 3: GTE 240x320)
+	if (SH > SW)
+		{
+		if (g_pfit == 1) // Crop 1:1 (240x240)
+			{
+			dstW = SW;
+			dstH = SW;
+			ox = 0;
+			oy = 0;
+			// Crop middle 75% horizontally: start at sw/8, width sw*3/4
+			const TInt cropX = sw / 8;
+			sw = sw * 3 / 4;
+			startByte += cropX * (rgb24 ? 3 : 2);
+			}
+		else if (g_pfit == 2) // GTE 240x240
+			{
+			dstW = SW;
+			dstH = SW;
+			ox = 0;
+			oy = 0;
+			}
+		else if (g_pfit == 3) // GTE 240x320
+			{
+			dstW = SW;
+			dstH = SH;
+			ox = 0;
+			oy = 0;
+			}
+		}
 
 #ifdef PS1_BENCH
 	const TUint _fc0 = User::FastCounter();
@@ -2840,6 +2871,16 @@ extern "C" unsigned short voutSymbianTiltPadBits(void)
 extern "C" void voutSymbianSetSmooth(int aOn)
 	{
 	g_smoothDown = aOn ? ETrue : EFalse;
+	}
+
+extern "C" void voutSymbianSetPFit(int aPFit)
+	{
+	g_pfit = (aPFit >= 0 && aPFit <= 3) ? aPFit : 0;
+	}
+
+extern "C" int voutSymbianGetPFit(void)
+	{
+	return g_pfit;
 	}
 
 extern "C" void voutSymbianSetDsaNoResume(int aOn)

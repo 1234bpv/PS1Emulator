@@ -37,6 +37,7 @@
 #include "i18n.h"
 #include "cheatfile.h"
 #include "cheatfind.h"
+#include "touchcore.h"
 
 extern "C" {
 int  SaveState(const char *file);
@@ -73,6 +74,7 @@ void ps1CfgApplyLive(int aIlace, int aLight, int aBlend, int aPixSkip,
 extern "C" void voutSymbianSetTilt(int aOn);
 extern "C" void voutSymbianTiltRezero(void);
 extern "C" void ps1SetDebugLog(int aOn);
+extern "C" void ps1SetPFit(int aPFit, int aOrient);
 extern "C" void voutSymbianSetTiltMap(int aSide, int aPitch, int aDead, int aSensPct);
 extern "C" int voutSymbianTiltActive(void);
 extern "C" int ps1TiltCli(void);
@@ -160,7 +162,7 @@ enum TCfgItem
 	ECfgStart = 0,
 	ECfgHdrGame, ECfgGame, ECfgSaveState, ECfgLoadState, ECfgCheats, ECfgAdd,
 	ECfgHdrVideo, ECfgSmooth, ECfgFxaa, ECfgFps,
-	ECfgLight, ECfgBlend, ECfgDirty, ECfgDsa, ECfgGl, ECfgSwDraw, ECfgIlace, ECfgPixSkip, ECfgOrient,
+	ECfgLight, ECfgBlend, ECfgDirty, ECfgDsa, ECfgGl, ECfgSwDraw, ECfgIlace, ECfgPixSkip, ECfgOrient, ECfgPFit,
 	ECfgHdrSpeed, ECfgGpuSkip, ECfgCpu, ECfgGteNf, ECfgCycle,
 	ECfgHdrSound, ECfgSound, ECfgWsola,
 	ECfgHdrInput, ECfgPreset, ECfgKeyBase, ECfgKeys,
@@ -189,7 +191,7 @@ static const unsigned char KItemSection[ECfgCount] =
 	ESecCount,
 	ESecGame, ESecGame, ESecGame, ESecGame, ESecGame, ESecGame,
 	ESecVideo, ESecVideo, ESecVideo, ESecVideo, ESecVideo, ESecVideo, ESecVideo,
-	ESecVideo, ESecVideo, ESecVideo, ESecVideo, ESecVideo, ESecVideo,
+	ESecVideo, ESecVideo, ESecVideo, ESecVideo, ESecVideo, ESecVideo, ESecVideo,
 	ESecSpeed, ESecSpeed, ESecSpeed, ESecSpeed, ESecSpeed,
 	ESecSound, ESecSound, ESecSound,
 	ESecInput, ESecInput, ESecInput, ESecInput,
@@ -205,7 +207,7 @@ static const TStrId KItemLabelStrId[ECfgCount] =
 	EStrSecGame, EStrItemGame, EStrItemSaveState, EStrItemLoadState, EStrSecGame, EStrItemAdd,
 	EStrSecVideo, EStrItemSmooth, EStrItemFxaa, EStrItemFps,
 	EStrItemLight, EStrItemBlend, EStrItemDirty, EStrItemDsa, EStrItemGl,
-	EStrItemSwDraw, EStrItemIlace, EStrItemPixSkip, EStrSecVideo,
+	EStrItemSwDraw, EStrItemIlace, EStrItemPixSkip, EStrSecVideo, EStrSecVideo,
 	EStrSecSpeed, EStrItemGpuSkip, EStrItemCpu, EStrItemGteNf, EStrItemCycle,
 	EStrSecSound, EStrItemSound, EStrItemWsola,
 	EStrSecControls, EStrItemPreset, EStrItemKeyBase, EStrItemKeys,
@@ -225,7 +227,7 @@ static const char *const KCfgKey[ECfgCount] =
 	NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, "smooth", "fxaa", "fps", "light", "blend", "dirty", "dsa", "gl",
-	"swdraw", "ilace", "pixskip", "orient",
+	"swdraw", "ilace", "pixskip", "orient", "pfit",
 	NULL, "gpuskip", "cpu", "gtenf", "cycle",
 	NULL, "sound", "wsola",
 	NULL, NULL, NULL, NULL,
@@ -243,7 +245,7 @@ static const char *const KItemHelpId[ECfgCount] =
 	"start",
 	"sec.game", "game", "savestate", "loadstate", "cheats", "add",
 	"sec.video", "smooth", "fxaa", "fps", "light", "blend", "dirty",
-	"dsa", "gl", "swdraw", "ilace", "pixskip", "orient",
+	"dsa", "gl", "swdraw", "ilace", "pixskip", "orient", "pfit",
 	"sec.speed", "gpuskip", "cpu", "gtenf", "cycle",
 	"sec.sound", "sound", "wsola",
 	"sec.input", "preset", "keybase", "keys",
@@ -462,7 +464,7 @@ public:
 	// at start until it is set. Not part of SetDefaults, so a reset does not clear it.
 	TInt iIntro;
 	TInt iTilt, iTiltSide, iTiltPitch, iTiltDead, iTiltSens;
-	TInt iOrient;
+	TInt iOrient, iPFit;
 	TInt iTouchOn, iSticks, iPadAlpha;
 	TInt iKeyScan[KPadMax], iKeyAlt[KPadMax], iKeyHold[KPadMax];
 	TInt iKeyScanL[KPadMax], iKeyAltL[KPadMax], iKeyHoldL[KPadMax];
@@ -479,7 +481,7 @@ public:
 void TPs1Cfg::SetDefaults()
 	{
 	iInterp = iIlace = iPixSkip = iGteNf = iGl = iFps = iSwDraw = 0;
-	iOrient = 0;
+	iOrient = iPFit = 0;
 	iGpuSkip = 0;
 	iDummy = 0;
 	iIntro = 0;
@@ -574,6 +576,7 @@ void TPs1Cfg::Clamp()
 	if (iTiltDead < 0 || iTiltDead > 40) iTiltDead = 10;
 	if (iTiltSens < 40 || iTiltSens > 300) iTiltSens = 100;
 	if (iOrient < 0 || iOrient > 1) iOrient = 0;
+	if (iPFit < 0 || iPFit > 3) iPFit = 0;
 	iDebug = iDebug ? 1 : 0;
 	iTouchOn = iTouchOn ? 1 : 0;
 	iSticks = iSticks ? 1 : 0;
@@ -586,6 +589,7 @@ TInt &TPs1Cfg::Value(TInt aItem)
 	switch (aItem)
 		{
 		case ECfgOrient:  return iOrient;
+		case ECfgPFit:    return iPFit;
 		case ECfgCpu:     return iInterp;
 		case ECfgIlace:   return iIlace;
 		case ECfgLight:   return iLight;
@@ -888,7 +892,15 @@ public:
 	TBool OnProgress() const { return iPage == EPageProgress; }
 	// Sleep of the menu loop: short only while a progress page or a moving hint needs it.
 	TInt TickUs() const
-		{ return iPage == EPageProgress ? 20000 : (iPage == EPageMain && iHintPhase == 1) ? 30000 : 50000; }
+		{
+		if (iPage == EPageProgress) return 20000;
+		if (iPage == EPageMain)
+			{
+			if (iHintPhase == 1) return 30000;
+			if (iMenuScrollInited && KScrollActive(iMenuScroll)) return 20000;
+			}
+		return 50000;
+		}
 	// Leaving the foreground (call, task switch) pauses through the menu.
 	void FocusLost();
 	void MenuTick();
@@ -947,6 +959,7 @@ private:
 	TKeyResponse SetupKeyL(TInt aScan);
 	TKeyResponse CheatsKeyL(TInt aScan);
 	void CheatsPointerL(const TPoint &aPos);
+	void MenuPointerL(const TPointerEvent &aPointerEvent);
 	void OpenCheats();
 	void LeaveCheats();
 	void OpenMenu();
@@ -1075,6 +1088,8 @@ private:
 	TInt iCheatLen;
 	char *iCheatBuf;
 	TPs1Cfg iCfg;
+	TKScroll iMenuScroll;
+	TBool iMenuScrollInited;
 	TInt32 iSideKeyCap[8];
 	CPs1RemCon *iRemCon;      // RemCon target for the media keys; NULL when it did not open
 	// ps1slide anim, held only while a binding uses a media key: NULL both when not.
@@ -1160,6 +1175,7 @@ void CPs1Container::ConstructL(const TRect &aRect)
 	iCheatSel = 0;
 	iCheatLen = 0;
 	iCheatBuf = s_appCheatMenuBuf;
+	iMenuScrollInited = EFalse;
 	for (TInt i = 0; i < 8; i++)
 		iSideKeyCap[i] = 0;
 
@@ -1173,6 +1189,7 @@ void CPs1Container::ConstructL(const TRect &aRect)
 		ProfilePath(p);
 		LoadCfg(p, EFalse);
 		}
+	ps1SetPFit(iCfg.iPFit, iCfg.iOrient);
 	if (iCfg.iOrient)
 		{
 		iPresetSel = iCfg.iPresetSelP;
@@ -1312,6 +1329,8 @@ TBool CPs1Container::ItemVisible(TInt aItem) const
 	// Portrait mode setting is for non-touch keypad handsets; hidden on touchscreens.
 	if (aItem == ECfgOrient)
 		return !AknLayoutUtils::PenEnabled();
+	if (aItem == ECfgPFit)
+		return !AknLayoutUtils::PenEnabled() && iCfg.iOrient;
 	if (aItem == ECfgTouchOn || aItem == ECfgSticks || aItem == ECfgPadAlpha)
 		return AknLayoutUtils::PenEnabled();
 	return ETrue;
@@ -2157,6 +2176,7 @@ void CPs1Container::SetOrient(TInt aOrient)
 			CAknAppUiBase::EAppUiOrientationPortrait :
 			CAknAppUiBase::EAppUiOrientationLandscape));
 		}
+	ps1SetPFit(iCfg.iPFit, iCfg.iOrient);
 	SaveAll();
 	}
 
@@ -2180,6 +2200,13 @@ void CPs1Container::ItemLabel(TInt aItem, TDes &aOut) const
 		aOut.Copy(iCfg.iLang == ELangIdUkrainian ? _L("Положення") :
 		          iCfg.iLang == ELangIdRussian ? _L("Ориентация") :
 		          _L("Orientation"));
+		return;
+		}
+	if (aItem == ECfgPFit)
+		{
+		aOut.Copy(iCfg.iLang == ELangIdUkrainian ? _L("Формат кадру") :
+		          iCfg.iLang == ELangIdRussian ? _L("Формат кадра") :
+		          _L("Frame format"));
 		return;
 		}
 	if (aItem == ECfgCheats)
@@ -2276,6 +2303,20 @@ void CPs1Container::ItemValue(TInt aItem, TDes &aOut) const
 				aOut.Copy(iCfg.iLang == ELangIdUkrainian ? _L("Альбомне") :
 				          iCfg.iLang == ELangIdRussian ? _L("Альбомная") :
 				          _L("Landscape"));
+			break;
+		case ECfgPFit:
+			if (c.iPFit == 1)
+				aOut.Copy(iCfg.iLang == ELangIdUkrainian ? _L("Обрізане (1:1)") :
+				          iCfg.iLang == ELangIdRussian ? _L("Обрезанное (1:1)") :
+				          _L("Crop (1:1)"));
+			else if (c.iPFit == 2)
+				aOut.Copy(_L("3D 240x240"));
+			else if (c.iPFit == 3)
+				aOut.Copy(_L("3D 240x320"));
+			else
+				aOut.Copy(iCfg.iLang == ELangIdUkrainian ? _L("Ціле (4:3)") :
+				          iCfg.iLang == ELangIdRussian ? _L("Целое (4:3)") :
+				          _L("Fit (4:3)"));
 			break;
 		case ECfgCpu:
 			aOut.Copy(Tr(c.iInterp ? EStrValInterp : EStrValDynarec));
@@ -2529,17 +2570,30 @@ void CPs1Container::DrawMain(CWindowGc &gc, const TRect &aBody) const
 		total++;
 		}
 
-	TInt first = selRow - rows / 2;
-	if (first > total - rows) first = total - rows;
-	if (first < 0) first = 0;
-
+	TInt first = 0;
 	TInt y = aBody.iTl.iY + font->AscentInPixels();
+	if (AknLayoutUtils::PenEnabled() && iMenuScrollInited)
+		{
+		const TInt scrollPos = KScrollPos(iMenuScroll);
+		first = scrollPos / lh;
+		if (first > total - rows) first = total - rows;
+		if (first < 0) first = 0;
+		y += first * lh - scrollPos;
+		}
+	else
+		{
+		first = selRow - rows / 2;
+		if (first > total - rows) first = total - rows;
+		if (first < 0) first = 0;
+		}
+
+	gc.SetClippingRect(aBody);
 	TInt row = 0;
 	for (TInt i = 0; i < ECfgCount; i++)
 		{
 		if (!ItemVisible(i))
 			continue;
-		if (row >= first && row < first + rows)
+		if (row >= first && row <= first + rows + 1)
 			{
 			TBuf<64> label;
 			TBuf<64> value;
@@ -2553,6 +2607,7 @@ void CPs1Container::DrawMain(CWindowGc &gc, const TRect &aBody) const
 			}
 		row++;
 		}
+	gc.CancelClippingRect();
 	}
 
 void CPs1Container::DrawKeys(CWindowGc &gc, const TRect &aBody) const
@@ -3386,6 +3441,30 @@ void CPs1Container::OpenMenu()
 	LogGeometry();
 	iConfirm = -1;
 	iStatusMsg.Zero();
+	if (AknLayoutUtils::PenEnabled())
+		{
+		const TRect body = BodyRect();
+		const CFont *font = iCoeEnv->NormalFont();
+		const TInt lh = font->HeightInPixels() + KRowGap;
+		if (lh > 0)
+			{
+			TInt total = 0;
+			for (TInt i = 0; i < ECfgCount; i++)
+				if (ItemVisible(i))
+					total++;
+			const TInt viewPx = body.Height();
+			const TInt contentPx = total * lh;
+			if (!iMenuScrollInited)
+				{
+				KScrollInit(iMenuScroll, viewPx, contentPx, 138);
+				iMenuScrollInited = ETrue;
+				}
+			else
+				{
+				KScrollSetExtent(iMenuScroll, viewPx, contentPx);
+				}
+			}
+		}
 	DrawNow();
 	}
 
@@ -3405,6 +3484,7 @@ void CPs1Container::DoCloseMenu(TBool aWithRestart)
 	ps1CfgApplyLive(iCfg.iIlace, iCfg.iLight, iCfg.iBlend, iCfg.iPixSkip,
 		iCfg.iFps, iCfg.iGpuSkip, iCfg.iCycle, iCfg.iSmooth, iCfg.iFxaa, iCfg.iDirty,
 		iCfg.iSwDraw);
+	ps1SetPFit(iCfg.iPFit, iCfg.iOrient);
 	ps1SndResetRate();
 	ps1SetDebugLog(iCfg.iDebug);
 	if (AknLayoutUtils::PenEnabled())
@@ -3432,7 +3512,12 @@ void CPs1Container::HandlePointerEventL(const TPointerEvent &aPointerEvent)
 		CheatsPointerL(aPointerEvent.iPosition);
 		return;
 		}
-	// The menu pages have no pointer handling yet; only the game takes taps.
+	if (iPage == EPageMain)
+		{
+		MenuPointerL(aPointerEvent);
+		return;
+		}
+	// The other menu pages have no pointer handling yet; only the game takes taps.
 	if (MenuActive())
 		return;
 	if (voutSymbianTouchEvent(aPointerEvent))
@@ -3478,7 +3563,14 @@ void CPs1Container::MenuTick()
 		return;
 		}
 	if (iPage == EPageMain)
+		{
 		HintTick();
+		if (AknLayoutUtils::PenEnabled() && iMenuScrollInited && KScrollActive(iMenuScroll))
+			{
+			KScrollStep(iMenuScroll, User::NTickCount());
+			DrawNow();
+			}
+		}
 	if (iPage == EPageKeys)
 		SlideKeysPoll();
 	if (iPage != EPageProgress)
@@ -3516,6 +3608,7 @@ void CPs1Container::ApplyAndStart()
 		iCfg.iDirty, iCfg.iDsa, iCfg.iFps, iCfg.iGpuSkip, iCfg.iCycle, iCfg.iSmooth,
 		iCfg.iFxaa, iCfg.iSwDraw, iCfg.iWsola);
 	ps1SetDebugLog(iCfg.iDebug);
+	ps1SetPFit(iCfg.iPFit, iCfg.iOrient);
 	iStartedOnce = ETrue;
 	iRestartReq = EFalse;
 	SnapRestart();
@@ -3607,6 +3700,11 @@ void CPs1Container::StepValue(TInt aItem, TInt d)
 		{
 		SetOrient(!iCfg.iOrient);
 		}
+	else if (aItem == ECfgPFit)
+		{
+		v = (v + d + 4) % 4;
+		ps1SetPFit(v, iCfg.iOrient);
+		}
 	else if (aItem == ECfgPadAlpha)
 		{
 		v += d * 10;
@@ -3682,6 +3780,15 @@ TKeyResponse CPs1Container::MainKeyL(TInt aScan)
 		ResetHint();
 		iConfirm = -1;      // confirmation applies only while staying on the item
 		iStatusMsg.Zero();
+		if (AknLayoutUtils::PenEnabled() && iMenuScrollInited)
+			{
+			const CFont *f = iCoeEnv->NormalFont();
+			const TInt rlh = f->HeightInPixels() + KRowGap;
+			TInt sRow = 0;
+			for (TInt i = 0; i < iSel; i++)
+				if (ItemVisible(i)) sRow++;
+			KScrollEnsureVisible(iMenuScroll, sRow * rlh, (sRow + 1) * rlh, 0, User::NTickCount());
+			}
 		DrawNow();
 		return EKeyWasConsumed;
 		}
@@ -4487,6 +4594,86 @@ void CPs1Container::CheatsPointerL(const TPoint &aPos)
 			int newLen = CheatSetEnabled(iCheatBuf, iCheatLen, KCheatBufCap, iCheatSel, !enabled);
 			if (newLen > 0)
 				iCheatLen = newLen;
+			}
+		DrawNow();
+		}
+	}
+
+void CPs1Container::MenuPointerL(const TPointerEvent &aPointerEvent)
+	{
+	const TRect body = BodyRect();
+	const CFont *font = iCoeEnv->NormalFont();
+	const TInt lh = font->HeightInPixels() + KRowGap;
+	if (lh < 1)
+		return;
+
+	TInt total = 0;
+	for (TInt i = 0; i < ECfgCount; i++)
+		if (ItemVisible(i))
+			total++;
+
+	const TInt viewPx = body.Height();
+	const TInt contentPx = total * lh;
+	const unsigned ms = User::NTickCount();
+
+	if (!iMenuScrollInited)
+		{
+		KScrollInit(iMenuScroll, viewPx, contentPx, 138);
+		iMenuScrollInited = ETrue;
+		}
+	else
+		{
+		KScrollSetExtent(iMenuScroll, viewPx, contentPx);
+		}
+
+	if (aPointerEvent.iType == TPointerEvent::EButton1Down)
+		{
+		KScrollDown(iMenuScroll, aPointerEvent.iPosition.iY, ms);
+		}
+	else if (aPointerEvent.iType == TPointerEvent::EDrag)
+		{
+		KScrollMove(iMenuScroll, aPointerEvent.iPosition.iY, ms);
+		DrawNow();
+		}
+	else if (aPointerEvent.iType == TPointerEvent::EButton1Up)
+		{
+		const int ev = KScrollUp(iMenuScroll, ms);
+		if (ev == EKsTap)
+			{
+			const TInt y = aPointerEvent.iPosition.iY;
+			const TInt yRel = y - body.iTl.iY;
+			if (yRel >= 0 && yRel < body.Height())
+				{
+				const TInt scrollPos = KScrollPos(iMenuScroll);
+				const TInt hitRow = (scrollPos + yRel) / lh;
+				TInt row = 0;
+				TInt clickedItem = -1;
+				for (TInt i = 0; i < ECfgCount; i++)
+					{
+					if (!ItemVisible(i))
+						continue;
+					if (row == hitRow)
+						{
+						clickedItem = i;
+						break;
+						}
+					row++;
+					}
+				if (clickedItem >= 0)
+					{
+					if (iSel != clickedItem)
+						{
+						iSel = clickedItem;
+						ResetHint();
+						iConfirm = -1;
+						iStatusMsg.Zero();
+						}
+					else
+						{
+						MainKeyL(EStdKeyDevice3);
+						}
+					}
+				}
 			}
 		DrawNow();
 		}
