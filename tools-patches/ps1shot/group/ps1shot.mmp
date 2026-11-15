@@ -1,0 +1,12 @@
+TARGET          ps1shot.exe
+TARGETTYPE      exe
+UID             0x100039CE 0xE00010A6
+SECUREID        0xE00010A6
+CAPABILITY      ReadDeviceData WriteDeviceData SwEvent
+
+SOURCEPATH      ..
+SOURCE          ps1shot.cpp
+
+SYSTEMINCLUDE   \epoc32\include
+
+LIBRARY         euser.lib efsrv.lib ws32.lib fbscli.lib
