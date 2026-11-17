@@ -49,6 +49,8 @@ static TVpadLayout g_layout;
 static TVpadState g_state;
 static TBool g_optSticks;    // command line: the two-stick layout
 static TInt g_alphaPct = 100;  // command line: opacity of the untouched panel, percent
+static TInt g_scalePct = 100;  // panel size asked for, percent: VpadDefaultLayout may return less
+static TInt g_scale;           // scale VpadDefaultLayout used for the current layout, 0 when none fits
 static TVpadArt g_art;
 static TBool g_artOk;        // g_art matches g_layout and its buffers hold it
 static TVpadSpan *g_artSpan; // buffers of g_art: grown to the largest layout, kept until Off
@@ -108,9 +110,9 @@ static TBool touchArtBuild(void)
 // command-line options, so that the line shows what is in effect, not what was asked for.
 static void touchLog(void)
 	{
-	ps1LogFmt("touch", "layout size=%dx%d umpx=%d on=%d controls=%d sticks=%d alpha=%d art=%d spans=%d",
+	ps1LogFmt("touch", "layout size=%dx%d umpx=%d on=%d controls=%d sticks=%d alpha=%d scale=%d art=%d spans=%d",
 		(int)g_scrW, (int)g_scrH, (int)g_umPerPx, (int)g_touchOn, (int)(g_fits ? g_layout.iCount : 0),
-		(int)g_optSticks, (int)g_alphaPct, (int)g_artOk, (int)(g_artOk ? g_art.iSpanCount : 0));
+		(int)g_optSticks, (int)g_alphaPct, (int)g_scale, (int)g_artOk, (int)(g_artOk ? g_art.iSpanCount : 0));
 	}
 
 // Builds the layout for a frame of aW x aH pixels. The frame, not the window at
@@ -122,8 +124,9 @@ static void touchLayout(TInt aW, TInt aH)
 	g_scrH = aH;
 	VpadReset(g_state);
 	g_keyValid = EFalse;
-	g_fits = aW > aH && VpadDefaultLayout(g_layout, aW, aH, g_umPerPx, 100,
-		g_optSticks ? EVpadOptSticks : 0) != 0;
+	g_scale = aW > aH ? VpadDefaultLayout(g_layout, aW, aH, g_umPerPx, g_scalePct,
+		g_optSticks ? EVpadOptSticks : 0) : 0;
+	g_fits = g_scale != 0;
 	g_artOk = EFalse;
 	g_touchOn = g_touchPen && !g_touchOff && g_fits;
 	touchLog();
@@ -185,11 +188,13 @@ TBool voutSymbianTouchProbe(RWindowBase &aWin)
 	}
 
 // Layout options from the command line, read next to touchon: sticks selects the two-stick
-// layout; aAlphaPct is the opacity of the untouched panel, 10..100 percent.
-void voutSymbianTouchOptions(TInt aSticks, TInt aAlphaPct)
+// layout; aAlphaPct is the opacity of the untouched panel, 10..100 percent, and aScalePct
+// the panel size, 50..100 percent of the nominal size.
+void voutSymbianTouchOptions(TInt aSticks, TInt aAlphaPct, TInt aScalePct)
 	{
 	g_optSticks = aSticks ? ETrue : EFalse;
 	g_alphaPct = aAlphaPct < 10 ? 10 : (aAlphaPct > 100 ? 100 : aAlphaPct);
+	g_scalePct = aScalePct < 50 ? 50 : (aScalePct > 100 ? 100 : aScalePct);
 	if (g_touchPen && g_scrW > 0)
 		touchLayout(g_scrW, g_scrH);
 	}

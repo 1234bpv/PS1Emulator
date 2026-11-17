@@ -11,6 +11,7 @@
 #include <w32std.h>
 #include <fbs.h>
 #include <hal.h>
+#include <e32math.h>
 #include <gles/egl.h>
 #include <gles/gl.h>
 #include <coemain.h>
@@ -1775,6 +1776,653 @@ extern "C" int voutSymbianGlBench(int aFrames)
 	User::Free(listT); User::Free(listS); User::Free(texbuf);
 	ps1LogFmt("glbench", "done");
 	return 0;
+#else
+	(void)aFrames;
+	return 0;
+#endif
+	}
+
+#ifdef PS1_BENCH
+// --- Vertex pipeline probe (vgpbench) ---------------------------------------
+// Is the GL vertex unit (VGP) faster than transforming the same vertices on ARM
+// before submission, and what does palette skinning add? The scene is a disc of
+// 2 px triangles, so pixel work stays negligible and the time goes to vertices.
+// No textures, blending or depth. Trigonometry is tabled before the timed span,
+// so libm does not weigh on the ARM variants alone. The build has no VFP, so the
+// float variants run soft-float; the fixed-point twins (armfx...) do the same
+// arithmetic in 16.16 integers, as a native renderer on this CPU would, and their
+// inputs are converted before the timed span.
+static const TInt KVgpFrames    = 100;     // frames per pass, default
+static const TInt KVgpWarm      = 10;      // warmup frames, outside the timed span
+static const TInt KVgpBones     = 10;      // palette matrices in the skinned scene
+static const TInt KVgpMaxVert   = 12000;   // largest vertex count per frame
+static const TInt KVgpRead      = 64;      // square read back for the idle check
+static const TInt KVgpDisc      = 100;     // scatter radius, pixels
+static const TReal KVgpSpin     = 0.05;    // radians per frame
+static const TReal KVgpBoneStep = 0.25;    // radians between bones
+static const GLfloat KVgpLight[3] = { 0.5f, 0.5f, 0.70710678f };   // unit vector, eye space
+static const GLfixed KVgpLightFx[3] = { 32768, 32768, 46341 };     // KVgpLight in 16.16
+
+enum TVgpCfg
+	{
+	EVgpStatic, EVgpArm, EVgpArmFx, EVgpFf, EVgpFfFx, EVgpArmLit, EVgpArmFxLit,
+	EVgpFfLit, EVgpArmSkin, EVgpArmFxSkin, EVgpPalSkin, EVgpCfgCount
+	};
+static const char * const KVgpName[EVgpCfgCount] =
+	{ "static", "arm", "armfx", "ff", "fffx", "armlit", "armfxlit", "fflit",
+	  "armskin", "armfxskin", "palskin" };
+
+// The driver exports the palette entry points through eglGetProcAddress only.
+typedef void (GL_APIENTRY *TVgpCurFn)(GLuint);
+typedef void (GL_APIENTRY *TVgpIdxFn)(GLint, GLenum, GLsizei, const GLvoid *);
+typedef void (GL_APIENTRY *TVgpWgtFn)(GLint, GLenum, GLsizei, const GLvoid *);
+
+struct TVgpBuf
+	{
+	GLfloat *iObj;       // object-space positions, 3 per vertex
+	GLfloat *iNrm;       // object-space normals, 3 per vertex
+	GLfloat *iOut;       // ARM output; the static copy of frame 0 lives here too
+	GLubyte *iCol;       // ARM diffuse colour, 4 per vertex
+	GLubyte *iIdx;       // palette indices, 2 per vertex
+	GLfloat *iWgt;       // palette weights, 2 per vertex
+	GLfloat *iPal;       // palette matrices, 16 floats each
+	GLfloat *iCs;        // cos and sin per frame slot and bone
+	GLubyte *iRdA;       // centre square read back
+	GLubyte *iRdB;       // second centre square, palette comparison
+	GLubyte *iRdC;       // third centre square, fixed-point comparison
+	GLfixed *iObjFx;     // the same positions, 16.16
+	GLfixed *iNrmFx;     // the same normals, 16.16
+	GLfixed *iOutFx;     // fixed-point ARM output, read by GL_FIXED vertex arrays
+	GLfixed *iWgtFx;     // palette weights, 16.16, 2 per vertex
+	GLfixed *iCsFx;      // cos and sin per frame slot and bone, 16.16
+	GLfixed *iPalFx;     // fixed-point palette matrices, 16 values each
+	TVgpCurFn iPalCur;
+	TVgpIdxFn iPalIdx;
+	TVgpWgtFn iPalWgt;
+	GLfloat iCx, iCy;    // surface centre, the scene is drawn around it
+	GLfixed iCxFx, iCyFx;
+	TInt iVerts;
+	TInt iSlot;          // frame index plus warmup
+	};
+
+// Float to 16.16. Every value converted here is below 2^15, so the cast cannot overflow.
+static GLfixed vgpFx(TReal aV)
+	{
+	return (GLfixed)(aV * 65536.0);
+	}
+
+static TInt vgpAlloc(TVgpBuf &aB, TInt aFrames)
+	{
+	Mem::FillZ(&aB, sizeof(aB));
+	const TInt nslot = aFrames + KVgpWarm;
+	aB.iObj = (GLfloat *)User::Alloc(KVgpMaxVert * 3 * (TInt)sizeof(GLfloat));
+	aB.iNrm = (GLfloat *)User::Alloc(KVgpMaxVert * 3 * (TInt)sizeof(GLfloat));
+	aB.iOut = (GLfloat *)User::Alloc(KVgpMaxVert * 3 * (TInt)sizeof(GLfloat));
+	aB.iCol = (GLubyte *)User::Alloc(KVgpMaxVert * 4);
+	aB.iIdx = (GLubyte *)User::Alloc(KVgpMaxVert * 2);
+	aB.iWgt = (GLfloat *)User::Alloc(KVgpMaxVert * 2 * (TInt)sizeof(GLfloat));
+	aB.iPal = (GLfloat *)User::Alloc(KVgpBones * 16 * (TInt)sizeof(GLfloat));
+	aB.iCs  = (GLfloat *)User::Alloc(nslot * KVgpBones * 2 * (TInt)sizeof(GLfloat));
+	aB.iRdA = (GLubyte *)User::Alloc(KVgpRead * KVgpRead * 4);
+	aB.iRdB = (GLubyte *)User::Alloc(KVgpRead * KVgpRead * 4);
+	aB.iRdC = (GLubyte *)User::Alloc(KVgpRead * KVgpRead * 4);
+	aB.iObjFx = (GLfixed *)User::Alloc(KVgpMaxVert * 3 * (TInt)sizeof(GLfixed));
+	aB.iNrmFx = (GLfixed *)User::Alloc(KVgpMaxVert * 3 * (TInt)sizeof(GLfixed));
+	aB.iOutFx = (GLfixed *)User::Alloc(KVgpMaxVert * 3 * (TInt)sizeof(GLfixed));
+	aB.iWgtFx = (GLfixed *)User::Alloc(KVgpMaxVert * 2 * (TInt)sizeof(GLfixed));
+	aB.iCsFx  = (GLfixed *)User::Alloc(nslot * KVgpBones * 2 * (TInt)sizeof(GLfixed));
+	aB.iPalFx = (GLfixed *)User::Alloc(KVgpBones * 16 * (TInt)sizeof(GLfixed));
+	if (!aB.iObj || !aB.iNrm || !aB.iOut || !aB.iCol || !aB.iIdx || !aB.iWgt ||
+		!aB.iPal || !aB.iCs || !aB.iRdA || !aB.iRdB || !aB.iRdC ||
+		!aB.iObjFx || !aB.iNrmFx || !aB.iOutFx || !aB.iWgtFx || !aB.iCsFx || !aB.iPalFx)
+		return KErrNoMemory;
+	aB.iCx = (GLfloat)g_glW * 0.5f;
+	aB.iCy = (GLfloat)g_glH * 0.5f;
+	aB.iCxFx = vgpFx(aB.iCx);
+	aB.iCyFx = vgpFx(aB.iCy);
+	// The angle of bone k in slot s depends on the frame only, so cos and sin are
+	// computed here, once, and the timed frame just reads them.
+	for (TInt s = 0; s < nslot; s++)
+		for (TInt k = 0; k < KVgpBones; k++)
+			{
+			const TReal a = KVgpSpin * (TReal)(s - KVgpWarm) + KVgpBoneStep * (TReal)k;
+			TReal c = 0, sn = 0;
+			if (Math::Cos(c, a) != KErrNone || Math::Sin(sn, a) != KErrNone)
+				return KErrGeneral;
+			aB.iCs[(s * KVgpBones + k) * 2]     = (GLfloat)c;
+			aB.iCs[(s * KVgpBones + k) * 2 + 1] = (GLfloat)sn;
+			aB.iCsFx[(s * KVgpBones + k) * 2]     = vgpFx(c);
+			aB.iCsFx[(s * KVgpBones + k) * 2 + 1] = vgpFx(sn);
+			}
+	return KErrNone;
+	}
+
+static void vgpFree(TVgpBuf &aB)
+	{
+	User::Free(aB.iObj); User::Free(aB.iNrm); User::Free(aB.iOut);
+	User::Free(aB.iCol); User::Free(aB.iIdx); User::Free(aB.iWgt);
+	User::Free(aB.iPal); User::Free(aB.iCs);
+	User::Free(aB.iRdA); User::Free(aB.iRdB); User::Free(aB.iRdC);
+	User::Free(aB.iObjFx); User::Free(aB.iNrmFx); User::Free(aB.iOutFx);
+	User::Free(aB.iWgtFx); User::Free(aB.iCsFx); User::Free(aB.iPalFx);
+	}
+
+// Scattered triangles inside the disc. aHalf is half the base: 1 gives the 2 px
+// triangles of the probe, 4 the large ones of the palette check. Normals form a
+// dome, so the lit variants see a spread of N.L values rather than one flat shade.
+// The 16.16 copies are made here, so the conversion never falls inside the timing.
+static TInt vgpScene(const TVgpBuf &aB, TInt aHalf)
+	{
+	TUint32 rnd = 4321;
+	for (TInt t = 0; t < aB.iVerts / 3; t++)
+		{
+		TInt x = 0, y = 0;
+		do
+			{
+			rnd = rnd * 1103515245u + 12345u;
+			x = (TInt)((rnd >> 16) % (TUint32)(2 * KVgpDisc + 1)) - KVgpDisc;
+			rnd = rnd * 1103515245u + 12345u;
+			y = (TInt)((rnd >> 16) % (TUint32)(2 * KVgpDisc + 1)) - KVgpDisc;
+			} while (x * x + y * y > KVgpDisc * KVgpDisc);
+		TReal len = 0;
+		if (Math::Sqrt(len, (TReal)(x * x + y * y + 3600)) != KErrNone)
+			return KErrGeneral;
+		const GLfloat nx = (GLfloat)((TReal)x / len);
+		const GLfloat ny = (GLfloat)((TReal)y / len);
+		const GLfloat nz = (GLfloat)(60.0 / len);
+		const GLfloat h = (GLfloat)aHalf;
+		const GLfloat dx[3] = { -h, h, 0 };
+		const GLfloat dy[3] = { -h, -h, h };
+		const TInt w = (t * 7) % 5;
+		for (TInt j = 0; j < 3; j++)
+			{
+			const TInt v = t * 3 + j;
+			GLfloat *p = aB.iObj + v * 3;
+			p[0] = (GLfloat)x + dx[j];
+			p[1] = (GLfloat)y + dy[j];
+			p[2] = 0;
+			GLfloat *n = aB.iNrm + v * 3;
+			n[0] = nx; n[1] = ny; n[2] = nz;
+			aB.iIdx[v * 2]     = (GLubyte)(t % KVgpBones);
+			aB.iIdx[v * 2 + 1] = (GLubyte)((t + 3) % KVgpBones);
+			aB.iWgt[v * 2]     = 0.25f + 0.125f * (GLfloat)w;
+			aB.iWgt[v * 2 + 1] = 0.75f - 0.125f * (GLfloat)w;
+			}
+		}
+	for (TInt i = 0; i < aB.iVerts * 3; i++)
+		{
+		aB.iObjFx[i] = vgpFx(aB.iObj[i]);
+		aB.iNrmFx[i] = vgpFx(aB.iNrm[i]);
+		}
+	for (TInt i = 0; i < aB.iVerts * 2; i++)
+		aB.iWgtFx[i] = vgpFx(aB.iWgt[i]);
+	return KErrNone;
+	}
+
+// Column-major rotation about Z and translation to the surface centre. The same
+// numbers go to glLoadMatrixf and to the ARM multiply, so both paths see one scene.
+static void vgpMatrix(GLfloat *m, GLfloat aC, GLfloat aS, GLfloat aCx, GLfloat aCy)
+	{
+	m[0] = aC;   m[1] = aS;   m[2] = 0;  m[3] = 0;
+	m[4] = -aS;  m[5] = aC;   m[6] = 0;  m[7] = 0;
+	m[8] = 0;    m[9] = 0;    m[10] = 1; m[11] = 0;
+	m[12] = aCx; m[13] = aCy; m[14] = 0; m[15] = 1;
+	}
+
+static void vgpBone(const TVgpBuf &aB, TInt aBone, GLfloat *aM)
+	{
+	const GLfloat *cs = aB.iCs + (aB.iSlot * KVgpBones + aBone) * 2;
+	vgpMatrix(aM, cs[0], cs[1], aB.iCx, aB.iCy);
+	}
+
+static void vgpApply(const GLfloat *m, const GLfloat *p, GLfloat *o)
+	{
+	o[0] = m[0] * p[0] + m[4] * p[1] + m[8] * p[2] + m[12];
+	o[1] = m[1] * p[0] + m[5] * p[1] + m[9] * p[2] + m[13];
+	o[2] = m[2] * p[0] + m[6] * p[1] + m[10] * p[2] + m[14];
+	}
+
+// ARM transform of the whole object scene into the output array.
+static void vgpApplyAll(const GLfloat *m, const TVgpBuf &aB)
+	{
+	for (TInt v = 0; v < aB.iVerts; v++)
+		vgpApply(m, aB.iObj + v * 3, aB.iOut + v * 3);
+	}
+
+// Diffuse term as GL lighting computes it: the rotated normal dotted with the light,
+// clamped at zero. Lighting is off in this variant, so the colour is the ARM's.
+static void vgpColour(const GLfloat *m, const TVgpBuf &aB)
+	{
+	for (TInt v = 0; v < aB.iVerts; v++)
+		{
+		const GLfloat *n = aB.iNrm + v * 3;
+		const GLfloat nx = m[0] * n[0] + m[4] * n[1] + m[8] * n[2];
+		const GLfloat ny = m[1] * n[0] + m[5] * n[1] + m[9] * n[2];
+		const GLfloat nz = m[2] * n[0] + m[6] * n[1] + m[10] * n[2];
+		GLfloat d = nx * KVgpLight[0] + ny * KVgpLight[1] + nz * KVgpLight[2];
+		if (d < 0) d = 0;
+		const GLubyte c = (GLubyte)(d * 255.0f + 0.5f);
+		GLubyte *o = aB.iCol + v * 4;
+		o[0] = c; o[1] = c; o[2] = c; o[3] = 255;
+		}
+	}
+
+// Two-bone blend on ARM: the same weighted sum that the palette computes in GL.
+static void vgpSkinArm(const TVgpBuf &aB)
+	{
+	for (TInt k = 0; k < KVgpBones; k++)
+		vgpBone(aB, k, aB.iPal + k * 16);
+	for (TInt v = 0; v < aB.iVerts; v++)
+		{
+		GLfloat a[3], b[3];
+		vgpApply(aB.iPal + aB.iIdx[v * 2] * 16, aB.iObj + v * 3, a);
+		vgpApply(aB.iPal + aB.iIdx[v * 2 + 1] * 16, aB.iObj + v * 3, b);
+		const GLfloat w0 = aB.iWgt[v * 2];
+		const GLfloat w1 = aB.iWgt[v * 2 + 1];
+		GLfloat *o = aB.iOut + v * 3;
+		o[0] = w0 * a[0] + w1 * b[0];
+		o[1] = w0 * a[1] + w1 * b[1];
+		o[2] = w0 * a[2] + w1 * b[2];
+		}
+	}
+
+// Palette path: the same bone matrices, computed the same way, then loaded into the
+// GL palette, so the GL cost is the palette itself and not a different matrix build.
+static void vgpSkinPal(const TVgpBuf &aB)
+	{
+	for (TInt k = 0; k < KVgpBones; k++)
+		{
+		vgpBone(aB, k, aB.iPal + k * 16);
+		aB.iPalCur(k);
+		glLoadMatrixf(aB.iPal + k * 16);
+		}
+	}
+
+// Fixed-point twin of vgpBone: the same layout, built from the 16.16 table.
+static void vgpBoneFx(const TVgpBuf &aB, TInt aBone, GLfixed *aM)
+	{
+	const GLfixed *cs = aB.iCsFx + (aB.iSlot * KVgpBones + aBone) * 2;
+	aM[0] = cs[0];  aM[1] = cs[1];  aM[2] = 0;      aM[3] = 0;
+	aM[4] = -cs[1]; aM[5] = cs[0];  aM[6] = 0;      aM[7] = 0;
+	aM[8] = 0;      aM[9] = 0;      aM[10] = 65536; aM[11] = 0;
+	aM[12] = aB.iCxFx; aM[13] = aB.iCyFx; aM[14] = 0; aM[15] = 65536;
+	}
+
+// Coordinates reach 2^24 in 16.16 at 260 px, so each product needs 64 bits: 2^40 per term, under 2^42 for the sum.
+static void vgpApplyFx(const GLfixed *m, const GLfixed *p, GLfixed *o)
+	{
+	o[0] = (GLfixed)(((long long)m[0] * p[0] + (long long)m[4] * p[1] + (long long)m[8] * p[2]) >> 16) + m[12];
+	o[1] = (GLfixed)(((long long)m[1] * p[0] + (long long)m[5] * p[1] + (long long)m[9] * p[2]) >> 16) + m[13];
+	o[2] = (GLfixed)(((long long)m[2] * p[0] + (long long)m[6] * p[1] + (long long)m[10] * p[2]) >> 16) + m[14];
+	}
+
+static void vgpApplyAllFx(const GLfixed *m, const TVgpBuf &aB)
+	{
+	for (TInt v = 0; v < aB.iVerts; v++)
+		vgpApplyFx(m, aB.iObjFx + v * 3, aB.iOutFx + v * 3);
+	}
+
+// Fixed-point twin of vgpColour: N.L in 16.16, clamped at zero and scaled to 0..255.
+// |d| stays near 1.0 in 16.16, so d * 255 is far below 2^31 and the 32-bit scale is safe.
+static void vgpColourFx(const GLfixed *m, const TVgpBuf &aB)
+	{
+	for (TInt v = 0; v < aB.iVerts; v++)
+		{
+		const GLfixed *n = aB.iNrmFx + v * 3;
+		const GLfixed nx = (GLfixed)(((long long)m[0] * n[0] + (long long)m[4] * n[1] + (long long)m[8] * n[2]) >> 16);
+		const GLfixed ny = (GLfixed)(((long long)m[1] * n[0] + (long long)m[5] * n[1] + (long long)m[9] * n[2]) >> 16);
+		const GLfixed nz = (GLfixed)(((long long)m[2] * n[0] + (long long)m[6] * n[1] + (long long)m[10] * n[2]) >> 16);
+		GLfixed d = (GLfixed)(((long long)nx * KVgpLightFx[0] + (long long)ny * KVgpLightFx[1] + (long long)nz * KVgpLightFx[2]) >> 16);
+		if (d < 0) d = 0;
+		TInt c = (d * 255 + 32768) >> 16;
+		if (c > 255) c = 255;
+		GLubyte *o = aB.iCol + v * 4;
+		o[0] = (GLubyte)c; o[1] = (GLubyte)c; o[2] = (GLubyte)c; o[3] = 255;
+		}
+	}
+
+// Two-bone blend in 16.16: the fixed twin of vgpSkinArm, with the weights in 16.16 too.
+static void vgpSkinArmFx(const TVgpBuf &aB)
+	{
+	for (TInt k = 0; k < KVgpBones; k++)
+		vgpBoneFx(aB, k, aB.iPalFx + k * 16);
+	for (TInt v = 0; v < aB.iVerts; v++)
+		{
+		GLfixed a[3], b[3];
+		vgpApplyFx(aB.iPalFx + aB.iIdx[v * 2] * 16, aB.iObjFx + v * 3, a);
+		vgpApplyFx(aB.iPalFx + aB.iIdx[v * 2 + 1] * 16, aB.iObjFx + v * 3, b);
+		const GLfixed w0 = aB.iWgtFx[v * 2];
+		const GLfixed w1 = aB.iWgtFx[v * 2 + 1];
+		GLfixed *o = aB.iOutFx + v * 3;
+		for (TInt c = 0; c < 3; c++)
+			o[c] = (GLfixed)(((long long)w0 * a[c] + (long long)w1 * b[c]) >> 16);
+		}
+	}
+
+// The light is set under identity modelview, so it stays fixed in eye space while the
+// per-frame rotation moves only the normals, as vgpColour does on the ARM side.
+static void vgpLightOn(void)
+	{
+	const GLfloat pos[4] = { KVgpLight[0], KVgpLight[1], KVgpLight[2], 0 };
+	const GLfloat white[4] = { 1, 1, 1, 1 };
+	const GLfloat zero[4] = { 0, 0, 0, 1 };
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
+	glLightfv(GL_LIGHT0, GL_POSITION, pos);
+	glLightfv(GL_LIGHT0, GL_AMBIENT, zero);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, white);
+	glLightfv(GL_LIGHT0, GL_SPECULAR, zero);
+	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, zero);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, white);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, zero);
+	}
+
+static void vgpLightOff(void)
+	{
+	const GLfloat ambient[4] = { 0.2f, 0.2f, 0.2f, 1.0f };   // the GL default
+	glDisable(GL_LIGHTING);
+	glDisable(GL_LIGHT0);
+	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambient);
+	}
+
+// Per-pass state for one configuration; vgpEnd puts back what it set.
+static void vgpBegin(TInt aCfg, const TVgpBuf &aB)
+	{
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	switch (aCfg)
+		{
+		case EVgpStatic:
+		case EVgpArm:
+		case EVgpArmSkin:
+			glVertexPointer(3, GL_FLOAT, 0, aB.iOut);
+			break;
+		case EVgpArmFx:
+		case EVgpArmFxSkin:
+			glVertexPointer(3, GL_FIXED, 0, aB.iOutFx);
+			break;
+		case EVgpArmLit:
+			glVertexPointer(3, GL_FLOAT, 0, aB.iOut);
+			glColorPointer(4, GL_UNSIGNED_BYTE, 0, aB.iCol);
+			glEnableClientState(GL_COLOR_ARRAY);
+			break;
+		case EVgpArmFxLit:
+			glVertexPointer(3, GL_FIXED, 0, aB.iOutFx);
+			glColorPointer(4, GL_UNSIGNED_BYTE, 0, aB.iCol);
+			glEnableClientState(GL_COLOR_ARRAY);
+			break;
+		case EVgpFf:
+			glVertexPointer(3, GL_FLOAT, 0, aB.iObj);
+			break;
+		case EVgpFfFx:
+			glVertexPointer(3, GL_FIXED, 0, aB.iObjFx);
+			break;
+		case EVgpFfLit:
+			glVertexPointer(3, GL_FLOAT, 0, aB.iObj);
+			glNormalPointer(GL_FLOAT, 0, aB.iNrm);
+			glEnableClientState(GL_NORMAL_ARRAY);
+			vgpLightOn();
+			break;
+		case EVgpPalSkin:
+			glVertexPointer(3, GL_FLOAT, 0, aB.iObj);
+			glEnable(GL_MATRIX_PALETTE_OES);
+			glMatrixMode(GL_MATRIX_PALETTE_OES);
+			aB.iPalIdx(2, GL_UNSIGNED_BYTE, 0, aB.iIdx);
+			aB.iPalWgt(2, GL_FLOAT, 0, aB.iWgt);
+			glEnableClientState(GL_MATRIX_INDEX_ARRAY_OES);
+			glEnableClientState(GL_WEIGHT_ARRAY_OES);
+			break;
+		}
+	}
+
+// One frame of work and the draw. Clear and swap belong to the caller.
+static void vgpFrame(TInt aCfg, const TVgpBuf &aB)
+	{
+	GLfloat m[16];
+	GLfixed mx[16];
+	switch (aCfg)
+		{
+		case EVgpArm:
+			vgpBone(aB, 0, m);
+			vgpApplyAll(m, aB);
+			break;
+		case EVgpArmFx:
+			vgpBoneFx(aB, 0, mx);
+			vgpApplyAllFx(mx, aB);
+			break;
+		case EVgpArmLit:
+			vgpBone(aB, 0, m);
+			vgpApplyAll(m, aB);
+			vgpColour(m, aB);
+			break;
+		case EVgpArmFxLit:
+			vgpBoneFx(aB, 0, mx);
+			vgpApplyAllFx(mx, aB);
+			vgpColourFx(mx, aB);
+			break;
+		case EVgpFf:
+		case EVgpFfFx:
+		case EVgpFfLit:
+			vgpBone(aB, 0, m);
+			glLoadMatrixf(m);
+			break;
+		case EVgpArmSkin:
+			vgpSkinArm(aB);
+			break;
+		case EVgpArmFxSkin:
+			vgpSkinArmFx(aB);
+			break;
+		case EVgpPalSkin:
+			vgpSkinPal(aB);
+			break;
+		}
+	glDrawArrays(GL_TRIANGLES, 0, aB.iVerts);
+	}
+
+static void vgpEnd(TInt aCfg)
+	{
+	switch (aCfg)
+		{
+		case EVgpArmLit:
+		case EVgpArmFxLit:
+			glDisableClientState(GL_COLOR_ARRAY);
+			break;
+		case EVgpFfLit:
+			vgpLightOff();
+			glDisableClientState(GL_NORMAL_ARRAY);
+			break;
+		case EVgpPalSkin:
+			glDisable(GL_MATRIX_PALETTE_OES);
+			glDisableClientState(GL_MATRIX_INDEX_ARRAY_OES);
+			glDisableClientState(GL_WEIGHT_ARRAY_OES);
+			break;
+		}
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	}
+
+// The static configuration: frame-0 positions, transformed once, outside the timing.
+static void vgpStaticCopy(TVgpBuf &aB)
+	{
+	GLfloat m[16];
+	aB.iSlot = KVgpWarm;
+	vgpBone(aB, 0, m);
+	vgpApplyAll(m, aB);
+	}
+
+// Centre square of the surface. A pass that drew nothing reads back as zero lit pixels.
+static void vgpRead(GLubyte *aDst)
+	{
+	glReadPixels((g_glW - KVgpRead) / 2, (g_glH - KVgpRead) / 2, KVgpRead, KVgpRead,
+		GL_RGBA, GL_UNSIGNED_BYTE, aDst);
+	}
+
+static TInt vgpLit(const GLubyte *aPix)
+	{
+	TInt n = 0;
+	for (TInt i = 0; i < KVgpRead * KVgpRead * 4; i += 4)
+		if (aPix[i] | aPix[i + 1] | aPix[i + 2])
+			n++;
+	return n;
+	}
+
+static TInt vgpDiff(const GLubyte *aX, const GLubyte *aY)
+	{
+	TInt n = 0;
+	for (TInt i = 0; i < KVgpRead * KVgpRead * 4; i += 4)
+		if (aX[i] != aY[i] || aX[i + 1] != aY[i + 1] || aX[i + 2] != aY[i + 2] || aX[i + 3] != aY[i + 3])
+			n++;
+	return n;
+	}
+
+// The palette must really be applied: 200 large triangles at one angle, through ARM
+// and through the palette, have to read back the same square. The fixed-point ARM skin
+// is checked against the float one; rounding may move a few pixels, so that count is
+// logged on its own line rather than folded into the palette figure.
+static TInt vgpPalCompare(TVgpBuf &aB, TBool aPal)
+	{
+	aB.iVerts = 600;
+	aB.iSlot = KVgpWarm;
+	if (vgpScene(aB, 4) != KErrNone)
+		return KErrGeneral;
+	vgpBegin(EVgpArmSkin, aB);
+	glClear(GL_COLOR_BUFFER_BIT);
+	vgpFrame(EVgpArmSkin, aB);
+	vgpRead(aB.iRdA);
+	eglSwapBuffers(g_eglDpy, g_eglSurf);
+	vgpEnd(EVgpArmSkin);
+	if (aPal)
+		{
+		vgpBegin(EVgpPalSkin, aB);
+		glClear(GL_COLOR_BUFFER_BIT);
+		vgpFrame(EVgpPalSkin, aB);
+		vgpRead(aB.iRdB);
+		eglSwapBuffers(g_eglDpy, g_eglSurf);
+		vgpEnd(EVgpPalSkin);
+		ps1LogFmt("vgpbench", "palcmp: verts=600 side=8 diffpx=%d armpx=%d palpx=%d err=%u",
+			vgpDiff(aB.iRdA, aB.iRdB), vgpLit(aB.iRdA), vgpLit(aB.iRdB), (unsigned)glGetError());
+		}
+	else
+		ps1LogFmt("vgpbench", "palcmp skipped: palette entry points or limits missing");
+	vgpBegin(EVgpArmFxSkin, aB);
+	glClear(GL_COLOR_BUFFER_BIT);
+	vgpFrame(EVgpArmFxSkin, aB);
+	vgpRead(aB.iRdC);
+	eglSwapBuffers(g_eglDpy, g_eglSurf);
+	vgpEnd(EVgpArmFxSkin);
+	ps1LogFmt("vgpbench", "fxcmp: armskin vs armfxskin fxdiffpx=%d armpx=%d armfxpx=%d err=%u",
+		vgpDiff(aB.iRdA, aB.iRdC), vgpLit(aB.iRdA), vgpLit(aB.iRdC), (unsigned)glGetError());
+	return KErrNone;
+	}
+
+static TInt vgpRun(TVgpBuf &aB, TInt aFrames)
+	{
+	// A missing entry point or a short palette skips the palette pass only; the other
+	// passes still run, and the log says why.
+	aB.iPalCur = (TVgpCurFn)eglGetProcAddress("glCurrentPaletteMatrixOES");
+	aB.iPalIdx = (TVgpIdxFn)eglGetProcAddress("glMatrixIndexPointerOES");
+	aB.iPalWgt = (TVgpWgtFn)eglGetProcAddress("glWeightPointerOES");
+	GLint maxPal = 0, maxUnits = 0;
+	glGetIntegerv(GL_MAX_PALETTE_MATRICES_OES, &maxPal);
+	const GLenum errPal = glGetError();
+	glGetIntegerv(GL_MAX_VERTEX_UNITS_OES, &maxUnits);
+	const GLenum errUnits = glGetError();
+	const TBool palOk = aB.iPalCur && aB.iPalIdx && aB.iPalWgt && maxPal >= KVgpBones && maxUnits >= 2;
+	ps1LogFmt("vgpbench", "limits: GL_MAX_PALETTE_MATRICES_OES=%d err=%u GL_MAX_VERTEX_UNITS_OES=%d err=%u",
+		(int)maxPal, (unsigned)errPal, (int)maxUnits, (unsigned)errUnits);
+	ps1LogFmt("vgpbench", "entry points: cur=%d idx=%d wgt=%d palette=%d",
+		(int)(aB.iPalCur != NULL), (int)(aB.iPalIdx != NULL), (int)(aB.iPalWgt != NULL), (int)palOk);
+
+	// Common state: plain vertex arrays, no textures, blending, depth or lighting. The
+	// projection is the one the GL init sets, in surface pixels.
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrthof(0, (GLfloat)g_glW, (GLfloat)g_glH, 0, -1, 1);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	glDisable(GL_TEXTURE_2D);           // left on by the GL init
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	glDisable(GL_BLEND);
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_LIGHTING);
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glColor4f(1, 1, 1, 1);
+	glClearColor(0, 0, 0, 1);
+	ps1LogFmt("vgpbench", "begin: surface=%dx%d frames=%d warm=%d err=%u",
+		(int)g_glW, (int)g_glH, (int)aFrames, (int)KVgpWarm, (unsigned)glGetError());
+
+	if (vgpPalCompare(aB, palOk) != KErrNone)
+		return KErrGeneral;
+
+	const TInt sizes[2] = { 3000, 12000 };
+	const TInt items = EVgpCfgCount * 2;
+	const unsigned freq = ndrc_symbian_fastfreq();
+	for (TInt p = 0; p < 2 * items; p++)
+		{
+		// Forward through the list and then back, so the base configuration opens and
+		// closes the session and any drift from the handset state shows in the log.
+		const TInt it = p < items ? p : 2 * items - 1 - p;
+		const TInt cfg = it / 2;
+		aB.iVerts = sizes[it % 2];
+		if (cfg == EVgpPalSkin && !palOk)
+			{
+			ps1LogFmt("vgpbench", "%s verts=%d skipped: no palette", KVgpName[cfg], (int)aB.iVerts);
+			continue;
+			}
+		if (vgpScene(aB, 1) != KErrNone)
+			return KErrGeneral;
+		if (cfg == EVgpStatic)
+			vgpStaticCopy(aB);
+		vgpBegin(cfg, aB);
+		TUint t0 = 0;
+		for (TInt f = -KVgpWarm; f < aFrames; f++)
+			{
+			aB.iSlot = f + KVgpWarm;
+			if (f == 0)
+				{
+				glFinish();
+				t0 = User::FastCounter();
+				}
+			glClear(GL_COLOR_BUFFER_BIT);
+			vgpFrame(cfg, aB);
+			// Read before the swap of the last frame. This sits inside the timed span,
+			// so one readback per pass biases the figure by at most one frame in the pass.
+			if (f == aFrames - 1)
+				vgpRead(aB.iRdA);
+			eglSwapBuffers(g_eglDpy, g_eglSurf);
+			}
+		glFinish();
+		const TUint dt = User::FastCounter() - t0;
+		vgpEnd(cfg);
+		// Both figures come from the same ticks: microseconds per frame, and thousands
+		// of vertices per second.
+		const unsigned us = (unsigned)((TUint64)dt * 1000000ULL / (freq ? freq : 1) / aFrames);
+		const unsigned kvps = (unsigned)((TUint64)aB.iVerts * aFrames * (freq ? freq : 1) / (dt ? dt : 1) / 1000ULL);
+		ps1LogFmt("vgpbench", "%s verts=%d us=%u kvps=%u lit=%d err=%u",
+			KVgpName[cfg], (int)aB.iVerts, us, kvps, vgpLit(aB.iRdA), (unsigned)glGetError());
+		}
+	return KErrNone;
+	}
+#endif
+
+extern "C" int voutSymbianVgpBench(int aFrames)
+	{
+#ifdef PS1_BENCH
+	if (!g_glReady)
+		{
+		ps1LogFmt("vgpbench", "GL is not up - the run needs the gl flag");
+		return -1;
+		}
+	const TInt frames = aFrames > 0 ? aFrames : KVgpFrames;
+	TVgpBuf b;
+	TInt rc = vgpAlloc(b, frames);
+	if (rc == KErrNone)
+		rc = vgpRun(b, frames);
+	if (rc != KErrNone)
+		ps1LogFmt("vgpbench", "failed: rc=%d", (int)rc);
+	vgpFree(b);
+	ps1LogFmt("vgpbench", "done");
+	return rc;
 #else
 	(void)aFrames;
 	return 0;

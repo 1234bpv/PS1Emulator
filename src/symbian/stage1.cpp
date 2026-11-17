@@ -496,6 +496,7 @@ int voutSymbianHalDump(const char *path);
 int voutSymbianHalAddr(void);
 int voutSymbianRawDump(const char *path, int bytes);
 int voutSymbianGlBench(int frames);
+int voutSymbianVgpBench(int frames);
 // MBX rasterizer (glrender.cpp).
 int  glrInit(void);
 void glrShutdown(void);
@@ -3283,6 +3284,8 @@ static void pfitDrcReset()
 
 // Frames per configuration in GL probe; 0 = probe not requested.
 static TInt g_glBench;
+// Frames per pass in the vertex-pipeline probe; 0 = not requested.
+static TInt g_vgpBench;
 // MBX rasterizer instead of VRAM presentation ("glrender" argument).
 static TBool g_glRender;
 static TInt  g_glBgForce;
@@ -3310,6 +3313,13 @@ extern "C" int ps1GuiSetup(void)
 		{
 		logEvent("start", NULL, "stage1 begin (glbench), frames=%d", (int)g_glBench);
 		voutSymbianGlBench(g_glBench);
+		g_guiUp = EFalse;
+		return KErrNone;
+		}
+	if (g_vgpBench > 0)
+		{
+		logEvent("start", NULL, "stage1 begin (vgpbench), frames=%d", (int)g_vgpBench);
+		voutSymbianVgpBench(g_vgpBench);
 		g_guiUp = EFalse;
 		return KErrNone;
 		}
@@ -4017,6 +4027,17 @@ GLDEF_C TInt E32Main()
 			TLex lex(cl.Mid(gbp + 7));
 			TInt n = 0;
 			g_glBench = (lex.Val(n) == KErrNone && n > 0) ? n : 200;
+			voutSymbianSetGl(1);
+			}
+		// "vgpbenchN" - vertex pipeline probe, frames per pass (default 100). Enables GL
+		// itself, as "glbenchN" does. The name is 8 characters, glbench's is 7.
+		_LIT(KVgpBenchArg, "vgpbench");
+		const TInt vbp = cl.FindF(KVgpBenchArg);
+		if (vbp != KErrNotFound)
+			{
+			TLex lex(cl.Mid(vbp + 8));
+			TInt n = 0;
+			g_vgpBench = (lex.Val(n) == KErrNone && n > 0) ? n : 100;
 			voutSymbianSetGl(1);
 			}
 		// "dsa"/"rowcopy" are MANDATORY here: parseCommandLine parses them only in

@@ -208,6 +208,7 @@ static const TText *const KStr_en_EStrKeyActSecond = _S("Second key");
 static const TText *const KStr_en_EStrKeyActClear = _S("Clear");
 static const TText *const KStr_en_EStrHintKeyMenu = _S("OK choose, RSK cancels");
 static const TText *const KStr_en_EStrKeyTakenFmt = _S("Already on %S. OK: move it here");
+static const TText *const KStr_en_EStrItemPadScale = _S("Pad size");
 
 // --- Ukrainian (uk) ---
 static const TText KStr_uk_EStrSecGame[] = { 0x0413, 0x0420, 0x0410, 0 };
@@ -358,6 +359,7 @@ static const TText KStr_uk_EStrKeyActSecond[] = { 0x0414, 0x0440, 0x0443, 0x0433
 static const TText KStr_uk_EStrKeyActClear[] = { 0x0421, 0x0442, 0x0435, 0x0440, 0x0442, 0x0438, 0 };
 static const TText KStr_uk_EStrHintKeyMenu[] = { 0x004F, 0x004B, 0x0020, 0x0432, 0x0438, 0x0431, 0x0440, 0x0430, 0x0442, 0x0438, 0x002C, 0x0020, 0x041F, 0x0421, 0x041A, 0x0020, 0x0441, 0x043A, 0x0430, 0x0441, 0x0443, 0x0432, 0x0430, 0x0442, 0x0438, 0 };
 static const TText KStr_uk_EStrKeyTakenFmt[] = { 0x0412, 0x0436, 0x0435, 0x0020, 0x043D, 0x0430, 0x0020, 0x0025, 0x0053, 0x002E, 0x0020, 0x004F, 0x004B, 0x003A, 0x0020, 0x043F, 0x0435, 0x0440, 0x0435, 0x043D, 0x0435, 0x0441, 0x0442, 0x0438, 0x0020, 0x0441, 0x044E, 0x0434, 0x0438, 0 };
+static const TText KStr_uk_EStrItemPadScale[] = { 0x0420, 0x043E, 0x0437, 0x043C, 0x0456, 0x0440, 0x0020, 0x043F, 0x0430, 0x043D, 0x0435, 0x043B, 0x0456, 0 };
 
 // --- Chinese (zh) ---
 static const TText KStr_zh_EStrSecGame[] = { 0x6E38, 0x620F, 0 };
@@ -4926,6 +4928,7 @@ static const TText *const KTable_en[EStrCount] =
 	KStr_en_EStrKeyActClear,
 	KStr_en_EStrHintKeyMenu,
 	KStr_en_EStrKeyTakenFmt,
+	KStr_en_EStrItemPadScale,
 	};
 
 static const TText *const KTable_uk[EStrCount] =
@@ -5097,6 +5100,7 @@ static const TText *const KTable_uk[EStrCount] =
 	KStr_uk_EStrKeyActClear,
 	KStr_uk_EStrHintKeyMenu,
 	KStr_uk_EStrKeyTakenFmt,
+	KStr_uk_EStrItemPadScale,
 	};
 
 static const TText *const KTable_zh[EStrCount] =
@@ -5268,6 +5272,7 @@ static const TText *const KTable_zh[EStrCount] =
 	KStr_zh_EStrKeyActClear,
 	KStr_zh_EStrHintKeyMenu,
 	KStr_zh_EStrKeyTakenFmt,
+	KStr_en_EStrItemPadScale,
 	};
 
 static const TText *const KTable_de[EStrCount] =
@@ -5439,6 +5444,7 @@ static const TText *const KTable_de[EStrCount] =
 	KStr_de_EStrKeyActClear,
 	KStr_de_EStrHintKeyMenu,
 	KStr_de_EStrKeyTakenFmt,
+	KStr_en_EStrItemPadScale,
 	};
 
 static const TText *const KTable_fr[EStrCount] =
@@ -5610,6 +5616,7 @@ static const TText *const KTable_fr[EStrCount] =
 	KStr_fr_EStrKeyActClear,
 	KStr_fr_EStrHintKeyMenu,
 	KStr_fr_EStrKeyTakenFmt,
+	KStr_en_EStrItemPadScale,
 	};
 
 static const TText *const KTable_es[EStrCount] =
@@ -5781,6 +5788,7 @@ static const TText *const KTable_es[EStrCount] =
 	KStr_es_EStrKeyActClear,
 	KStr_es_EStrHintKeyMenu,
 	KStr_es_EStrKeyTakenFmt,
+	KStr_en_EStrItemPadScale,
 	};
 
 static const TText *const KTable_ru[EStrCount] =
@@ -5952,6 +5960,7 @@ static const TText *const KTable_ru[EStrCount] =
 	KStr_ru_EStrKeyActClear,
 	KStr_ru_EStrHintKeyMenu,
 	KStr_ru_EStrKeyTakenFmt,
+	KStr_en_EStrItemPadScale,
 	};
 
 static const TText *const KTable_pt[EStrCount] =
@@ -6123,6 +6132,7 @@ static const TText *const KTable_pt[EStrCount] =
 	KStr_pt_EStrKeyActClear,
 	KStr_pt_EStrHintKeyMenu,
 	KStr_pt_EStrKeyTakenFmt,
+	KStr_en_EStrItemPadScale,
 	};
 
 static const TText *const KTable_it[EStrCount] =
@@ -6294,6 +6304,7 @@ static const TText *const KTable_it[EStrCount] =
 	KStr_it_EStrKeyActClear,
 	KStr_it_EStrHintKeyMenu,
 	KStr_it_EStrKeyTakenFmt,
+	KStr_en_EStrItemPadScale,
 	};
 
 static const TText *const KTable_pl[EStrCount] =
@@ -6465,6 +6476,7 @@ static const TText *const KTable_pl[EStrCount] =
 	KStr_pl_EStrKeyActClear,
 	KStr_pl_EStrHintKeyMenu,
 	KStr_pl_EStrKeyTakenFmt,
+	KStr_en_EStrItemPadScale,
 	};
 
 static const TText *const KTable_tr[EStrCount] =
@@ -6636,6 +6648,7 @@ static const TText *const KTable_tr[EStrCount] =
 	KStr_tr_EStrKeyActClear,
 	KStr_tr_EStrHintKeyMenu,
 	KStr_tr_EStrKeyTakenFmt,
+	KStr_en_EStrItemPadScale,
 	};
 
 static const TText *const KTable_ja[EStrCount] =
@@ -6807,6 +6820,7 @@ static const TText *const KTable_ja[EStrCount] =
 	KStr_ja_EStrKeyActClear,
 	KStr_ja_EStrHintKeyMenu,
 	KStr_ja_EStrKeyTakenFmt,
+	KStr_en_EStrItemPadScale,
 	};
 
 static const TText *const KTable_hi[EStrCount] =
@@ -6978,6 +6992,7 @@ static const TText *const KTable_hi[EStrCount] =
 	KStr_hi_EStrKeyActClear,
 	KStr_hi_EStrHintKeyMenu,
 	KStr_hi_EStrKeyTakenFmt,
+	KStr_en_EStrItemPadScale,
 	};
 
 static const TText *const KTable_ar[EStrCount] =
@@ -7149,6 +7164,7 @@ static const TText *const KTable_ar[EStrCount] =
 	KStr_ar_EStrKeyActClear,
 	KStr_ar_EStrHintKeyMenu,
 	KStr_ar_EStrKeyTakenFmt,
+	KStr_en_EStrItemPadScale,
 	};
 
 static const TText *const KTable_ko[EStrCount] =
@@ -7320,6 +7336,7 @@ static const TText *const KTable_ko[EStrCount] =
 	KStr_ko_EStrKeyActClear,
 	KStr_ko_EStrHintKeyMenu,
 	KStr_ko_EStrKeyTakenFmt,
+	KStr_en_EStrItemPadScale,
 	};
 
 static const TText *const KTable_cs[EStrCount] =
@@ -7491,6 +7508,7 @@ static const TText *const KTable_cs[EStrCount] =
 	KStr_cs_EStrKeyActClear,
 	KStr_cs_EStrHintKeyMenu,
 	KStr_cs_EStrKeyTakenFmt,
+	KStr_en_EStrItemPadScale,
 	};
 
 static const TText *const KTable_nl[EStrCount] =
@@ -7662,6 +7680,7 @@ static const TText *const KTable_nl[EStrCount] =
 	KStr_nl_EStrKeyActClear,
 	KStr_nl_EStrHintKeyMenu,
 	KStr_nl_EStrKeyTakenFmt,
+	KStr_en_EStrItemPadScale,
 	};
 
 static const TText *const KTable_sv[EStrCount] =
@@ -7833,6 +7852,7 @@ static const TText *const KTable_sv[EStrCount] =
 	KStr_sv_EStrKeyActClear,
 	KStr_sv_EStrHintKeyMenu,
 	KStr_sv_EStrKeyTakenFmt,
+	KStr_en_EStrItemPadScale,
 	};
 
 static const TText *const KTable_ro[EStrCount] =
@@ -8004,6 +8024,7 @@ static const TText *const KTable_ro[EStrCount] =
 	KStr_ro_EStrKeyActClear,
 	KStr_ro_EStrHintKeyMenu,
 	KStr_ro_EStrKeyTakenFmt,
+	KStr_en_EStrItemPadScale,
 	};
 
 static const TText *const KTable_hu[EStrCount] =
@@ -8175,6 +8196,7 @@ static const TText *const KTable_hu[EStrCount] =
 	KStr_hu_EStrKeyActClear,
 	KStr_hu_EStrHintKeyMenu,
 	KStr_hu_EStrKeyTakenFmt,
+	KStr_en_EStrItemPadScale,
 	};
 
 static const TText *const KTable_el[EStrCount] =
@@ -8346,6 +8368,7 @@ static const TText *const KTable_el[EStrCount] =
 	KStr_el_EStrKeyActClear,
 	KStr_el_EStrHintKeyMenu,
 	KStr_el_EStrKeyTakenFmt,
+	KStr_en_EStrItemPadScale,
 	};
 
 static const TText *const KTable_fi[EStrCount] =
@@ -8517,6 +8540,7 @@ static const TText *const KTable_fi[EStrCount] =
 	KStr_fi_EStrKeyActClear,
 	KStr_fi_EStrHintKeyMenu,
 	KStr_fi_EStrKeyTakenFmt,
+	KStr_en_EStrItemPadScale,
 	};
 
 static const TText *const KTable_da[EStrCount] =
@@ -8688,6 +8712,7 @@ static const TText *const KTable_da[EStrCount] =
 	KStr_da_EStrKeyActClear,
 	KStr_da_EStrHintKeyMenu,
 	KStr_da_EStrKeyTakenFmt,
+	KStr_en_EStrItemPadScale,
 	};
 
 static const TText *const KTable_no[EStrCount] =
@@ -8859,6 +8884,7 @@ static const TText *const KTable_no[EStrCount] =
 	KStr_no_EStrKeyActClear,
 	KStr_no_EStrHintKeyMenu,
 	KStr_no_EStrKeyTakenFmt,
+	KStr_en_EStrItemPadScale,
 	};
 
 static const TText *const KTable_sk[EStrCount] =
@@ -9030,6 +9056,7 @@ static const TText *const KTable_sk[EStrCount] =
 	KStr_sk_EStrKeyActClear,
 	KStr_sk_EStrHintKeyMenu,
 	KStr_sk_EStrKeyTakenFmt,
+	KStr_en_EStrItemPadScale,
 	};
 
 static const TText *const KTable_bg[EStrCount] =
@@ -9201,6 +9228,7 @@ static const TText *const KTable_bg[EStrCount] =
 	KStr_bg_EStrKeyActClear,
 	KStr_bg_EStrHintKeyMenu,
 	KStr_bg_EStrKeyTakenFmt,
+	KStr_en_EStrItemPadScale,
 	};
 
 static const TText *const KTable_hr[EStrCount] =
@@ -9372,6 +9400,7 @@ static const TText *const KTable_hr[EStrCount] =
 	KStr_hr_EStrKeyActClear,
 	KStr_hr_EStrHintKeyMenu,
 	KStr_hr_EStrKeyTakenFmt,
+	KStr_en_EStrItemPadScale,
 	};
 
 static const TText *const KTable_sl[EStrCount] =
@@ -9543,6 +9572,7 @@ static const TText *const KTable_sl[EStrCount] =
 	KStr_sl_EStrKeyActClear,
 	KStr_sl_EStrHintKeyMenu,
 	KStr_sl_EStrKeyTakenFmt,
+	KStr_en_EStrItemPadScale,
 	};
 
 static const TText *const KTable_sr[EStrCount] =
@@ -9714,6 +9744,7 @@ static const TText *const KTable_sr[EStrCount] =
 	KStr_sr_EStrKeyActClear,
 	KStr_sr_EStrHintKeyMenu,
 	KStr_sr_EStrKeyTakenFmt,
+	KStr_en_EStrItemPadScale,
 	};
 
 static const TText *const KTable_et[EStrCount] =
@@ -9885,6 +9916,7 @@ static const TText *const KTable_et[EStrCount] =
 	KStr_et_EStrKeyActClear,
 	KStr_et_EStrHintKeyMenu,
 	KStr_et_EStrKeyTakenFmt,
+	KStr_en_EStrItemPadScale,
 	};
 
 static const TText *const KTable_lv[EStrCount] =
@@ -10056,6 +10088,7 @@ static const TText *const KTable_lv[EStrCount] =
 	KStr_lv_EStrKeyActClear,
 	KStr_lv_EStrHintKeyMenu,
 	KStr_lv_EStrKeyTakenFmt,
+	KStr_en_EStrItemPadScale,
 	};
 
 static const TText *const KTable_lt[EStrCount] =
@@ -10227,6 +10260,7 @@ static const TText *const KTable_lt[EStrCount] =
 	KStr_lt_EStrKeyActClear,
 	KStr_lt_EStrHintKeyMenu,
 	KStr_lt_EStrKeyTakenFmt,
+	KStr_en_EStrItemPadScale,
 	};
 
 static const TText *const KTable_ca[EStrCount] =
@@ -10398,6 +10432,7 @@ static const TText *const KTable_ca[EStrCount] =
 	KStr_ca_EStrKeyActClear,
 	KStr_ca_EStrHintKeyMenu,
 	KStr_ca_EStrKeyTakenFmt,
+	KStr_en_EStrItemPadScale,
 	};
 
 static const TText *const *const KAllTables[ELangIdCount] =

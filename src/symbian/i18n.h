@@ -172,6 +172,7 @@ enum TStrId
 	EStrKeyActClear,
 	EStrHintKeyMenu,
 	EStrKeyTakenFmt,
+	EStrItemPadScale,
 	EStrCount
 	};
 

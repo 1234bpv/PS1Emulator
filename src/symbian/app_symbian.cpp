@@ -96,7 +96,7 @@ void voutSymbianAttachWindow(RWsSession &aWs, CWsScreenDevice &aDev, RWindow &aW
 // On-screen gamepad input (touchpad_symbian.cpp). The probe runs in ConstructL, before ActivateL.
 TBool voutSymbianTouchProbe(RWindowBase &aWin);
 void voutSymbianTouchOff(void);
-void voutSymbianTouchOptions(TInt aSticks, TInt aAlphaPct);
+void voutSymbianTouchOptions(TInt aSticks, TInt aAlphaPct, TInt aScalePct);
 TBool voutSymbianTouchEvent(const TPointerEvent &aEvent);
 
 extern char CdromId[10];
@@ -167,7 +167,7 @@ enum TCfgItem
 	ECfgHdrSpeed, ECfgGpuSkip, ECfgCpu, ECfgGteNf, ECfgCycle,
 	ECfgHdrSound, ECfgSound, ECfgWsola,
 	ECfgHdrInput, ECfgPreset, ECfgKeyBase, ECfgKeys,
-	ECfgTouchOn, ECfgSticks, ECfgPadAlpha,
+	ECfgTouchOn, ECfgSticks, ECfgPadAlpha, ECfgPadScale,
 	ECfgTilt, ECfgTiltSide, ECfgTiltPitch, ECfgTiltDead, ECfgTiltSens, ECfgResetKeys,
 	ECfgHdrSystem, ECfgLang, ECfgBios, ECfgProfile, ECfgDebug, ECfgReset,
 	ECfgHelp, ECfgExit,
@@ -196,7 +196,7 @@ static const unsigned char KItemSection[ECfgCount] =
 	ESecSpeed, ESecSpeed, ESecSpeed, ESecSpeed, ESecSpeed,
 	ESecSound, ESecSound, ESecSound,
 	ESecInput, ESecInput, ESecInput, ESecInput,
-	ESecInput, ESecInput, ESecInput,
+	ESecInput, ESecInput, ESecInput, ESecInput,
 	ESecInput, ESecInput, ESecInput, ESecInput, ESecInput, ESecInput,
 	ESecSystem, ESecSystem, ESecSystem, ESecSystem, ESecSystem, ESecSystem,
 	ESecCount, ESecCount
@@ -212,7 +212,7 @@ static const TStrId KItemLabelStrId[ECfgCount] =
 	EStrSecSpeed, EStrItemGpuSkip, EStrItemCpu, EStrItemGteNf, EStrItemCycle,
 	EStrSecSound, EStrItemSound, EStrItemWsola,
 	EStrSecControls, EStrItemPreset, EStrItemKeyBase, EStrItemKeys,
-	EStrSecControls, EStrSecControls, EStrSecControls,
+	EStrSecControls, EStrSecControls, EStrSecControls, EStrItemPadScale,
 	EStrItemTilt, EStrItemTiltSide, EStrItemTiltPitch, EStrItemTiltDead,
 	EStrItemTiltSens, EStrItemResetKeys,
 	EStrSecSystem, EStrItemLang, EStrItemBios, EStrItemProfile, EStrItemDebug,
@@ -232,7 +232,7 @@ static const char *const KCfgKey[ECfgCount] =
 	NULL, "gpuskip", "cpu", "gtenf", "cycle",
 	NULL, "sound", "wsola",
 	NULL, NULL, NULL, NULL,
-	"touchon", "sticks", "padalpha",
+	"touchon", "sticks", "padalpha", "padscale",
 	"tilt", "tiltside", "tiltpitch", "tiltdead",
 	"tiltsens", NULL,
 	NULL, "lang", NULL, "profile", "debug", NULL,
@@ -250,7 +250,7 @@ static const char *const KItemHelpId[ECfgCount] =
 	"sec.speed", "gpuskip", "cpu", "gtenf", "cycle",
 	"sec.sound", "sound", "wsola",
 	"sec.input", "preset", "keybase", "keys",
-	"touchon", "sticks", "padalpha",
+	"touchon", "sticks", "padalpha", "padscale",
 	"tilt", "tiltside",
 	"tiltpitch", "tiltdead", "tiltsens", "resetkeys",
 	"sec.system", "lang", "bios", "profile", "debug", "reset",
@@ -466,7 +466,7 @@ public:
 	TInt iIntro;
 	TInt iTilt, iTiltSide, iTiltPitch, iTiltDead, iTiltSens;
 	TInt iOrient, iPFit;
-	TInt iTouchOn, iSticks, iPadAlpha;
+	TInt iTouchOn, iSticks, iPadAlpha, iPadScale;
 	TInt iKeyScan[KPadMax], iKeyAlt[KPadMax], iKeyHold[KPadMax];
 	TInt iKeyScanL[KPadMax], iKeyAltL[KPadMax], iKeyHoldL[KPadMax];
 	TInt iKeyScanP[KPadMax], iKeyAltP[KPadMax], iKeyHoldP[KPadMax];
@@ -517,6 +517,7 @@ void TPs1Cfg::SetDefaults()
 	iTouchOn = AknLayoutUtils::PenEnabled() ? 1 : 0;
 	iSticks = 0;
 	iPadAlpha = 100;
+	iPadScale = 100;
 	}
 
 // The CONTROLS section alone, for its own reset: keys, holds, the tilt zero key and tilt.
@@ -583,6 +584,8 @@ void TPs1Cfg::Clamp()
 	iSticks = iSticks ? 1 : 0;
 	if (iPadAlpha < 10) iPadAlpha = 10;
 	else if (iPadAlpha > 100) iPadAlpha = 100;
+	if (iPadScale < 50) iPadScale = 50;
+	else if (iPadScale > 100) iPadScale = 100;
 	}
 
 TInt &TPs1Cfg::Value(TInt aItem)
@@ -619,6 +622,7 @@ TInt &TPs1Cfg::Value(TInt aItem)
 		case ECfgTouchOn:   return iTouchOn;
 		case ECfgSticks:    return iSticks;
 		case ECfgPadAlpha:  return iPadAlpha;
+		case ECfgPadScale:  return iPadScale;
 		default:          return iDummy;
 		}
 	}
@@ -1073,6 +1077,9 @@ private:
 	// from the current values is the reason to restart emulation.
 	TFileName iGameAtStart, iBiosAtStart;
 	TInt iInterpAtStart, iGteNfAtStart, iSoundAtStart, iGlAtStart, iDsaAtStart, iWsolaAtStart;
+	TBool iPtrLog;            // ptrlog argument: write every pointer event to the log (touch calibration)
+	TInt iPtrLogCount;        // pointer events written to the log
+	TInt iPtrLogSkipped;      // pointer events past the limit, counted and reported every hundredth
 	TBool iCliMode;           // launched with arguments: do not touch the in-game menu
 	// The running game's settings as they were before another game's profile was
 	// loaded over them, so "Discard changes" can put them back.
@@ -1237,6 +1244,7 @@ void CPs1Container::ConstructL(const TRect &aRect)
 	User::CommandLine(cl);
 	cl.Trim();
 	iCliMode = (cl.Length() != 0);
+	iPtrLog = cl.FindF(_L("ptrlog")) != KErrNotFound;
 	// Command-line runs replay recorded input and are measured frame by frame; the panel
 	// would add drawing to every frame of them.
 	if (iCliMode)
@@ -1244,7 +1252,8 @@ void CPs1Container::ConstructL(const TRect &aRect)
 		if (cl.FindF(_L("touchon")) == KErrNotFound)
 			voutSymbianTouchOff();
 		// Layout options of the on-screen gamepad, read next to touchon: "sticks" selects the
-		// two-stick layout, "padalpha<N>" the opacity of the untouched panel in percent (default 100).
+		// two-stick layout, "padalpha<N>" the opacity of the untouched panel in percent (default 100),
+		// "padscale<N>" the panel size in percent, 50..100 (default 100).
 		TInt padAlpha = 100;
 		const TInt padAt = cl.FindF(_L("padalpha"));
 		if (padAt != KErrNotFound)
@@ -1257,11 +1266,23 @@ void CPs1Container::ConstructL(const TRect &aRect)
 			else
 				ps1LogFmt("touch", "padalpha is not a number, the default 100 is kept");
 			}
-		voutSymbianTouchOptions(cl.FindF(_L("sticks")) != KErrNotFound, padAlpha);
+		TInt padScale = 100;
+		const TInt scaleAt = cl.FindF(_L("padscale"));
+		if (scaleAt != KErrNotFound)
+			{
+			const TPtrC digits = cl.Mid(scaleAt + 8);
+			TLex lex(digits);
+			TInt value = 0;
+			if (lex.Val(value) == KErrNone)
+				padScale = value;
+			else
+				ps1LogFmt("touch", "padscale is not a number, the default 100 is kept");
+			}
+		voutSymbianTouchOptions(cl.FindF(_L("sticks")) != KErrNotFound, padAlpha, padScale);
 		}
 	else
 		{
-		voutSymbianTouchOptions(iCfg.iSticks, iCfg.iPadAlpha);
+		voutSymbianTouchOptions(iCfg.iSticks, iCfg.iPadAlpha, iCfg.iPadScale);
 		if (!iCfg.iTouchOn)
 			voutSymbianTouchOff();
 		}
@@ -1341,7 +1362,8 @@ TBool CPs1Container::ItemVisible(TInt aItem) const
 		return !AknLayoutUtils::PenEnabled();
 	if (aItem == ECfgPFit)
 		return !AknLayoutUtils::PenEnabled() && iCfg.iOrient;
-	if (aItem == ECfgTouchOn || aItem == ECfgSticks || aItem == ECfgPadAlpha)
+	if (aItem == ECfgTouchOn || aItem == ECfgSticks || aItem == ECfgPadAlpha ||
+		aItem == ECfgPadScale)
 		return AknLayoutUtils::PenEnabled();
 	return ETrue;
 	}
@@ -2402,6 +2424,9 @@ void CPs1Container::ItemValue(TInt aItem, TDes &aOut) const
 			break;
 		case ECfgPadAlpha:
 			aOut.Format(_L("%d%%"), c.iPadAlpha);
+			break;
+		case ECfgPadScale:
+			aOut.Format(_L("%d%%"), c.iPadScale);
 			break;
 
 		case ECfgKeys:
@@ -3502,7 +3527,7 @@ void CPs1Container::DoCloseMenu(TBool aWithRestart)
 		if (!iCfg.iTouchOn)
 			voutSymbianTouchOff();
 		else
-			voutSymbianTouchOptions(iCfg.iSticks, iCfg.iPadAlpha);
+			voutSymbianTouchOptions(iCfg.iSticks, iCfg.iPadAlpha, iCfg.iPadScale);
 		}
 	iPage = EPageNone;
 	voutSymbianSuspend(0);
@@ -3517,6 +3542,26 @@ void CPs1Container::FocusLost()
 
 void CPs1Container::HandlePointerEventL(const TPointerEvent &aPointerEvent)
 	{
+	if (iPtrLog)
+		{
+		// Past the limit only the count is kept, reported every hundredth event so nothing is dropped silently.
+		const TInt KPtrLogMax = 300;
+		if (iPtrLogCount < KPtrLogMax)
+			{
+			iPtrLogCount++;
+			const TSize size = Size();
+			ps1LogFmt("ptr", "type=%d x=%d y=%d px=%d py=%d win=%dx%d tick=%d", (int)aPointerEvent.iType,
+				(int)aPointerEvent.iPosition.iX, (int)aPointerEvent.iPosition.iY,
+				(int)aPointerEvent.iParentPosition.iX, (int)aPointerEvent.iParentPosition.iY,
+				(int)size.iWidth, (int)size.iHeight, (int)User::NTickCount());
+			}
+		else
+			{
+			iPtrLogSkipped++;
+			if (iPtrLogSkipped % 100 == 0)
+				ps1LogFmt("ptr", "skipped=%d after the first %d events", (int)iPtrLogSkipped, (int)KPtrLogMax);
+			}
+		}
 	if (iPage == EPageCheats && aPointerEvent.iType == TPointerEvent::EButton1Up)
 		{
 		CheatsPointerL(aPointerEvent.iPosition);
@@ -3605,7 +3650,7 @@ void CPs1Container::ApplyAndStart()
 	voutSymbianSetTiltMap(iCfg.iTiltSide, iCfg.iTiltPitch, iCfg.iTiltDead, iCfg.iTiltSens);
 	// No sensor means the switch would sit on "on" and do nothing.
 	if (iCfg.iTilt && !voutSymbianTiltActive()) iCfg.iTilt = 0;
-	voutSymbianTouchOptions(iCfg.iSticks, iCfg.iPadAlpha);
+	voutSymbianTouchOptions(iCfg.iSticks, iCfg.iPadAlpha, iCfg.iPadScale);
 	if (!iCfg.iTouchOn)
 		voutSymbianTouchOff();
 	TBuf8<KMaxFileName + 1> path8;
@@ -3720,12 +3765,19 @@ void CPs1Container::StepValue(TInt aItem, TInt d)
 		v += d * 10;
 		if (v < 10) v = 100;
 		if (v > 100) v = 10;
-		voutSymbianTouchOptions(iCfg.iSticks, v);
+		voutSymbianTouchOptions(iCfg.iSticks, v, iCfg.iPadScale);
+		}
+	else if (aItem == ECfgPadScale)
+		{
+		v += d * 10;
+		if (v < 50) v = 100;
+		if (v > 100) v = 50;
+		voutSymbianTouchOptions(iCfg.iSticks, iCfg.iPadAlpha, v);
 		}
 	else if (aItem == ECfgSticks)
 		{
 		v = v ? 0 : 1;
-		voutSymbianTouchOptions(v, iCfg.iPadAlpha);
+		voutSymbianTouchOptions(v, iCfg.iPadAlpha, iCfg.iPadScale);
 		}
 	else if (aItem == ECfgTouchOn)
 		{
@@ -3733,7 +3785,7 @@ void CPs1Container::StepValue(TInt aItem, TInt d)
 		if (!v)
 			voutSymbianTouchOff();
 		else
-			voutSymbianTouchOptions(iCfg.iSticks, iCfg.iPadAlpha);
+			voutSymbianTouchOptions(iCfg.iSticks, iCfg.iPadAlpha, iCfg.iPadScale);
 		}
 	else
 		v = v ? 0 : 1;

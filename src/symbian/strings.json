@@ -5613,6 +5613,10 @@
    "lv": "Jau uz %S. OK: pārvietot šeit",
    "lt": "Jau priskirtas %S. OK: perkelti čia",
    "ca": "Ja a %S. OK: mou-ho aquí"
+  },
+  "EStrItemPadScale": {
+   "en": "Pad size",
+   "uk": "Розмір панелі"
   }
  }
 }

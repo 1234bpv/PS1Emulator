@@ -1254,3 +1254,24 @@ S2 (bench) після серії; для гри людиною залити ре
 2026-10-05 23:32: N95-useroc-wing three runs completed; user-installed clock registers unchanged before/after. Next proc96.
 2026-10-05 23:36: N95-useroc-wipeout three runs completed; user-installed clock registers unchanged before/after. Next proc103.
 2026-10-05 23:37: F11 completed with user-installed m111 CORE04360644 DSP000023C3. 108 valid runs/36 triples/12 canonical gameplay states. All runs sound ON, volume0 before clocks; positive audio feeds/samples. C5 14/14 and N95 18/18 originals restored with SHA readback; EXE release hash and boot.dat unchanged verified. User clock left unchanged, no emulator source changes, no push. Final evidence audit passed.
+
+## Стан на 2026-11-17: три зміни зібрано, на апараті ще не перевірено
+
+Після перевірки Павла рукою (`work/питання-павлу.md`, розділ від 2026-11-17) додано:
+
+1. `vgpbench` (`src/symbian/vout_symbian.cpp`, блок `vgpbench` під `PS1_BENCH`; розбір у
+   `stage1.cpp`). Запуск: `tools-patches\run.ps1 -Dev n95 -Ip <адреса> -Name vgp -RunArgs
+   "gui vgpbench100"`; результат — рядки `vgpbench` у `plans\runs\<stamp>_vgp_n95\ps1_stage1.jsonl`
+   (`run.ps1` їх у підсумок не виводить). 11 конфігурацій (static; arm, armfx, ff, fffx;
+   armlit, armfxlit, fflit; armskin, armfxskin, palskin) по 3000 і 12000 вершин, прямо й
+   назад. `lit=0` означає порожній прохід, `palcmp diffpx` — чи справді застосовано палітру.
+   ARM float у цій збірці програмний (немає `-mfpu=vfp`), тому чесний суперник VGP —
+   варіанти `armfx*`. Записати тактування апарата (зараз штатне 330/165).
+2. «Розмір панелі» (`padscale`, 50–100 %, типово 100), `touchpad_symbian.cpp` і
+   `app_symbian.cpp`; новий рядок `EStrItemPadScale` у `i18n.h`. Перевірити на 701: розмір
+   міняється одразу, `scale=` у рядку `touch`.
+3. `ptrlog`: журнал подій дотику (`ptr`, перші 300, далі лічильник). Для калібрування `TAP`
+   демона на 701: надіслати `TAP` у сітку точок, порівняти з `x/y` у журналі, виправити
+   перетворення в `SymbianDeployDaemon/src/tester_input.cpp` (`CmdTap`, `RawPointer`).
+
+Ще відкрито: чорний екран Crush Gear у грі на N95 (не досліджено).
